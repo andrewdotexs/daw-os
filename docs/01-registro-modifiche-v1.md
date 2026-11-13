@@ -422,6 +422,6 @@ Tutti e tre **chiusi il 13 novembre 2026**, come proposto.
 | Soglie dell'esperimento E-05 | Confermate. |
 | Esperimento E-06 | Approvato: entra nel passo P0.6. |
 
-## 4. Punto nuovo, da chiarire prima del passo P0.4
+## 4. Il disco del 285K
 
-Sul 285K risulta oggi un solo disco da 932 GB con Windows 11 in funzione. Prima di scrivere lo script di installazione va chiarito se quel disco è quello destinato a dawOS, e quindi da cancellare per intero. I dettagli sono in [hardware-285k.md](fasi/fase-0/hardware-285k.md).
+Sul 285K c'è oggi un solo disco da 932 GB con Windows 11. **Deciso il 13 novembre 2026**: è il disco dedicato a dawOS, e il passo P0.4 lo cancella per intero. Prima va salvato ciò che si vuole tenere. I dettagli e le conseguenze per lo script di scrittura sono in [hardware-285k.md](fasi/fase-0/hardware-285k.md).

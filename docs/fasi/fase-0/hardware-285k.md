@@ -37,19 +37,19 @@ Non ho trovato nella scheda tecnica: la presenza di un connettore seriale e i de
 
 **Il modulo audio ROG Strix Hive II è un dispositivo USB.** Se resta collegato, il kernel lo vedrà come una seconda scheda audio USB. Nel passo P0.4 va deciso se scollegarlo; nel frattempo conta come dispositivo da tenere lontano dal controller della Scarlett.
 
-## Punto da chiarire prima del passo P0.4: il disco
+## Il disco: deciso
 
-La schermata mostra **un solo volume da 932 GB con 123 GB usati e Windows 11 in funzione**. Il master prompt parla di un «SSD NVMe da 1 TB dedicato a dawOS», e l'ADR 0001 di un 285K che non ospita altri sistemi operativi.
+**Decisione del 13 novembre 2026: caso A.** Il disco da 932 GB oggi occupato da Windows 11 è il disco dedicato a dawOS. Il passo P0.4 lo **cancella per intero**, Windows compreso. Il 285K non ha altri dischi da preservare.
 
-Le due cose stanno insieme solo in uno di questi casi:
+Conseguenze:
 
-| Caso | Cosa succede nel passo P0.4 |
-| --- | --- |
-| A. Quel disco è il disco destinato a dawOS, e il Windows che contiene è da eliminare | L'installazione **cancella tutto il contenuto del disco**, Windows compreso. Serve prima una copia di ciò che vuoi tenere. |
-| B. Esiste un secondo NVMe, non ancora montato o non mostrato nella schermata | Lo script di scrittura deve conoscere entrambi i dischi e rifiutare quello di Windows. |
-| C. Windows deve restare sul 285K | Va rivista la decisione D-01: non è più una macchina dedicata. |
+- **Prima del passo P0.4** va salvato altrove tutto ciò che di quel Windows vuoi tenere (123 GB occupati oggi). Dopo l'installazione non è recuperabile.
+- I dati della sezione seguente vanno raccolti **finché Windows è ancora lì**: dopo si possono leggere anche da dawOS, ma avere i due elenchi permette di confrontarli.
+- Lo script di scrittura si aspetta **un solo disco NVMe interno**. Se al momento dell'installazione ne trova più d'uno, si ferma: vuol dire che la macchina non è più quella descritta qui.
+- Le altre protezioni restano tutte: identificazione per modello e numero di serie, rifiuto del disco da cui si è avviato e dei dischi rimovibili, elenco di ciò che verrà cancellato, conferma digitata con il numero di serie, prova a secco come comportamento predefinito. Che il disco sia «solo» quello di Windows non le rende superflue: servono proprio a evitare di cancellare la chiavetta o un disco aggiunto nel frattempo.
+- L'aggiornamento del firmware della scheda madre non richiede Windows: si fa dal firmware stesso, da una chiavetta. Non serve farlo prima di cancellare.
 
-Non procedo con lo script di scrittura finché non mi dici in quale caso siamo.
+Le alternative scartate erano un secondo NVMe (caso B) e il mantenimento di Windows sul 285K (caso C), che avrebbe riaperto la decisione D-01.
 
 ## Dati da raccogliere finché c'è Windows
 
