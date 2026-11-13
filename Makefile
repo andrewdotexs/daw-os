@@ -108,6 +108,10 @@ qemu-target-test: ## Boot the disk installed by the rehearsal and check the boot
 remote-test: ## Check a real machine over SSH: make remote-test HOST=<address>
 	@tools/remote-check.sh $(HOST)
 
+.PHONY: measure-fetch
+measure-fetch: ## Copy measurement results from a machine: make measure-fetch HOST=<address>
+	@tools/fetch-measure.sh $(HOST)
+
 .PHONY: lint
 lint: ## Run shellcheck and markdownlint
 	shellcheck $(SHELL_SOURCES)

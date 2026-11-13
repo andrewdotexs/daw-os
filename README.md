@@ -2,7 +2,7 @@
 
 dawOS: un sistema operativo basato su Linux in cui la DAW è l'unico programma.
 
-Stato: **Fase 0 — Piattaforma**, passi P0.1, P0.2 e P0.3 superati, P0.4a consegnato.
+Stato: **Fase 0 — Piattaforma**, passi da P0.1 a P0.4a superati, P0.4b consegnato.
 
 ## Per cominciare
 
@@ -29,7 +29,7 @@ make qemu-test
 - [Documento 0: revisione critica, interfacce trasversali, piano della Fase 0, domande aperte](docs/00-revisione-specifiche-fase0.md)
 - [Registro delle modifiche del documento 0 verso la versione 1](docs/01-registro-modifiche-v1.md)
 - [Registri delle decisioni (ADR)](docs/adr/README.md)
-- Fase 0: [P0.1 — Ambiente di sviluppo](docs/fasi/fase-0/P0.1-ambiente.md), [P0.2 — Scheletro e primo avvio in QEMU](docs/fasi/fase-0/P0.2-scheletro-e-qemu.md), [P0.3 — Kernel real-time](docs/fasi/fase-0/P0.3-kernel-real-time.md), [P0.4a — Installazione sul 285K](docs/fasi/fase-0/P0.4a-installazione.md), [hardware di riferimento](docs/fasi/fase-0/hardware-285k.md)
+- Fase 0: [P0.1 — Ambiente di sviluppo](docs/fasi/fase-0/P0.1-ambiente.md), [P0.2 — Scheletro e primo avvio in QEMU](docs/fasi/fase-0/P0.2-scheletro-e-qemu.md), [P0.3 — Kernel real-time](docs/fasi/fase-0/P0.3-kernel-real-time.md), [P0.4a — Installazione sul 285K](docs/fasi/fase-0/P0.4a-installazione.md), [P0.4b — Rumore di fondo](docs/fasi/fase-0/P0.4b-rumore-di-fondo.md), [hardware di riferimento](docs/fasi/fase-0/hardware-285k.md)
 
 ## Licenza
 

@@ -1,0 +1,102 @@
+#!/bin/sh
+# dawos-topology — describe this machine as the kernel sees it.
+#
+# Prints a plain-text report on standard output: firmware, processors and
+# their hybrid layout, idle states, frequency policy, interrupts, PCI and
+# USB devices, disks. Step P0.4b archives it; step P0.6 derives the four
+# core domains from it.
+#
+# It only reads: nothing on the machine is changed.
+
+set -u
+
+section() {
+	printf '\n== %s ==\n' "$1"
+}
+
+# Run a command under a heading; a failing command is reported, not fatal.
+run() {
+	section "$1"
+	shift
+	"$@" 2>&1 || echo "(failed: $*)"
+}
+
+# Print "path: content" for a readable sysfs or procfs file.
+show() {
+	if [ -r "$1" ]; then
+		printf '%s: %s\n' "$1" "$(cat "$1" 2> /dev/null)"
+	fi
+}
+
+section "identity"
+date -u '+utc: %Y-%m-%dT%H:%M:%SZ'
+grep -E '^(PRETTY_NAME|IMAGE_VERSION|VARIANT_ID|BUILD_ID)=' /etc/os-release
+printf 'kernel: %s\n' "$(uname -srv)"
+printf 'cmdline: %s\n' "$(cat /proc/cmdline)"
+
+section "firmware"
+for attr in sys_vendor board_vendor board_name board_version bios_vendor bios_version bios_date; do
+	show "/sys/class/dmi/id/${attr}"
+done
+
+run "lscpu" lscpu
+run "lscpu -e" lscpu -e
+
+section "hybrid layout"
+# Performance cores and efficiency cores are two separate PMUs.
+show /sys/devices/cpu_core/cpus
+show /sys/devices/cpu_atom/cpus
+show /sys/devices/system/cpu/online
+show /sys/devices/system/cpu/isolated
+show /sys/devices/system/cpu/nohz_full
+
+section "per-cpu table"
+# l2_shared tells which CPUs share a level-2 cache: one P-core alone, or
+# the four E-cores of a cluster. highest_perf ranks the cores (favoured
+# P-cores have the largest value).
+printf '%-4s %-8s %-12s %-12s %-12s %s\n' cpu core_id l2_shared max_khz highest_perf driver
+for path in /sys/devices/system/cpu/cpu[0-9]*; do
+	cpu=${path##*cpu}
+	core_id=$(cat "${path}/topology/core_id" 2> /dev/null || echo -)
+	l2=-
+	for index in "${path}"/cache/index*; do
+		if [ "$(cat "${index}/level" 2> /dev/null)" = 2 ]; then
+			l2=$(cat "${index}/shared_cpu_list")
+		fi
+	done
+	max_khz=$(cat "${path}/cpufreq/cpuinfo_max_freq" 2> /dev/null || echo -)
+	perf=$(cat "${path}/acpi_cppc/highest_perf" 2> /dev/null || echo -)
+	driver=$(cat "${path}/cpufreq/scaling_driver" 2> /dev/null || echo -)
+	printf '%-4s %-8s %-12s %-12s %-12s %s\n' "${cpu}" "${core_id}" "${l2}" "${max_khz}" "${perf}" "${driver}"
+done | sort -n
+
+section "idle states (cpu0 and last cpu)"
+last=$(($(nproc) - 1))
+for cpu in 0 "${last}"; do
+	for state in "/sys/devices/system/cpu/cpu${cpu}/cpuidle"/state*; do
+		[ -d "${state}" ] || continue
+		printf 'cpu%s %s: name=%s exit_latency_us=%s target_residency_us=%s\n' \
+			"${cpu}" "${state##*/}" "$(cat "${state}/name")" \
+			"$(cat "${state}/latency")" "$(cat "${state}/residency")"
+	done
+done
+show /sys/devices/system/cpu/cpuidle/current_driver
+show /sys/devices/system/cpu/cpuidle/current_governor
+
+section "frequency policy"
+for attr in status no_turbo min_perf_pct max_perf_pct hwp_dynamic_boost; do
+	show "/sys/devices/system/cpu/intel_pstate/${attr}"
+done
+show /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+show /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+
+section "time"
+show /sys/devices/system/clocksource/clocksource0/current_clocksource
+show /sys/devices/system/clocksource/clocksource0/available_clocksource
+
+run "memory" head -n 5 /proc/meminfo
+run "pci devices and drivers" lspci -nnk
+run "usb tree" lsusb -t
+run "block devices" lsblk -o NAME,SIZE,TYPE,FSTYPE,PARTLABEL,MODEL
+run "network" networkctl --no-pager
+run "interrupts" cat /proc/interrupts

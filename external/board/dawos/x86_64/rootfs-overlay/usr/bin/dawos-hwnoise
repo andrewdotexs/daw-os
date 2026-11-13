@@ -1,0 +1,212 @@
+#!/bin/sh
+# dawos-hwnoise — measure hardware and firmware noise on every CPU.
+#
+# Runs "rtla hwnoise" for the given time: on each CPU a kernel thread
+# spins with interrupts disabled and records every gap in its own
+# execution. With interrupts off, only the hardware and the firmware
+# (system management interrupts, SMI) can cause a gap. turbostat runs
+# alongside to count the SMIs and log temperature and power.
+#
+# The measurement runs as a transient systemd unit, so it survives the
+# end of the SSH session. Results go to /var/lib/dawos/measure/, which is
+# in memory until the "state" partition is mounted (step P0.5): fetch
+# them before rebooting (tools/fetch-measure.sh on the development PC).
+#
+# While it runs, the machine answers in fits and starts: that is expected.
+
+set -u
+
+PROG=dawos-hwnoise
+BASE=/var/lib/dawos/measure
+UNIT=dawos-hwnoise
+# Acceptance of step P0.4b: largest single gap, in microseconds.
+LIMIT_US=15
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} DURATION [LABEL]   start a measurement (DURATION like 10m, 4h)
+  ${PROG} --status           show progress, or the last summary
+  ${PROG} --summary DIR      (re)compute the summary of a finished run
+
+LABEL is a short word added to the name of the result directory, for
+example "baseline" or "tuned".
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# Write summary.txt from hwnoise.txt, smi.txt and power.txt in directory $1.
+summarize() {
+	dir=$1
+	{
+		echo "directory: ${dir}"
+		[ -r "${dir}/meta.txt" ] && cat "${dir}/meta.txt"
+
+		# rtla prints one line per CPU: cpu, #periods, runtime, noise,
+		# % available, max noise, max single, hardware count, NMI count.
+		awk '
+			$1 ~ /^[0-9]+$/ && $2 ~ /^#/ {
+				cpus++
+				if ($7 + 0 > max) { max = $7 + 0; worst = $1 }
+				hw += $8; nmi += $9
+			}
+			END {
+				if (!cpus) { print "hwnoise: no data"; exit }
+				printf "cpus_measured: %d\n", cpus
+				printf "max_single_noise_us: %d (cpu %s)\n", max, worst
+				printf "hardware_noise_events: %d\n", hw
+				printf "nmi_events: %d\n", nmi
+			}' "${dir}/hwnoise.txt"
+
+		# SMI counter. It is per CPU, but an SMI stops them all, so CPU 0
+		# is enough. Column positions are taken from the header line.
+		if [ -s "${dir}/smi.txt" ]; then
+			awk '
+				!hdr { for (i = 1; i <= NF; i++) col[$i] = i; if ("SMI" in col) hdr = 1; else delete col; next }
+				$col["CPU"] == "0" { smi += $col["SMI"]; samples++ }
+				END {
+					if (!samples) { print "smi: no data"; exit }
+					printf "smi_count: %d\n", smi
+					printf "smi_samples: %d\n", samples
+				}' "${dir}/smi.txt"
+		else
+			echo "smi: turbostat gave no data on this machine"
+		fi
+
+		# Temperature and power, from the system-wide rows ("-").
+		if [ -s "${dir}/power.txt" ]; then
+			awk '
+				!hdr { for (i = 1; i <= NF; i++) col[$i] = i; if ("CPU" in col && ("PkgTmp" in col || "PkgWatt" in col)) hdr = 1; else delete col; next }
+				$col["CPU"] == "-" {
+					if ("PkgTmp" in col && $col["PkgTmp"] + 0 > tmax) tmax = $col["PkgTmp"] + 0
+					if ("PkgWatt" in col) { wsum += $col["PkgWatt"]; wn++; if ($col["PkgWatt"] + 0 > wmax) wmax = $col["PkgWatt"] + 0 }
+				}
+				END {
+					if (tmax) printf "package_temperature_max_c: %d\n", tmax
+					if (wn) printf "package_power_w: avg %.1f max %.1f\n", wsum / wn, wmax
+				}' "${dir}/power.txt"
+		fi
+	} > "${dir}/summary.txt"
+
+	# Verdict against the acceptance criterion of step P0.4b.
+	max=$(sed -n 's/^max_single_noise_us: \([0-9]*\).*/\1/p' "${dir}/summary.txt")
+	smi=$(sed -n 's/^smi_count: \([0-9]*\).*/\1/p' "${dir}/summary.txt")
+	if [ -z "${max}" ]; then
+		echo "verdict: NO DATA" >> "${dir}/summary.txt"
+	elif [ "${max}" -le "${LIMIT_US}" ] && [ "${smi:-0}" -eq 0 ]; then
+		if [ -n "${smi}" ]; then
+			echo "verdict: PASS (max single noise <= ${LIMIT_US} us, no SMI)" >> "${dir}/summary.txt"
+		else
+			echo "verdict: PASS on noise (<= ${LIMIT_US} us); SMI count unknown" >> "${dir}/summary.txt"
+		fi
+	else
+		echo "verdict: FAIL (limit ${LIMIT_US} us and zero SMI)" >> "${dir}/summary.txt"
+	fi
+	cat "${dir}/summary.txt"
+}
+
+# The measurement itself; runs inside the transient unit.
+run_measurement() {
+	dir=$1
+	duration=$2
+
+	# Two turbostat processes on purpose. The SMI count is the figure the
+	# verdict depends on, so it gets a minimal column set that works
+	# everywhere; a column this processor lacks in the second set must
+	# not be able to silence the first.
+	turbostat --quiet --interval 5 --show CPU,SMI \
+		--out "${dir}/smi.txt" 2> "${dir}/smi.err" &
+	smi_pid=$!
+	turbostat --quiet --interval 5 --show CPU,Busy%,Bzy_MHz,CoreTmp,PkgTmp,PkgWatt \
+		--out "${dir}/power.txt" 2> "${dir}/power.err" &
+	power_pid=$!
+	# Give them time to probe the processor before every CPU is taken
+	# over by the measurement threads.
+	sleep 3
+
+	rtla hwnoise -d "${duration}" -q > "${dir}/hwnoise.txt" 2>&1
+	rtla_status=$?
+
+	kill "${smi_pid}" "${power_pid}" 2> /dev/null
+	wait "${smi_pid}" "${power_pid}" 2> /dev/null
+
+	echo "rtla_exit_status: ${rtla_status}" >> "${dir}/meta.txt"
+	date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+	summarize "${dir}" > /dev/null
+}
+
+case "${1:-}" in
+"" | -h | --help)
+	usage
+	exit 0
+	;;
+--status)
+	if systemctl is-active --quiet "${UNIT}"; then
+		echo "A measurement is running:"
+		systemctl show -p ActiveEnterTimestamp --value "${UNIT}" | sed 's/^/  started: /'
+	else
+		echo "No measurement is running."
+	fi
+	# Directory names start with a UTC timestamp: the last one sorts last.
+	last=
+	for candidate in "${BASE}"/hwnoise-*; do
+		[ -d "${candidate}" ] && last=${candidate}
+	done
+	if [ -n "${last}" ]; then
+		echo "Latest result directory: ${last}"
+		if [ -r "${last}/summary.txt" ]; then
+			cat "${last}/summary.txt"
+		else
+			sed 's/^/  /' "${last}/meta.txt"
+		fi
+	fi
+	exit 0
+	;;
+--summary)
+	[ -d "${2:-}" ] || die "--summary needs a result directory"
+	summarize "$2"
+	exit 0
+	;;
+--run)
+	# Internal: called by the transient unit.
+	run_measurement "$2" "$3"
+	exit 0
+	;;
+-*)
+	die "unknown option '$1' (try --help)"
+	;;
+esac
+
+duration=$1
+label=${2:-}
+
+[ "$(id -u)" = 0 ] || die "must run as root"
+echo "${duration}" | grep -Eq '^[0-9]+[smhd]?$' || die "bad duration '${duration}' (examples: 600, 10m, 4h)"
+if [ -n "${label}" ]; then
+	echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' || die "the label may only contain letters, digits, '-' and '_'"
+fi
+systemctl is-active --quiet "${UNIT}" && die "a measurement is already running (see --status)"
+
+dir="${BASE}/hwnoise-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}"
+{
+	date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "duration: ${duration}"
+	echo "label: ${label:-none}"
+	echo "kernel: $(uname -srv)"
+	echo "cmdline: $(cat /proc/cmdline)"
+	echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
+	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+} > "${dir}/meta.txt"
+
+systemd-run --quiet --unit="${UNIT}" --collect \
+	--description="dawOS hardware noise measurement" \
+	/usr/bin/dawos-hwnoise --run "${dir}" "${duration}" ||
+	die "could not start the measurement"
+
+echo "Measurement started for ${duration}; results in ${dir}"
+echo "Follow it with: ${PROG} --status"

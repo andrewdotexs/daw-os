@@ -42,7 +42,7 @@ BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="6.18.63"
 BR2_LINUX_KERNEL_USE_ARCH_DEFAULT_CONFIG=y
-BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/base.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/storage.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/qemu.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/rt.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/hw-285k.fragment"
+BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/base.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/storage.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/qemu.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/rt.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/hw-285k.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/trim.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/security.fragment"
 BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
 BR2_LINUX_KERNEL_NEEDS_HOST_LIBELF=y
 
@@ -74,6 +74,8 @@ BR2_PACKAGE_USBUTILS=y
 BR2_PACKAGE_LINUX_TOOLS_RTLA=y
 # cpupower: idle-state and frequency inspection; rtla links its library.
 BR2_PACKAGE_LINUX_TOOLS_CPUPOWER=y
+# turbostat (our package): SMI count, temperatures, package power.
+BR2_PACKAGE_TURBOSTAT=y
 # cyclictest: independent cross-check of timerlat.
 BR2_PACKAGE_RT_TESTS=y
 # Load generator for the measurement campaign.
