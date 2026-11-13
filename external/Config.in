@@ -1,0 +1,6 @@
+# dawOS BR2_EXTERNAL tree: package menu entries.
+#
+# Packages are added here as the phases need them, one "source" line each:
+#   source "$BR2_EXTERNAL_DAWOS_PATH/package/<name>/Config.in"
+#
+# Phase 0, step P0.2: no dawOS-specific package yet.

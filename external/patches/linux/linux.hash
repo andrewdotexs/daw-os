@@ -1,0 +1,7 @@
+# Hash of the pinned kernel tarball. Buildroot enforces it because the
+# defconfig sets BR2_DOWNLOAD_FORCE_CHECK_HASHES=y.
+#
+# Source: https://cdn.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc
+# (PGP-signed by the kernel.org autosigner). Update together with
+# BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE, only at the end of a phase (ADR 0007).
+sha256  81764a545072d160748beff4d9de2e7d95aa9f16e8261110288f067a2cc61d71  linux-6.18.63.tar.xz

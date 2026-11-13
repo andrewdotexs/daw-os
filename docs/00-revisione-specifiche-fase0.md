@@ -1,6 +1,6 @@
 # dawOS — Documento 0: revisione critica, interfacce trasversali, piano della Fase 0, domande aperte
 
-- **Stato**: bozza in attesa di revisione. Nessun codice di prodotto è stato scritto.
+- **Stato**: versione 0, rivista. Le sezioni elencate nel [registro delle modifiche verso la versione 1](01-registro-modifiche-v1.md) sono **sostituite** dal testo riportato lì; le decisioni D-01…D-09 sono negli [ADR](adr/README.md).
 - **Data**: 13 novembre 2026.
 - **Ambito**: risposta al «Primo compito» del master prompt.
 

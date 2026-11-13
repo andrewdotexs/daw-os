@@ -1,0 +1,14 @@
+# dawOS (dev variant): print a one-line, machine-readable boot summary on
+# the console once the system has reached multi-user.target.
+# Read by "make qemu-test" and by the boot-time measurements.
+[Unit]
+Description=dawOS boot report
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/dawos/boot-report
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

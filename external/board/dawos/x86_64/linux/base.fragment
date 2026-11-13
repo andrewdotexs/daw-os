@@ -1,0 +1,31 @@
+# dawOS kernel fragment: minimal x86-64 platform.
+# Applied on top of the architecture default (x86_64_defconfig), 6.18.y.
+
+# Identify our builds in "uname -r"; no git suffix so the string is stable.
+CONFIG_LOCALVERSION="-dawos"
+# CONFIG_LOCALVERSION_AUTO is not set
+
+# UEFI boot: the kernel image is itself an EFI executable.
+CONFIG_EFI=y
+CONFIG_EFI_STUB=y
+CONFIG_EFI_PARTITION=y
+CONFIG_EFIVAR_FS=y
+
+# Consoles available before any native graphics driver: firmware
+# framebuffer on screen, 8250 UART for QEMU and for debugging.
+CONFIG_SYSFB_SIMPLEFB=y
+CONFIG_DRM=y
+CONFIG_DRM_SIMPLEDRM=y
+CONFIG_DRM_FBDEV_EMULATION=y
+CONFIG_FRAMEBUFFER_CONSOLE=y
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+
+# systemd expects a kernel-populated /dev.
+CONFIG_DEVTMPFS=y
+CONFIG_DEVTMPFS_MOUNT=y
+
+# Make the running configuration readable from /proc/config.gz, so every
+# measurement report can archive the exact configuration it ran on.
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y

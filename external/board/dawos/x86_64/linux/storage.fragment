@@ -1,0 +1,20 @@
+# dawOS kernel fragment: storage needed to reach the root filesystem.
+# Everything here is built in: there is no initrd to load modules from
+# (ADR 0003).
+
+# NVMe: the reference machine boots from it and QEMU emulates one.
+CONFIG_BLK_DEV_NVME=y
+
+# Root filesystem: EROFS with compression support (LZ4 is part of ZIP).
+CONFIG_EROFS_FS=y
+CONFIG_EROFS_FS_ZIP=y
+# CONFIG_EROFS_FS_DEBUG is not set
+
+# EFI System Partition.
+CONFIG_VFAT_FS=y
+CONFIG_NLS_CODEPAGE_437=y
+CONFIG_NLS_ISO8859_1=y
+
+# /run, /tmp and, for now, /var.
+CONFIG_TMPFS=y
+CONFIG_TMPFS_POSIX_ACL=y
