@@ -14,6 +14,10 @@ EXT_DIR := $(TOP)/external
 O ?= $(TOP)/output
 DL ?= $(TOP)/dl
 DEFCONFIG ?= dawos_x86_64_dev_defconfig
+# Number of parallel compile jobs. Empty means Buildroot's default, one
+# more than the CPUs it sees. Lower it when RAM is short, about one job
+# per GiB: "make image JOBS=6". "make check-env" suggests a value.
+JOBS ?=
 
 # Buildroot refuses paths with spaces, and so do we, early and clearly.
 ifneq ($(word 2,$(TOP)),)
@@ -22,7 +26,8 @@ endif
 
 # One place for the Buildroot invocation: out-of-tree build, our external
 # tree, download cache kept outside the output so "make distclean" keeps it.
-BR_MAKE = $(MAKE) -C $(BR_DIR) BR2_EXTERNAL=$(EXT_DIR) O=$(O) BR2_DL_DIR=$(DL)
+BR_MAKE = $(MAKE) -C $(BR_DIR) BR2_EXTERNAL=$(EXT_DIR) O=$(O) BR2_DL_DIR=$(DL) \
+	$(if $(JOBS),BR2_JLEVEL=$(JOBS))
 
 .PHONY: help
 help: ## Show this help
@@ -46,7 +51,7 @@ config: | $(BR_DIR)/Makefile ## (Re)apply the defconfig, discarding local menuco
 	$(BR_MAKE) $(DEFCONFIG)
 
 .PHONY: image
-image: $(O)/.config ## Build the whole image (output/images/disk.img)
+image: $(O)/.config ## Build the whole image (output/images/disk.img); JOBS=N limits parallelism
 	$(BR_MAKE) all
 
 .PHONY: menuconfig

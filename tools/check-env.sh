@@ -13,7 +13,8 @@ repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 readonly BUILDROOT_TAG=2026.02.3
 # Space needed by a first full build: output tree plus download cache.
 readonly MIN_FREE_GIB=40
-readonly MIN_RAM_GIB=8
+# Below this the build is at risk even with a single job (kernel link).
+readonly MIN_RAM_GIB=4
 
 failures=0
 warnings=0
@@ -123,11 +124,19 @@ else
 	fail "${free_gib} GiB free, at least ${MIN_FREE_GIB} GiB needed"
 fi
 
+# Buildroot compiles with one job more than the CPUs it sees. As a rule of
+# thumb each job needs about 1 GiB at the worst moments (an estimate, not
+# a measurement): with less than that, the kernel or systemd build can be
+# killed for lack of memory. Suggest a job count that fits.
 ram_gib=$(awk '/^MemTotal:/ { printf "%d", $2 / 1024 / 1024 }' /proc/meminfo)
-if ((ram_gib >= MIN_RAM_GIB)); then
-	ok "${ram_gib} GiB of RAM visible, $(nproc) CPUs"
+cpus=$(nproc)
+default_jobs=$((cpus + 1))
+if ((ram_gib < MIN_RAM_GIB)); then
+	fail "${ram_gib} GiB of RAM visible, at least ${MIN_RAM_GIB} GiB needed (raise 'memory' in .wslconfig)"
+elif ((ram_gib < default_jobs)); then
+	warn "${ram_gib} GiB of RAM for ${cpus} CPUs: build with 'make image JOBS=$((ram_gib - 1))' or raise 'memory' in .wslconfig"
 else
-	warn "${ram_gib} GiB of RAM visible: builds may be slow or run out of memory (see .wslconfig)"
+	ok "${ram_gib} GiB of RAM visible, ${cpus} CPUs"
 fi
 
 # --- Verdict ----------------------------------------------------------------
