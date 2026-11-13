@@ -1,0 +1,15 @@
+# dawOS kernel fragment: paravirtual devices for QEMU/KVM.
+# Harmless on the real machine; kept in the same image so that one build
+# boots both in QEMU and on the 285K.
+
+CONFIG_HYPERVISOR_GUEST=y
+CONFIG_PARAVIRT=y
+CONFIG_KVM_GUEST=y
+
+CONFIG_VIRTIO_MENU=y
+CONFIG_VIRTIO_PCI=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_NET=y
+CONFIG_VIRTIO_CONSOLE=y
+CONFIG_HW_RANDOM=y
+CONFIG_HW_RANDOM_VIRTIO=y

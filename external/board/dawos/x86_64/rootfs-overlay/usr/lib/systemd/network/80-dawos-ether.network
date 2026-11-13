@@ -1,0 +1,7 @@
+# dawOS: wired interfaces get their address by DHCP.
+# Wi-Fi stays off by default (binding decision, system services).
+[Match]
+Type=ether
+
+[Network]
+DHCP=yes

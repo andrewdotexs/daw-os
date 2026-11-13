@@ -1,0 +1,5 @@
+# Everything is text with Unix line endings, whatever the client's
+# platform: shell scripts and Buildroot files break with CRLF.
+* text=auto eol=lf
+*.png binary
+*.jpg binary

@@ -1,0 +1,13 @@
+# Kernel command line shared by every boot profile.
+# One or more parameters per line; lines starting with '#' are ignored.
+# post-image.sh joins the lines and appends root=PARTLABEL=... itself.
+
+# Root filesystem: read-only EROFS, wait for the NVMe device to appear.
+rootfstype=erofs ro rootwait
+
+# Consoles: the screen first, the serial port last so that it becomes
+# /dev/console (systemd messages and the QEMU serial console).
+console=tty0 console=ttyS0,115200n8
+
+# Keep the boot log readable; raise it when debugging.
+loglevel=4

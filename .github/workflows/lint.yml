@@ -1,0 +1,25 @@
+# Static checks that need neither Buildroot nor the target hardware.
+name: lint
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      # The Buildroot submodule is deliberately not fetched: nothing here
+      # needs it and it is not ours to lint.
+      - uses: actions/checkout@v4
+
+      - name: shellcheck
+        run: |
+          shellcheck tools/*.sh external/board/dawos/x86_64/*.sh \
+            external/board/dawos/x86_64/rootfs-overlay/usr/libexec/dawos/*
+
+      - name: markdownlint
+        run: npx --yes markdownlint-cli2@0.24.1

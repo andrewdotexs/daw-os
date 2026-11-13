@@ -1,0 +1,17 @@
+# Buildroot output tree and download cache (large, fully reproducible).
+/output/
+/dl/
+
+# Signing keys and any other local secret never enter the repository.
+/keys/
+*.key
+*.pem
+*.p12
+
+# Local, machine-specific overrides (see docs/fasi/fase-0/).
+/local/
+
+# Editor and OS noise.
+*.swp
+*~
+.DS_Store

@@ -1,0 +1,3 @@
+# Boot profile "generic": no CPU isolation.
+# Used in QEMU and as the safe fallback on real hardware (document 0, C-03).
+# The "285k" profile with the isolation masks is added in step P0.6.
