@@ -25,6 +25,16 @@ CONFIG_SERIAL_8250_CONSOLE=y
 CONFIG_DEVTMPFS=y
 CONFIG_DEVTMPFS_MOUNT=y
 
+# systemd confines the network access of each service with cgroup BPF
+# programs (IPAddressAllow=/IPAddressDeny=): without these options it only
+# logs a warning and applies nothing. Unprivileged BPF stays off, and the
+# JIT is mandatory so that no in-kernel interpreter is left to abuse.
+CONFIG_BPF_SYSCALL=y
+CONFIG_CGROUP_BPF=y
+CONFIG_BPF_JIT=y
+CONFIG_BPF_JIT_ALWAYS_ON=y
+CONFIG_BPF_UNPRIV_DEFAULT_OFF=y
+
 # Make the running configuration readable from /proc/config.gz, so every
 # measurement report can archive the exact configuration it ran on.
 CONFIG_IKCONFIG=y

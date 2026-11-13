@@ -111,3 +111,5 @@ Il 285K ha oggi un indirizzo impostato a mano in Windows. dawOS usa DHCP, quindi
 | B. Indirizzo statico nell'immagine, letto da `local/` alla costruzione e applicato solo alla scheda del 285K | Non dipende dal router. | L'immagine `dev` diventa specifica della tua rete; un dato in più da tenere in `local/`. |
 
 **Raccomandazione**: A, se hai accesso al router. Altrimenti B. Si decide nel passo P0.4.
+
+L'indirizzo che il 285K deve avere è stato comunicato il 13 novembre 2026. Il valore non sta nel repository: andrà in `local/` (alternativa B) oppure nella prenotazione del router (alternativa A). Mancano ancora la scelta tra le due e, per la B, i server DNS.

@@ -42,8 +42,10 @@ $(BR_DIR)/Makefile:
 	@echo "Buildroot submodule missing: run 'git submodule update --init'" >&2
 	@exit 1
 
-# First configuration: created from the defconfig if it does not exist.
-$(O)/.config: | $(BR_DIR)/Makefile
+# The Buildroot configuration follows the defconfig: it is (re)created when
+# missing and whenever the defconfig is newer, for example after "git pull".
+# Local "make menuconfig" changes are lost at that point: save them first.
+$(O)/.config: $(EXT_DIR)/configs/$(DEFCONFIG) | $(BR_DIR)/Makefile
 	$(BR_MAKE) $(DEFCONFIG)
 
 .PHONY: config
