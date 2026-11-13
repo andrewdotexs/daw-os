@@ -39,11 +39,15 @@ while (($# > 0)); do
 done
 
 ssh_options=(
-	-o BatchMode=yes
 	-o ConnectTimeout=10
 	-o StrictHostKeyChecking=accept-new
 	-p "${port}"
 )
+# Never wait for input when nobody can type it (scripts, CI). At a
+# terminal, let ssh ask for the passphrase of the key if it has one.
+if [[ ! -t 0 ]]; then
+	ssh_options+=(-o BatchMode=yes)
+fi
 
 if ! report=$(ssh "${ssh_options[@]}" "root@${host}" /usr/libexec/dawos/boot-report); then
 	echo "FAIL: cannot run the boot report on ${host} over SSH" >&2
