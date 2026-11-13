@@ -105,6 +105,8 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Mini-ITX con 285K e RTX 5080.** Lo spazio ridotto rende calore e rumore delle ventole più critici del previsto: pesa sul rischio K-04 e rende più importanti le misure dell'esperimento E-01 e la verifica di cosa fa la RTX senza driver (K-14).
 
+**Sotto carico il package arriva a 101 °C.** Misura di partenza del passo P0.4b, 13 novembre 2026: quindici minuti con tutti i 24 core occupati per tre quarti del tempo, potenza del package 121,7 W di media e 159,4 W di massimo, temperatura massima 101 °C. Il limite di giunzione del 285K è 105 °C secondo i dati Intel che ricordo (_da verificare_ sul rapporto di topologia, che ora lo legge dal processore). È la conferma, con un numero, dell'osservazione precedente, ed è registrata come rischio K-15. Dissipatore, contenitore e limiti di potenza del firmware sono ancora da annotare qui.
+
 **Il modulo audio ROG Strix Hive II è un dispositivo USB.** Se resta collegato, il kernel lo vedrà come una seconda scheda audio USB. Nel passo P0.4 va deciso se scollegarlo; nel frattempo conta come dispositivo da tenere lontano dal controller della Scarlett.
 
 ## Il disco: deciso

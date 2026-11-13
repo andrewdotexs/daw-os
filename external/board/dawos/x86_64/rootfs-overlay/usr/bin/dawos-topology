@@ -2,9 +2,9 @@
 # dawos-topology — describe this machine as the kernel sees it.
 #
 # Prints a plain-text report on standard output: firmware, processors and
-# their hybrid layout, idle states, frequency policy, interrupts, PCI and
-# USB devices, disks. Step P0.4b archives it; step P0.6 derives the four
-# core domains from it.
+# their hybrid layout, idle states, frequency policy, temperatures and
+# power limits, interrupts, PCI and USB devices, disks. Step P0.4b archives
+# it; step P0.6 derives the four core domains from it.
 #
 # It only reads: nothing on the machine is changed.
 
@@ -89,6 +89,57 @@ for attr in status no_turbo min_perf_pct max_perf_pct hwp_dynamic_boost; do
 done
 show /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 show /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+
+section "thermal and power limits"
+# Hardware-monitoring sensors. For "coretemp", temp1 is the whole package
+# and its critical value is the junction limit (TjMax): the processor
+# slows itself down before reaching it. Values are in millidegrees Celsius.
+for hwmon in /sys/class/hwmon/hwmon*; do
+	[ -r "${hwmon}/name" ] || continue
+	name=$(cat "${hwmon}/name")
+	for input in "${hwmon}"/temp*_input; do
+		[ -r "${input}" ] || continue
+		sensor=${input%_input}
+		printf '%s %s %s label="%s" input=%s max=%s crit=%s\n' \
+			"${hwmon##*/}" "${name}" "${sensor##*/}" \
+			"$(cat "${sensor}_label" 2> /dev/null || echo -)" \
+			"$(cat "${input}" 2> /dev/null || echo -)" \
+			"$(cat "${sensor}_max" 2> /dev/null || echo -)" \
+			"$(cat "${sensor}_crit" 2> /dev/null || echo -)"
+	done
+	for input in "${hwmon}"/fan*_input; do
+		[ -r "${input}" ] || continue
+		printf '%s %s %s rpm=%s\n' "${hwmon##*/}" "${name}" "${input##*/}" "$(cat "${input}")"
+	done
+done
+# Thermal-throttle events since boot. The package counters are the same on
+# every CPU, so CPU 0 is enough; the core counters are listed per CPU.
+for attr in package_throttle_count package_throttle_total_time_ms package_throttle_max_time_ms; do
+	show "/sys/devices/system/cpu/cpu0/thermal_throttle/${attr}"
+done
+printf 'core_throttle_count per cpu:'
+for path in /sys/devices/system/cpu/cpu[0-9]*; do
+	printf ' %s=%s' "${path##*cpu}" "$(cat "${path}/thermal_throttle/core_throttle_count" 2> /dev/null || echo -)"
+done | tr ' ' '\n' | sort -n | tr '\n' ' '
+printf '\n'
+# Power limits programmed by the firmware (RAPL): constraint 0 is the
+# long-term limit (PL1), constraint 1 the short-term one (PL2).
+# Values are in microwatts and microseconds.
+for zone in /sys/class/powercap/intel-rapl:*; do
+	[ -d "${zone}" ] || continue
+	printf '%s name=%s enabled=%s\n' "${zone##*/}" \
+		"$(cat "${zone}/name" 2> /dev/null || echo -)" \
+		"$(cat "${zone}/enabled" 2> /dev/null || echo -)"
+	for limit in "${zone}"/constraint_*_power_limit_uw; do
+		[ -r "${limit}" ] || continue
+		constraint=${limit%_power_limit_uw}
+		printf '  %s name=%s power_limit_uw=%s time_window_us=%s\n' \
+			"${constraint##*/}" \
+			"$(cat "${constraint}_name" 2> /dev/null || echo -)" \
+			"$(cat "${limit}" 2> /dev/null || echo -)" \
+			"$(cat "${constraint}_time_window_us" 2> /dev/null || echo -)"
+	done
+done
 
 section "time"
 show /sys/devices/system/clocksource/clocksource0/current_clocksource

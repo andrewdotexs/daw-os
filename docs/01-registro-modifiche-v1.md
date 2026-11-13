@@ -450,3 +450,14 @@ Il dettaglio è in [P0.3-kernel-real-time.md](fasi/fase-0/P0.3-kernel-real-time.
 | P0.4, rete | DHCP | Indirizzo statico da `local/network-285k.conf`, legato al driver della scheda. |
 
 Il dettaglio è in [P0.4a-installazione.md](fasi/fase-0/P0.4a-installazione.md).
+
+## 7. Modifiche emerse dalla misura di partenza di P0.4b
+
+| Sezione | Era scritto | Com'è ora |
+| --- | --- | --- |
+| Rischi | K-01 … K-14 | Nuovo rischio **K-15 — Dissipazione termica del 285K**: nella misura di partenza il package è arrivato a 101 °C con 120–160 W. Gravità alta finché non è risolto; riguarda le fasi 0 (P0.4b, P0.6, P0.7) e 3 (R-04). Mitigazioni in discussione: limite di potenza fisso nel firmware, raffreddamento. |
+| P0.4, impostazioni del firmware | Dieci voci da cambiare prima della seconda misura | Proposta di ridurle a quelle con una ragione indipendente dagli SMI, visto che la misura di partenza ne ha contati zero. In attesa di conferma. |
+| P0.4, criterio | Rumore ≤ 15 µs e zero SMI | Invariato; in più il riepilogo segnala a parte la temperatura da 95 °C e gli interventi della protezione termica. |
+| 3.5, `rtla hwnoise` | Soglia e copertura non specificate | Risoluzione di 1 µs e copertura del 75 % del tempo per core, verificate nei sorgenti della 6.18.63. |
+
+Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.md).

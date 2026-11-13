@@ -7,12 +7,29 @@
 # (system management interrupts, SMI) can cause a gap. turbostat runs
 # alongside to count the SMIs and log temperature and power.
 #
+# Resolution: the tracer counts a gap as noise from 1 microsecond up (its
+# default threshold, kernel/trace/trace_osnoise.c), and each CPU measures
+# for 750 ms of every second (the rtla hwnoise default). A result of 0
+# therefore means "no gap of 1 us or more", not "no gap at all". The SMI
+# counter has no such blind spots: it covers the whole run.
+#
+# The measurement loads every CPU, so it is also a thermal test: the
+# summary reports temperature, frequency and thermal-throttle events, and
+# warns when the package comes close to its junction limit.
+#
 # The measurement runs as a transient systemd unit, so it survives the
 # end of the SSH session. Results go to /var/lib/dawos/measure/, which is
 # in memory until the "state" partition is mounted (step P0.5): fetch
 # them before rebooting (tools/fetch-measure.sh on the development PC).
 #
 # While it runs, the machine answers in fits and starts: that is expected.
+#
+# The script finds itself through its own path, so a newer copy can be
+# tried on an installed machine without rebuilding the image:
+#   ssh root@HOST 'cat > /run/dawos-hwnoise' < dawos-hwnoise
+#   ssh root@HOST sh /run/dawos-hwnoise 15m LABEL
+# "--summary DIR" needs only sh, awk and sed: it also runs on the
+# development PC, on a result directory copied there.
 
 set -u
 
@@ -21,6 +38,12 @@ BASE=/var/lib/dawos/measure
 UNIT=dawos-hwnoise
 # Acceptance of step P0.4b: largest single gap, in microseconds.
 LIMIT_US=15
+# Package temperature, in degrees Celsius, from which the summary warns.
+# Not an acceptance criterion: a hot package does not stop the clock, but
+# it means the processor is about to slow itself down, or already has.
+WARN_TEMP_C=95
+# This script, for the transient unit to call back.
+SELF=$(readlink -f "$0")
 
 usage() {
 	cat <<USAGE
@@ -37,6 +60,41 @@ USAGE
 die() {
 	echo "${PROG}: $*" >&2
 	exit 1
+}
+
+# Print "core=N package=M": thermal-throttle events since boot. The core
+# count is summed over all CPUs; the package count is the same on every
+# CPU of a package, so the largest one is taken. Prints nothing where the
+# kernel does not expose the counters (virtual machines).
+throttle_counts() {
+	core=0
+	package=0
+	found=0
+	for file in /sys/devices/system/cpu/cpu[0-9]*/thermal_throttle/core_throttle_count; do
+		[ -r "${file}" ] || continue
+		found=1
+		read -r count < "${file}"
+		core=$((core + count))
+		read -r count < "${file%core_throttle_count}package_throttle_count"
+		[ "${count}" -gt "${package}" ] && package=${count}
+	done
+	[ "${found}" = 1 ] && echo "core=${core} package=${package}"
+	return 0
+}
+
+# Print the junction limit (TjMax) in degrees Celsius, as the coretemp
+# driver reports it for the package; nothing if it is not available.
+junction_limit_c() {
+	for hwmon in /sys/class/hwmon/hwmon*; do
+		[ -r "${hwmon}/name" ] || continue
+		[ -r "${hwmon}/temp1_crit" ] || continue
+		read -r name < "${hwmon}/name"
+		[ "${name}" = coretemp ] || continue
+		read -r millidegrees < "${hwmon}/temp1_crit"
+		echo $((millidegrees / 1000))
+		return 0
+	done
+	return 0
 }
 
 # Write summary.txt from hwnoise.txt, smi.txt and power.txt in directory $1.
@@ -57,7 +115,8 @@ summarize() {
 			END {
 				if (!cpus) { print "hwnoise: no data"; exit }
 				printf "cpus_measured: %d\n", cpus
-				printf "max_single_noise_us: %d (cpu %s)\n", max, worst
+				if (max) printf "max_single_noise_us: %d (cpu %s)\n", max, worst
+				else printf "max_single_noise_us: 0 (no gap of 1 us or more on any cpu)\n"
 				printf "hardware_noise_events: %d\n", hw
 				printf "nmi_events: %d\n", nmi
 			}' "${dir}/hwnoise.txt"
@@ -77,19 +136,50 @@ summarize() {
 			echo "smi: turbostat gave no data on this machine"
 		fi
 
-		# Temperature and power, from the system-wide rows ("-").
+		# Temperature, frequency and power, from the system-wide rows ("-").
+		# "hot" counts the samples at or above the warning temperature;
+		# a falling Bzy_MHz at constant load is the sign of throttling.
 		if [ -s "${dir}/power.txt" ]; then
-			awk '
+			awk -v warn="${WARN_TEMP_C}" '
 				!hdr { for (i = 1; i <= NF; i++) col[$i] = i; if ("CPU" in col && ("PkgTmp" in col || "PkgWatt" in col)) hdr = 1; else delete col; next }
 				$col["CPU"] == "-" {
-					if ("PkgTmp" in col && $col["PkgTmp"] + 0 > tmax) tmax = $col["PkgTmp"] + 0
+					if ("PkgTmp" in col) {
+						t = $col["PkgTmp"] + 0
+						tsum += t; tn++
+						if (t > tmax) tmax = t
+						if (t >= warn) hot++
+					}
+					if ("Bzy_MHz" in col) {
+						f = $col["Bzy_MHz"] + 0
+						fsum += f; fn++
+						if (!fmin || f < fmin) fmin = f
+					}
 					if ("PkgWatt" in col) { wsum += $col["PkgWatt"]; wn++; if ($col["PkgWatt"] + 0 > wmax) wmax = $col["PkgWatt"] + 0 }
 				}
 				END {
-					if (tmax) printf "package_temperature_max_c: %d\n", tmax
+					if (tn) {
+						printf "package_temperature_max_c: %d\n", tmax
+						printf "package_temperature_avg_c: %.1f\n", tsum / tn
+						printf "samples_at_or_above_%d_c: %d of %d\n", warn, hot, tn
+					}
+					if (fn) printf "busy_frequency_mhz: avg %d min %d\n", fsum / fn, fmin
 					if (wn) printf "package_power_w: avg %.1f max %.1f\n", wsum / wn, wmax
 				}' "${dir}/power.txt"
 		fi
+
+		# Thermal-throttle events during the run, from the two counter
+		# readings in meta.txt (absent in results of older versions).
+		awk '
+			/^throttle_(start|end):/ {
+				for (i = 2; i <= NF; i++) { split($i, kv, "="); v[$1 kv[1]] = kv[2] }
+				seen[$1] = 1
+			}
+			END {
+				if (seen["throttle_start:"] && seen["throttle_end:"])
+					printf "thermal_throttle_events: core %d package %d\n",
+						v["throttle_end:core"] - v["throttle_start:core"],
+						v["throttle_end:package"] - v["throttle_start:package"]
+			}' "${dir}/meta.txt" 2> /dev/null
 	} > "${dir}/summary.txt"
 
 	# Verdict against the acceptance criterion of step P0.4b.
@@ -105,6 +195,15 @@ summarize() {
 		fi
 	else
 		echo "verdict: FAIL (limit ${LIMIT_US} us and zero SMI)" >> "${dir}/summary.txt"
+	fi
+
+	# Thermal note, separate from the verdict.
+	tmax=$(sed -n 's/^package_temperature_max_c: \([0-9]*\).*/\1/p' "${dir}/summary.txt")
+	events=$(sed -n 's/^thermal_throttle_events: core \([0-9]*\) package \([0-9]*\)/\1 \2/p' "${dir}/summary.txt")
+	if [ "${tmax:-0}" -ge "${WARN_TEMP_C}" ] || [ "${events:-0 0}" != "0 0" ]; then
+		echo "thermal: WARNING (package reached ${tmax:-?} C; throttle events core/package: ${events:-unknown})" >> "${dir}/summary.txt"
+	elif [ -n "${tmax}" ]; then
+		echo "thermal: ok (package stayed below ${WARN_TEMP_C} C)" >> "${dir}/summary.txt"
 	fi
 	cat "${dir}/summary.txt"
 }
@@ -134,8 +233,12 @@ run_measurement() {
 	kill "${smi_pid}" "${power_pid}" 2> /dev/null
 	wait "${smi_pid}" "${power_pid}" 2> /dev/null
 
-	echo "rtla_exit_status: ${rtla_status}" >> "${dir}/meta.txt"
-	date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+	{
+		echo "rtla_exit_status: ${rtla_status}"
+		date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ'
+		counts=$(throttle_counts)
+		[ -n "${counts}" ] && echo "throttle_end: ${counts}"
+	} >> "${dir}/meta.txt"
 	summarize "${dir}" > /dev/null
 }
 
@@ -201,11 +304,15 @@ mkdir -p "${dir}"
 	echo "cmdline: $(cat /proc/cmdline)"
 	echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
 	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+	limit=$(junction_limit_c)
+	[ -n "${limit}" ] && echo "junction_limit_c: ${limit}"
+	counts=$(throttle_counts)
+	[ -n "${counts}" ] && echo "throttle_start: ${counts}"
 } > "${dir}/meta.txt"
 
 systemd-run --quiet --unit="${UNIT}" --collect \
 	--description="dawOS hardware noise measurement" \
-	/usr/bin/dawos-hwnoise --run "${dir}" "${duration}" ||
+	/bin/sh "${SELF}" --run "${dir}" "${duration}" ||
 	die "could not start the measurement"
 
 echo "Measurement started for ${duration}; results in ${dir}"
