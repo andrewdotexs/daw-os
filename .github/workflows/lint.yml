@@ -16,10 +16,7 @@ jobs:
       # needs it and it is not ours to lint.
       - uses: actions/checkout@v4
 
-      - name: shellcheck
-        run: |
-          shellcheck tools/*.sh external/board/dawos/x86_64/*.sh \
-            external/board/dawos/x86_64/rootfs-overlay/usr/libexec/dawos/*
-
-      - name: markdownlint
-        run: npx --yes markdownlint-cli2@0.24.1
+      # One entry point for local and automated checks: the tool versions
+      # live in the Makefile only.
+      - name: shellcheck and markdownlint
+        run: make lint

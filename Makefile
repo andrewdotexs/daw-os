@@ -19,6 +19,11 @@ DEFCONFIG ?= dawos_x86_64_dev_defconfig
 # per GiB: "make image JOBS=6". "make check-env" suggests a value.
 JOBS ?=
 
+# markdownlint-cli2 release used by "make lint" and by the lint workflow.
+# 0.17.2 is the last line that runs on Node.js 18, the version packaged by
+# Ubuntu 24.04; newer releases need Node.js 20 or 22.
+MARKDOWNLINT_VERSION := 0.17.2
+
 # Buildroot refuses paths with spaces, and so do we, early and clearly.
 ifneq ($(word 2,$(TOP)),)
 $(error The repository path contains spaces: move it, e.g. to ~/daw-os)
@@ -83,7 +88,7 @@ qemu-test: ## Boot the image in QEMU and check the boot report (PASS/FAIL)
 lint: ## Run shellcheck and markdownlint
 	shellcheck tools/*.sh external/board/dawos/x86_64/*.sh \
 		external/board/dawos/x86_64/rootfs-overlay/usr/libexec/dawos/*
-	npx --yes markdownlint-cli2@0.24.1
+	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION)
 
 # Pass any other target straight to Buildroot, e.g. "make br-linux-rebuild".
 br-%: $(O)/.config

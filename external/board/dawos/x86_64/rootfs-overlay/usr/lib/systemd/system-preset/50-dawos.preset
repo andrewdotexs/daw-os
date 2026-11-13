@@ -1,2 +1,7 @@
 # dawOS presets: units shipped by the platform that must be enabled.
 enable dawos-boot-report.service
+
+# The cpupower package ships a unit that applies frequency settings at
+# boot. CPU frequency and idle policy belong to one place only, the dawOS
+# tuning step (P0.6): keep this one off.
+disable cpupower.service

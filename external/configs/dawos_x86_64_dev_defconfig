@@ -61,6 +61,9 @@ BR2_PACKAGE_RT_TESTS=y
 BR2_PACKAGE_STRESS_NG=y
 # Records and reads kernel traces when a latency threshold is exceeded.
 BR2_PACKAGE_TRACE_CMD=y
+# Full ps and top: scheduling class, real-time priority and CPU of every
+# thread, which the busybox applets cannot show.
+BR2_PACKAGE_PROCPS_NG=y
 
 # --- Filesystem images ------------------------------------------------------
 # EROFS root, LZ4HC: fastest decompression, which is what boot time needs.

@@ -14,12 +14,13 @@ set -eu
 # so "systemctl is-system-running" would only ever say "starting" here.
 failed=$(systemctl list-units --state=failed --no-legend --plain | wc -l)
 
-# 1 when the running kernel is a PREEMPT_RT kernel; the file does not
-# exist otherwise.
-realtime=0
-if [ -r /sys/kernel/realtime ]; then
-	read -r realtime < /sys/kernel/realtime
-fi
+# 1 when the running kernel is a PREEMPT_RT kernel. The kernel says so in
+# its version string. (The /sys/kernel/realtime file known from the
+# out-of-tree RT patches does not exist in mainline 6.18.)
+case "$(uname -v)" in
+*PREEMPT_RT*) realtime=1 ;;
+*) realtime=0 ;;
+esac
 
 # Seconds since the kernel started, as a cheap boot-time indicator.
 # The authoritative figure is "systemd-analyze", run by hand.
