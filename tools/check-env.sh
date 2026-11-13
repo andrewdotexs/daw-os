@@ -64,6 +64,8 @@ required_tools=(
 	make gcc g++ patch perl python3 rsync bc cpio unzip file wget git
 	tar gzip bzip2 xz sed awk find diff which
 	qemu-system-x86_64 shellcheck
+	# openssh-client: host key of dev images, login to the real machine.
+	ssh ssh-keygen
 )
 missing=()
 for tool in "${required_tools[@]}"; do

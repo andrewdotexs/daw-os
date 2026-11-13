@@ -4,9 +4,18 @@
 # Called by Buildroot as:  post-image.sh <BINARIES_DIR> <variant>
 # with the Buildroot top directory as the working directory.
 #
-# Step P0.2 scope: assemble a GPT disk image that boots in QEMU through
-# systemd-boot. There is no verity, no UKI and no signature yet; those
-# arrive in step P0.5 and replace the "boot entry" section below.
+# It assembles two GPT disk images that boot through systemd-boot:
+#
+#   disk.img       the system as installed, for QEMU;
+#   installer.img  the installation medium for the real machine (USB stick).
+#
+# Both carry the same root filesystem and kernel. They differ in the label
+# of the root partition, so that a machine with the stick plugged in and
+# dawOS already on its disk can never mount the wrong one, and in the
+# "dawos.installer" marker on the kernel command line.
+#
+# There is no verity, no UKI and no signature yet; those arrive in step
+# P0.5 and replace the "boot entry" sections below.
 
 set -euo pipefail
 
@@ -24,6 +33,7 @@ root_slot_bytes=$((4 * 1024 * 1024 * 1024))
 
 version=$(tr -d '[:space:]' < "${repo_dir}/VERSION")
 root_label="dawos-root-${version}"
+installer_label="dawos-inst-${version}"
 
 die() {
 	echo "post-image: $*" >&2
@@ -47,41 +57,58 @@ read_cmdline() {
 root_bytes=$(stat -c %s "${images_dir}/rootfs.erofs")
 ((root_bytes <= root_slot_bytes)) || die "rootfs.erofs (${root_bytes} bytes) does not fit the ${root_slot_size} slot"
 
-# --- Kernel command line ----------------------------------------------------
+# --- Kernel command lines ---------------------------------------------------
 # The root partition is named by its GPT label, which carries the version:
 # the same command line works whichever slot the image is written to.
-cmdline="root=PARTLABEL=${root_label} $(read_cmdline \
+cmdline_common=$(read_cmdline \
 	"${board_dir}/cmdline/common.txt" \
-	"${board_dir}/cmdline/profile-generic.txt")"
+	"${board_dir}/cmdline/profile-generic.txt")
+cmdline="root=PARTLABEL=${root_label} ${cmdline_common}"
+# dawos-install derives the first form from the second by reversing
+# exactly these two differences.
+cmdline_installer="root=PARTLABEL=${installer_label} ${cmdline_common} dawos.installer"
 
-# --- Boot entry (Boot Loader Specification, type 1) ---------------------------
-esp_dir=${images_dir}/efi-part
+# --- Boot entries (Boot Loader Specification, type 1) --------------------------
+# Fill the tree of one EFI System Partition.
+#   $1 = directory, $2 = menu title, $3 = kernel command line
+populate_esp() {
+	local dir=$1 title=$2 options=$3
 
-# Drop Buildroot's sample configuration and anything left by an earlier run.
-rm -rf "${esp_dir}/loader" "${esp_dir}/dawos"
+	install -D -m 0644 "${images_dir}/bzImage" "${dir}/dawos/${version}/linux"
 
-install -D -m 0644 "${images_dir}/bzImage" "${esp_dir}/dawos/${version}/linux"
-
-install -d -m 0755 "${esp_dir}/loader/entries"
-cat > "${esp_dir}/loader/loader.conf" <<LOADER
-# dawOS (${variant}): show the menu briefly so a slot can be picked by hand.
+	install -d -m 0755 "${dir}/loader/entries"
+	cat > "${dir}/loader/loader.conf" <<LOADER
+# dawOS (${variant}): show the menu briefly so an entry can be picked by hand.
 timeout 2
 default dawos-*
 console-mode keep
 LOADER
 
-cat > "${esp_dir}/loader/entries/dawos-${version}.conf" <<ENTRY
-title   dawOS ${version} (${variant})
+	cat > "${dir}/loader/entries/dawos-${version}.conf" <<ENTRY
+title   ${title}
 version ${version}
 sort-key dawos
 linux   /dawos/${version}/linux
-options ${cmdline}
+options ${options}
 ENTRY
+}
+
+# systemd-boot itself is installed by Buildroot in efi-part/EFI.
+esp_dir=${images_dir}/efi-part
+# Drop Buildroot's sample configuration and anything left by an earlier run.
+rm -rf "${esp_dir}/loader" "${esp_dir}/dawos"
+populate_esp "${esp_dir}" "dawOS ${version} (${variant})" "${cmdline}"
+
+# The installation medium gets its own tree, with the same boot loader.
+inst_dir=${images_dir}/efi-inst
+rm -rf "${inst_dir}"
+install -D -m 0644 "${esp_dir}/EFI/BOOT/bootx64.efi" "${inst_dir}/EFI/BOOT/bootx64.efi"
+populate_esp "${inst_dir}" "dawOS ${version} (${variant}) - installation medium" "${cmdline_installer}"
 
 # Keep a copy next to the images: it is what the measurement reports cite.
 printf '%s\n' "${cmdline}" > "${images_dir}/cmdline.txt"
 
-# --- Disk image -------------------------------------------------------------
+# --- Disk images ------------------------------------------------------------
 sed -e "s/@VERSION@/${version}/g" \
 	-e "s/@ROOT_SLOT_SIZE@/${root_slot_size}/g" \
 	"${board_dir}/genimage.cfg.in" > "${images_dir}/genimage.cfg"
@@ -89,4 +116,5 @@ sed -e "s/@VERSION@/${version}/g" \
 support/scripts/genimage.sh -c "${images_dir}/genimage.cfg"
 
 echo "post-image: ${images_dir}/disk.img ready (dawOS ${version}, ${variant})"
+echo "post-image: ${images_dir}/installer.img ready (installation medium)"
 echo "post-image: kernel command line: ${cmdline}"

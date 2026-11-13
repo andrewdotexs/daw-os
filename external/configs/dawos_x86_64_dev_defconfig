@@ -1,4 +1,4 @@
-# dawOS — "dev" variant, x86-64 (Phase 0, steps P0.2 and P0.3)
+# dawOS — "dev" variant, x86-64 (Phase 0, steps P0.2 to P0.4)
 #
 # Option names verified against Buildroot 2026.02.3.
 # Regenerate with "make savedefconfig" after "make menuconfig".
@@ -42,13 +42,32 @@ BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="6.18.63"
 BR2_LINUX_KERNEL_USE_ARCH_DEFAULT_CONFIG=y
-BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/base.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/storage.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/qemu.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/rt.fragment"
+BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/base.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/storage.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/qemu.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/rt.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/hw-285k.fragment"
 BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
 BR2_LINUX_KERNEL_NEEDS_HOST_LIBELF=y
 
 # --- Packages ---------------------------------------------------------------
 BR2_PACKAGE_SYSTEMD_BOOT=y
 BR2_PACKAGE_SYSTEMD_ANALYZE=y
+
+# --- Remote access (dev variant only, ADR 0005) -----------------------------
+# SSH with public keys only; configuration in the rootfs overlay.
+BR2_PACKAGE_OPENSSH=y
+
+# --- Installation on the internal disk (step P0.4) --------------------------
+# systemd-repart creates the partition table of document 0, section 3.3;
+# the mkfs tools format the ESP and the data partitions.
+BR2_PACKAGE_SYSTEMD_REPART=y
+BR2_PACKAGE_DOSFSTOOLS=y
+BR2_PACKAGE_DOSFSTOOLS_MKFS_FAT=y
+BR2_PACKAGE_E2FSPROGS=y
+BR2_PACKAGE_XFSPROGS=y
+# lsblk, to show what is on a disk before it is erased.
+BR2_PACKAGE_UTIL_LINUX=y
+BR2_PACKAGE_UTIL_LINUX_BINARIES=y
+# lspci and lsusb, to record the hardware of the reference machine.
+BR2_PACKAGE_PCIUTILS=y
+BR2_PACKAGE_USBUTILS=y
 
 # --- Measurement tools (dev variant only, ADR 0005) -------------------------
 # rtla: timerlat, osnoise, hwnoise. Built from the kernel sources.

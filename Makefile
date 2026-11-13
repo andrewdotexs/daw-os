@@ -24,6 +24,14 @@ JOBS ?=
 # Ubuntu 24.04; newer releases need Node.js 20 or 22.
 MARKDOWNLINT_VERSION := 0.17.2
 
+# Every shell script of the project, wherever it lives.
+OVERLAY_DIR := $(EXT_DIR)/board/dawos/x86_64/rootfs-overlay
+SHELL_SOURCES := $(wildcard tools/*.sh) \
+	$(wildcard $(EXT_DIR)/board/dawos/x86_64/*.sh) \
+	$(wildcard $(OVERLAY_DIR)/usr/libexec/dawos/*) \
+	$(wildcard $(OVERLAY_DIR)/usr/sbin/*) \
+	$(wildcard $(OVERLAY_DIR)/etc/profile.d/*.sh)
+
 # Buildroot refuses paths with spaces, and so do we, early and clearly.
 ifneq ($(word 2,$(TOP)),)
 $(error The repository path contains spaces: move it, e.g. to ~/daw-os)
@@ -84,10 +92,25 @@ qemu: ## Boot the image in QEMU with a serial console (exit: Ctrl-A then X)
 qemu-test: ## Boot the image in QEMU and check the boot report (PASS/FAIL)
 	@tools/run-qemu.sh --test
 
+.PHONY: qemu-installer
+qemu-installer: ## Rehearse the installation: boot the stick image with a blank NVMe disk
+	@tools/run-qemu.sh --installer
+
+.PHONY: qemu-target
+qemu-target: ## Boot the disk installed by the rehearsal (exit: Ctrl-A then X)
+	@tools/run-qemu.sh --target
+
+.PHONY: qemu-target-test
+qemu-target-test: ## Boot the disk installed by the rehearsal and check the boot report
+	@tools/run-qemu.sh --target --test
+
+.PHONY: remote-test
+remote-test: ## Check a real machine over SSH: make remote-test HOST=<address>
+	@tools/remote-check.sh $(HOST)
+
 .PHONY: lint
 lint: ## Run shellcheck and markdownlint
-	shellcheck tools/*.sh external/board/dawos/x86_64/*.sh \
-		external/board/dawos/x86_64/rootfs-overlay/usr/libexec/dawos/*
+	shellcheck $(SHELL_SOURCES)
 	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION)
 
 # Pass any other target straight to Buildroot, e.g. "make br-linux-rebuild".

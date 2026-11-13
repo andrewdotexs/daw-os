@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Boot the dawOS disk image in QEMU with UEFI firmware (OVMF).
+# Boot dawOS in QEMU with UEFI firmware (OVMF).
 #
 # Interactive mode (default): serial console on this terminal.
 #   Leave with Ctrl-A then X.
+# Installation rehearsal (--installer): boots the installation medium as a
+#   USB stick next to a blank NVMe disk, to run dawos-install exactly as
+#   on the real machine. --target then boots the disk it installed.
 # Test mode (--test): headless boot, waits for the boot report printed by
 #   dawos-boot-report.service and exits 0 (PASS) or 1 (FAIL). The report
 #   must say failed_units=0 and realtime=1, plus any --expect KEY=VALUE.
@@ -15,7 +18,14 @@ set -euo pipefail
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
 image=${repo_dir}/output/images/disk.img
+installer_image=${repo_dir}/output/images/installer.img
 state_dir=${repo_dir}/output/qemu
+# Blank disk used by the installation rehearsal. Sparse: it only takes
+# the space actually written. Sized like the disk of the reference machine.
+target_image=${state_dir}/target.img
+target_size=932G
+installer=no
+new_target=no
 mode=interactive
 memory=2G
 cpus=4
@@ -31,6 +41,10 @@ Usage: ${0##*/} [options]
   --test            headless boot; check the boot report; exit 0/1
   --expect K=V      with --test: also require this field in the boot report
   --image PATH      disk image to boot (default: output/images/disk.img)
+  --installer       boot the installation medium (USB) with a blank NVMe
+                    target disk, to rehearse dawos-install
+  --new-target      with --installer: start again from a blank target disk
+  --target          boot the disk installed by the rehearsal
   --memory SIZE     guest memory (default: ${memory})
   --cpus N          guest CPUs (default: ${cpus})
   --ssh-port PORT   host port forwarded to guest port 22 (default: ${ssh_port})
@@ -55,6 +69,9 @@ while (($# > 0)); do
 		image=${2:?--image needs a path}
 		shift
 		;;
+	--installer) installer=yes ;;
+	--new-target) new_target=yes ;;
+	--target) image=${target_image} ;;
 	--memory)
 		memory=${2:?--memory needs a size}
 		shift
@@ -81,7 +98,23 @@ while (($# > 0)); do
 done
 
 command -v qemu-system-x86_64 > /dev/null || die "qemu-system-x86_64 not found (see docs/fasi/fase-0/P0.1-ambiente.md)"
-[[ -f ${image} ]] || die "image not found: ${image} (run 'make image' first)"
+
+mkdir -p "${state_dir}"
+
+if [[ ${installer} == yes ]]; then
+	[[ ${mode} == interactive ]] || die "--installer is interactive: it cannot be combined with --test"
+	[[ -f ${installer_image} ]] || die "image not found: ${installer_image} (run 'make image' first)"
+	if [[ ${new_target} == yes ]]; then
+		rm -f "${target_image}"
+	fi
+	if [[ ! -f ${target_image} ]]; then
+		truncate -s "${target_size}" "${target_image}"
+		echo "run-qemu: created a blank ${target_size} target disk (sparse) at ${target_image}" >&2
+	fi
+	image=${target_image}
+fi
+
+[[ -f ${image} ]] || die "image not found: ${image} (run 'make image' or, for --target, the rehearsal first)"
 
 # --- UEFI firmware ----------------------------------------------------------
 # OVMF comes as two files: read-only code and a variable store. The names
@@ -104,7 +137,6 @@ CANDIDATES
 
 # The variable store is written by the firmware (boot entries, later the
 # Secure Boot keys): each checkout keeps its own private copy.
-mkdir -p "${state_dir}"
 ovmf_vars=${state_dir}/OVMF_VARS.fd
 [[ -f ${ovmf_vars} ]] || cp "${ovmf_vars_template}" "${ovmf_vars}"
 
@@ -129,13 +161,24 @@ qemu_args=(
 	-drive "if=pflash,format=raw,unit=0,readonly=on,file=${ovmf_code}"
 	-drive "if=pflash,format=raw,unit=1,file=${ovmf_vars}"
 	# The system disk is an emulated NVMe, as on the reference machine.
-	-drive "if=none,id=nvme0,format=raw,file=${image}"
-	-device "nvme,drive=nvme0,serial=DAWOSQEMU0001"
+	# discard=unmap keeps a sparse image sparse when the guest trims it.
+	-drive "if=none,id=nvme0,format=raw,file=${image},discard=unmap"
+	-device "nvme,drive=nvme0,serial=DAWOSQEMU0001,bootindex=2"
 	# User-mode network with guest port 22 reachable on the loopback only.
 	-netdev "user,id=net0,hostfwd=tcp:127.0.0.1:${ssh_port}-:22"
 	-device "virtio-net-pci,netdev=net0"
 	-device virtio-rng-pci
 )
+
+if [[ ${installer} == yes ]]; then
+	# The installation medium is a USB stick and comes first in the boot
+	# order. snapshot=on: the image file itself is never modified.
+	qemu_args+=(
+		-device "qemu-xhci,id=xhci"
+		-drive "if=none,id=stick,format=raw,file=${installer_image},snapshot=on"
+		-device "usb-storage,drive=stick,bus=xhci.0,removable=on,bootindex=1"
+	)
+fi
 
 if [[ ${mode} == interactive ]]; then
 	echo "run-qemu: booting ${image} (accel=${accel}); leave with Ctrl-A then X" >&2

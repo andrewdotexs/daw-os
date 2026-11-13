@@ -1,0 +1,28 @@
+# dawOS (dev variant): SSH server configuration.
+#
+# Access is by public key only. The authorized keys and the host key are
+# put into the image at build time by post-build.sh, from files that are
+# never committed (local/ssh-authorized-keys, keys/ssh_host_ed25519_key).
+
+Port 22
+
+# A single, modern host key. It lives on the read-only root filesystem,
+# so it is the same at every boot.
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Keys only: no passwords, no keyboard-interactive, no empty passwords.
+# root may log in, but only with a key.
+PermitRootLogin prohibit-password
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+AuthorizedKeysFile .ssh/authorized_keys
+
+# No graphical forwarding. TCP forwarding stays on: it is how the MCP
+# socket will be reached from the development PC (ADR 0005).
+X11Forwarding no
+AllowTcpForwarding yes
+
+# File transfer for measurement reports.
+Subsystem sftp /usr/libexec/sftp-server

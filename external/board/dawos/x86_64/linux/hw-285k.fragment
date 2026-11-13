@@ -1,0 +1,21 @@
+# dawOS kernel fragment: drivers for the reference machine
+# (Core Ultra 9 285K on ASUS ROG STRIX Z890-I GAMING WIFI).
+#
+# First version, written from the vendor specification before the first
+# boot: step P0.4 confirms each line against "lspci -k" on the machine.
+# Everything needed to reach the network is built in, like storage.
+
+# Wired network: Intel 2.5 Gb controller (I225/I226 family).
+CONFIG_IGC=y
+
+# Core temperatures and package power, read by the measurement tools.
+CONFIG_HWMON=y
+CONFIG_SENSORS_CORETEMP=y
+CONFIG_THERMAL=y
+CONFIG_X86_PKG_TEMP_THERMAL=y
+CONFIG_POWERCAP=y
+CONFIG_INTEL_RAPL=y
+
+# Raw access to model-specific registers: turbostat reads the SMI counter
+# and the idle-state residencies from there.
+CONFIG_X86_MSR=y
