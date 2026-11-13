@@ -2,7 +2,7 @@
 # dawOS boot report: one line with what an automated boot test needs.
 #
 # Output format (single line, space-separated key=value pairs):
-#   DAWOS-BOOT-REPORT version=<v> variant=<v> kernel=<r> failed_units=<n> uptime_s=<s>
+#   DAWOS-BOOT-REPORT version=<v> variant=<v> kernel=<r> realtime=<0|1> failed_units=<n> uptime_s=<s>
 
 set -eu
 
@@ -14,9 +14,17 @@ set -eu
 # so "systemctl is-system-running" would only ever say "starting" here.
 failed=$(systemctl list-units --state=failed --no-legend --plain | wc -l)
 
+# 1 when the running kernel is a PREEMPT_RT kernel. The kernel says so in
+# its version string. (The /sys/kernel/realtime file known from the
+# out-of-tree RT patches does not exist in mainline 6.18.)
+case "$(uname -v)" in
+*PREEMPT_RT*) realtime=1 ;;
+*) realtime=0 ;;
+esac
+
 # Seconds since the kernel started, as a cheap boot-time indicator.
 # The authoritative figure is "systemd-analyze", run by hand.
 read -r uptime _ < /proc/uptime
 
-printf 'DAWOS-BOOT-REPORT version=%s variant=%s kernel=%s failed_units=%s uptime_s=%s\n' \
-	"${IMAGE_VERSION:-unknown}" "${VARIANT_ID:-unknown}" "$(uname -r)" "${failed}" "${uptime}"
+printf 'DAWOS-BOOT-REPORT version=%s variant=%s kernel=%s realtime=%s failed_units=%s uptime_s=%s\n' \
+	"${IMAGE_VERSION:-unknown}" "${VARIANT_ID:-unknown}" "$(uname -r)" "${realtime}" "${failed}" "${uptime}"

@@ -425,3 +425,14 @@ Tutti e tre **chiusi il 13 novembre 2026**, come proposto.
 ## 4. Il disco del 285K
 
 Sul 285K c'è oggi un solo disco da 932 GB con Windows 11. **Deciso il 13 novembre 2026**: è il disco dedicato a dawOS, e il passo P0.4 lo cancella per intero. Prima va salvato ciò che si vuole tenere. I dettagli e le conseguenze per lo script di scrittura sono in [hardware-285k.md](fasi/fase-0/hardware-285k.md).
+
+## 5. Correzioni emerse dal passo P0.3
+
+Due affermazioni del documento 0 corrette dalla prova sul kernel compilato.
+
+| Sezione | Era scritto | È vero |
+| --- | --- | --- |
+| P0.3, accettazione | «`cat /sys/kernel/realtime` dà `1`» | Quel file non esiste nel kernel 6.18; apparteneva alle patch real-time esterne. Il kernel real-time si riconosce da `uname -v`, che contiene `PREEMPT_RT`. |
+| P0.3, tabella delle opzioni | «pagine grandi trasparenti a `madvise`» | Con `PREEMPT_RT` le pagine grandi trasparenti non sono disponibili affatto (`mm/Kconfig`). Le pagine da 2 MB per il preload dei sample e per la memoria condivisa vanno riservate con `hugetlbfs`. Il parametro `transparent_hugepage=madvise` previsto nella riga di comando del passo P0.6 è quindi inutile e va tolto. |
+
+Il dettaglio è in [P0.3-kernel-real-time.md](fasi/fase-0/P0.3-kernel-real-time.md).

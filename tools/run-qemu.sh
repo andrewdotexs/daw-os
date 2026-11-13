@@ -4,7 +4,8 @@
 # Interactive mode (default): serial console on this terminal.
 #   Leave with Ctrl-A then X.
 # Test mode (--test): headless boot, waits for the boot report printed by
-#   dawos-boot-report.service and exits 0 (PASS) or 1 (FAIL).
+#   dawos-boot-report.service and exits 0 (PASS) or 1 (FAIL). The report
+#   must say failed_units=0 and realtime=1, plus any --expect KEY=VALUE.
 #
 # QEMU is for functional checks only (boot chain, services, A/B updates).
 # Latency figures measured here are meaningless: see document 0, 3.6.
@@ -20,12 +21,15 @@ memory=2G
 cpus=4
 ssh_port=2222
 timeout_s=300
+# Fields the boot report must contain for the test to pass.
+expectations=(failed_units=0 realtime=1)
 
 usage() {
 	cat <<USAGE
 Usage: ${0##*/} [options]
 
   --test            headless boot; check the boot report; exit 0/1
+  --expect K=V      with --test: also require this field in the boot report
   --image PATH      disk image to boot (default: output/images/disk.img)
   --memory SIZE     guest memory (default: ${memory})
   --cpus N          guest CPUs (default: ${cpus})
@@ -43,6 +47,10 @@ die() {
 while (($# > 0)); do
 	case $1 in
 	--test) mode='test' ;;
+	--expect)
+		expectations+=("${2:?--expect needs KEY=VALUE}")
+		shift
+		;;
 	--image)
 		image=${2:?--image needs a path}
 		shift
@@ -178,9 +186,17 @@ fi
 
 echo "${report}"
 
-if [[ ${report} != *" failed_units=0 "* ]]; then
-	echo "FAIL: some systemd units failed (see ${log})" >&2
+# Each expectation must appear as a whole space-separated field.
+failed=0
+for expected in "${expectations[@]}"; do
+	if [[ " ${report} " != *" ${expected} "* ]]; then
+		echo "FAIL: boot report does not contain '${expected}'" >&2
+		failed=1
+	fi
+done
+if ((failed)); then
+	echo "(console log: ${log})" >&2
 	exit 1
 fi
 
-echo "PASS: dawOS reached multi-user.target with no failed units"
+echo "PASS: boot report matches: ${expectations[*]}"

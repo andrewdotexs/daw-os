@@ -101,13 +101,17 @@ Get-PnpDevice -PresentOnly | Where-Object { $_.FriendlyName -match 'xHCI|Host Co
 
 Un'avvertenza sul numero di serie: per i dischi NVMe Windows mostra a volte un identificativo diverso da quello che legge Linux. Il valore che fa fede per lo script di scrittura è quello letto da dawOS avviato dalla chiavetta; quello di Windows serve da confronto e per contare i dischi.
 
-## Rete
+## Rete: deciso
 
-Il 285K ha oggi un indirizzo impostato a mano in Windows. dawOS usa DHCP, quindi dopo l'installazione riceverebbe dal router un indirizzo qualsiasi, e ogni collegamento SSH andrebbe cercato.
+**Decisione del 13 novembre 2026: indirizzo statico nell'immagine** (alternativa B).
 
-| Alternativa | Vantaggi | Svantaggi |
-| --- | --- | --- |
-| A. Prenotazione sul router, legata all'indirizzo fisico della scheda di rete | L'immagine resta generica e uguale a quella di QEMU; nessun dato di rete nella costruzione. | Richiede di configurare il router. |
-| B. Indirizzo statico nell'immagine, letto da `local/` alla costruzione e applicato solo alla scheda del 285K | Non dipende dal router. | L'immagine `dev` diventa specifica della tua rete; un dato in più da tenere in `local/`. |
+- Indirizzo, maschera, gateway e server DNS stanno in un file di `local/`, ignorato da git, e vengono letti alla costruzione. Nel repository non compare alcun indirizzo.
+- La configurazione statica si applica **solo alla scheda di rete del 285K**, riconosciuta dal suo driver; ogni altra scheda cablata, compresa quella virtuale di QEMU, continua a usare DHCP. Così la stessa immagine resta provabile in QEMU.
+- Se il file in `local/` manca, l'immagine usa DHCP ovunque: è il comportamento di oggi.
+- Il server DNS scelto è il router della rete locale, non i server pubblici oggi impostati in Windows.
 
-**Raccomandazione**: A, se hai accesso al router. Altrimenti B. Si decide nel passo P0.4.
+Il collegamento risulta a 1000 Mb/s, su una scheda da 2,5 Gb: è il limite del resto della rete, e per SSH, aggiornamenti e carico di rete delle prove basta.
+
+Si realizza nel passo P0.4, insieme al driver della scheda, che la configurazione predefinita del kernel potrebbe non includere _(da verificare)_.
+
+Alternativa scartata: prenotazione sul router, che avrebbe lasciato l'immagine del tutto generica ma richiedeva di configurare il router.

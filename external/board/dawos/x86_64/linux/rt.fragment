@@ -1,0 +1,42 @@
+# dawOS kernel fragment: real-time behaviour and the tracers that measure it.
+# Option names and dependencies checked against the 6.18.63 sources.
+
+# --- Preemption model -------------------------------------------------------
+# PREEMPT_RT turns spinlocks into sleeping, priority-inheriting locks and
+# forces interrupt handlers into threads. It is only offered with EXPERT.
+CONFIG_EXPERT=y
+CONFIG_PREEMPT_RT=y
+# With RT the remaining choice is how eagerly normal (non real-time) tasks
+# are preempted: full, not lazy, so the behaviour is the plain documented one.
+CONFIG_PREEMPT=y
+# The model is fixed at build time: no boot-time switch to reason about.
+# CONFIG_PREEMPT_DYNAMIC is not set
+
+# --- Tick, timers and RCU ---------------------------------------------------
+CONFIG_HZ_1000=y
+CONFIG_HIGH_RES_TIMERS=y
+# Let a CPU that runs a single task stop its periodic tick. Takes effect
+# only on the CPUs listed in nohz_full= (boot profile, step P0.6).
+CONFIG_NO_HZ_FULL=y
+# Move RCU callback processing off the CPUs listed in rcu_nocbs=.
+CONFIG_RCU_NOCB_CPU=y
+CONFIG_CPU_ISOLATION=y
+
+# --- Tracers used by rtla ---------------------------------------------------
+# osnoise: what steals time from a CPU. timerlat: wake-up latency.
+# hwlat: stalls caused by hardware and firmware (SMIs).
+CONFIG_FTRACE=y
+CONFIG_OSNOISE_TRACER=y
+CONFIG_TIMERLAT_TRACER=y
+CONFIG_HWLAT_TRACER=y
+CONFIG_HIST_TRIGGERS=y
+# Scheduler knobs (fair server, step P0.6) live in debugfs.
+CONFIG_DEBUG_FS=y
+
+# --- Background memory work that we do not want ------------------------------
+# Single-socket machine: NUMA support only adds periodic scanning.
+# CONFIG_NUMA is not set
+# Page deduplication scans memory from a kernel thread.
+# CONFIG_KSM is not set
+# Note: transparent huge pages cannot be enabled together with PREEMPT_RT
+# (mm/Kconfig). 2 MB pages for sample preload must come from hugetlbfs.
