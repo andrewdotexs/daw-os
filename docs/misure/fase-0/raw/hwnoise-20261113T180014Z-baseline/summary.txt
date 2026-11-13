@@ -1,0 +1,19 @@
+directory: /var/lib/dawos/measure/hwnoise-20261113T180014Z-baseline
+started_utc: 2026-11-13T18:00:14Z
+duration: 15m
+label: baseline
+kernel: Linux 6.18.63-dawos #4 SMP PREEMPT_RT Fri Nov 13 18:12:52 CET 2026
+cmdline: root=PARTLABEL=dawos-root-0.0.1 rootfstype=erofs ro rootwait console=tty0 console=ttyS0,115200n8 loglevel=4
+bios: 2301 10/04/2025
+image: df0a10a9fd82
+rtla_exit_status: 0
+finished_utc: 2026-11-13T18:15:22Z
+cpus_measured: 24
+max_single_noise_us: 0 (cpu )
+hardware_noise_events: 0
+nmi_events: 0
+smi_count: 0
+smi_samples: 112
+package_temperature_max_c: 101
+package_power_w: avg 121.7 max 159.4
+verdict: PASS (max single noise <= 15 us, no SMI)
