@@ -456,7 +456,10 @@ Il dettaglio è in [P0.4a-installazione.md](fasi/fase-0/P0.4a-installazione.md).
 | Sezione | Era scritto | Com'è ora |
 | --- | --- | --- |
 | Rischi | K-01 … K-14 | Nuovo rischio **K-15 — Dissipazione termica del 285K**: nella misura di partenza il package è arrivato a 101 °C con 120–160 W. Gravità alta finché non è risolto; riguarda le fasi 0 (P0.4b, P0.6, P0.7) e 3 (R-04). Mitigazioni in discussione: limite di potenza fisso nel firmware, raffreddamento. |
-| P0.4, impostazioni del firmware | Dieci voci da cambiare prima della seconda misura | Proposta di ridurle a quelle con una ragione indipendente dagli SMI, visto che la misura di partenza ne ha contati zero. In attesa di conferma. |
+| P0.4, impostazioni del firmware | Dieci voci da cambiare prima della seconda misura | Ridotte a quelle con una ragione indipendente dagli SMI (ASPM, Wi-Fi e Bluetooth, HD Audio), visto che la misura di partenza ne ha contati zero. Approvato il 13 novembre 2026. |
+| K-15, mitigazione | In discussione | Limite di potenza fisso nel firmware, con il raffreddamento come complemento. Approvato il 13 novembre 2026. L'analisi dei dati grezzi mostra un salto improvviso di 21 °C: prima si cerca la causa del salto, poi si fissa il limite. |
+| P0.4, passi | Misura di partenza, firmware, seconda misura, misura lunga | Aggiunta una prova diagnostica tra la misura di partenza e il firmware, con la potenza letta alla presa. |
+| Rischi, K-04 | Stati di riposo e latenza | In più: gli eventi termici del package generano interrupt su **tutti** i core (26–49 per core nella misura di partenza). Da tenere a zero nella campagna di P0.7. |
 | P0.4, criterio | Rumore ≤ 15 µs e zero SMI | Invariato; in più il riepilogo segnala a parte la temperatura da 95 °C e gli interventi della protezione termica. |
 | 3.5, `rtla hwnoise` | Soglia e copertura non specificate | Risoluzione di 1 µs e copertura del 75 % del tempo per core, verificate nei sorgenti della 6.18.63. |
 

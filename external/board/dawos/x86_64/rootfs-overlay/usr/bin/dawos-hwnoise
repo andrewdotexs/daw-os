@@ -50,6 +50,7 @@ usage() {
 Usage:
   ${PROG} DURATION [LABEL]   start a measurement (DURATION like 10m, 4h)
   ${PROG} --status           show progress, or the last summary
+  ${PROG} --watch            print the package temperature every 5 seconds
   ${PROG} --summary DIR      (re)compute the summary of a finished run
 
 LABEL is a short word added to the name of the result directory, for
@@ -82,19 +83,28 @@ throttle_counts() {
 	return 0
 }
 
+# Print the sysfs directory of the coretemp sensor, whose temp1 is the
+# whole package; nothing if there is none (virtual machines). The hwmon
+# number is not stable across boots, hence the search by name.
+coretemp_dir() {
+	for hwmon in /sys/class/hwmon/hwmon*; do
+		[ -r "${hwmon}/name" ] || continue
+		read -r name < "${hwmon}/name"
+		if [ "${name}" = coretemp ] && [ -r "${hwmon}/temp1_input" ]; then
+			echo "${hwmon}"
+			return 0
+		fi
+	done
+	return 0
+}
+
 # Print the junction limit (TjMax) in degrees Celsius, as the coretemp
 # driver reports it for the package; nothing if it is not available.
 junction_limit_c() {
-	for hwmon in /sys/class/hwmon/hwmon*; do
-		[ -r "${hwmon}/name" ] || continue
-		[ -r "${hwmon}/temp1_crit" ] || continue
-		read -r name < "${hwmon}/name"
-		[ "${name}" = coretemp ] || continue
-		read -r millidegrees < "${hwmon}/temp1_crit"
-		echo $((millidegrees / 1000))
-		return 0
-	done
-	return 0
+	sensor=$(coretemp_dir)
+	[ -n "${sensor}" ] && [ -r "${sensor}/temp1_crit" ] || return 0
+	read -r millidegrees < "${sensor}/temp1_crit"
+	echo $((millidegrees / 1000))
 }
 
 # Write summary.txt from hwnoise.txt, smi.txt and power.txt in directory $1.
@@ -139,12 +149,21 @@ summarize() {
 		# Temperature, frequency and power, from the system-wide rows ("-").
 		# "hot" counts the samples at or above the warning temperature;
 		# a falling Bzy_MHz at constant load is the sign of throttling.
+		# The largest rise between two consecutive samples tells a slow
+		# warm-up (a degree or two) from a sudden change in cooling or
+		# power (tens of degrees); its time is given when the readings
+		# carry a timestamp.
 		if [ -s "${dir}/power.txt" ]; then
 			awk -v warn="${WARN_TEMP_C}" '
 				!hdr { for (i = 1; i <= NF; i++) col[$i] = i; if ("CPU" in col && ("PkgTmp" in col || "PkgWatt" in col)) hdr = 1; else delete col; next }
 				$col["CPU"] == "-" {
 					if ("PkgTmp" in col) {
 						t = $col["PkgTmp"] + 0
+						if (tn && t - tprev > step) {
+							step = t - tprev; stepfrom = tprev; stepn = tn
+							steptime = ("Time_Of_Day_Seconds" in col) ? $col["Time_Of_Day_Seconds"] : ""
+						}
+						tprev = t
 						tsum += t; tn++
 						if (t > tmax) tmax = t
 						if (t >= warn) hot++
@@ -161,6 +180,11 @@ summarize() {
 						printf "package_temperature_max_c: %d\n", tmax
 						printf "package_temperature_avg_c: %.1f\n", tsum / tn
 						printf "samples_at_or_above_%d_c: %d of %d\n", warn, hot, tn
+						if (step) {
+							printf "package_temperature_largest_step_c: +%d (from %d, sample %d of %d", step, stepfrom, stepn + 1, tn
+							if (steptime != "") printf ", epoch %d", steptime
+							printf ")\n"
+						}
 					}
 					if (fn) printf "busy_frequency_mhz: avg %d min %d\n", fsum / fn, fmin
 					if (wn) printf "package_power_w: avg %.1f max %.1f\n", wsum / wn, wmax
@@ -217,10 +241,14 @@ run_measurement() {
 	# verdict depends on, so it gets a minimal column set that works
 	# everywhere; a column this processor lacks in the second set must
 	# not be able to silence the first.
-	turbostat --quiet --interval 5 --show CPU,SMI \
+	# Time_Of_Day_Seconds stamps every reading: with every CPU busy the
+	# interval stretches beyond the 5 seconds asked for, and a sudden
+	# change must be placed in time to be explained.
+	turbostat --quiet --interval 5 --show Time_Of_Day_Seconds,CPU,SMI \
 		--out "${dir}/smi.txt" 2> "${dir}/smi.err" &
 	smi_pid=$!
-	turbostat --quiet --interval 5 --show CPU,Busy%,Bzy_MHz,CoreTmp,PkgTmp,PkgWatt \
+	turbostat --quiet --interval 5 \
+		--show Time_Of_Day_Seconds,CPU,Busy%,Bzy_MHz,CoreTmp,PkgTmp,PkgWatt \
 		--out "${dir}/power.txt" 2> "${dir}/power.err" &
 	power_pid=$!
 	# Give them time to probe the processor before every CPU is taken
@@ -268,6 +296,18 @@ case "${1:-}" in
 		fi
 	fi
 	exit 0
+	;;
+--watch)
+	# A plain sysfs read: cheap enough to run next to a measurement, to
+	# see at which moment the temperature changes.
+	sensor=$(coretemp_dir)
+	[ -n "${sensor}" ] || die "no package temperature sensor on this machine"
+	echo "Package temperature every 5 seconds (UTC); stop with Ctrl-C."
+	while :; do
+		read -r millidegrees < "${sensor}/temp1_input"
+		printf '%s  %d C\n' "$(date -u +%H:%M:%S)" $((millidegrees / 1000))
+		sleep 5
+	done
 	;;
 --summary)
 	[ -d "${2:-}" ] || die "--summary needs a result directory"

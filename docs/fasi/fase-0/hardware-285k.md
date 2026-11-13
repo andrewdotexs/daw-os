@@ -105,7 +105,9 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Mini-ITX con 285K e RTX 5080.** Lo spazio ridotto rende calore e rumore delle ventole più critici del previsto: pesa sul rischio K-04 e rende più importanti le misure dell'esperimento E-01 e la verifica di cosa fa la RTX senza driver (K-14).
 
-**Sotto carico il package arriva a 101 °C.** Misura di partenza del passo P0.4b, 13 novembre 2026: quindici minuti con tutti i 24 core occupati per tre quarti del tempo, potenza del package 121,7 W di media e 159,4 W di massimo, temperatura massima 101 °C. Il limite di giunzione del 285K è 105 °C secondo i dati Intel che ricordo (_da verificare_ sul rapporto di topologia, che ora lo legge dal processore). È la conferma, con un numero, dell'osservazione precedente, ed è registrata come rischio K-15. Dissipatore, contenitore e limiti di potenza del firmware sono ancora da annotare qui.
+**Sotto carico il package arriva a 101 °C, con un salto improvviso.** Misura di partenza del passo P0.4b, 13 novembre 2026: quindici minuti con tutti i 24 core occupati per tre quarti del tempo. Per quasi sette minuti il package resta a 70 °C con 119 W; poi sale di 21 °C in meno di 8 secondi a potenza riportata quasi uguale e resta tra 92 e 101 °C, con 18 interventi della protezione termica. La causa è da trovare (flusso del liquido, oppure potenza reale non riportata): analisi e prova diagnostica sono nella guida del passo P0.4b. Rischio K-15.
+
+**Dati termici e di potenza letti dalla macchina** (13 novembre 2026): limite di giunzione 105 °C; limiti di potenza impostati dal firmware PL1 = PL2 = 250 W con finestra di 56 secondi; a riposo, senza driver per gli stati di riposo profondi, package a 46 °C. Il dissipatore è a liquido: marca, modello e collegamenti di pompa e ventole sono ancora da annotare. Per le misure alla presa c'è una presa Tapo P115.
 
 **Il modulo audio ROG Strix Hive II è un dispositivo USB.** Se resta collegato, il kernel lo vedrà come una seconda scheda audio USB. Nel passo P0.4 va deciso se scollegarlo; nel frattempo conta come dispositivo da tenere lontano dal controller della Scarlett.
 
