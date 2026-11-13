@@ -373,7 +373,7 @@ La soglia di 1,2 GB/s è tre volte la portata della variante stress: riempire un
 
 Se anche P viola le soglie, il problema è la cifratura in sé e non il dispositivo loop: in quel caso non si adotta il ripiego ma si riapre la discussione sulla cifratura degli spazi utente.
 
-Queste soglie sono una mia proposta ragionata _(stima)_: confermale o correggile prima che il passo P0.6 cominci.
+Queste soglie sono una mia proposta ragionata _(stima)_, **confermata** nella revisione del 13 novembre 2026.
 
 #### E-06 — Rapporto tra E-core e P-core
 
@@ -383,7 +383,7 @@ Queste soglie sono una mia proposta ragionata _(stima)_: confermale o correggile
 
 **Esito**: il rapporto entra nell'ADR 0011 al posto della forbice 0,55–0,80 e dice se la sessione di riferimento a 96 kHz è dentro o fuori dal 60 %.
 
-Questo esperimento richiede un programma di misura di poche decine di righe. È uno strumento, non codice di prodotto, ma lo aggiungo solo se sei d'accordo.
+Questo esperimento richiede un programma di misura di poche decine di righe: uno strumento, non codice di prodotto. **Approvato** nella revisione del 13 novembre 2026.
 
 ### 3.5 Strumenti di misura — correzioni
 
@@ -414,8 +414,14 @@ Due effetti delle decisioni prese sulle domande rinviate, da tenere a mente:
 
 ## 3. Punti aperti introdotti da questa revisione
 
-Sono tre, e non bloccano i passi P0.1 e P0.2.
+Tutti e tre **chiusi il 13 novembre 2026**, come proposto.
 
-1. **Freeze nella sessione di riferimento** (ADR 0011): a 96 kHz senza tracce congelate, a 192 kHz con il freeze ammesso?
-2. **Soglie dell'esperimento E-05**: da confermare prima del passo P0.6.
-3. **Esperimento E-06**: lo aggiungo al passo P0.6?
+| Punto | Decisione |
+| --- | --- |
+| Freeze nella sessione di riferimento | A 96 kHz senza tracce congelate; variante stress a 192 kHz con il freeze ammesso, dichiarando quante tracce è stato necessario congelare. |
+| Soglie dell'esperimento E-05 | Confermate. |
+| Esperimento E-06 | Approvato: entra nel passo P0.6. |
+
+## 4. Punto nuovo, da chiarire prima del passo P0.4
+
+Sul 285K risulta oggi un solo disco da 932 GB con Windows 11 in funzione. Prima di scrivere lo script di installazione va chiarito se quel disco è quello destinato a dawOS, e quindi da cancellare per intero. I dettagli sono in [hardware-285k.md](fasi/fase-0/hardware-285k.md).

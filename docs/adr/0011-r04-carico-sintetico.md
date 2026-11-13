@@ -1,6 +1,6 @@
 # ADR 0011 — R-04 con carico sintetico di riferimento
 
-- **Stato**: accettata; un punto da confermare (in fondo)
+- **Stato**: accettata; punto sul freeze confermato il 13 novembre 2026
 - **Data**: 13 novembre 2026
 - **Origine**: revisione del documento 0, modifica 2; chiude D-16 e aggiorna K-02
 
@@ -65,13 +65,13 @@ A questo si sommano mixaggio, misuratori e gestione dello streaming, qualche pun
 ## Conseguenze
 
 - K-02 scende da «non misurabile» a «misurabile e al limite sul dominio anticipativo».
-- Il rapporto E-core / P-core diventa il numero più importante da misurare presto. Propongo di anticiparlo al passo P0.6 con un banco di prova minimo (stesso nucleo DSP del carico sintetico, eseguito su un P-core e su un E-core alle frequenze fissate): costa poche ore e dice subito se R-04 è realistico.
+- Il rapporto E-core / P-core diventa il numero più importante da misurare presto. Si anticipa al passo P0.6 con un banco di prova minimo, l'esperimento E-06 **(approvato)**: stesso nucleo DSP del carico sintetico, eseguito su un P-core e su un E-core alle frequenze fissate. Costa poche ore e dice subito se R-04 è realistico.
 - Se la misura conferma il superamento, le leve sono, in ordine di preferenza: ottimizzare il percorso anticipativo (blocchi più lunghi, meno salti); spostare parte del lavoro anticipativo su core oggi assegnati ad altro; ridurre la sessione di riferimento.
 - La verifica del budget prima di attivare un modulo o inserire un plugin usa lo stesso modello di costo e lo stesso 60 %.
 
-## Punto da confermare
+## Freeze nella sessione di riferimento
 
-**Il freeze è ammesso nella sessione di riferimento?** La mia raccomandazione:
+**Confermato** nella revisione del 13 novembre 2026:
 
 - a **96 kHz** la sessione di riferimento si misura **senza** tracce congelate: è il caso che deve reggere da solo, e se non regge vogliamo saperlo;
 - la **variante stress a 192 kHz** si misura **con il freeze ammesso**, dichiarando quante tracce è stato necessario congelare; il requisito diventa «le 16 tracce live e almeno N tracce non congelate», con N da fissare dopo la prima misura.

@@ -29,7 +29,7 @@ make qemu-test
 - [Documento 0: revisione critica, interfacce trasversali, piano della Fase 0, domande aperte](docs/00-revisione-specifiche-fase0.md)
 - [Registro delle modifiche del documento 0 verso la versione 1](docs/01-registro-modifiche-v1.md)
 - [Registri delle decisioni (ADR)](docs/adr/README.md)
-- Fase 0: [P0.1 — Ambiente di sviluppo](docs/fasi/fase-0/P0.1-ambiente.md), [P0.2 — Scheletro e primo avvio in QEMU](docs/fasi/fase-0/P0.2-scheletro-e-qemu.md)
+- Fase 0: [P0.1 — Ambiente di sviluppo](docs/fasi/fase-0/P0.1-ambiente.md), [P0.2 — Scheletro e primo avvio in QEMU](docs/fasi/fase-0/P0.2-scheletro-e-qemu.md), [hardware di riferimento](docs/fasi/fase-0/hardware-285k.md)
 
 ## Licenza
 
