@@ -22,7 +22,7 @@ Dalla scheda tecnica del produttore _(verificato sulla pagina ASUS, non sulla ma
 
 | Componente | Dato | Conseguenza per dawOS |
 | --- | --- | --- |
-| Ethernet | Controller Intel da 2,5 Gb | Driver `igc`, con ogni probabilità; modello esatto da leggere con `lspci`. |
+| Ethernet | Controller Intel da 2,5 Gb | Driver `igc` _(confermato al primo avvio: l'interfaccia `eno1` riceve la configurazione legata a quel driver)_; modello esatto da leggere con `lspci`. |
 | Wi-Fi e Bluetooth | Modulo Wi-Fi 7 2x2 | Resta spento: nessun driver nel kernel. |
 | Audio | Nessun codec sulla scheda: tutto passa dal modulo esterno ROG Strix Hive II, collegato via USB | Non lo usiamo; va tenuto scollegato o su un controller USB diverso da quello della Scarlett. |
 | Thunderbolt | Due porte Thunderbolt 4 sul pannello posteriore | Sono un controller USB distinto da quello del chipset: è il candidato per isolare la Scarlett (rischio K-07). |
