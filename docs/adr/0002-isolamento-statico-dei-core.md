@@ -35,7 +35,7 @@ Regole collegate:
 
 - `isolcpus=domain` toglie il bilanciamento: sui core live ogni thread va fissato su un core preciso. È coerente con il passaggio sincrono motore ↔ host (documento 0, sezione 2.3).
 - Le maschere stanno nella riga di comando firmata, quindi sono specifiche dell'hardware: profilo `285k` con le maschere, profilo `generico` senza isolamento.
-- La CPU 0 non entra nel dominio live, perché su x86 viene esclusa da `nohz_full` _(da verificare sulla 6.18 nel passo P0.6)_.
+- La CPU 0 non entra nel dominio live, perché su x86 il kernel toglie la CPU di avvio dall'insieme `nohz_full` per tenere il tempo di sistema _(verificato nei sorgenti 6.18.63, `kernel/time/tick-sched.c`; da osservare sul 285K nel passo P0.6)_.
 - Le partizioni dinamiche diventano obiettivo di ricerca, accanto a `SCHED_DEADLINE`.
 
 ## Quando si riapre

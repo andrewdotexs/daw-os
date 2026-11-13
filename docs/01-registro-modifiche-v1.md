@@ -43,6 +43,14 @@ Etichette come nel documento 0: _(verificato)_, _(da verificare)_, _(stima)_.
 | `fcp-server` | Ramo `master`, licenza GPL-3.0-or-later | `COPYING` e intestazioni SPDX _(verificato)_. |
 | Smithay, wgpu, egui | Non fissate | Si fissano all'inizio della Fase 3. |
 
+Tre affermazioni del documento 0 marcate _da verificare_ sono ora **verificate nei sorgenti del kernel 6.18.63**:
+
+- **C-03**: su x86 il kernel toglie la CPU di avvio dall'insieme `nohz_full` (`kernel/time/tick-sched.c`, messaggio «NO\_HZ: Clearing … from nohz\_full range for timekeeping»). La CPU 0 non può quindi stare nel dominio live.
+- **D-03**: la tabella di `dm-mod.create` e `dm-mod.waitfor` accettano `PARTLABEL=` e `PARTUUID=`, perché durante l'avvio la ricerca passa per `early_lookup_bdev` (`drivers/md/dm-table.c`, `drivers/md/dm-init.c`, `block/early-lookup.c`).
+- **K-04**: i parametri del _fair server_ per CPU esistono in debugfs (`kernel/sched/debug.c`).
+
+Restano da osservare sul sistema in funzione, nei passi indicati.
+
 ### C-04 — XFS con reflink, systemd-homed e cifratura a due livelli
 
 **Stato: chiusa**, vedi [ADR 0004](adr/0004-partizioni-dei-dati.md).
