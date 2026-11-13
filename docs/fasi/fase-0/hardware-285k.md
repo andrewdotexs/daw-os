@@ -59,6 +59,42 @@ Conseguenze:
 - **ASPM**: il registro dice `igc: can't disable ASPM; OS doesn't have ASPM control`. Il firmware tiene per sé la gestione del risparmio energetico dei collegamenti PCIe. Per il tempo reale va spento dal firmware, voce già prevista nella lista del passo P0.4b.
 - **Nessun avviso `W^X`** sull'hardware reale, come previsto nel passo P0.3: era un artefatto della macchina virtuale.
 
+## Topologia dei processori (13 novembre 2026)
+
+Dal rapporto archiviato in [`docs/misure/fase-0/topologia-285k.txt`](../../misure/fase-0/topologia-285k.txt), prodotto da `dawos-topology` sul 285K.
+
+| CPU | Tipo | Cache L2 condivisa con | Frequenza massima | Nota |
+| --- | --- | --- | --- | --- |
+| 0 | P-core | nessuno | 5,6 GHz | CPU di avvio: non può essere `nohz_full`. |
+| 1 | P-core | nessuno | 5,6 GHz | |
+| 2 | P-core | nessuno | **5,8 GHz** | Uno dei due core «favoriti». |
+| 3–6 | P-core | nessuno | 5,6 GHz | |
+| 7 | P-core | nessuno | **5,8 GHz** | L'altro core «favorito». |
+| 8–11 | E-core | 8–11 | 4,6 GHz | Primo cluster. |
+| 12–15 | E-core | 12–15 | 4,6 GHz | Secondo cluster. |
+| 16–19 | E-core | 16–19 | 4,6 GHz | Terzo cluster. |
+| 20–23 | E-core | 20–23 | 4,6 GHz | Quarto cluster. |
+
+Conferme e scoperte:
+
+- **La numerazione è quella ipotizzata nel documento 0**: P-core sulle CPU 0–7, E-core sulle 8–23, quattro cluster da quattro E-core con la cache L2 in comune. Nessun thread aggiuntivo per core.
+- **Disposizione fisica sul chip**, ricavata dagli identificativi dei core: `P P | E1 E2 | P P P P | E3 E4 | P P`. Le CPU 0–1 stanno a un'estremità, le CPU 2–5 al centro tra i due gruppi di E-core, le CPU 6–7 all'altra estremità. Conta per il calore: core vicini si scaldano a vicenda.
+- **Due candidati per il dominio live**, da confrontare nel passo P0.6: le CPU 4–7 (ipotesi del documento 0; comprendono un core favorito ma sono due coppie separate) oppure le CPU 2–5 (quattro core contigui al centro, con l'altro core favorito).
+- **Nessun driver per gli stati di riposo** (`cpuidle current_driver: none`): al kernel manca `CONFIG_INTEL_IDLE`. Oggi i core a riposo usano solo l'istruzione di arresto, senza stati profondi. Per l'esperimento E-01 (polling, C1, C1E) il driver va aggiunto, e nel firmware gli stati di riposo vanno lasciati al sistema operativo.
+- **Frequenza**: `intel_pstate` in modalità attiva, regolatore `powersave`, preferenza `balance_performance`, turbo acceso. È la configurazione di partenza; quella a frequenza fissa sui core live arriva con il passo P0.6.
+- **Orologio**: `tsc`, come deve essere.
+- **Rimappaggio degli interrupt attivo**: tutte le linee portano il prefisso `IR-`.
+- **Esiste una porta seriale** (`ttyS0`, interrupt 4, con traffico): la console di sistema ci sta scrivendo. Una console seriale vera è lenta: nel profilo di avvio del 285K converrà toglierla dalla riga di comando, e sapere se sulla scheda c'è il connettore per usarla in diagnosi.
+
+## Bus USB (13 novembre 2026)
+
+| Bus | Controller | Cosa c'è collegato |
+| --- | --- | --- |
+| 1 e 2 | Processore (Thunderbolt 4), `00:0d.0` | **Nulla.** |
+| 3 e 4 | Chipset, `80:14.0` | Tastiera e mouse, il controller dei LED, il modulo audio ROG Strix Hive II (senza driver), il Bluetooth (senza driver). |
+
+Il controller del processore è libero: è il posto naturale per la Scarlett, da sola (rischio K-07). Resta **da verificare nella Fase 1** a quale controller arrivino davvero i segnali USB 2.0 delle porte Thunderbolt: su molte schede le linee USB 2.0 di quelle porte vanno al chipset. Si vede collegando la Scarlett e guardando `lsusb -t`.
+
 ## Osservazioni
 
 **Il firmware consegna la macchina con x2APIC bloccato.** Il kernel deve quindi avere il rimappaggio degli interrupt (`CONFIG_IRQ_REMAP`), e nel firmware deve restare attivo VT-d. Senza, il kernel va in panico a 0,16 secondi dall'avvio. Scoperto al primo avvio reale; i dettagli sono nella guida del passo P0.4a.
