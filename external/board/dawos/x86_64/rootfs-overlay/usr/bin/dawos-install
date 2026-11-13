@@ -300,8 +300,11 @@ cmd_install() {
 	lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,PARTLABEL "/dev/${target}" | sed 's/^/  /'
 	echo
 	echo "New layout (dawOS ${version}):"
+	# systemd-repart ends a dry run by saying it "refuses to repartition":
+	# true, but alarming in the middle of a preview, so that line is dropped.
 	systemd-repart --dry-run=yes --empty=force --pretty=yes \
-		--definitions="${WORK}/repart.d" "/dev/${target}" 2>&1 | sed 's/^/  /'
+		--definitions="${WORK}/repart.d" "/dev/${target}" 2>&1 |
+		sed -e '/Refusing to repartition/d' -e 's/^/  /'
 	echo
 	echo "Kernel command line of the installed system:"
 	echo "  ${cmdline}"

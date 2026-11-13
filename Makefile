@@ -29,7 +29,7 @@ OVERLAY_DIR := $(EXT_DIR)/board/dawos/x86_64/rootfs-overlay
 SHELL_SOURCES := $(wildcard tools/*.sh) \
 	$(wildcard $(EXT_DIR)/board/dawos/x86_64/*.sh) \
 	$(wildcard $(OVERLAY_DIR)/usr/libexec/dawos/*) \
-	$(wildcard $(OVERLAY_DIR)/usr/sbin/*) \
+	$(wildcard $(OVERLAY_DIR)/usr/bin/*) \
 	$(wildcard $(OVERLAY_DIR)/etc/profile.d/*.sh)
 
 # Buildroot refuses paths with spaces, and so do we, early and clearly.
