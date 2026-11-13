@@ -1,0 +1,14 @@
+started_utc: 2026-11-13T20:52:33Z
+limits_w: 60 80 100 125 150
+step_seconds: 300
+label: none
+kernel: Linux 6.18.63-dawos #4 SMP PREEMPT_RT Fri Nov 13 18:12:52 CET 2026
+bios: 2301 10/04/2025
+image: df0a10a9fd82
+power_limits_before_uw: long=250000000 short=250000000
+junction_limit_c: 105
+temperature_at_start_c: 45
+throttle_start: core=0 package=18
+finished_utc: 2026-11-13T21:15:01Z
+power_limits_after_uw: long=250000000 short=250000000
+throttle_end: core=2 package=42
