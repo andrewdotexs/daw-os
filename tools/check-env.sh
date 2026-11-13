@@ -32,7 +32,9 @@ fail() {
 echo "dawOS build environment check"
 
 # --- Where we are running ---------------------------------------------------
+in_wsl=no
 if grep -qi microsoft /proc/version 2> /dev/null; then
+	in_wsl=yes
 	ok "running inside WSL2"
 	# The Windows drives are slow and case-insensitive: builds break there.
 	case ${repo_dir} in
@@ -122,6 +124,20 @@ if ((free_gib >= MIN_FREE_GIB)); then
 	ok "${free_gib} GiB free on the repository filesystem"
 else
 	fail "${free_gib} GiB free, at least ${MIN_FREE_GIB} GiB needed"
+fi
+
+# Inside WSL2 the figure above is the ceiling of the virtual disk, not real
+# space: the virtual disk grows on a Windows drive, normally C:. Check that
+# one too, when it is mounted.
+if [[ ${in_wsl} == yes ]] && mountpoint -q /mnt/c 2> /dev/null; then
+	host_free_gib=$(df --output=avail -BG /mnt/c 2> /dev/null | tail -n 1 | tr -dc '0-9')
+	if [[ -z ${host_free_gib} ]]; then
+		warn "cannot read the free space of Windows drive C:"
+	elif ((host_free_gib >= MIN_FREE_GIB)); then
+		ok "${host_free_gib} GiB free on Windows drive C: (where the WSL virtual disk normally grows)"
+	else
+		warn "${host_free_gib} GiB free on Windows drive C:, ${MIN_FREE_GIB} GiB needed if the WSL virtual disk lives there"
+	fi
 fi
 
 # Buildroot compiles with one job more than the CPUs it sees. As a rule of
