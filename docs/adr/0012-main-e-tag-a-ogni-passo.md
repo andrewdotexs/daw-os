@@ -39,7 +39,27 @@ git config --global user.email "indirizzo@esempio.it"
 
 L'indirizzo compare nella storia pubblica del repository. Se non vuoi mostrare quello personale, GitHub ne offre uno apposito, nella forma `<numero>+<utente>@users.noreply.github.com`, indicato nelle impostazioni dell'account alla voce _Emails_.
 
-Serve anche che il clone possa scrivere su GitHub: al primo invio git chiede di autenticarsi.
+Serve anche che il clone possa **scrivere** su GitHub. GitHub non accetta la password dell'account per le operazioni di git: il modo più semplice è usare la chiave SSH che esiste già per il 285K.
+
+Mostrare la chiave pubblica e copiarla:
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+Aggiungerla su GitHub, in _Settings_ → _SSH and GPG keys_ → _New SSH key_. Poi verificare:
+
+```bash
+ssh -T git@github.com
+```
+
+La risposta attesa comincia con `Hi <utente>! You've successfully authenticated`. Infine far usare SSH al clone:
+
+```bash
+git remote set-url origin git@github.com:andrewdotexs/daw-os.git
+```
+
+Da quel momento anche `git pull` passa per SSH. Il sottomodulo di Buildroot non cambia: resta su HTTPS, in sola lettura.
 
 ## Come si usa
 
