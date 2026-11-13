@@ -39,6 +39,15 @@ note=${4:-}
 repo_dir=$(git rev-parse --show-toplevel)
 cd "${repo_dir}"
 
+# A merge commit and an annotated tag both need an author: say so now,
+# in plain words, instead of failing halfway through.
+if ! git var GIT_COMMITTER_IDENT > /dev/null 2>&1; then
+	die "git does not know who you are. Set your identity once with:
+  git config --global user.name  \"Your Name\"
+  git config --global user.email \"you@example.com\"
+then run this command again."
+fi
+
 git fetch --quiet --tags origin
 
 sha=$(git rev-parse --verify --quiet "${commit}^{commit}") || die "unknown commit '${commit}'"
@@ -64,8 +73,9 @@ cleanup() {
 trap cleanup EXIT
 
 git worktree add --quiet --detach "${work_dir}" origin/main
-if ! git -C "${work_dir}" merge --quiet --no-ff -m "${message}" "${sha}"; then
-	die "the merge has conflicts: main was changed outside the working branch"
+if ! merge_output=$(git -C "${work_dir}" merge --no-ff -m "${message}" "${sha}" 2>&1); then
+	echo "${merge_output}" >&2
+	die "the merge did not complete (see git's message above). Nothing was pushed. If it reports conflicts, main was changed outside the working branch."
 fi
 merge_sha=$(git -C "${work_dir}" rev-parse HEAD)
 

@@ -25,6 +25,22 @@ La sessione in cui lavora l'assistente può scrivere solo sul proprio ramo di la
 - l'assistente registra la chiusura sul ramo di lavoro e indica il comando, con il commit esatto e il testo dell'accettazione;
 - **l'utente esegue il comando** dal proprio clone.
 
+## Prima volta
+
+Il commit di unione e il tag portano il nome di chi li crea, quindi git deve conoscere la tua identità. Si imposta una volta sola:
+
+```bash
+git config --global user.name "Nome Cognome"
+```
+
+```bash
+git config --global user.email "indirizzo@esempio.it"
+```
+
+L'indirizzo compare nella storia pubblica del repository. Se non vuoi mostrare quello personale, GitHub ne offre uno apposito, nella forma `<numero>+<utente>@users.noreply.github.com`, indicato nelle impostazioni dell'account alla voce _Emails_.
+
+Serve anche che il clone possa scrivere su GitHub: al primo invio git chiede di autenticarsi.
+
 ## Come si usa
 
 Chiudere un passo:
