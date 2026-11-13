@@ -34,7 +34,7 @@ Nella Fase 0 le tre partizioni esistono già ma senza cifratura: ext4 per `state
 
 ## Ripiego
 
-Se l'esperimento del passo P0.6 (prova `fio` dentro un'immagine LUKS su loop, registro delle modifiche, esperimento E-05) supera le soglie di degrado definite lì, homed userà una **partizione LUKS dedicata per utente** al posto del file immagine. Il prezzo è una dimensione fissa per utente, decisa alla creazione.
+Se l'esperimento del passo P0.6 (prova `fio` dentro un'immagine LUKS su loop, registro delle modifiche, esperimento E-05) supera le soglie di degrado definite lì, **confermate il 13 novembre 2026**, homed userà una **partizione LUKS dedicata per utente** al posto del file immagine. Il prezzo è una dimensione fissa per utente, decisa alla creazione.
 
 ## Quando si riapre
 
