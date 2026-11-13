@@ -11,6 +11,20 @@ CONFIG_EFI_STUB=y
 CONFIG_EFI_PARTITION=y
 CONFIG_EFIVAR_FS=y
 
+# Interrupt remapping (Intel VT-d). Recent Intel desktop firmware hands the
+# machine over with the local APIC locked in x2APIC mode. On bare metal
+# the kernel only keeps x2APIC when interrupt remapping is available, and
+# it cannot switch a locked x2APIC off: without this option the reference
+# machine panics 0.16 s into the boot, in setup_IO_APIC, right after
+# "Cannot disable locked x2apic". Needs VT-d enabled in the firmware.
+CONFIG_X86_X2APIC=y
+CONFIG_INTEL_IOMMU=y
+CONFIG_IRQ_REMAP=y
+# Only interrupt remapping: DMA remapping stays off unless asked for with
+# intel_iommu=on, because it adds work to every DMA mapping. To be decided
+# with the threat model (DMA attacks over Thunderbolt), not here.
+# CONFIG_INTEL_IOMMU_DEFAULT_ON is not set
+
 # Consoles available before any native graphics driver: firmware
 # framebuffer on screen, 8250 UART for QEMU and for debugging.
 CONFIG_SYSFB_SIMPLEFB=y

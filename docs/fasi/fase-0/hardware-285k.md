@@ -10,7 +10,9 @@
 | --- | --- | --- |
 | Processore | Intel Core Ultra 9 285K | Schermata di Windows sul 285K |
 | RAM | 64 GB, in funzione a 4800 MT/s | Schermata di Windows |
-| Scheda madre | ASUS ROG STRIX Z890-I GAMING WIFI, Mini-ITX, chipset Z890 | Dichiarata |
+| Scheda madre | ASUS ROG STRIX Z890-I GAMING WIFI, Mini-ITX, chipset Z890 | Dichiarata; confermata dal kernel al primo avvio |
+| Firmware | Versione 2301 del 4 ottobre 2025 | Letta dal kernel al primo avvio |
+| Processori visti dal kernel | 24, un solo package, nessun thread aggiuntivo per core | Registro di avvio del 13 novembre 2026 |
 | Schede grafiche | Intel Graphics integrata e NVIDIA GeForce RTX 5080 da 16 GB | Schermata di Windows |
 | Archiviazione | 932 GB visibili, 123 GB usati | Schermata di Windows |
 | Sistema attuale | Windows 11, nome `ANDREW-PC` | Schermata di Windows |
@@ -30,6 +32,10 @@ Dalla scheda tecnica del produttore _(verificato sulla pagina ASUS, non sulla ma
 Non ho trovato nella scheda tecnica: la presenza di un connettore seriale e i dettagli del TPM. Su una Mini-ITX di questa serie un connettore seriale è improbabile _(da verificare sul manuale)_; il TPM sarà quello integrato nel processore (Intel PTT) _(da verificare)_.
 
 ## Osservazioni
+
+**Il firmware consegna la macchina con x2APIC bloccato.** Il kernel deve quindi avere il rimappaggio degli interrupt (`CONFIG_IRQ_REMAP`), e nel firmware deve restare attivo VT-d. Senza, il kernel va in panico a 0,16 secondi dall'avvio. Scoperto al primo avvio reale; i dettagli sono nella guida del passo P0.4a.
+
+**Uscite video.** Con il monitor sulla RTX 5080 l'avvio dalla chiavetta non mostrava nulla; con il monitor sull'uscita HDMI della scheda madre i messaggi del kernel sono visibili. Per dawOS il monitor va tenuto sulla scheda madre, coerentemente con la decisione di usare la grafica integrata.
 
 **La RAM lavora a 4800 MT/s**, cioè al profilo di base e non a un profilo accelerato. Per il tempo reale è la scelta giusta: la lista del firmware nel passo P0.4 chiede proprio un profilo di memoria stabile. Non va cambiato.
 
