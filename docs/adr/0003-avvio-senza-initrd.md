@@ -21,7 +21,7 @@ La decisione è subordinata a una **prova a tempo di un giorno** nel passo P0.5.
 
 ## Conseguenze
 
-- La radice si indica per etichetta GPT, che contiene la versione: `PARTLABEL=dawos-root-<versione>`. Il passo P0.2 lo fa già con `root=PARTLABEL=…` _(prova in QEMU in corso)_. Anche la tabella di `dm-mod.create` e il parametro `dm-mod.waitfor` accettano `PARTLABEL=` e `PARTUUID=`: durante l'avvio la ricerca dei dispositivi passa per `early_lookup_bdev` _(verificato nei sorgenti 6.18.63, `drivers/md/dm-table.c` e `block/early-lookup.c`)_. Il rischio principale della prova è quindi ridotto; resta da vederlo funzionare.
+- La radice si indica per etichetta GPT, che contiene la versione: `PARTLABEL=dawos-root-<versione>`. Il passo P0.2 lo fa già con `root=PARTLABEL=…`, e funziona _(verificato in QEMU)_. Anche la tabella di `dm-mod.create` e il parametro `dm-mod.waitfor` accettano `PARTLABEL=` e `PARTUUID=`: durante l'avvio la ricerca dei dispositivi passa per `early_lookup_bdev` _(verificato nei sorgenti 6.18.63, `drivers/md/dm-table.c` e `block/early-lookup.c`)_. Il rischio principale della prova è quindi ridotto; resta da vederlo funzionare.
 - La riga di comando non dipende dallo slot A o B, quindi la stessa UKI vale per entrambi.
 - Lo sblocco di LUKS con il TPM (Fase 6) avviene nella radice vera, non prima: è possibile perché la radice non è cifrata.
 - In caso di guasto all'avvio non c'è una shell di emergenza dell'initrd: la diagnosi passa dalla console e dal profilo di ripiego.

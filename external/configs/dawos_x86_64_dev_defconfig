@@ -30,6 +30,7 @@ BR2_TARGET_GENERIC_GETTY_PORT="tty1"
 # Read-only root: /var is a tmpfs populated from a factory copy until the
 # persistent "state" partition arrives in step P0.5.
 # BR2_TARGET_GENERIC_REMOUNT_ROOTFS_RW is not set
+BR2_ROOTFS_USERS_TABLES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/users.table"
 BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/rootfs-overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/post-build.sh"
 BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/post-image.sh"

@@ -210,7 +210,8 @@ daw-os/
 │   │   ├── cmdline/              common.txt, profile-generic.txt
 │   │   │                         più avanti: profile-285k.txt
 │   │   ├── genimage.cfg.in       modello dell'immagine disco per QEMU
-│   │   ├── rootfs-overlay/       unità systemd, rete, rapporto di avvio
+│   │   ├── users.table           utenti e gruppi aggiunti (gruppo clock)
+│   │   ├── rootfs-overlay/       unità systemd, rete, risolutore, rapporto di avvio
 │   │   ├── post-build.sh         identità dell'immagine in os-release
 │   │   └── post-image.sh         voce di avvio e immagine disco
 │   ├── package/                  pacchetti nostri (vuoto per ora)
@@ -259,7 +260,9 @@ In sintesi: WSL2 sul PC di sviluppo, dimensionato sulle sue risorse; repository 
 
 Eseguito. Testo completo, file e comandi in [P0.2-scheletro-e-qemu.md](fasi/fase-0/P0.2-scheletro-e-qemu.md).
 
-Differenze rispetto al documento 0: immagine composta con genimage; radice indicata per etichetta GPT con la versione fin da ora; rapporto di avvio sulla console e prova automatica `make qemu-test`; impronta obbligatoria per l'archivio del kernel.
+Differenze rispetto al documento 0: immagine composta con genimage; radice indicata per etichetta GPT con la versione fin da ora; rapporto di avvio sulla console e prova automatica `make qemu-test`; impronta obbligatoria per l'archivio del kernel; LLMNR e mDNS spenti, perché systemd-resolved li apre verso la rete per impostazione predefinita.
+
+La costruzione completa e l'avvio in QEMU sono stati provati (29 minuti su 4 core; `make qemu-test` → `PASS`).
 
 ### P0.4 — Primo avvio sul 285K e rumore di fondo del firmware
 

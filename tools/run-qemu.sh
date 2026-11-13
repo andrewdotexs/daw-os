@@ -138,9 +138,14 @@ fi
 log=${state_dir}/serial.log
 : > "${log}"
 
+# QEMU's own messages go to a side file: on success they are just the
+# notice that we stopped it; on failure they are printed below.
+qemu_err=${state_dir}/qemu.err
+# -snapshot: the guest is stopped abruptly once the report is seen, so
+# its writes (boot loader random seed on the ESP) must not reach the image.
 qemu-system-x86_64 "${qemu_args[@]}" \
-	-display none -monitor none -no-reboot \
-	-serial "file:${log}" &
+	-display none -monitor none -no-reboot -snapshot \
+	-serial "file:${log}" 2> "${qemu_err}" &
 qemu_pid=$!
 
 cleanup() {
@@ -164,6 +169,10 @@ done
 if [[ -z ${report} ]]; then
 	echo "FAIL: no boot report within ${timeout_s}s; last lines of the console:" >&2
 	tail -n 25 "${log}" | tr -d '\r' >&2
+	if [[ -s ${qemu_err} ]]; then
+		echo "QEMU messages:" >&2
+		cat "${qemu_err}" >&2
+	fi
 	exit 1
 fi
 

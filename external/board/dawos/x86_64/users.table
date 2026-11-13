@@ -1,0 +1,7 @@
+# Extra users and groups, in Buildroot "makeusers" syntax:
+#   username uid group gid password home shell groups comment
+# A username of "-" creates only the group; -1 picks a free id.
+#
+# systemd 258 udev rules give RTC and PTP devices to group "clock", which
+# Buildroot 2026.02.3 does not create: without it udev logs a warning.
+- -1 clock -1 * - - - Clock devices (RTC, PTP)

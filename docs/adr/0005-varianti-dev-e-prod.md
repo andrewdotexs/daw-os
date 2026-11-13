@@ -32,7 +32,7 @@ Nella Fase 0 esiste solo `dev`. La variante compare in `VARIANT_ID` di `os-relea
 
 - Le regole di sicurezza del master prompt valgono per `prod`. Ogni deroga di `dev` è elencata nella tabella sopra e in nessun altro posto.
 - Le chiavi pubbliche SSH autorizzate non stanno nel repository: si prendono da un file locale ignorato da git al momento della costruzione (passo P0.4).
-- Nel passo P0.2 la variante `dev` ammette l'accesso come root senza password dalla sola console. Non ci sono servizi di rete in ascolto, quindi il rischio è limitato a chi ha accesso fisico; dal passo P0.4 la password viene bloccata e resta solo la chiave SSH.
+- Nel passo P0.2 la variante `dev` ammette l'accesso come root senza password dalla sola console. Non ci sono servizi raggiungibili dalla rete _(verificato in QEMU: restano solo il risolutore locale su `127.0.0.53` e il client DHCP)_, quindi il rischio è limitato a chi ha accesso fisico; dal passo P0.4 la password viene bloccata e resta solo la chiave SSH.
 - Un'immagine `dev` non deve mai essere firmata con chiavi di produzione: lo impone lo script di firma, non la disciplina.
 
 ## Quando si riapre
