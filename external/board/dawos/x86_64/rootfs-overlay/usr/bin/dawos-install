@@ -1,0 +1,417 @@
+#!/bin/sh
+# dawos-install — write dawOS to the internal NVMe disk of this machine.
+#
+# Runs from the installation medium only. It ERASES the target disk, so
+# every step that leads to writing is guarded:
+#
+#   - the target is named by model and serial number, never by device
+#     path (/dev/nvme0n1 may change between boots);
+#   - exactly one disk must match, and it must be the only internal NVMe;
+#   - the disk is refused if it is removable, attached over USB, the disk
+#     this system was started from, in use, or smaller than expected;
+#   - the current content of the disk and the new layout are shown first;
+#   - without --write nothing is written (dry run);
+#   - with --write, the serial number must be typed again to confirm.
+#
+# The partition table is the one of document 0, section 3.3; the actual
+# partitioning and formatting is done by systemd-repart.
+
+set -eu
+
+PROG=dawos-install
+WORK=/run/dawos-install
+LOG=${WORK}/install.log
+
+# Smallest disk accepted: guards against picking a small auxiliary disk.
+MIN_BYTES=500000000000
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} --list
+      Show the disks of this machine and whether each can be a target.
+
+  ${PROG} --model MODEL --serial SERIAL
+      Dry run: check the disk and show what would be done. Writes nothing.
+
+  ${PROG} --model MODEL --serial SERIAL --write
+      Erase the disk and install dawOS on it, after a typed confirmation.
+
+MODEL and SERIAL are the values printed by --list, exactly.
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# Strip leading and trailing whitespace.
+trim() {
+	printf '%s' "$1" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+# Value of a sysfs attribute of a whole disk, trimmed; empty if missing.
+# $1 = disk name (nvme0n1), $2 = path below /sys/block/<disk>.
+disk_attr() {
+	if [ -r "/sys/block/$1/$2" ]; then
+		trim "$(cat "/sys/block/$1/$2")"
+	fi
+}
+
+disk_bytes() {
+	echo $(($(disk_attr "$1" size) * 512))
+}
+
+# How the disk is attached: nvme, usb or other.
+disk_transport() {
+	case "$(readlink -f "/sys/block/$1")" in
+	*/usb[0-9]*/*) echo usb ;;
+	*/nvme/*) echo nvme ;;
+	*) echo other ;;
+	esac
+}
+
+# Names of the whole disks worth looking at (no loop, RAM or mapped devices).
+list_disks() {
+	for path in /sys/block/*; do
+		name=${path##*/}
+		case "${name}" in
+		loop* | ram* | zram* | dm-* | sr* | md* | nbd*) continue ;;
+		esac
+		echo "${name}"
+	done
+}
+
+# Name of the whole disk this system was started from, found through the
+# root partition named on the kernel command line.
+boot_disk() {
+	label=$(sed -n 's/.*root=PARTLABEL=\([^ ]*\).*/\1/p' /proc/cmdline)
+	[ -n "${label}" ] || return 1
+	part=$(readlink -f "/dev/disk/by-partlabel/${label}") || return 1
+	part=${part##*/}
+	[ -e "/sys/class/block/${part}/partition" ] || return 1
+	parent=$(readlink -f "/sys/class/block/${part}/..")
+	echo "${parent##*/}"
+}
+
+# Reasons why a disk cannot be the target, one per line; empty if it can.
+# $1 = disk name, $2 = name of the boot disk.
+refusals() {
+	disk=$1
+	[ "${disk}" != "$2" ] || echo "it is the disk this system was started from"
+	[ "$(disk_transport "${disk}")" = nvme ] || echo "it is not an NVMe disk"
+	[ "$(disk_transport "${disk}")" != usb ] || echo "it is attached over USB"
+	[ "$(disk_attr "${disk}" removable)" = 0 ] || echo "it is removable"
+	[ "$(disk_bytes "${disk}")" -ge "${MIN_BYTES}" ] || echo "it is smaller than 500 GB"
+	[ -n "$(disk_attr "${disk}" device/serial)" ] || echo "it reports no serial number"
+
+	# Anything mounted, used as swap or held by a mapped device.
+	for path in "/sys/block/${disk}" "/sys/block/${disk}/${disk}"*; do
+		[ -d "${path}" ] || continue
+		dev=${path##*/}
+		if grep -q "^/dev/${dev} " /proc/mounts; then
+			echo "/dev/${dev} is mounted"
+		fi
+		if grep -q "^/dev/${dev} " /proc/swaps; then
+			echo "/dev/${dev} is used as swap"
+		fi
+		if [ -d "${path}/holders" ] && [ -n "$(ls -A "${path}/holders")" ]; then
+			echo "/dev/${dev} is in use by another device"
+		fi
+	done
+}
+
+show_disk() {
+	disk=$1
+	printf '  device     /dev/%s\n' "${disk}"
+	printf '  model      %s\n' "$(disk_attr "${disk}" device/model)"
+	printf '  serial     %s\n' "$(disk_attr "${disk}" device/serial)"
+	printf '  size       %s GB\n' "$(($(disk_bytes "${disk}") / 1000000000))"
+	printf '  attached   %s\n' "$(disk_transport "${disk}")"
+}
+
+cmd_list() {
+	boot=$(boot_disk) || boot=unknown
+	echo "Disks of this machine:"
+	for disk in $(list_disks); do
+		echo
+		show_disk "${disk}"
+		reasons=$(refusals "${disk}" "${boot}")
+		if [ -z "${reasons}" ]; then
+			echo "  status     can be a target"
+		else
+			echo "  status     REFUSED:"
+			echo "${reasons}" | sed 's/^/               /'
+		fi
+	done
+	echo
+	echo "To continue: ${PROG} --model 'MODEL' --serial 'SERIAL'"
+}
+
+# Write the systemd-repart definitions for the layout of document 0,
+# section 3.3. $1 = directory, $2 = image version, $3 = source of slot A.
+write_definitions() {
+	dir=$1
+	rm -rf "${dir}"
+	mkdir -p "${dir}"
+
+	cat > "${dir}/10-esp.conf" <<DEF
+[Partition]
+Type=esp
+Label=esp
+SizeMinBytes=1G
+SizeMaxBytes=1G
+Format=vfat
+DEF
+	# Slot A: the running root filesystem image, copied block by block.
+	cat > "${dir}/20-root-a.conf" <<DEF
+[Partition]
+Type=root-x86-64
+Label=dawos-root-$2
+SizeMinBytes=4G
+SizeMaxBytes=4G
+CopyBlocks=$3
+DEF
+	# The verity slots and slot B stay empty until the first signed
+	# image (step P0.5); "_empty" is the label systemd-sysupdate looks for.
+	cat > "${dir}/21-verity-a.conf" <<DEF
+[Partition]
+Type=root-x86-64-verity
+Label=_empty
+SizeMinBytes=128M
+SizeMaxBytes=128M
+DEF
+	cat > "${dir}/30-root-b.conf" <<DEF
+[Partition]
+Type=root-x86-64
+Label=_empty
+SizeMinBytes=4G
+SizeMaxBytes=4G
+DEF
+	cat > "${dir}/31-verity-b.conf" <<DEF
+[Partition]
+Type=root-x86-64-verity
+Label=_empty
+SizeMinBytes=128M
+SizeMaxBytes=128M
+DEF
+	cat > "${dir}/40-state.conf" <<DEF
+[Partition]
+Type=linux-generic
+Label=state
+SizeMinBytes=32G
+SizeMaxBytes=32G
+Format=ext4
+DEF
+	cat > "${dir}/50-shared.conf" <<DEF
+[Partition]
+Type=linux-generic
+Label=shared
+SizeMinBytes=300G
+SizeMaxBytes=300G
+Format=xfs
+DEF
+	# No maximum: "homes" takes whatever is left.
+	cat > "${dir}/60-homes.conf" <<DEF
+[Partition]
+Type=linux-generic
+Label=homes
+SizeMinBytes=100G
+Format=xfs
+DEF
+}
+
+# Device node of partition number $2 of disk $1.
+partition_dev() {
+	for path in "/sys/block/$1/$1"*; do
+		[ -r "${path}/partition" ] || continue
+		if [ "$(cat "${path}/partition")" = "$2" ]; then
+			echo "/dev/${path##*/}"
+			return 0
+		fi
+	done
+	return 1
+}
+
+cmd_install() {
+	want_model=$1
+	want_serial=$2
+	write=$3
+
+	[ "$(id -u)" = 0 ] || die "must run as root"
+	case " $(cat /proc/cmdline) " in
+	*" dawos.installer "*) ;;
+	*) die "this system was not started from the installation medium" ;;
+	esac
+
+	boot=$(boot_disk) || die "cannot tell which disk this system was started from"
+
+	# --- Find the target: exactly one disk with this model and serial ----
+	target=
+	matches=0
+	internal_nvme=0
+	for disk in $(list_disks); do
+		if [ "$(disk_transport "${disk}")" = nvme ]; then
+			internal_nvme=$((internal_nvme + 1))
+		fi
+		if [ "$(disk_attr "${disk}" device/model)" = "${want_model}" ] &&
+			[ "$(disk_attr "${disk}" device/serial)" = "${want_serial}" ]; then
+			target=${disk}
+			matches=$((matches + 1))
+		fi
+	done
+	[ "${matches}" -ge 1 ] || die "no disk with model '${want_model}' and serial '${want_serial}' (see --list)"
+	[ "${matches}" -eq 1 ] || die "${matches} disks match that model and serial: refusing to guess"
+	[ "${internal_nvme}" -eq 1 ] ||
+		die "${internal_nvme} internal NVMe disks found, exactly 1 expected: this is not the machine described in docs/fasi/fase-0/hardware-285k.md"
+
+	reasons=$(refusals "${target}" "${boot}")
+	if [ -n "${reasons}" ]; then
+		echo "${PROG}: /dev/${target} is refused:" >&2
+		echo "${reasons}" | sed 's/^/  - /' >&2
+		exit 1
+	fi
+
+	# --- Sources: this medium ---------------------------------------------
+	# shellcheck source=/dev/null
+	. /etc/os-release
+	version=${IMAGE_VERSION:?IMAGE_VERSION missing from /etc/os-release}
+
+	root_src=$(readlink -f "/dev/disk/by-partlabel/dawos-inst-${version}") ||
+		die "root partition of the installation medium not found"
+	esp_src=$(bootctl --print-esp-path 2> /dev/null) || esp_src=/boot
+	[ -f "${esp_src}/EFI/BOOT/bootx64.efi" ] || die "boot loader not found in ${esp_src}"
+	[ -f "${esp_src}/dawos/${version}/linux" ] || die "kernel not found in ${esp_src}"
+
+	# The installed system boots with the same command line as this one,
+	# except for the root label; the installer marker and whatever follows
+	# it (the options of the "verbose" entry) are cut off.
+	cmdline=$(sed -e "s/root=PARTLABEL=dawos-inst-/root=PARTLABEL=dawos-root-/" \
+		-e 's/ *dawos\.installer.*$//' /proc/cmdline)
+
+	mkdir -p "${WORK}"
+	write_definitions "${WORK}/repart.d" "${version}" "${root_src}"
+
+	# --- Show what is there and what will be done ---------------------------
+	echo "Target disk:"
+	show_disk "${target}"
+	echo
+	echo "Current content, which will be ERASED:"
+	lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,PARTLABEL "/dev/${target}" | sed 's/^/  /'
+	echo
+	echo "New layout (dawOS ${version}):"
+	# systemd-repart ends a dry run by saying it "refuses to repartition":
+	# true, but alarming in the middle of a preview, so that line is dropped.
+	systemd-repart --dry-run=yes --empty=force --pretty=yes \
+		--definitions="${WORK}/repart.d" "/dev/${target}" 2>&1 |
+		sed -e '/Refusing to repartition/d' -e 's/^/  /'
+	echo
+	echo "Kernel command line of the installed system:"
+	echo "  ${cmdline}"
+	echo
+
+	if [ "${write}" != yes ]; then
+		echo "Dry run: nothing was written. Add --write to install."
+		return 0
+	fi
+
+	# --- Typed confirmation -------------------------------------------------
+	[ -t 0 ] || die "--write needs a terminal for the confirmation"
+	echo "Everything on /dev/${target} will be lost."
+	printf 'Type the serial number of the disk to confirm: '
+	read -r answer
+	[ "${answer}" = "${want_serial}" ] || die "serial number does not match: nothing was written"
+
+	# --- Write ----------------------------------------------------------------
+	{
+		echo "dawos-install: dawOS ${version} on /dev/${target}"
+		echo "model=${want_model} serial=${want_serial}"
+		date
+	} > "${LOG}"
+
+	echo "Partitioning and formatting (this takes a minute)..."
+	systemd-repart --dry-run=no --empty=force --pretty=yes \
+		--definitions="${WORK}/repart.d" "/dev/${target}" >> "${LOG}" 2>&1 ||
+		die "systemd-repart failed, see ${LOG}"
+	udevadm settle
+
+	esp_dev=$(partition_dev "${target}" 1) || die "new ESP not found"
+	state_dev=$(partition_dev "${target}" 6) || die "new state partition not found"
+
+	echo "Installing the boot loader and the kernel..."
+	mkdir -p "${WORK}/esp"
+	mount -t vfat "${esp_dev}" "${WORK}/esp"
+	mkdir -p "${WORK}/esp/EFI/BOOT" "${WORK}/esp/dawos/${version}" "${WORK}/esp/loader/entries"
+	cp "${esp_src}/EFI/BOOT/bootx64.efi" "${WORK}/esp/EFI/BOOT/bootx64.efi"
+	cp "${esp_src}/dawos/${version}/linux" "${WORK}/esp/dawos/${version}/linux"
+	cat > "${WORK}/esp/loader/loader.conf" <<LOADER
+timeout 5
+default dawos-${version}.conf
+console-mode keep
+LOADER
+	cat > "${WORK}/esp/loader/entries/dawos-${version}.conf" <<ENTRY
+title   dawOS ${version} (${VARIANT_ID:-dev})
+version ${version}
+sort-key dawos
+linux   /dawos/${version}/linux
+options ${cmdline}
+ENTRY
+	umount "${WORK}/esp"
+
+	# Keep the record of the installation on the disk itself.
+	lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,PARTLABEL "/dev/${target}" >> "${LOG}"
+	mkdir -p "${WORK}/state"
+	mount -t ext4 "${state_dev}" "${WORK}/state"
+	cp "${LOG}" "${WORK}/state/install.log"
+	umount "${WORK}/state"
+	sync
+
+	echo
+	echo "Result:"
+	lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,PARTLABEL "/dev/${target}" | sed 's/^/  /'
+	echo
+	echo "dawOS ${version} is installed on /dev/${target}."
+	echo "Run 'poweroff', remove the installation medium, and switch the machine on."
+}
+
+# --- Command line -------------------------------------------------------------
+mode=
+model=
+serial=
+write=no
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--list) mode=list ;;
+	--model)
+		[ $# -ge 2 ] || die "--model needs a value"
+		model=$2
+		shift
+		;;
+	--serial)
+		[ $# -ge 2 ] || die "--serial needs a value"
+		serial=$2
+		shift
+		;;
+	--write) write=yes ;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*) die "unknown option '$1' (try --help)" ;;
+	esac
+	shift
+done
+
+if [ "${mode}" = list ]; then
+	cmd_list
+	exit 0
+fi
+
+if [ -z "${model}" ] || [ -z "${serial}" ]; then
+	usage >&2
+	exit 1
+fi
+
+cmd_install "${model}" "${serial}" "${write}"

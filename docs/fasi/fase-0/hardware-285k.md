@@ -10,7 +10,9 @@
 | --- | --- | --- |
 | Processore | Intel Core Ultra 9 285K | Schermata di Windows sul 285K |
 | RAM | 64 GB, in funzione a 4800 MT/s | Schermata di Windows |
-| Scheda madre | ASUS ROG STRIX Z890-I GAMING WIFI, Mini-ITX, chipset Z890 | Dichiarata |
+| Scheda madre | ASUS ROG STRIX Z890-I GAMING WIFI, Mini-ITX, chipset Z890 | Dichiarata; confermata dal kernel al primo avvio |
+| Firmware | Versione 2301 del 4 ottobre 2025 | Letta dal kernel al primo avvio |
+| Processori visti dal kernel | 24, un solo package, nessun thread aggiuntivo per core | Registro di avvio del 13 novembre 2026 |
 | Schede grafiche | Intel Graphics integrata e NVIDIA GeForce RTX 5080 da 16 GB | Schermata di Windows |
 | Archiviazione | 932 GB visibili, 123 GB usati | Schermata di Windows |
 | Sistema attuale | Windows 11, nome `ANDREW-PC` | Schermata di Windows |
@@ -20,7 +22,7 @@ Dalla scheda tecnica del produttore _(verificato sulla pagina ASUS, non sulla ma
 
 | Componente | Dato | Conseguenza per dawOS |
 | --- | --- | --- |
-| Ethernet | Controller Intel da 2,5 Gb | Driver `igc`, con ogni probabilità; modello esatto da leggere con `lspci`. |
+| Ethernet | Controller Intel da 2,5 Gb | Driver `igc` _(confermato al primo avvio: l'interfaccia `eno1` riceve la configurazione legata a quel driver)_; modello esatto da leggere con `lspci`. |
 | Wi-Fi e Bluetooth | Modulo Wi-Fi 7 2x2 | Resta spento: nessun driver nel kernel. |
 | Audio | Nessun codec sulla scheda: tutto passa dal modulo esterno ROG Strix Hive II, collegato via USB | Non lo usiamo; va tenuto scollegato o su un controller USB diverso da quello della Scarlett. |
 | Thunderbolt | Due porte Thunderbolt 4 sul pannello posteriore | Sono un controller USB distinto da quello del chipset: è il candidato per isolare la Scarlett (rischio K-07). |
@@ -29,7 +31,39 @@ Dalla scheda tecnica del produttore _(verificato sulla pagina ASUS, non sulla ma
 
 Non ho trovato nella scheda tecnica: la presenza di un connettore seriale e i dettagli del TPM. Su una Mini-ITX di questa serie un connettore seriale è improbabile _(da verificare sul manuale)_; il TPM sarà quello integrato nel processore (Intel PTT) _(da verificare)_.
 
+## Cosa vede il kernel (13 novembre 2026)
+
+Da `lspci -k`, `lsblk` e dal registro del primo avvio dal disco. Il numero di serie del disco non è riportato qui.
+
+| Dispositivo | Indirizzo PCI | Driver in uso | Nota |
+| --- | --- | --- | --- |
+| Ethernet Intel I226-V (rev 06) | `83:00.0` | `igc` | Confermato. Interfaccia `eno1`. |
+| Disco Samsung SSD 990 PRO 1TB | `02:00.0` | `nvme` | 931,5 GiB reali. Unico disco interno. |
+| Intel VMD (controller RAID NVMe) | `00:0e.0` | `vmd` | VMD è attivo nel firmware: il driver aggiunto per prudenza serviva davvero. |
+| USB, controller del processore (Thunderbolt 4) | `00:0d.0` | `xhci_hcd` | Primo dei due controller USB. |
+| USB, controller del chipset | `80:14.0` | `xhci_hcd` | Secondo controller USB. |
+| Thunderbolt 4 NHI | `00:0d.2` | nessuno | Il sottosistema Thunderbolt non è nel kernel. |
+| Grafica integrata Arrow Lake-S | `00:02.0` | nessuno | La console usa il framebuffer del firmware. |
+| NVIDIA RTX 5080 | `01:00.0` | nessuno | Come voluto. |
+| Audio HDMI della RTX | `01:00.1` | `snd_hda_intel` | Nessun codec utile: errore all'avvio. |
+| Intel HD Audio del chipset | `80:1f.3` | `snd_hda_intel` | Sulla scheda non c'è codec: tre secondi di tentativi ed errori all'avvio. |
+| Intel Management Engine (HECI) | `80:16.0` | `mei_me` | Non serve. |
+| SATA | `80:17.0` | `ahci` | Nessun disco collegato. |
+| Wi-Fi 7 Intel BE200 | `84:00.0` | nessuno | Spento, come deciso. |
+| NPU Arrow Lake | `00:0b.0` | nessuno | Servirà alla fase dell'agente. |
+
+Conseguenze:
+
+- **Due controller USB distinti** esistono davvero: la Scarlett potrà stare da sola su uno dei due (rischio K-07).
+- **Tre driver da togliere dal kernel** nel passo P0.4b, perché inutili qui e sorgenti di lavoro all'avvio o di rumore: `snd_hda_intel` (l'audio di dawOS è USB), `mei_me`, e con ogni probabilità `ahci`.
+- **ASPM**: il registro dice `igc: can't disable ASPM; OS doesn't have ASPM control`. Il firmware tiene per sé la gestione del risparmio energetico dei collegamenti PCIe. Per il tempo reale va spento dal firmware, voce già prevista nella lista del passo P0.4b.
+- **Nessun avviso `W^X`** sull'hardware reale, come previsto nel passo P0.3: era un artefatto della macchina virtuale.
+
 ## Osservazioni
+
+**Il firmware consegna la macchina con x2APIC bloccato.** Il kernel deve quindi avere il rimappaggio degli interrupt (`CONFIG_IRQ_REMAP`), e nel firmware deve restare attivo VT-d. Senza, il kernel va in panico a 0,16 secondi dall'avvio. Scoperto al primo avvio reale; i dettagli sono nella guida del passo P0.4a.
+
+**Uscite video.** Con il monitor sulla RTX 5080 l'avvio dalla chiavetta non mostrava nulla; con il monitor sull'uscita HDMI della scheda madre i messaggi del kernel sono visibili. Per dawOS il monitor va tenuto sulla scheda madre, coerentemente con la decisione di usare la grafica integrata.
 
 **La RAM lavora a 4800 MT/s**, cioè al profilo di base e non a un profilo accelerato. Per il tempo reale è la scelta giusta: la lista del firmware nel passo P0.4 chiede proprio un profilo di memoria stabile. Non va cambiato.
 

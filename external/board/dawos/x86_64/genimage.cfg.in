@@ -1,8 +1,12 @@
-# dawOS disk image for QEMU (step P0.2).
+# dawOS disk images.
 # Template: post-image.sh replaces @VERSION@ and @ROOT_SLOT_SIZE@.
 #
-# The real NVMe is not written from this image: it is partitioned by the
-# installer (step P0.4) with the full layout of document 0, section 3.3.
+#   disk.img       the installed system, for QEMU;
+#   installer.img  the installation medium, to be written to a USB stick.
+#
+# The real NVMe is not written from either image: dawos-install, run from
+# the installation medium, partitions it with the full layout of
+# document 0, section 3.3.
 
 image efi-part.vfat {
 	vfat {
@@ -44,5 +48,52 @@ image disk.img {
 		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
 		image = "rootfs.erofs"
 		size = @ROOT_SLOT_SIZE@
+	}
+}
+
+# --- Installation medium ------------------------------------------------------
+
+image installer-esp.vfat {
+	vfat {
+		extraargs = "-n DAWOSINST"
+
+		file EFI {
+			image = "efi-inst/EFI"
+		}
+
+		file loader {
+			image = "efi-inst/loader"
+		}
+
+		file dawos {
+			image = "efi-inst/dawos"
+		}
+	}
+
+	size = 128M
+}
+
+image installer.img {
+	hdimage {
+		partition-table-type = "gpt"
+	}
+
+	# Not called "esp": the installer must tell this partition from the
+	# one it creates on the target disk.
+	partition "dawos-inst-esp" {
+		image = "installer-esp.vfat"
+		partition-type-uuid = U
+		offset = 1M
+		bootable = true
+	}
+
+	# A different label from the installed system ("dawos-root-..."):
+	# the kernel finds its root by label, and the stick must never be
+	# confused with a disk that already holds the same version.
+	# No explicit size: the partition is as large as the image, so the
+	# stick is written in seconds.
+	partition "dawos-inst-@VERSION@" {
+		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
+		image = "rootfs.erofs"
 	}
 }

@@ -436,3 +436,17 @@ Due affermazioni del documento 0 corrette dalla prova sul kernel compilato.
 | P0.3, tabella delle opzioni | «pagine grandi trasparenti a `madvise`» | Con `PREEMPT_RT` le pagine grandi trasparenti non sono disponibili affatto (`mm/Kconfig`). Le pagine da 2 MB per il preload dei sample e per la memoria condivisa vanno riservate con `hugetlbfs`. Il parametro `transparent_hugepage=madvise` previsto nella riga di comando del passo P0.6 è quindi inutile e va tolto. |
 
 Il dettaglio è in [P0.3-kernel-real-time.md](fasi/fase-0/P0.3-kernel-real-time.md).
+
+## 6. Modifiche emerse dal passo P0.4a
+
+| Sezione | Era scritto | Com'è ora |
+| --- | --- | --- |
+| P0.4 | Un solo passo | Diviso in **P0.4a** (installazione e accesso remoto) e **P0.4b** (topologia, firmware, rumore di fondo). |
+| P0.4, identità del disco | Modello e numero di serie inclusi nell'immagine da `local/target-disk.conf` | Indicati sul 285K con `--model` e `--serial`, dopo `dawos-install --list`. Approvato il 13 novembre 2026. |
+| 3.3, partizione `homes` | Circa 650 GiB | 590,7 GiB, misurati nella prova generale su un disco da 932 GiB. |
+| 3.3, immagine per QEMU | Una sola immagine | Due: `disk.img` e `installer.img`, con etichette di radice diverse. |
+| ADR 0005, password di root | Bloccata dal passo P0.4 | Resta vuota per la sola console; via SSH le password sono disattivate. Approvato il 13 novembre 2026. |
+| ADR 0005, chiave dell'host SSH | Non specificata | Generata sul PC di sviluppo in `keys/` e inclusa nelle immagini `dev`. Approvato il 13 novembre 2026. |
+| P0.4, rete | DHCP | Indirizzo statico da `local/network-285k.conf`, legato al driver della scheda. |
+
+Il dettaglio è in [P0.4a-installazione.md](fasi/fase-0/P0.4a-installazione.md).
