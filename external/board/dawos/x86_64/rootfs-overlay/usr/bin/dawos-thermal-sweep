@@ -1,0 +1,446 @@
+#!/bin/sh
+# dawos-thermal-sweep — package temperature at a series of power limits.
+#
+# Loads every CPU without pause (stress-ng) and, for each power limit
+# given, caps the package at that power through the RAPL interface, holds
+# it for a few minutes and records temperature, real power and frequency.
+# The result is the curve "watts in, degrees out" of this machine's
+# cooling, from which the fixed power limit of the firmware is chosen
+# (risk K-15). At the end the load stops and the temperature is logged
+# every second: a fall of tens of degrees within a couple of seconds
+# points at the contact between processor and cooler, a slow fall at the
+# liquid, the radiator or the air flow.
+#
+# Why not dawos-hwnoise for this: its threads run 750 ms of every second
+# with interrupts off, and turbostat can read a CPU only in the pause, so
+# its temperatures depend on how the pauses of the CPUs line up. Here the
+# load is continuous and the readings mean what they say.
+#
+# Safety:
+# - the limits are only ever lowered below the firmware's own values, and
+#   the original values are written back on every way out, including an
+#   interrupted run; they are not persistent anyway: a reboot restores
+#   what the firmware sets;
+# - the sweep stops by itself, skipping the remaining steps, as soon as
+#   the package reaches STOP_TEMP_C.
+#
+# Like dawos-hwnoise it runs as a transient systemd unit, survives the end
+# of the SSH session, writes to /var/lib/dawos/measure/ (in memory until
+# step P0.5: fetch the results before rebooting) and finds itself through
+# its own path, so that a copy in /run works on an installed machine.
+
+set -u
+
+PROG=dawos-thermal-sweep
+BASE=/var/lib/dawos/measure
+UNIT=dawos-thermal-sweep
+# Package zone of the RAPL power-capping interface: constraint 0 is the
+# long-term limit (PL1), constraint 1 the short-term one (PL2).
+RAPL=${DAWOS_RAPL_DIR:-/sys/class/powercap/intel-rapl:0}
+# Package temperature, in degrees Celsius, at which the sweep gives up.
+STOP_TEMP_C=97
+# Seconds of temperature logging after the load has stopped.
+COOLDOWN_SECONDS=90
+# Default time spent at each power limit, in seconds.
+STEP_SECONDS=300
+SELF=$(readlink -f "$0")
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--step SECONDS] [--label WORD] WATTS [WATTS...]
+  ${PROG} --status           show progress, or the last summary
+  ${PROG} --summary DIR      (re)compute the summary of a finished run
+
+Example: ${PROG} 80 100 125 150
+Each WATTS is a package power limit, held for --step seconds (default
+${STEP_SECONDS}), lowest first. The sweep ends early if the package
+reaches ${STOP_TEMP_C} C.
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# Print the sysfs directory of the coretemp sensor, whose temp1 is the
+# whole package; nothing if there is none (virtual machines).
+coretemp_dir() {
+	if [ -n "${DAWOS_CORETEMP_DIR:-}" ]; then
+		echo "${DAWOS_CORETEMP_DIR}"
+		return 0
+	fi
+	for hwmon in /sys/class/hwmon/hwmon*; do
+		[ -r "${hwmon}/name" ] || continue
+		read -r name < "${hwmon}/name"
+		if [ "${name}" = coretemp ] && [ -r "${hwmon}/temp1_input" ]; then
+			echo "${hwmon}"
+			return 0
+		fi
+	done
+	return 0
+}
+
+# Print the package temperature in degrees Celsius; nothing without sensor.
+package_temp_c() {
+	[ -n "${SENSOR}" ] || return 0
+	read -r millidegrees < "${SENSOR}/temp1_input"
+	echo $((millidegrees / 1000))
+}
+
+# Print "core=N package=M": thermal-throttle events since boot (see
+# dawos-hwnoise, which has the same function).
+throttle_counts() {
+	core=0
+	package=0
+	found=0
+	for file in /sys/devices/system/cpu/cpu[0-9]*/thermal_throttle/core_throttle_count; do
+		[ -r "${file}" ] || continue
+		found=1
+		read -r count < "${file}"
+		core=$((core + count))
+		read -r count < "${file%core_throttle_count}package_throttle_count"
+		[ "${count}" -gt "${package}" ] && package=${count}
+	done
+	[ "${found}" = 1 ] && echo "core=${core} package=${package}"
+	return 0
+}
+
+# Set both package power limits to $1 microwatts and check that the
+# processor took them: a firmware can lock the limits, in which case the
+# write fails or the old value reads back.
+set_limits_uw() {
+	for constraint in 1 0; do
+		file="${RAPL}/constraint_${constraint}_power_limit_uw"
+		echo "$1" > "${file}" 2> /dev/null || return 1
+		read -r now < "${file}"
+		[ "${now}" = "$1" ] || return 1
+	done
+	return 0
+}
+
+# Write back the limits found at the start; used on every way out.
+restore_limits() {
+	[ -n "${ORIG_LONG:-}" ] || return 0
+	echo "${ORIG_SHORT}" > "${RAPL}/constraint_1_power_limit_uw" 2> /dev/null
+	echo "${ORIG_LONG}" > "${RAPL}/constraint_0_power_limit_uw" 2> /dev/null
+}
+
+# One way out for the sweep: stop the load, stop the logging, put the
+# limits back.
+load_pid=
+stat_pid=
+cleanup() {
+	[ -n "${load_pid}" ] && kill "${load_pid}" 2> /dev/null
+	[ -n "${stat_pid}" ] && kill "${stat_pid}" 2> /dev/null
+	restore_limits
+}
+
+# Write summary.txt from steps.txt, power.txt, cooldown.txt and meta.txt
+# in directory $1.
+summarize() {
+	dir=$1
+	{
+		echo "directory: ${dir}"
+		[ -r "${dir}/meta.txt" ] && cat "${dir}/meta.txt"
+
+		# One line per step. Figures are taken from the system-wide rows
+		# ("-") of turbostat, placed in time by their timestamp:
+		# "end" values are averages over the last minute of the step,
+		# the drift compares that minute with the one before it (a drift
+		# near zero means the temperature had settled).
+		if [ -s "${dir}/steps.txt" ] && [ -s "${dir}/power.txt" ]; then
+			awk '
+				FNR == NR {
+					n++
+					for (i = 1; i <= NF; i++) { split($i, kv, "="); step[n, kv[1]] = kv[2] }
+					next
+				}
+				!hdr { for (i = 1; i <= NF; i++) col[$i] = i; if ("CPU" in col && "PkgTmp" in col) hdr = 1; else delete col; next }
+				$col["CPU"] == "-" {
+					ts = $col["Time_Of_Day_Seconds"] + 0
+					for (s = 1; s <= n; s++) {
+						if (ts < step[s, "start"] || ts > step[s, "end"]) continue
+						t = $col["PkgTmp"] + 0
+						if (t > tmax[s]) tmax[s] = t
+						smi[s] += $col["SMI"]
+						if (ts > step[s, "end"] - 60) {
+							tsum[s] += t; wsum[s] += $col["PkgWatt"]; fsum[s] += $col["Bzy_MHz"]; cnt[s]++
+						} else if (ts > step[s, "end"] - 120) {
+							psum[s] += t; pcnt[s]++
+						}
+					}
+				}
+				END {
+					printf "%-10s %-10s %-10s %-10s %-15s %-8s %-4s %s\n",
+						"limit_w", "measured_w", "temp_end_c", "temp_max_c", "drift_c_per_min", "busy_mhz", "smi", "note"
+					for (s = 1; s <= n; s++) {
+						note = (step[s, "stopped_hot"] == 1) ? "stopped: too hot" : "-"
+						if (!cnt[s]) { printf "%-10d (no readings)\n", step[s, "watts"]; continue }
+						drift = pcnt[s] ? sprintf("%+.1f", tsum[s] / cnt[s] - psum[s] / pcnt[s]) : "-"
+						printf "%-10d %-10.1f %-10.1f %-10d %-15s %-8d %-4d %s\n",
+							step[s, "watts"], wsum[s] / cnt[s], tsum[s] / cnt[s], tmax[s], drift, fsum[s] / cnt[s], smi[s], note
+					}
+				}' "${dir}/steps.txt" "${dir}/power.txt"
+		else
+			echo "sweep: no data"
+		fi
+
+		# Cool-down: package temperature N seconds after the load stopped.
+		if [ -s "${dir}/cooldown.txt" ]; then
+			# The readings are a little more than a second apart: each
+			# mark takes the first reading at or after it.
+			awk '
+				BEGIN { m = split("0 1 2 3 5 10 20 30 60 90", marks, " "); next_mark = 1; printf "cooldown_c:" }
+				NR == 1 { t0 = $1 }
+				{
+					while (next_mark <= m && $1 - t0 >= marks[next_mark]) {
+						printf " %ss=%d", marks[next_mark], $2
+						next_mark++
+					}
+				}
+				END { printf "\n" }' "${dir}/cooldown.txt"
+		fi
+
+		awk '
+			/^throttle_(start|end):/ {
+				for (i = 2; i <= NF; i++) { split($i, kv, "="); v[$1 kv[1]] = kv[2] }
+				seen[$1] = 1
+			}
+			END {
+				if (seen["throttle_start:"] && seen["throttle_end:"])
+					printf "thermal_throttle_events: core %d package %d\n",
+						v["throttle_end:core"] - v["throttle_start:core"],
+						v["throttle_end:package"] - v["throttle_start:package"]
+			}' "${dir}/meta.txt" 2> /dev/null
+	} > "${dir}/summary.txt"
+	cat "${dir}/summary.txt"
+}
+
+# The sweep itself; runs inside the transient unit.
+# $1 result directory, $2 seconds per step, then the limits in watts.
+run_sweep() {
+	dir=$1
+	step_seconds=$2
+	shift 2
+
+	SENSOR=$(coretemp_dir)
+	read -r ORIG_LONG < "${RAPL}/constraint_0_power_limit_uw"
+	read -r ORIG_SHORT < "${RAPL}/constraint_1_power_limit_uw"
+
+	# Signals are turned into a normal exit so that the EXIT trap runs
+	# for them too ("systemctl stop" sends SIGTERM).
+	trap cleanup EXIT
+	trap 'exit 1' INT TERM HUP
+
+	turbostat --quiet --interval 5 \
+		--show Time_Of_Day_Seconds,CPU,Busy%,Bzy_MHz,CoreTmp,PkgTmp,PkgWatt,SMI \
+		--out "${dir}/power.txt" 2> "${dir}/power.err" &
+	stat_pid=$!
+	sleep 3
+
+	# The first limit is in place before the load starts, so that the
+	# package never runs at the firmware's limit.
+	first=yes
+	stopped_hot=0
+	for watts in "$@"; do
+		if ! set_limits_uw $((watts * 1000000)); then
+			echo "error: could not set the limit to ${watts} W" >> "${dir}/meta.txt"
+			break
+		fi
+		if [ "${first}" = yes ]; then
+			first=no
+			# --cpu 0: one worker per online CPU. A single fixed method
+			# keeps the load, and so the power asked for, constant.
+			# stress-ng insists on a writable directory even for a
+			# stressor that writes no file; the unit starts in "/",
+			# which is read-only.
+			stress-ng --cpu 0 --cpu-method matrixprod --timeout 0 \
+				--temp-path "${dir}" > "${dir}/stress.log" 2>&1 &
+			load_pid=$!
+			sleep 2
+			if ! kill -0 "${load_pid}" 2> /dev/null; then
+				echo "error: the load generator did not start (see stress.log)" >> "${dir}/meta.txt"
+				load_pid=
+				break
+			fi
+		fi
+
+		start=$(date +%s)
+		elapsed=0
+		while [ "${elapsed}" -lt "${step_seconds}" ]; do
+			sleep 5
+			elapsed=$(($(date +%s) - start))
+			temp=$(package_temp_c)
+			if [ -n "${temp}" ] && [ "${temp}" -ge "${STOP_TEMP_C}" ]; then
+				stopped_hot=1
+				break
+			fi
+		done
+		echo "watts=${watts} start=${start} end=$(date +%s) stopped_hot=${stopped_hot}" >> "${dir}/steps.txt"
+		[ "${stopped_hot}" = 1 ] && break
+	done
+
+	# Cool-down: load off, one reading per second.
+	[ -n "${load_pid}" ] && kill "${load_pid}" 2> /dev/null
+	wait "${load_pid}" 2> /dev/null
+	load_pid=
+	if [ -n "${SENSOR}" ]; then
+		end=$(($(date +%s) + COOLDOWN_SECONDS))
+		while [ "$(date +%s)" -le "${end}" ]; do
+			echo "$(date +%s) $(package_temp_c)" >> "${dir}/cooldown.txt"
+			sleep 1
+		done
+	fi
+
+	kill "${stat_pid}" 2> /dev/null
+	wait "${stat_pid}" 2> /dev/null
+	stat_pid=
+	restore_limits
+	{
+		date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ'
+		read -r now_long < "${RAPL}/constraint_0_power_limit_uw"
+		read -r now_short < "${RAPL}/constraint_1_power_limit_uw"
+		echo "power_limits_after_uw: long=${now_long} short=${now_short}"
+		counts=$(throttle_counts)
+		[ -n "${counts}" ] && echo "throttle_end: ${counts}"
+	} >> "${dir}/meta.txt"
+	summarize "${dir}" > /dev/null
+}
+
+step_seconds=${STEP_SECONDS}
+label=
+
+case "${1:-}" in
+"" | -h | --help)
+	usage
+	exit 0
+	;;
+--status)
+	if systemctl is-active --quiet "${UNIT}"; then
+		echo "A sweep is running:"
+		systemctl show -p ActiveEnterTimestamp --value "${UNIT}" | sed 's/^/  started: /'
+	else
+		echo "No sweep is running."
+	fi
+	last=
+	for candidate in "${BASE}"/thermal-*; do
+		[ -d "${candidate}" ] && last=${candidate}
+	done
+	if [ -n "${last}" ]; then
+		echo "Latest result directory: ${last}"
+		if [ -r "${last}/summary.txt" ]; then
+			cat "${last}/summary.txt"
+		else
+			sed 's/^/  /' "${last}/meta.txt"
+			[ -r "${last}/steps.txt" ] && sed 's/^/  done: /' "${last}/steps.txt"
+			SENSOR=$(coretemp_dir)
+			temp=$(package_temp_c)
+			[ -n "${temp}" ] && echo "  package temperature now: ${temp} C"
+		fi
+	fi
+	exit 0
+	;;
+--summary)
+	[ -d "${2:-}" ] || die "--summary needs a result directory"
+	summarize "$2"
+	exit 0
+	;;
+--run)
+	# Internal: called by the transient unit.
+	shift
+	run_sweep "$@"
+	exit 0
+	;;
+esac
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--step)
+		step_seconds=${2:-}
+		shift 2 || die "--step needs a number of seconds"
+		;;
+	--label)
+		label=${2:-}
+		shift 2 || die "--label needs a word"
+		;;
+	-*)
+		die "unknown option '$1' (try --help)"
+		;;
+	*)
+		break
+		;;
+	esac
+done
+
+[ $# -gt 0 ] || die "give at least one power limit in watts (try --help)"
+[ "$(id -u)" = 0 ] || die "must run as root"
+echo "${step_seconds}" | grep -Eq '^[0-9]+$' || die "--step must be a number of seconds"
+[ "${step_seconds}" -ge 30 ] || die "--step must be at least 30 seconds"
+if [ -n "${label}" ]; then
+	echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' || die "the label may only contain letters, digits, '-' and '_'"
+fi
+for tool in stress-ng turbostat; do
+	command -v "${tool}" > /dev/null || die "${tool} is not installed"
+done
+for constraint in 0 1; do
+	[ -r "${RAPL}/constraint_${constraint}_power_limit_uw" ] ||
+		die "no package power limits on this machine (${RAPL})"
+done
+systemctl is-active --quiet "${UNIT}" && die "a sweep is already running (see --status)"
+systemctl is-active --quiet dawos-hwnoise && die "a hardware noise measurement is running: wait for it"
+
+read -r ORIG_LONG < "${RAPL}/constraint_0_power_limit_uw"
+read -r ORIG_SHORT < "${RAPL}/constraint_1_power_limit_uw"
+
+# The limits must rise from step to step and stay below the firmware's.
+previous=0
+for watts in "$@"; do
+	echo "${watts}" | grep -Eq '^[0-9]+$' || die "'${watts}' is not a number of watts"
+	[ "${watts}" -ge 20 ] || die "${watts} W is too low to be a useful limit"
+	[ "${watts}" -gt "${previous}" ] || die "give the limits in increasing order"
+	[ $((watts * 1000000)) -le "${ORIG_LONG}" ] ||
+		die "${watts} W is above the firmware's limit of $((ORIG_LONG / 1000000)) W"
+	previous=${watts}
+done
+
+# Try the first limit now, to say at once if the firmware has locked them.
+if ! set_limits_uw $(($1 * 1000000)); then
+	restore_limits
+	die "the power limits cannot be changed from the operating system (locked by the firmware?)"
+fi
+restore_limits
+
+SENSOR=$(coretemp_dir)
+[ -n "${SENSOR}" ] || echo "${PROG}: warning: no package temperature sensor, the sweep cannot stop itself when hot" >&2
+
+dir="${BASE}/thermal-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}"
+{
+	date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "limits_w: $*"
+	echo "step_seconds: ${step_seconds}"
+	echo "label: ${label:-none}"
+	echo "kernel: $(uname -srv)"
+	echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
+	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+	echo "power_limits_before_uw: long=${ORIG_LONG} short=${ORIG_SHORT}"
+	[ -n "${SENSOR}" ] && [ -r "${SENSOR}/temp1_crit" ] && echo "junction_limit_c: $(($(cat "${SENSOR}/temp1_crit") / 1000))"
+	echo "temperature_at_start_c: $(package_temp_c)"
+	counts=$(throttle_counts)
+	[ -n "${counts}" ] && echo "throttle_start: ${counts}"
+} > "${dir}/meta.txt"
+
+# The environment is passed on for the test overrides (DAWOS_*_DIR).
+systemd-run --quiet --unit="${UNIT}" --collect \
+	--description="dawOS thermal sweep" \
+	${DAWOS_RAPL_DIR:+--setenv=DAWOS_RAPL_DIR="${DAWOS_RAPL_DIR}"} \
+	${DAWOS_CORETEMP_DIR:+--setenv=DAWOS_CORETEMP_DIR="${DAWOS_CORETEMP_DIR}"} \
+	/bin/sh "${SELF}" --run "${dir}" "${step_seconds}" "$@" ||
+	die "could not start the sweep"
+
+total=$(($# * step_seconds + COOLDOWN_SECONDS))
+echo "Sweep started: limits $* W, ${step_seconds} s each, about $((total / 60 + 1)) minutes in all."
+echo "Results in ${dir}"
+echo "Follow it with: ${PROG} --status"
