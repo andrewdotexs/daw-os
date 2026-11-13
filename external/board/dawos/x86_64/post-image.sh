@@ -69,10 +69,18 @@ cmdline="root=PARTLABEL=${root_label} ${cmdline_common}"
 # meant for the installation medium only must therefore come after it.
 cmdline_installer="root=PARTLABEL=${installer_label} ${cmdline_common} dawos.installer"
 # Second menu entry of the installation medium, for bringing up a new
-# machine: every kernel message on the screen, from the very first ones
-# (earlycon=efifb draws on the firmware framebuffer before any driver is
-# up), and the screen as system console instead of the serial port.
-cmdline_installer_verbose="${cmdline_installer} ignore_loglevel earlycon=efifb console=tty0"
+# machine: the whole boot on the screen.
+#   earlycon=efifb  draws kernel messages straight on the firmware
+#                   framebuffer, before any driver is up;
+#   keep_bootcon    keeps that early console for the whole boot. Without
+#                   it the kernel switches it off as soon as the virtual
+#                   terminal exists, long before a graphics driver can
+#                   show anything: the screen then looks frozen;
+#   systemd.log_*   sends systemd's own messages through the kernel log,
+#                   so they are drawn by the same early console.
+# The framebuffer console still comes up when it can; the two then write
+# on the same screen. Ugly, but nothing is hidden.
+cmdline_installer_verbose="${cmdline_installer} ignore_loglevel earlycon=efifb keep_bootcon systemd.log_target=kmsg systemd.log_level=info"
 
 # --- Boot entries (Boot Loader Specification, type 1) --------------------------
 # Fill the tree of one EFI System Partition.
