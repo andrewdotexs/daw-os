@@ -1,0 +1,9 @@
+{
+  // Project-wide markdownlint configuration.
+  "default": true,
+  // Prose is written one paragraph per line; line length is not enforced.
+  "MD013": false,
+  // Emphasis with underscores, strong with asterisks.
+  "MD049": { "style": "underscore" },
+  "MD050": { "style": "asterisk" }
+}
