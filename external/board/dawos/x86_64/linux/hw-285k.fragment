@@ -8,6 +8,11 @@
 # Wired network: Intel 2.5 Gb controller (I225/I226 family).
 CONFIG_IGC=y
 
+# Intel Volume Management Device. When the firmware has VMD (Intel RST)
+# enabled, the NVMe disk sits behind it and is invisible without this
+# driver: the installer would then find no disk at all.
+CONFIG_VMD=y
+
 # Core temperatures and package power, read by the measurement tools.
 CONFIG_HWMON=y
 CONFIG_SENSORS_CORETEMP=y

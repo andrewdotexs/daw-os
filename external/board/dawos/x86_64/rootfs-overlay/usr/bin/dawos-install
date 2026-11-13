@@ -285,9 +285,10 @@ cmd_install() {
 	[ -f "${esp_src}/dawos/${version}/linux" ] || die "kernel not found in ${esp_src}"
 
 	# The installed system boots with the same command line as this one,
-	# except for the root label and the installer marker.
+	# except for the root label; the installer marker and whatever follows
+	# it (the options of the "verbose" entry) are cut off.
 	cmdline=$(sed -e "s/root=PARTLABEL=dawos-inst-/root=PARTLABEL=dawos-root-/" \
-		-e 's/ *dawos\.installer//' /proc/cmdline)
+		-e 's/ *dawos\.installer.*$//' /proc/cmdline)
 
 	mkdir -p "${WORK}"
 	write_definitions "${WORK}/repart.d" "${version}" "${root_src}"
@@ -345,8 +346,8 @@ cmd_install() {
 	cp "${esp_src}/EFI/BOOT/bootx64.efi" "${WORK}/esp/EFI/BOOT/bootx64.efi"
 	cp "${esp_src}/dawos/${version}/linux" "${WORK}/esp/dawos/${version}/linux"
 	cat > "${WORK}/esp/loader/loader.conf" <<LOADER
-timeout 2
-default dawos-*
+timeout 5
+default dawos-${version}.conf
 console-mode keep
 LOADER
 	cat > "${WORK}/esp/loader/entries/dawos-${version}.conf" <<ENTRY

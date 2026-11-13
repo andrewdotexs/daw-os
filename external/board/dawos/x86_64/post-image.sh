@@ -64,23 +64,30 @@ cmdline_common=$(read_cmdline \
 	"${board_dir}/cmdline/common.txt" \
 	"${board_dir}/cmdline/profile-generic.txt")
 cmdline="root=PARTLABEL=${root_label} ${cmdline_common}"
-# dawos-install derives the first form from the second by reversing
-# exactly these two differences.
+# dawos-install derives the first form from the second: it swaps the root
+# label back and cuts the line at the "dawos.installer" marker. Anything
+# meant for the installation medium only must therefore come after it.
 cmdline_installer="root=PARTLABEL=${installer_label} ${cmdline_common} dawos.installer"
+# Second menu entry of the installation medium, for bringing up a new
+# machine: every kernel message on the screen, from the very first ones
+# (earlycon=efifb draws on the firmware framebuffer before any driver is
+# up), and the screen as system console instead of the serial port.
+cmdline_installer_verbose="${cmdline_installer} ignore_loglevel earlycon=efifb console=tty0"
 
 # --- Boot entries (Boot Loader Specification, type 1) --------------------------
 # Fill the tree of one EFI System Partition.
-#   $1 = directory, $2 = menu title, $3 = kernel command line
+#   $1 = directory, $2 = menu title, $3 = kernel command line,
+#   $4 = command line of an extra "verbose" entry (optional)
 populate_esp() {
-	local dir=$1 title=$2 options=$3
+	local dir=$1 title=$2 options=$3 verbose_options=${4:-}
 
 	install -D -m 0644 "${images_dir}/bzImage" "${dir}/dawos/${version}/linux"
 
 	install -d -m 0755 "${dir}/loader/entries"
 	cat > "${dir}/loader/loader.conf" <<LOADER
 # dawOS (${variant}): show the menu briefly so an entry can be picked by hand.
-timeout 2
-default dawos-*
+timeout 5
+default dawos-${version}.conf
 console-mode keep
 LOADER
 
@@ -91,6 +98,16 @@ sort-key dawos
 linux   /dawos/${version}/linux
 options ${options}
 ENTRY
+
+	if [[ -n ${verbose_options} ]]; then
+		cat > "${dir}/loader/entries/dawos-${version}-verbose.conf" <<ENTRY
+title   ${title}, verbose (all kernel messages on screen)
+version ${version}
+sort-key dawos-verbose
+linux   /dawos/${version}/linux
+options ${verbose_options}
+ENTRY
+	fi
 }
 
 # systemd-boot itself is installed by Buildroot in efi-part/EFI.
@@ -103,7 +120,8 @@ populate_esp "${esp_dir}" "dawOS ${version} (${variant})" "${cmdline}"
 inst_dir=${images_dir}/efi-inst
 rm -rf "${inst_dir}"
 install -D -m 0644 "${esp_dir}/EFI/BOOT/bootx64.efi" "${inst_dir}/EFI/BOOT/bootx64.efi"
-populate_esp "${inst_dir}" "dawOS ${version} (${variant}) - installation medium" "${cmdline_installer}"
+populate_esp "${inst_dir}" "dawOS ${version} (${variant}) - installation medium" \
+	"${cmdline_installer}" "${cmdline_installer_verbose}"
 
 # Keep a copy next to the images: it is what the measurement reports cite.
 printf '%s\n' "${cmdline}" > "${images_dir}/cmdline.txt"
