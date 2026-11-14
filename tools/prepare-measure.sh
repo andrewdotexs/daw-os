@@ -3,8 +3,11 @@
 #
 # Usage: prepare-measure.sh [--port PORT] HOST
 #
-# Until step P0.5 two things are lost at every reboot of the machine, and
-# this script puts both back in one SSH session:
+# On a system installed before step P0.5a two things are lost at every
+# reboot of the machine, and this script puts both back in one SSH
+# session. From step P0.5a on /var is the "state" partition and the image
+# carries the current tools: the script then only says so, and copying
+# the tools to /run remains useful to try a newer version of one.
 #
 # 1. The measurement tools newer than the installed image: the current
 #    dawos-hwnoise, dawos-thermal-sweep and dawos-topology are copied to
@@ -63,7 +66,9 @@ measure=/var/lib/dawos/measure
 state_dev=/dev/disk/by-partlabel/state
 state_mnt=/run/dawos-state
 
-if grep -q " ${measure} " /proc/mounts; then
+if grep -q " /var ext4 " /proc/mounts; then
+	echo "Results directory: /var is the state partition on this system, nothing to do."
+elif grep -q " ${measure} " /proc/mounts; then
 	echo "Results directory: already on the state partition."
 elif systemctl is-active --quiet dawos-hwnoise || systemctl is-active --quiet dawos-thermal-sweep; then
 	echo "Results directory: left in memory, a measurement is running. Run this again when it has finished."

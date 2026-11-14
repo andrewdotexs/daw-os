@@ -9,5 +9,13 @@ rootfstype=erofs ro rootwait
 # /dev/console (systemd messages and the QEMU serial console).
 console=tty0 console=ttyS0,115200n8
 
+# Machine identity: the root is read-only and identical on every machine,
+# so /etc/machine-id cannot be stored there. systemd derives it from the
+# UUID the firmware reports (SMBIOS), which is stable across reboots,
+# reinstallations and updates. Without this parameter a new random
+# identity would be drawn at every boot, and the journal on the "state"
+# partition would start a new directory each time.
+systemd.machine_id=firmware
+
 # Keep the boot log readable; raise it when debugging.
 loglevel=4

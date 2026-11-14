@@ -94,5 +94,7 @@ BR2_TARGET_ROOTFS_EROFS_LZ4HC=y
 
 # --- Host tools used by post-image.sh ---------------------------------------
 BR2_PACKAGE_HOST_GENIMAGE=y
+# mke2fs, for the empty "state" file system of the QEMU disk.
+BR2_PACKAGE_HOST_E2FSPROGS=y
 BR2_PACKAGE_HOST_DOSFSTOOLS=y
 BR2_PACKAGE_HOST_MTOOLS=y

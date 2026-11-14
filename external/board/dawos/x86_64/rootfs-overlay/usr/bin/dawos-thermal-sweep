@@ -25,8 +25,8 @@
 #   the package reaches STOP_TEMP_C.
 #
 # Like dawos-hwnoise it runs as a transient systemd unit, survives the end
-# of the SSH session, writes to /var/lib/dawos/measure/ (in memory until
-# step P0.5: fetch the results before rebooting) and finds itself through
+# of the SSH session, writes to /var/lib/dawos/measure/ (persistent on an
+# installed system from step P0.5a on) and finds itself through
 # its own path, so that a copy in /run works on an installed machine.
 
 set -u

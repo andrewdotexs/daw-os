@@ -474,3 +474,16 @@ Il dettaglio è in [P0.4a-installazione.md](fasi/fase-0/P0.4a-installazione.md).
 | 3.5, `rtla hwnoise` | Soglia e copertura non specificate | Risoluzione di 1 µs e copertura del 75 % del tempo per core, verificate nei sorgenti della 6.18.63. |
 
 Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.md).
+
+## 8. Modifiche emerse dal passo P0.5
+
+| Sezione | Era scritto | Com'è ora |
+| --- | --- | --- |
+| P0.5 | Un solo passo | Diviso in cinque sotto-passi: **P0.5a** stato persistente, **P0.5b** radice verificata, **P0.5c** immagine di avvio firmata e Secure Boot, **P0.5d** slot A/B e ritorno automatico, **P0.5e** aggiornamenti dal PC di sviluppo e installazione finale sul 285K. Proposta: una sola installazione dalla chiavetta, alla fine. |
+| M-04, `/var` | «`/var` su `state`» | Montata da un generatore nostro, che cerca la partizione per nome sul disco della radice; in memoria sul supporto d'installazione. ADR 0013. |
+| M-04, `machine-id` | «`machine-id` conservato» | Derivato dall'identificativo SMBIOS con `systemd.machine_id=firmware`: non c'è nulla da conservare. ADR 0013. |
+| M-04, file di `/etc` modificabili | Collegamenti verso `/var/lib/dawos/etc/` | Rinviati a quando un componente ne avrà bisogno. |
+| P0.5, punto 3, `ukify` | «Se il pacchetto systemd di Buildroot non fornisce `ukify` per l'host _(da verificare)_» | Verificato: Buildroot 2026.02.3 non lo offre. Servirà un pacchetto nostro nel sotto-passo P0.5c. |
+| Rapporto di avvio | Cinque campi | Nuovo campo `var=state`, `tmpfs` o `none`; le prove automatiche pretendono `var=state`. |
+
+Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).

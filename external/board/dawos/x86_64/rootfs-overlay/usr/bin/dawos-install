@@ -113,7 +113,8 @@ refusals() {
 		if grep -q "^/dev/${dev} " /proc/mounts; then
 			echo "/dev/${dev} is mounted"
 		fi
-		if grep -q "^/dev/${dev} " /proc/swaps; then
+		# No /proc/swaps on a kernel built without swap support, as ours.
+		if [ -r /proc/swaps ] && grep -q "^/dev/${dev} " /proc/swaps; then
 			echo "/dev/${dev} is used as swap"
 		fi
 		if [ -d "${path}/holders" ] && [ -n "$(ls -A "${path}/holders")" ]; then
@@ -363,7 +364,10 @@ ENTRY
 	lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,PARTLABEL "/dev/${target}" >> "${LOG}"
 	mkdir -p "${WORK}/state"
 	mount -t ext4 "${state_dev}" "${WORK}/state"
-	cp "${LOG}" "${WORK}/state/install.log"
+	# The partition is /var of the installed system: the record goes
+	# where dawOS keeps its own state.
+	mkdir -p "${WORK}/state/lib/dawos"
+	cp "${LOG}" "${WORK}/state/lib/dawos/install.log"
 	umount "${WORK}/state"
 	sync
 

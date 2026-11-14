@@ -157,6 +157,10 @@ qemu_args=(
 	-cpu "${cpu_model}"
 	-smp "${cpus}"
 	-m "${memory}"
+	# A fixed firmware UUID: dawOS derives its machine identity from it
+	# (systemd.machine_id=firmware). QEMU's default is all zeros, which
+	# systemd rejects, falling back to a new random identity per boot.
+	-uuid 0d6f1a52-9c3e-4b7d-8a41-5e2c7f903b16
 	# UEFI firmware: read-only code, private variable store.
 	-drive "if=pflash,format=raw,unit=0,readonly=on,file=${ovmf_code}"
 	-drive "if=pflash,format=raw,unit=1,file=${ovmf_vars}"
