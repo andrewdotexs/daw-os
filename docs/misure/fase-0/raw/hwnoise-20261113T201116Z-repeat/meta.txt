@@ -1,0 +1,12 @@
+started_utc: 2026-11-13T20:11:16Z
+duration: 15m
+label: repeat
+kernel: Linux 6.18.63-dawos #4 SMP PREEMPT_RT Fri Nov 13 18:12:52 CET 2026
+cmdline: root=PARTLABEL=dawos-root-0.0.1 rootfstype=erofs ro rootwait console=tty0 console=ttyS0,115200n8 loglevel=4
+bios: 2301 10/04/2025
+image: df0a10a9fd82
+junction_limit_c: 105
+throttle_start: core=0 package=0
+rtla_exit_status: 0
+finished_utc: 2026-11-13T20:26:23Z
+throttle_end: core=0 package=18

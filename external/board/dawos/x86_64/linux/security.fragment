@@ -1,0 +1,18 @@
+# dawOS kernel fragment: security modules.
+#
+# The architecture default configuration enables SELinux, which is not
+# part of the dawOS design and does nothing without a policy. The design
+# relies on Landlock (unprivileged sandboxing: plugin hosts, the agent)
+# plus the systemd sandboxing options.
+
+# CONFIG_SECURITY_SELINUX is not set
+CONFIG_SECURITY=y
+CONFIG_SECURITY_LANDLOCK=y
+# Yama restricts ptrace between unrelated processes of the same user:
+# a plugin host must not be able to inspect another one.
+CONFIG_SECURITY_YAMA=y
+CONFIG_DEFAULT_SECURITY_DAC=y
+CONFIG_LSM="landlock,yama"
+
+# Kernel lockdown (CONFIG_SECURITY_LOCKDOWN_LSM) belongs with Secure Boot
+# and signed modules: step P0.5.

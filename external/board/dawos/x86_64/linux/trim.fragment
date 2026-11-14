@@ -1,0 +1,37 @@
+# dawOS kernel fragment: things the architecture default configuration
+# switches on and dawOS does not want. Each line is here for a reason seen
+# on the reference machine or stated in the binding decisions.
+
+# --- Drivers with nothing to drive -------------------------------------------
+# The board has no HD-audio codec (audio goes through USB) and the HDMI
+# audio of the unused NVIDIA card is not wanted: at boot this driver spends
+# about three seconds probing codecs that are not there, then logs errors.
+# CONFIG_SND_HDA_INTEL is not set
+# Intel Management Engine interface: no use for it, one less driver with
+# its own interrupts and firmware conversations.
+# CONFIG_INTEL_MEI is not set
+# Kernel log over the network and AGP graphics.
+# CONFIG_NETCONSOLE is not set
+# CONFIG_AGP is not set
+
+# --- Memory and power policy (binding decisions) -----------------------------
+# No swap, ever: remove the mechanism instead of merely not configuring it.
+# CONFIG_SWAP is not set
+# Hibernation needs swap and has no place on a machine with a read-only,
+# verified root.
+# CONFIG_HIBERNATION is not set
+# Where the kernel is allowed to manage PCIe link power saving, keep the
+# links fully on: waking a link adds latency. On the reference machine the
+# firmware keeps this control to itself, so the firmware setting counts.
+CONFIG_PCIEASPM_PERFORMANCE=y
+
+# --- Debug checks on hot paths -----------------------------------------------
+# Extra consistency checks on every kernel entry and exit, on FPU state
+# handling and on stack usage: useful to kernel developers, pure overhead
+# and measurement noise here. (Lock debugging lives in debug.fragment, to
+# be used on purpose and never during measurements.)
+# CONFIG_DEBUG_ENTRY is not set
+# CONFIG_X86_DEBUG_FPU is not set
+# CONFIG_DEBUG_STACK_USAGE is not set
+# CONFIG_DEBUG_DEVRES is not set
+# CONFIG_DEBUG_BOOT_PARAMS is not set

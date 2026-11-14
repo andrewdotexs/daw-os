@@ -1,0 +1,19 @@
+config BR2_PACKAGE_TURBOSTAT
+	bool "turbostat"
+	depends on BR2_x86_64
+	depends on BR2_LINUX_KERNEL
+	depends on BR2_USE_MMU # libcap
+	select BR2_PACKAGE_LIBCAP
+	help
+	  turbostat reports processor frequency, idle-state residency,
+	  temperature, power and, most important for dawOS, the count
+	  of system management interrupts (SMI) raised by the firmware.
+
+	  It is built from the sources of the kernel selected in
+	  Buildroot (tools/power/x86/turbostat), so it always matches
+	  the running kernel. Buildroot's own linux-tools package does
+	  not offer it (checked on 2026.02.3).
+
+comment "turbostat needs a Linux kernel to be built"
+	depends on BR2_x86_64
+	depends on !BR2_LINUX_KERNEL

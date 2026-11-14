@@ -59,6 +59,42 @@ Conseguenze:
 - **ASPM**: il registro dice `igc: can't disable ASPM; OS doesn't have ASPM control`. Il firmware tiene per sé la gestione del risparmio energetico dei collegamenti PCIe. Per il tempo reale va spento dal firmware, voce già prevista nella lista del passo P0.4b.
 - **Nessun avviso `W^X`** sull'hardware reale, come previsto nel passo P0.3: era un artefatto della macchina virtuale.
 
+## Topologia dei processori (13 novembre 2026)
+
+Dal rapporto archiviato in [`docs/misure/fase-0/topologia-285k.txt`](../../misure/fase-0/topologia-285k.txt), prodotto da `dawos-topology` sul 285K.
+
+| CPU | Tipo | Cache L2 condivisa con | Frequenza massima | Nota |
+| --- | --- | --- | --- | --- |
+| 0 | P-core | nessuno | 5,6 GHz | CPU di avvio: non può essere `nohz_full`. |
+| 1 | P-core | nessuno | 5,6 GHz | |
+| 2 | P-core | nessuno | **5,8 GHz** | Uno dei due core «favoriti». |
+| 3–6 | P-core | nessuno | 5,6 GHz | |
+| 7 | P-core | nessuno | **5,8 GHz** | L'altro core «favorito». |
+| 8–11 | E-core | 8–11 | 4,6 GHz | Primo cluster. |
+| 12–15 | E-core | 12–15 | 4,6 GHz | Secondo cluster. |
+| 16–19 | E-core | 16–19 | 4,6 GHz | Terzo cluster. |
+| 20–23 | E-core | 20–23 | 4,6 GHz | Quarto cluster. |
+
+Conferme e scoperte:
+
+- **La numerazione è quella ipotizzata nel documento 0**: P-core sulle CPU 0–7, E-core sulle 8–23, quattro cluster da quattro E-core con la cache L2 in comune. Nessun thread aggiuntivo per core.
+- **Disposizione fisica sul chip**, ricavata dagli identificativi dei core: `P P | E1 E2 | P P P P | E3 E4 | P P`. Le CPU 0–1 stanno a un'estremità, le CPU 2–5 al centro tra i due gruppi di E-core, le CPU 6–7 all'altra estremità. Conta per il calore: core vicini si scaldano a vicenda.
+- **Due candidati per il dominio live**, da confrontare nel passo P0.6: le CPU 4–7 (ipotesi del documento 0; comprendono un core favorito ma sono due coppie separate) oppure le CPU 2–5 (quattro core contigui al centro, con l'altro core favorito).
+- **Nessun driver per gli stati di riposo** (`cpuidle current_driver: none`): al kernel manca `CONFIG_INTEL_IDLE`. Oggi i core a riposo usano solo l'istruzione di arresto, senza stati profondi. Per l'esperimento E-01 (polling, C1, C1E) il driver va aggiunto, e nel firmware gli stati di riposo vanno lasciati al sistema operativo.
+- **Frequenza**: `intel_pstate` in modalità attiva, regolatore `powersave`, preferenza `balance_performance`, turbo acceso. È la configurazione di partenza; quella a frequenza fissa sui core live arriva con il passo P0.6.
+- **Orologio**: `tsc`, come deve essere.
+- **Rimappaggio degli interrupt attivo**: tutte le linee portano il prefisso `IR-`.
+- **Esiste una porta seriale** (`ttyS0`, interrupt 4, con traffico): la console di sistema ci sta scrivendo. Una console seriale vera è lenta: nel profilo di avvio del 285K converrà toglierla dalla riga di comando, e sapere se sulla scheda c'è il connettore per usarla in diagnosi.
+
+## Bus USB (13 novembre 2026)
+
+| Bus | Controller | Cosa c'è collegato |
+| --- | --- | --- |
+| 1 e 2 | Processore (Thunderbolt 4), `00:0d.0` | **Nulla.** |
+| 3 e 4 | Chipset, `80:14.0` | Tastiera e mouse, il controller dei LED, il modulo audio ROG Strix Hive II (senza driver), il Bluetooth (senza driver). |
+
+Il controller del processore è libero: è il posto naturale per la Scarlett, da sola (rischio K-07). Resta **da verificare nella Fase 1** a quale controller arrivino davvero i segnali USB 2.0 delle porte Thunderbolt: su molte schede le linee USB 2.0 di quelle porte vanno al chipset. Si vede collegando la Scarlett e guardando `lsusb -t`.
+
 ## Osservazioni
 
 **Il firmware consegna la macchina con x2APIC bloccato.** Il kernel deve quindi avere il rimappaggio degli interrupt (`CONFIG_IRQ_REMAP`), e nel firmware deve restare attivo VT-d. Senza, il kernel va in panico a 0,16 secondi dall'avvio. Scoperto al primo avvio reale; i dettagli sono nella guida del passo P0.4a.
@@ -68,6 +104,27 @@ Conseguenze:
 **La RAM lavora a 4800 MT/s**, cioè al profilo di base e non a un profilo accelerato. Per il tempo reale è la scelta giusta: la lista del firmware nel passo P0.4 chiede proprio un profilo di memoria stabile. Non va cambiato.
 
 **Mini-ITX con 285K e RTX 5080.** Lo spazio ridotto rende calore e rumore delle ventole più critici del previsto: pesa sul rischio K-04 e rende più importanti le misure dell'esperimento E-01 e la verifica di cosa fa la RTX senza driver (K-14).
+
+**Raffreddamento: 85 °C già con 115 W** (curva termica del passo P0.4b, 13 novembre 2026, contenitore chiuso, firmware com'era). Temperatura del package a carico continuo: 66 °C a 60 W, 75 °C a 80 W, 81 °C a 100 W, 88 °C a 125 W, 97 °C a 150 W. Il contatto tra processore e dissipatore è nella norma (circa 0,27 °C per watt) e il radiatore lavora (circa 0,09 °C per watt); il problema è il punto di partenza: **il liquido è a 44 °C già a riposo**, con il processore che dissipa meno di 4 W. Cause da distinguere: aria calda nel contenitore, oppure ventole e pompa tenute al minimo dal firmware. Rischio K-15.
+
+**Dati termici e di potenza letti dalla macchina** (13 novembre 2026): limite di giunzione 105 °C, ma la protezione termica interviene attorno a 97–100 °C; limiti di potenza impostati dal firmware PL1 = PL2 = 250 W con finestra di 56 secondi, **modificabili dal sistema operativo** (il firmware non li blocca); package a riposo 3,7 W e 45 °C, senza driver per gli stati di riposo profondi. Il dissipatore è un **be quiet! Pure Loop 2 FX da 280 mm** (due ventole da 140 mm, pompa PWM, distributore per ventole e luci). Il 13 novembre 2026 aveva **una sola ventola montata su due**: la seconda va montata. Restano da annotare i collegamenti di pompa e ventole e il verso dell'aria.
+
+**Dopo l'intervento del 14 novembre 2026** (RTX 5080 tolta, seconda ventola montata): package a riposo 32 °C e 50 W alla presa; a carico continuo 53 °C a 60 W, 65 °C a 100 W, 79 °C a 150 W, 87 °C a 175 W, senza interventi della protezione termica. I valori del 13 novembre qui sopra descrivono la macchina com'era prima.
+
+**Firmware, stato al 14 novembre 2026**: limite di potenza PL1 = PL2 = **160 W** (prima 250 W); ASPM, Wi-Fi, Bluetooth e _HD Audio_ disattivati; profilo di memoria di base (X.M.P. disattivato, 4800 MT/s); pompa a 5378 giri al minuto; ventola del processore sul profilo _Standard_, al 100 % da 70 °C. Voci cambiate rispetto a prima: Wi-Fi, Bluetooth e _HD Audio_ da attivi a disattivati; i due limiti di potenza da automatici a 160; l'ASPM era già disattivato. Verifica a carico continuo al limite: 83,3 °C con la stanza a 24 °C.
+
+**Contenitore: da rack 2U modificato (D-22, orientamento del 14 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno), il PC in 2U e 1U libera sopra il PC. Il contenitore scelto è un 2U da 19 pollici per schede micro-ATX (UNYKAch UK2129, 381 × 431 × 90 mm, 4,8 kg), da modificare: un'apertura nel coperchio, il radiatore **appoggiato all'esterno** sopra il coperchio, nell'unità libera, e le ventole da 140 mm avvitate dall'interno attraverso il coperchio. Così restano il dissipatore attuale e le ventole grandi e lente. Punti da verificare a modifica fatta:
+
+- sopra il radiatore restano circa 17 mm prima dell'apparecchio o del pannello successivo: l'aria deve poter uscire dal fronte e dal retro di quell'unità;
+- l'aria calda esce verso l'alto: il PC sarà l'apparecchio più in alto del rack, e il rack resta aperto davanti e dietro durante l'uso (confermato dall'utente);
+- l'alimentatore è in formato **SFX**: serve una staffa di adattamento da SFX ad ATX, e i suoi cavi, pensati per contenitori piccoli, possono risultare corti in un contenitore profondo 431 mm. Alto 63,5 mm, lascia circa 20 mm liberi per la sua ventola;
+- il coperchio resta legato alla scheda madre dai tubi del dissipatore.
+
+Un contenitore diverso cambia il raffreddamento: curva termica, limite di potenza e misura di conferma vanno rifatti nel contenitore definitivo, **prima** dei passi P0.6 e P0.7.
+
+**Ambiente d'uso**: stanza climatizzata, al massimo 24–25 °C tutto l'anno (indicato dall'utente il 13 novembre 2026). È la temperatura di riferimento per il limite di potenza.
+
+**Potenza alla presa** (Tapo P115, 13 novembre 2026): 2 W da spento, **77 W a sistema fermo**, e sotto carico 72 W + 1,16 × potenza del package (141 W a 60 W, 245 W a 150 W). Dei 77 W a riposo il processore ne spiega meno di 5: il resto è scheda madre, memoria, disco, pompa, ventole e RTX 5080 senza driver, quest'ultima plausibilmente per 30–45 W _(stima)_. È il primo numero per il rischio K-14. Deciso il 13 novembre 2026 di **togliere la RTX 5080 dal contenitore**: dawOS non la usa.
 
 **Il modulo audio ROG Strix Hive II è un dispositivo USB.** Se resta collegato, il kernel lo vedrà come una seconda scheda audio USB. Nel passo P0.4 va deciso se scollegarlo; nel frattempo conta come dispositivo da tenere lontano dal controller della Scarlett.
 

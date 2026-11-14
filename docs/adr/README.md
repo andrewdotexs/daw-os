@@ -15,6 +15,7 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0009](0009-riposo-dei-core-live.md) | Stato di riposo dei core live | D-09, K-04 | In sospeso fino a P0.6 |
 | [0010](0010-licenza-gplv3-eccezione-plugin.md) | GPLv3 con eccezione per i plugin | M-11 | Accettata, parere legale da ottenere |
 | [0011](0011-r04-carico-sintetico.md) | R-04 con carico sintetico di riferimento | D-16, K-02 | Accettata |
+| [0012](0012-main-e-tag-a-ogni-passo.md) | Unione in `main` e tag alla chiusura di ogni passo | Proposta dell'utente | Accettata |
 
 ## Modello
 

@@ -450,3 +450,27 @@ Il dettaglio è in [P0.3-kernel-real-time.md](fasi/fase-0/P0.3-kernel-real-time.
 | P0.4, rete | DHCP | Indirizzo statico da `local/network-285k.conf`, legato al driver della scheda. |
 
 Il dettaglio è in [P0.4a-installazione.md](fasi/fase-0/P0.4a-installazione.md).
+
+## 7. Modifiche emerse dalla misura di partenza di P0.4b
+
+| Sezione | Era scritto | Com'è ora |
+| --- | --- | --- |
+| Rischi | K-01 … K-14 | Nuovo rischio **K-15 — Dissipazione termica del 285K**: nella misura di partenza il package è arrivato a 101 °C con 120–160 W. Gravità alta finché non è risolto; riguarda le fasi 0 (P0.4b, P0.6, P0.7) e 3 (R-04). Mitigazioni in discussione: limite di potenza fisso nel firmware, raffreddamento. |
+| P0.4, impostazioni del firmware | Dieci voci da cambiare prima della seconda misura | Ridotte a quelle con una ragione indipendente dagli SMI (ASPM, Wi-Fi e Bluetooth, HD Audio), visto che la misura di partenza ne ha contati zero. Approvato il 13 novembre 2026. |
+| K-15, mitigazione | In discussione | Limite di potenza fisso nel firmware, con il raffreddamento come complemento. Approvato il 13 novembre 2026. L'analisi dei dati grezzi mostra un salto improvviso di 21 °C: prima si cerca la causa del salto, poi si fissa il limite. |
+| P0.4, passi | Misura di partenza, firmware, seconda misura, misura lunga | Aggiunte, tra la misura di partenza e il firmware, una prova diagnostica con la potenza letta alla presa e una curva termica con carico continuo (`dawos-thermal-sweep`). |
+| K-15, diagnosi | Salto improvviso di causa ignota | Curva termica a carico continuo: contatto tra processore e dissipatore nella norma, radiatore nella norma, ma liquido a 44 °C già a riposo. Com'è oggi la macchina regge 85 °C con circa 115 W. Il «salto» delle prime misure era un effetto del metodo. Prossimo intervento: aria nel contenitore e regolazione di ventole e pompa. |
+| K-14 | Consumo della RTX 5080 da misurare | Primo dato: 77 W alla presa a sistema fermo, di cui meno di 5 del processore; 2 W da spento. La RTX senza driver è plausibilmente la voce più grande e scalda l'aria del contenitore: il rischio sale da basso a **medio** e si lega a K-15. |
+| K-14, K-15 | RTX 5080 lasciata nel contenitore senza driver; dissipatore non descritto | La RTX 5080 viene tolta dal contenitore (decisione dell'utente, 13 novembre 2026). Il dissipatore è un be quiet! Pure Loop 2 FX da 280 mm con una sola ventola montata su due: si monta la seconda. Se le fasi successive prevedessero un uso della scheda grafica, K-14 si riapre. |
+| K-15, esito | Aperto | Mitigato il 14 novembre 2026: con la RTX tolta e due ventole sul radiatore la curva è 35 °C + 0,30 °C per watt, 79 °C a 150 W, nessun intervento della protezione termica. Resta da fissare il limite di potenza nel firmware (proposto: 150 W). |
+| K-15, limite di potenza | Proposto: 150 W | Fissato nel firmware a **160 W** il 14 novembre 2026 (scelta dell'utente, stanza a 24 °C; circa 83,5 °C a 25 °C per interpolazione). Misura di conferma superata: 75 °C al massimo, nessun intervento della protezione termica. |
+| Ventole | Non trattate | Il profilo del firmware porta le ventole al 100 % da 70 °C. Profilo più silenzioso da definire dopo le misure della Fase 0. |
+| Decisioni aperte | D-10 … D-21 | Nuova **D-22 — Contenitore da rack**: orientamento dell'utente del 14 novembre 2026 per un 2U modificato con il radiatore all'esterno, sopra il coperchio. A modifica fatta vanno rifatte curva termica, verifica del limite e misura di conferma, prima dei passi P0.6 e P0.7. Non blocca la chiusura di P0.4b né il passo P0.5. |
+| P0.4b, esito | In corso | **Superato** il 15 novembre 2026: quattro ore su 24 core senza buchi di almeno 1 µs e senza SMI. K-01 non si è presentato su questa scheda madre. |
+| K-14, esito | Medio | Chiuso: la RTX 5080 non è più nella macchina. Costava 27 W alla presa a riposo. |
+| P0.6, `dawos-tune` | Isolamento, stati di riposo, frequenza | In più: i limiti di potenza del package si possono scrivere dal sistema operativo (verificato). Da decidere in P0.6 se `dawos-tune` debba riscriverli all'avvio oltre al valore fissato nel firmware, e a quale frequenza massima fissare i core perché il limite non debba intervenire. |
+| Rischi, K-04 | Stati di riposo e latenza | In più: gli eventi termici del package generano interrupt su **tutti** i core (26–49 per core nella misura di partenza). Da tenere a zero nella campagna di P0.7. |
+| P0.4, criterio | Rumore ≤ 15 µs e zero SMI | Invariato; in più il riepilogo segnala a parte la temperatura da 95 °C e gli interventi della protezione termica. |
+| 3.5, `rtla hwnoise` | Soglia e copertura non specificate | Risoluzione di 1 µs e copertura del 75 % del tempo per core, verificate nei sorgenti della 6.18.63. |
+
+Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.md).
