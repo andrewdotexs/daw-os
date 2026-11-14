@@ -116,8 +116,8 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 **Contenitore: da rack 2U modificato (D-22, orientamento del 14 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno), il PC in 2U e 1U libera sopra il PC. Il contenitore scelto è un 2U da 19 pollici per schede micro-ATX (UNYKAch UK2129, 381 × 431 × 90 mm, 4,8 kg), da modificare: un'apertura nel coperchio, il radiatore **appoggiato all'esterno** sopra il coperchio, nell'unità libera, e le ventole da 140 mm avvitate dall'interno attraverso il coperchio. Così restano il dissipatore attuale e le ventole grandi e lente. Punti da verificare a modifica fatta:
 
 - sopra il radiatore restano circa 17 mm prima dell'apparecchio o del pannello successivo: l'aria deve poter uscire dal fronte e dal retro di quell'unità;
-- l'aria calda esce verso ciò che sta sopra: conviene che il PC sia l'apparecchio più in alto;
-- l'alimentatore: formato, e se la sua ventola resta contro il coperchio;
+- l'aria calda esce verso l'alto: il PC sarà l'apparecchio più in alto del rack, e il rack resta aperto davanti e dietro durante l'uso (confermato dall'utente);
+- l'alimentatore è in formato **SFX**: serve una staffa di adattamento da SFX ad ATX, e i suoi cavi, pensati per contenitori piccoli, possono risultare corti in un contenitore profondo 431 mm. Alto 63,5 mm, lascia circa 20 mm liberi per la sua ventola;
 - il coperchio resta legato alla scheda madre dai tubi del dissipatore.
 
 Un contenitore diverso cambia il raffreddamento: curva termica, limite di potenza e misura di conferma vanno rifatti nel contenitore definitivo, **prima** dei passi P0.6 e P0.7.
