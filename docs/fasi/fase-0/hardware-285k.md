@@ -111,7 +111,9 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Dopo l'intervento del 14 novembre 2026** (RTX 5080 tolta, seconda ventola montata): package a riposo 32 °C e 50 W alla presa; a carico continuo 53 °C a 60 W, 65 °C a 100 W, 79 °C a 150 W, 87 °C a 175 W, senza interventi della protezione termica. I valori del 13 novembre qui sopra descrivono la macchina com'era prima.
 
-**Firmware, stato al 14 novembre 2026**: limite di potenza PL1 = PL2 = **160 W** (prima 250 W); ASPM, Wi-Fi, Bluetooth e _HD Audio_ disattivati; profilo di memoria di base (X.M.P. disattivato, 4800 MT/s); pompa a 5378 giri al minuto; ventola del processore sul profilo _Standard_, al 100 % da 70 °C. L'elenco esatto delle voci cambiate, con i valori precedenti, è da riportare qui.
+**Firmware, stato al 14 novembre 2026**: limite di potenza PL1 = PL2 = **160 W** (prima 250 W); ASPM, Wi-Fi, Bluetooth e _HD Audio_ disattivati; profilo di memoria di base (X.M.P. disattivato, 4800 MT/s); pompa a 5378 giri al minuto; ventola del processore sul profilo _Standard_, al 100 % da 70 °C. Voci cambiate rispetto a prima: Wi-Fi, Bluetooth e _HD Audio_ da attivi a disattivati; i due limiti di potenza da automatici a 160; l'ASPM era già disattivato. Verifica a carico continuo al limite: 83,3 °C con la stanza a 24 °C.
+
+**Contenitore: decisione aperta (D-22).** Il 14 novembre 2026 l'utente ha proposto di passare a un contenitore da rack a 19 pollici, adatto a uno studio di registrazione. Un contenitore diverso cambia il raffreddamento: curva termica e limite di potenza vanno rimisurati nel contenitore definitivo, **prima** della campagna di 24 ore del passo P0.7. Un 2U non ospita il radiatore da 280 mm e accetta solo ventole da 80 mm.
 
 **Ambiente d'uso**: stanza climatizzata, al massimo 24–25 °C tutto l'anno (indicato dall'utente il 13 novembre 2026). È la temperatura di riferimento per il limite di potenza.
 
