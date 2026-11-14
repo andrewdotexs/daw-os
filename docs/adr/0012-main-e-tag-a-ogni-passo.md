@@ -106,6 +106,7 @@ git checkout claude/affectionate-faraday-5le4g4
 | `p0.2` | `2548337` | Stesso codice di `p0.1`, più la documentazione dell'esito. |
 | `p0.3` | `bd95317` | Kernel real-time, come provato con KVM. |
 | `p0.4a` | `a04f94e` | Sistema come installato sul 285K. |
+| `p0.4b` | Testa del ramo alla chiusura | Primo passo chiuso con la procedura in corso d'opera: il commit è quello che contiene i risultati della misura lunga. |
 
 ## Quando si riapre
 
