@@ -113,7 +113,14 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Firmware, stato al 14 novembre 2026**: limite di potenza PL1 = PL2 = **160 W** (prima 250 W); ASPM, Wi-Fi, Bluetooth e _HD Audio_ disattivati; profilo di memoria di base (X.M.P. disattivato, 4800 MT/s); pompa a 5378 giri al minuto; ventola del processore sul profilo _Standard_, al 100 % da 70 °C. Voci cambiate rispetto a prima: Wi-Fi, Bluetooth e _HD Audio_ da attivi a disattivati; i due limiti di potenza da automatici a 160; l'ASPM era già disattivato. Verifica a carico continuo al limite: 83,3 °C con la stanza a 24 °C.
 
-**Contenitore: decisione aperta (D-22).** Il 14 novembre 2026 l'utente ha proposto di passare a un contenitore da rack a 19 pollici, adatto a uno studio di registrazione. Un contenitore diverso cambia il raffreddamento: curva termica e limite di potenza vanno rimisurati nel contenitore definitivo, **prima** della campagna di 24 ore del passo P0.7. Un 2U non ospita il radiatore da 280 mm e accetta solo ventole da 80 mm.
+**Contenitore: da rack 2U modificato (D-22, orientamento del 14 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno), il PC in 2U e 1U libera sopra il PC. Il contenitore scelto è un 2U da 19 pollici per schede micro-ATX (UNYKAch UK2129, 381 × 431 × 90 mm, 4,8 kg), da modificare: un'apertura nel coperchio, il radiatore **appoggiato all'esterno** sopra il coperchio, nell'unità libera, e le ventole da 140 mm avvitate dall'interno attraverso il coperchio. Così restano il dissipatore attuale e le ventole grandi e lente. Punti da verificare a modifica fatta:
+
+- sopra il radiatore restano circa 17 mm prima dell'apparecchio o del pannello successivo: l'aria deve poter uscire dal fronte e dal retro di quell'unità;
+- l'aria calda esce verso ciò che sta sopra: conviene che il PC sia l'apparecchio più in alto;
+- l'alimentatore: formato, e se la sua ventola resta contro il coperchio;
+- il coperchio resta legato alla scheda madre dai tubi del dissipatore.
+
+Un contenitore diverso cambia il raffreddamento: curva termica, limite di potenza e misura di conferma vanno rifatti nel contenitore definitivo, **prima** dei passi P0.6 e P0.7.
 
 **Ambiente d'uso**: stanza climatizzata, al massimo 24–25 °C tutto l'anno (indicato dall'utente il 13 novembre 2026). È la temperatura di riferimento per il limite di potenza.
 
