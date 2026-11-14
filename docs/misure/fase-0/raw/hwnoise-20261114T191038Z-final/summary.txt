@@ -1,0 +1,28 @@
+directory: /var/lib/dawos/measure/hwnoise-20261114T191038Z-final
+started_utc: 2026-11-14T19:10:38Z
+duration: 4h
+label: final
+kernel: Linux 6.18.63-dawos #4 SMP PREEMPT_RT Fri Nov 13 18:12:52 CET 2026
+cmdline: root=PARTLABEL=dawos-root-0.0.1 rootfstype=erofs ro rootwait console=tty0 console=ttyS0,115200n8 loglevel=4
+bios: 2301 10/04/2025
+image: df0a10a9fd82
+junction_limit_c: 105
+throttle_start: core=0 package=0
+rtla_exit_status: 0
+finished_utc: 2026-11-14T23:10:47Z
+throttle_end: core=0 package=0
+cpus_measured: 24
+max_single_noise_us: 0 (no gap of 1 us or more on any cpu)
+hardware_noise_events: 0
+nmi_events: 0
+smi_count: 0
+smi_samples: 1440
+package_temperature_max_c: 75
+package_temperature_avg_c: 66.4
+samples_at_or_above_95_c: 0 of 1440
+package_temperature_largest_step_c: +13 (from 54, sample 498 of 1440, epoch 1794685932)
+busy_frequency_mhz: avg 4857 min 4819
+package_power_w: avg 109.2 max 134.5
+thermal_throttle_events: core 0 package 0
+verdict: PASS (max single noise <= 15 us, no SMI)
+thermal: ok (package stayed below 95 C)
