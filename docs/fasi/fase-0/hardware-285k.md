@@ -109,6 +109,8 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Dati termici e di potenza letti dalla macchina** (13 novembre 2026): limite di giunzione 105 °C, ma la protezione termica interviene attorno a 97–100 °C; limiti di potenza impostati dal firmware PL1 = PL2 = 250 W con finestra di 56 secondi, **modificabili dal sistema operativo** (il firmware non li blocca); package a riposo 3,7 W e 45 °C, senza driver per gli stati di riposo profondi. Il dissipatore è un **be quiet! Pure Loop 2 FX da 280 mm** (due ventole da 140 mm, pompa PWM, distributore per ventole e luci). Il 13 novembre 2026 aveva **una sola ventola montata su due**: la seconda va montata. Restano da annotare i collegamenti di pompa e ventole e il verso dell'aria.
 
+**Dopo l'intervento del 14 novembre 2026** (RTX 5080 tolta, seconda ventola montata): package a riposo 32 °C e 50 W alla presa; a carico continuo 53 °C a 60 W, 65 °C a 100 W, 79 °C a 150 W, 87 °C a 175 W, senza interventi della protezione termica. I valori del 13 novembre qui sopra descrivono la macchina com'era prima.
+
 **Ambiente d'uso**: stanza climatizzata, al massimo 24–25 °C tutto l'anno (indicato dall'utente il 13 novembre 2026). È la temperatura di riferimento per il limite di potenza.
 
 **Potenza alla presa** (Tapo P115, 13 novembre 2026): 2 W da spento, **77 W a sistema fermo**, e sotto carico 72 W + 1,16 × potenza del package (141 W a 60 W, 245 W a 150 W). Dei 77 W a riposo il processore ne spiega meno di 5: il resto è scheda madre, memoria, disco, pompa, ventole e RTX 5080 senza driver, quest'ultima plausibilmente per 30–45 W _(stima)_. È il primo numero per il rischio K-14. Deciso il 13 novembre 2026 di **togliere la RTX 5080 dal contenitore**: dawOS non la usa.
