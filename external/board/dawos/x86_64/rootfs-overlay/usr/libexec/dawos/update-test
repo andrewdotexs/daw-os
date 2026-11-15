@@ -10,6 +10,7 @@
 #   DAWOS-UPDATE-TEST result=refused     the server answered, the update
 #                                        was not accepted
 #   DAWOS-UPDATE-TEST result=unreachable the server never answered
+#   DAWOS-UPDATE-TEST result=timeout     the update did not end in time
 
 set -u
 
@@ -38,7 +39,32 @@ if [ "${reachable}" != yes ]; then
 	exit 0
 fi
 
-if dawos-update --server "${url}"; then
+# The update runs in the background with a time limit, so that this test
+# always ends with a result line, whatever happens to the update.
+limit=180
+status_file=/run/dawos-update-test.status
+rm -f "${status_file}"
+(
+	dawos-update --server "${url}"
+	echo $? > "${status_file}"
+) &
+update_pid=$!
+waited=0
+while [ ! -s "${status_file}" ] && [ "${waited}" -lt "${limit}" ]; do
+	sleep 1
+	waited=$((waited + 1))
+done
+
+if [ ! -s "${status_file}" ]; then
+	kill "${update_pid}" 2> /dev/null
+	echo "DAWOS-UPDATE-TEST result=timeout after_s=${waited}"
+	echo "dawOS: processes at the time of the timeout:"
+	pgrep -a -f 'sysupdate|systemd-pull|gpg|dawos-update'
+	exit 0
+fi
+
+read -r status < "${status_file}"
+if [ "${status}" = 0 ]; then
 	echo "DAWOS-UPDATE-TEST result=installed"
 	systemctl --no-block reboot
 else

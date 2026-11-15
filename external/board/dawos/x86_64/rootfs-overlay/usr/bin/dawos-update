@@ -123,22 +123,26 @@ if [ "${action}" = list ]; then
 	exit $?
 fi
 
+# The unified kernel images present before and after tell whether
+# anything was installed. (Comparing lists, rather than reading the output
+# of systemd-sysupdate through a pipe: a pipe stays open, and its reader
+# waits, for as long as any process started along the way keeps it.)
+installed_images() {
+	esp=$(bootctl --print-esp-path 2> /dev/null) || esp=/boot
+	for image in "${esp}"/EFI/Linux/dawos_*.efi; do
+		[ -e "${image}" ] && echo "${image##*/}"
+	done
+}
+
 echo "${PROG}: looking for a newer image at ${server}"
-# The output is shown as it comes and kept, to tell afterwards whether
-# anything was installed; the exit status travels through a file because
-# a pipeline only reports the status of its last command.
-{
-	"${SYSUPDATE}" --definitions="${WORK}/sysupdate.d" update
-	echo $? > "${WORK}/status"
-} 2>&1 | tee "${WORK}/update.log"
-read -r status < "${WORK}/status" || status=1
-if [ "${status}" != 0 ]; then
+before=$(installed_images)
+if ! "${SYSUPDATE}" --definitions="${WORK}/sysupdate.d" update; then
 	echo "${PROG}: NOT UPDATED. The image on the server was refused, or could not be fetched; the installed system is unchanged." >&2
 	exit 1
 fi
 
 show_installed
-if grep -q 'No update needed' "${WORK}/update.log"; then
+if [ "$(installed_images)" = "${before}" ]; then
 	echo "${PROG}: already up to date: the server offers nothing newer than what is installed."
 	exit 0
 fi

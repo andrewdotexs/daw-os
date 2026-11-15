@@ -503,6 +503,7 @@ echo "run-qemu: waiting up to ${timeout_s}s for the boot report (accel=${accel},
 report=
 # Kernel message of dm-verity when a block does not match the hash tree.
 corruption=
+started=${SECONDS}
 deadline=$((SECONDS + timeout_s))
 while ((SECONDS < deadline)); do
 	# -a: the log contains terminal escape sequences from the firmware.
@@ -535,6 +536,14 @@ if [[ ${update_test} == tampered ]]; then
 	tr -d '\r' < "${log}" | grep -a -o -m 1 'gpg: BAD signature.*' || true
 	if [[ ${corruption} != 'DAWOS-UPDATE-TEST result=refused' ]]; then
 		echo "FAIL: the update was not refused" >&2
+		# Enough to tell a machine that hung from a test that gave up.
+		if kill -0 "${qemu_pid}" 2> /dev/null; then
+			echo "(waited $((SECONDS - started)) s; the machine was still running)" >&2
+		else
+			echo "(waited $((SECONDS - started)) s; QEMU had exited)" >&2
+		fi
+		echo "last lines of the console:" >&2
+		tr -d '\r' < "${log}" | sed 's/\x1b\[[0-9;?]*[A-Za-z]//g' | grep -a -v '^[[:space:]]*$' | tail -n 25 >&2
 		echo "(console log: ${log})" >&2
 		exit 1
 	fi
