@@ -1,0 +1,12 @@
+# dawOS: react to a boot that did not pass its checks while its boot entry
+# was still under assessment (see /usr/libexec/dawos/boot-failed).
+# Started through OnFailure= of the checks, never on its own.
+[Unit]
+Description=dawOS reaction to a failed boot assessment
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/dawos/boot-failed
+StandardOutput=journal+console
+StandardError=journal+console

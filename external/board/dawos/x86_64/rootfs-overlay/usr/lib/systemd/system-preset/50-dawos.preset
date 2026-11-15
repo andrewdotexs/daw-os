@@ -1,6 +1,13 @@
 # dawOS presets: units shipped by the platform that must be enabled.
 enable dawos-boot-report.service
 
+# Boot assessment: a boot is good, and its boot entry is kept, only if no
+# unit ended in failed state (see /usr/libexec/dawos/boot-failed).
+enable systemd-boot-check-no-failures.service
+# Fails a boot on purpose when asked to by a marker file, to test the
+# fallback to the previous image (dev variant; inert otherwise).
+enable dawos-fail-boot-test.service
+
 # The cpupower package ships a unit that applies frequency settings at
 # boot. CPU frequency and idle policy belong to one place only, the dawOS
 # tuning step (P0.6): keep this one off.

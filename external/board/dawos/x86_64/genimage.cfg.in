@@ -74,6 +74,71 @@ image disk.img {
 	}
 }
 
+# --- A/B test image -----------------------------------------------------------
+# A disk as it is after an update: the current system image in slot A,
+# already marked good, and a newer one in slot B, still under assessment.
+# "make qemu-ab-test" boots it, once as it is and once with slot B damaged,
+# to see the boot loader fall back to slot A. The "newer" image is this
+# same build under the version "@VERSION@.abtest".
+
+image efi-ab.vfat {
+	vfat {
+		extraargs = "-n ESP"
+
+		file EFI {
+			image = "efi-ab/EFI"
+		}
+
+		file loader {
+			image = "efi-ab/loader"
+		}
+	}
+
+	size = 256M
+}
+
+image ab-test.img {
+	hdimage {
+		partition-table-type = "gpt"
+	}
+
+	partition esp {
+		image = "efi-ab.vfat"
+		partition-type-uuid = U
+		offset = 1M
+		bootable = true
+	}
+
+	partition "dawos-root-@VERSION@" {
+		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
+		image = "rootfs.erofs"
+		size = 128M
+	}
+
+	partition "dawos-verity-@VERSION@" {
+		partition-type-uuid = 2c7357ed-ebd2-46d9-aec1-23d437ec2bf5
+		image = "rootfs.verity"
+		size = 16M
+	}
+
+	partition "dawos-root-@VERSION@.abtest" {
+		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
+		image = "rootfs.erofs"
+		size = 128M
+	}
+
+	partition "dawos-verity-@VERSION@.abtest" {
+		partition-type-uuid = 2c7357ed-ebd2-46d9-aec1-23d437ec2bf5
+		image = "rootfs.verity"
+		size = 16M
+	}
+
+	partition state {
+		partition-type-uuid = L
+		image = "state.ext4"
+	}
+}
+
 # --- Installation medium ------------------------------------------------------
 
 image installer-esp.vfat {

@@ -1,0 +1,34 @@
+#!/bin/sh
+# dawOS (dev variant): fail on purpose, to exercise the boot assessment.
+#
+# A system image that boots but is faulty must give way to the previous
+# one by itself. To try that on a real machine without building a broken
+# image, name the image that must "fail" in a marker file:
+#
+#   mkdir -p /var/lib/dawos/test
+#   echo dawos-root-<version> > /var/lib/dawos/test/fail-boot-on
+#
+# with the GPT name of its root partition, as shown by the boot report
+# (rootpart=...). At every boot of that image this unit then ends in
+# failed state, the boot is not marked good, and
+# /usr/libexec/dawos/boot-failed reboots until the boot loader falls back
+# to the other image. Any other image ignores the marker, so the machine
+# ends up running and reachable. Remove the file to end the test.
+
+set -u
+
+marker=/var/lib/dawos/test/fail-boot-on
+
+# shellcheck source=/dev/null
+. /etc/os-release
+[ "${VARIANT_ID:-}" = dev ] || exit 0
+[ -r "${marker}" ] || exit 0
+
+read -r wanted < "${marker}" || exit 0
+running=$(sed -n 's/.*PARTLABEL=\(dawos-root-[A-Za-z0-9._+-]*\).*/\1/p' /proc/cmdline)
+
+if [ -n "${wanted}" ] && [ "${wanted}" = "${running}" ]; then
+	echo "dawOS: failing this boot on purpose: ${marker} names ${running}."
+	exit 1
+fi
+exit 0

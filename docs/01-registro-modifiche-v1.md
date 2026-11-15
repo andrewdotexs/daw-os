@@ -493,6 +493,11 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | P0.5, punto 6, Secure Boot in QEMU | «Generare chiavi di sviluppo, iscriverle nelle variabili di OVMF» | Fatto con `virt-fw-vars` e la variante di OVMF che applica Secure Boot; prova automatica `make qemu-tamper-test WHAT=uki`. |
 | Decisioni aperte | D-10 … D-22 | Nuove **D-23** (chiave delle immagini di rilascio) e **D-24** (blocco del kernel e vincolo sui moduli). Proposta: rinviare; non bloccano la Fase 0. |
 | Rapporto di avvio | Sei campi | Nuovo campo `secureboot=0` o `1`. |
+| P0.5, prova di ritorno | «Con uno slot B valido e lo slot A manomesso, dopo tre tentativi systemd-boot avvia lo slot B» | Provata in QEMU con un'immagine a due slot (`make qemu-ab-test`), nei due versi che contano: immagine nuova danneggiata, e immagine nuova che parte ma fallisce un controllo. ADR 0016. |
+| P0.5, criterio di avvio riuscito | Non specificato | Nessuna unità in errore, per ora; un avvio in prova che non lo rispetta riavvia la macchina da sé (`dawos-boot-failed`). ADR 0016. |
+| M-05, watchdog | Non trattato | Punto aperto: un kernel bloccato senza errore non fa scattare il ritorno. Da misurare sul 285K prima di accenderlo, per via degli SMI. |
+| M-04, `/var` | Stato persistente | In più: `/var` è condivisa tra i due slot, quindi il ritorno non riporta indietro i dati. Regola di compatibilità registrata nell'ADR 0016. |
+| Rapporto di avvio | Sette campi | Nuovo campo `rootpart=`, l'etichetta della partizione radice in uso. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
 Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).

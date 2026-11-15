@@ -1,0 +1,63 @@
+#!/bin/sh
+# dawOS: a boot under assessment did not pass its checks.
+#
+# How a new system image earns its place (boot assessment):
+# - its unified kernel image is installed as dawos_<version>+3.efi: the
+#   "+3" is a counter of attempts left, kept by systemd-boot in the file
+#   name itself and decremented at every start (+2-1, +1-2, +0-3);
+# - a boot that reaches boot-complete.target is "blessed":
+#   systemd-bless-boot removes the counter and the entry is good for ever;
+# - an entry that runs out of attempts is bad: systemd-boot then prefers
+#   any other entry, that is, the previous system image in the other slot.
+#
+# This script covers the case in between: the system came up, but a check
+# failed (a unit in failed state), so the boot will not be blessed. Left
+# alone, the machine would just sit there with the new, faulty image until
+# someone reboots it. Rebooting here uses up the attempts and brings the
+# previous image back without anyone at the keyboard.
+#
+# It reboots only while that can still change something. systemd-boot
+# counts down before starting an entry, so the third and last attempt
+# already shows "+0-3": it must still end in a reboot, for the boot loader
+# to see the entry as bad and pick another one. If the bad entry is then
+# started again all the same, because there is nothing else to boot, the
+# name reads "+0-4" and beyond: at that point a machine that stays up can
+# at least be inspected.
+
+set -u
+
+# Path of the boot entry we were started from, with its counter, as
+# systemd-boot left it in a UEFI variable: four bytes of attributes, then
+# UTF-16 text.
+var=/sys/firmware/efi/efivars/LoaderBootCountPath-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f
+
+echo "dawOS: this boot did not pass its checks. Units in failed state:"
+systemctl list-units --state=failed --no-legend --plain | sed 's/^/  /'
+
+if [ ! -r "${var}" ]; then
+	echo "dawOS: the boot entry is not under assessment: nothing to do."
+	exit 0
+fi
+
+# Attempts given to a new image: the "+3" in the name it is installed
+# under (post-image.sh, dawos-install).
+attempts=3
+
+# Dropping the bytes below 32 removes the attribute bytes and the zero
+# half of every UTF-16 character. (An octal range, because the tr of
+# busybox does not know character classes such as [:print:].)
+entry=$(tr -d '\000-\037' < "${var}")
+# The name ends in +<left>-<done>.efi once systemd-boot has counted.
+tries_done=$(printf '%s\n' "${entry}" | sed -n 's/.*+[0-9][0-9]*-\([0-9][0-9]*\)\.efi$/\1/p')
+
+if [ -z "${tries_done}" ]; then
+	echo "dawOS: cannot read the attempt counter of '${entry}': staying up."
+	exit 0
+fi
+if [ "${tries_done}" -gt "${attempts}" ]; then
+	echo "dawOS: '${entry}' is out of attempts and there is nothing better to boot: staying up for inspection."
+	exit 0
+fi
+
+echo "dawOS: attempt ${tries_done} of ${attempts} for '${entry}' failed: rebooting."
+systemctl --no-block reboot

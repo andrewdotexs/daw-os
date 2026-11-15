@@ -1,0 +1,17 @@
+# dawOS (dev variant): fail on purpose, to exercise the boot assessment.
+#
+# Does nothing unless the marker file exists; see
+# /usr/libexec/dawos/fail-boot-test for how to use it.
+[Unit]
+Description=dawOS deliberate boot failure (test of the fallback to the previous image)
+ConditionPathExists=/var/lib/dawos/test/fail-boot-on
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/dawos/fail-boot-test
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

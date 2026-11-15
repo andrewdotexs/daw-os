@@ -2,7 +2,7 @@
 # dawOS boot report: one line with what an automated boot test needs.
 #
 # Output format (single line, space-separated key=value pairs):
-#   DAWOS-BOOT-REPORT version=<v> variant=<v> kernel=<r> realtime=<0|1> secureboot=<0|1> verity=<0|1> var=<state|tmpfs|none> failed_units=<n> uptime_s=<s>
+#   DAWOS-BOOT-REPORT version=<v> variant=<v> kernel=<r> realtime=<0|1> secureboot=<0|1> verity=<0|1> rootpart=<label> var=<state|tmpfs|none> failed_units=<n> uptime_s=<s>
 
 set -eu
 
@@ -47,6 +47,13 @@ for dm in /sys/block/dm-*; do
 	fi
 done
 
+# GPT name of the root partition in use, as on the kernel command line:
+# it carries the version, so it tells which system image, and therefore
+# which slot, is running.
+rootpart=$(sed -n 's/.*PARTLABEL=\(dawos-root-[A-Za-z0-9._+-]*\).*/\1/p' /proc/cmdline)
+[ -n "${rootpart}" ] ||
+	rootpart=$(sed -n 's/.*PARTLABEL=\(dawos-inst-[A-Za-z0-9._+-]*\).*/\1/p' /proc/cmdline)
+
 # Where /var lives: "state" when it is the persistent partition, "tmpfs"
 # when it is in memory (installation medium, image without a state
 # partition), "none" when nothing is mounted there, which is a fault.
@@ -63,5 +70,5 @@ done < /proc/mounts
 # The authoritative figure is "systemd-analyze", run by hand.
 read -r uptime _ < /proc/uptime
 
-printf 'DAWOS-BOOT-REPORT version=%s variant=%s kernel=%s realtime=%s secureboot=%s verity=%s var=%s failed_units=%s uptime_s=%s\n' \
-	"${IMAGE_VERSION:-unknown}" "${VARIANT_ID:-unknown}" "$(uname -r)" "${realtime}" "${secureboot}" "${verity}" "${var}" "${failed}" "${uptime}"
+printf 'DAWOS-BOOT-REPORT version=%s variant=%s kernel=%s realtime=%s secureboot=%s verity=%s rootpart=%s var=%s failed_units=%s uptime_s=%s\n' \
+	"${IMAGE_VERSION:-unknown}" "${VARIANT_ID:-unknown}" "$(uname -r)" "${realtime}" "${secureboot}" "${verity}" "${rootpart:-unknown}" "${var}" "${failed}" "${uptime}"

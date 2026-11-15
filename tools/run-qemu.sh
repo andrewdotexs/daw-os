@@ -27,6 +27,7 @@ target_size=932G
 installer=no
 new_target=no
 tamper=
+ab_test=
 secure_boot=yes
 mode=interactive
 memory=2G
@@ -48,6 +49,14 @@ Usage: ${0##*/} [options]
                     the kernel; or 'uki' (the dm-verity root hash inside
                     the signed unified kernel image), caught by the
                     firmware
+  --ab-test WHAT    with --test: boot the image that holds two system
+                    images, the current one in slot A and a newer one in
+                    slot B (output/images/ab-test.img). WHAT is 'good': the
+                    newer image must be the one that boots; 'bad': slot B
+                    is damaged first; 'unit': the newer image boots but a
+                    unit fails in it. In the last two cases, after three
+                    failed attempts the boot loader must fall back to
+                    slot A
   --no-secure-boot  start the firmware with Secure Boot off
   --image PATH      disk image to boot (default: output/images/disk.img)
   --installer       boot the installation medium (USB) with a blank NVMe
@@ -76,6 +85,10 @@ while (($# > 0)); do
 		;;
 	--tamper)
 		tamper=${2:?--tamper needs 'root', 'verity' or 'uki'}
+		shift
+		;;
+	--ab-test)
+		ab_test=${2:?--ab-test needs 'good', 'bad' or 'unit'}
 		shift
 		;;
 	--no-secure-boot) secure_boot=no ;;
@@ -130,38 +143,28 @@ fi
 
 [[ -f ${image} ]] || die "image not found: ${image} (run 'make image' or, for --target, the rehearsal first)"
 
-# --- Tamper test: one changed byte in a copy of the image --------------------
-if [[ -n ${tamper} ]]; then
-	[[ ${mode} == test ]] || die "--tamper needs --test"
-	[[ ${tamper} == root || ${tamper} == verity || ${tamper} == uki ]] ||
-		die "--tamper takes 'root', 'verity' or 'uki'"
+# --- Changing one byte of an image --------------------------------------------
+# tamper_image IMAGE WHAT PARTITION [ROOT_HASH]
+#   PARTITION  GPT name of the partition to change; a trailing '*' takes
+#              the first partition whose name starts with what precedes it
+#   WHAT       root    one byte in the first block of a root file system
+#                      (its superblock), certainly read while booting;
+#              verity  one byte in the first block of a hash tree (its top
+#                      level, on the path of every check). Block 0 of the
+#                      hash partition is veritysetup's own superblock,
+#                      unused by the kernel, hence the offset of one block;
+#              uki     one digit of the dm-verity root hash ROOT_HASH
+#                      inside the signed unified kernel image, on the EFI
+#                      System Partition. The image is found by searching
+#                      the partition for the hash.
+tamper_image() {
 	command -v python3 > /dev/null || die "python3 not found"
-
-	tampered=${state_dir}/tampered.img
-	cp --sparse=always "${image}" "${tampered}"
-
-	# What gets changed, always in the copy:
-	#   root    one byte in the first block of the root file system (its
-	#           superblock), certainly read while booting;
-	#   verity  one byte in the first block of the hash tree (its top
-	#           level, on the path of every check). Block 0 of the hash
-	#           partition is veritysetup's own superblock, unused by the
-	#           kernel, hence the offset of one block;
-	#   uki     one digit of the dm-verity root hash inside the signed
-	#           unified kernel image, on the EFI System Partition. The
-	#           image is found by searching the partition for the hash.
-	root_hash=
-	if [[ ${tamper} == uki ]]; then
-		[[ ${secure_boot} == yes ]] || die "--tamper uki makes no sense with --no-secure-boot"
-		[[ -f ${repo_dir}/output/images/rootfs.roothash ]] || die "root hash not found (run 'make image' first)"
-		root_hash=$(tr -d '[:space:]' < "${repo_dir}/output/images/rootfs.roothash")
-	fi
-	python3 - "${tampered}" "${tamper}" "${root_hash}" <<'PYTHON' || die "could not tamper with ${tampered}"
+	python3 - "$@" <<'PYTHON' || die "could not tamper with $1"
 import struct
 import sys
 
-path, what, root_hash = sys.argv[1:4]
-prefix = {"root": "dawos-root-", "verity": "dawos-verity-", "uki": "esp"}[what]
+path, what, selector = sys.argv[1:4]
+root_hash = sys.argv[4] if len(sys.argv) > 4 else ""
 with open(path, "r+b") as image:
     # GPT header in sector 1: signature, then at offset 72 the first
     # sector of the entry array, the number of entries and their size.
@@ -175,11 +178,11 @@ with open(path, "r+b") as image:
         image.seek(entries_lba * 512 + index * size)
         entry = image.read(size)
         name = entry[56:128].decode("utf-16-le").rstrip("\x00")
-        if name.startswith(prefix):
+        if name == selector or (selector.endswith("*") and name.startswith(selector[:-1])):
             first, last = struct.unpack_from("<QQ", entry, 32)
             break
     if first is None:
-        sys.exit("no partition named " + prefix + "* in " + path)
+        sys.exit("no partition named " + selector + " in " + path)
     if what == "uki":
         # The command line is plain text inside the unified image.
         image.seek(first * 512)
@@ -202,7 +205,94 @@ with open(path, "r+b") as image:
 print("run-qemu: tampered copy %s: byte %d of the image (partition %s) changed from %d to %d"
       % (path, offset, name, old, new))
 PYTHON
+}
+
+# --- Tamper test: one changed byte in a copy of the image --------------------
+if [[ -n ${tamper} ]]; then
+	[[ ${mode} == test ]] || die "--tamper needs --test"
+	[[ -z ${ab_test} ]] || die "--tamper and --ab-test cannot be combined"
+	tampered=${state_dir}/tampered.img
+	cp --sparse=always "${image}" "${tampered}"
+	case ${tamper} in
+	root) tamper_image "${tampered}" root 'dawos-root-*' ;;
+	verity) tamper_image "${tampered}" verity 'dawos-verity-*' ;;
+	uki)
+		[[ ${secure_boot} == yes ]] || die "--tamper uki makes no sense with --no-secure-boot"
+		[[ -f ${repo_dir}/output/images/rootfs.roothash ]] || die "root hash not found (run 'make image' first)"
+		tamper_image "${tampered}" uki esp "$(tr -d '[:space:]' < "${repo_dir}/output/images/rootfs.roothash")"
+		;;
+	*) die "--tamper takes 'root', 'verity' or 'uki'" ;;
+	esac
 	image=${tampered}
+fi
+
+# --- A/B test: two system images, the newer one good, damaged or faulty --------
+# Which boot report the test waits for. A machine that goes through
+# several boots prints several: the one that counts names the expected
+# root partition.
+report_pattern='DAWOS-BOOT-REPORT .*'
+if [[ -n ${ab_test} ]]; then
+	[[ ${mode} == test ]] || die "--ab-test needs --test"
+	ab_source=${repo_dir}/output/images/ab-test.img
+	[[ -f ${ab_source} ]] || die "image not found: ${ab_source} (run 'make image' first)"
+	version=$(tr -d '[:space:]' < "${repo_dir}/VERSION")
+	slot_a="dawos-root-${version}"
+	slot_b="dawos-root-${version}.abtest"
+	image=${state_dir}/ab.img
+	cp --sparse=always "${ab_source}" "${image}"
+	case ${ab_test} in
+	good)
+		# The newer image, in slot B, is the one that must boot.
+		expected_slot=${slot_b}
+		;;
+	bad)
+		# Slot B is damaged: every attempt to boot it ends in a dm-verity
+		# panic and a reboot. The one that completes must be slot A.
+		tamper_image "${image}" root "${slot_b}"
+		expected_slot=${slot_a}
+		;;
+	unit)
+		# The image in slot B boots, but one unit fails in it: the marker
+		# file of dawos-fail-boot-test.service is put on the "state"
+		# partition. The partition is copied out, changed with debugfs
+		# and copied back.
+		debugfs=${repo_dir}/output/host/sbin/debugfs
+		[[ -x ${debugfs} ]] || debugfs=$(command -v debugfs) || die "debugfs not found (run 'make image' first)"
+		read -r state_start state_sectors < <(python3 - "${image}" <<'PYTHON'
+import struct
+import sys
+
+with open(sys.argv[1], "rb") as image:
+    image.seek(512)
+    header = image.read(92)
+    entries_lba, count, size = struct.unpack_from("<QII", header, 72)
+    for index in range(count):
+        image.seek(entries_lba * 512 + index * size)
+        entry = image.read(size)
+        if entry[56:128].decode("utf-16-le").rstrip("\x00") == "state":
+            first, last = struct.unpack_from("<QQ", entry, 32)
+            print(first, last - first + 1)
+PYTHON
+		)
+		[[ ${state_start:-} =~ ^[0-9]+$ ]] || die "no state partition in ${image}"
+		state_copy=${state_dir}/ab-state.ext4
+		dd if="${image}" of="${state_copy}" bs=512 skip="${state_start}" count="${state_sectors}" status=none
+		printf '%s\n' "${slot_b}" > "${state_dir}/fail-boot-on"
+		"${debugfs}" -w "${state_copy}" > "${state_dir}/debugfs.log" 2>&1 <<DEBUGFS || die "debugfs failed, see ${state_dir}/debugfs.log"
+mkdir lib
+mkdir lib/dawos
+mkdir lib/dawos/test
+write ${state_dir}/fail-boot-on lib/dawos/test/fail-boot-on
+DEBUGFS
+		dd if="${state_copy}" of="${image}" bs=512 seek="${state_start}" conv=notrunc status=none
+		rm -f "${state_copy}" "${state_dir}/fail-boot-on"
+		echo "run-qemu: marker written: the image on ${slot_b} will fail a unit at every boot"
+		expected_slot=${slot_a}
+		;;
+	*) die "--ab-test takes 'good', 'bad' or 'unit'" ;;
+	esac
+	expectations+=("rootpart=${expected_slot}")
+	report_pattern="DAWOS-BOOT-REPORT .*rootpart=${expected_slot} .*"
 fi
 
 # --- UEFI firmware ----------------------------------------------------------
@@ -321,13 +411,19 @@ fi
 log=${state_dir}/serial.log
 : > "${log}"
 
+# A guest that reboots normally ends the test: nothing in a plain boot
+# test should reboot. The A/B test is the exception, its whole point being
+# a machine that restarts by itself until it finds an image that works.
+reboot_option=(-no-reboot)
+[[ -z ${ab_test} ]] || reboot_option=()
+
 # QEMU's own messages go to a side file: on success they are just the
 # notice that we stopped it; on failure they are printed below.
 qemu_err=${state_dir}/qemu.err
 # -snapshot: the guest is stopped abruptly once the report is seen, so
 # its writes (boot loader random seed on the ESP) must not reach the image.
 qemu-system-x86_64 "${qemu_args[@]}" \
-	-display none -monitor none -no-reboot -snapshot \
+	-display none -monitor none "${reboot_option[@]}" -snapshot \
 	-serial "file:${log}" 2> "${qemu_err}" &
 qemu_pid=$!
 
@@ -345,7 +441,7 @@ corruption=
 deadline=$((SECONDS + timeout_s))
 while ((SECONDS < deadline)); do
 	# -a: the log contains terminal escape sequences from the firmware.
-	report=$(grep -a -m 1 -o 'DAWOS-BOOT-REPORT .*' "${log}" | tr -d '\r' || true)
+	report=$(grep -a -m 1 -o "${report_pattern}" "${log}" | tr -d '\r' || true)
 	[[ -n ${report} ]] && break
 	if [[ ${tamper} == uki ]]; then
 		# The firmware refuses to load the image; systemd-boot reports it.
@@ -409,6 +505,33 @@ done
 if ((failed)); then
 	echo "(console log: ${log})" >&2
 	exit 1
+fi
+
+if [[ ${ab_test} == bad || ${ab_test} == unit ]]; then
+	# Every attempt on slot B must have ended badly, in one of two ways:
+	# a kernel panic followed by a reboot (dm-verity for the damaged
+	# image; any other panic counts as well, an attempt lost is an
+	# attempt lost), or a reboot ordered by dawos-boot-failed after a
+	# failed check. Three attempts in all, then slot A.
+	panics=$(grep -a -c 'Kernel panic - not syncing' "${log}" || true)
+	verity_panics=$(grep -a -c 'Kernel panic - not syncing: dm-verity device corrupted' "${log}" || true)
+	ordered=$(grep -a -c -E 'dawOS: attempt [0-9]+ of [0-9]+ .* failed: rebooting' "${log}" || true)
+	echo "failed attempts on slot B: $((panics + ordered)) (kernel panics: ${panics}, of which dm-verity: ${verity_panics}; reboots by dawos-boot-failed: ${ordered})"
+	if ((panics + ordered != 3)); then
+		echo "FAIL: expected exactly 3 failed attempts on slot B before the fallback" >&2
+		echo "(console log: ${log})" >&2
+		exit 1
+	fi
+	if [[ ${ab_test} == bad ]] && ((verity_panics == 0)); then
+		echo "FAIL: the damaged image was never caught by dm-verity" >&2
+		exit 1
+	fi
+	if [[ ${ab_test} == unit ]] && ((ordered == 0)); then
+		echo "FAIL: dawos-boot-failed never ordered a reboot" >&2
+		exit 1
+	fi
+	echo "PASS: after 3 failed attempts on slot B the boot loader fell back to slot A"
+	exit 0
 fi
 
 echo "PASS: boot report matches: ${expectations[*]}"
