@@ -1,6 +1,6 @@
 # ADR 0015 — Secure Boot: che cosa si firma, con quale chiave, con quali strumenti
 
-- **Stato**: accettata con il sotto-passo P0.5c per la variante `dev`; apre le decisioni D-23 e D-24
+- **Stato**: accettata con il sotto-passo P0.5c per la variante `dev`. Le decisioni D-23 e D-24 che apre sono rinviate, d'accordo con l'utente (15 novembre 2026)
 - **Data**: 15 novembre 2026
 - **Origine**: passo P0.5 del documento 0, decisioni vincolanti sulla catena di avvio
 

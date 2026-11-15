@@ -18,7 +18,8 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0012](0012-main-e-tag-a-ogni-passo.md) | Unione in `main` e tag alla chiusura di ogni passo | Proposta dell'utente | Accettata |
 | [0013](0013-stato-persistente-e-identita.md) | Stato persistente e identità della macchina | M-04 | Accettata; identificativo del firmware valido sul 285K |
 | [0014](0014-radice-verificata.md) | Radice verificata: politica d'errore e supporto d'installazione | P0.5 | Accettata; politica d'errore confermata dall'utente |
-| [0015](0015-secure-boot.md) | Secure Boot: che cosa si firma, con quale chiave, con quali strumenti | P0.5 | Accettata per `dev`; apre D-23 e D-24 |
+| [0015](0015-secure-boot.md) | Secure Boot: che cosa si firma, con quale chiave, con quali strumenti | P0.5 | Accettata per `dev`; D-23 e D-24 rinviate d'accordo con l'utente |
+| [0016](0016-valutazione-dell-avvio.md) | Valutazione dell'avvio e ritorno all'immagine precedente | P0.5 | Accettata |
 
 ## Modello
 

@@ -373,7 +373,10 @@ cmd_install() {
 	mount -t vfat "${esp_dev}" "${WORK}/esp"
 	mkdir -p "${WORK}/esp/EFI/BOOT" "${WORK}/esp/EFI/Linux" "${WORK}/esp/loader"
 	cp "${esp_src}/EFI/BOOT/bootx64.efi" "${WORK}/esp/EFI/BOOT/bootx64.efi"
-	cp "${esp_src}/dawos/${version}/${uki}" "${WORK}/esp/EFI/Linux/${uki}"
+	# "+3": three attempts to complete a boot before systemd-boot gives
+	# up on this image (boot assessment). The first good boot removes
+	# the counter.
+	cp "${esp_src}/dawos/${version}/${uki}" "${WORK}/esp/EFI/Linux/dawos_${version}+3.efi"
 	cat > "${WORK}/esp/loader/loader.conf" <<LOADER
 timeout 5
 console-mode keep

@@ -97,6 +97,10 @@ qemu-test: ## Boot the image in QEMU and check the boot report (PASS/FAIL)
 qemu-tamper-test: ## Change one byte in a copy of the image: the boot must stop. WHAT=root (default), verity or uki
 	@tools/run-qemu.sh --test --tamper $(or $(WHAT),root)
 
+.PHONY: qemu-ab-test
+qemu-ab-test: ## Two system images on one disk. WHAT=bad (default): slot B damaged; WHAT=unit: a unit fails in slot B; in both slot A must take over. WHAT=good: slot B must boot
+	@tools/run-qemu.sh --test --ab-test $(or $(WHAT),bad)
+
 .PHONY: qemu-installer
 qemu-installer: ## Rehearse the installation: boot the stick image with a blank NVMe disk
 	@tools/run-qemu.sh --installer

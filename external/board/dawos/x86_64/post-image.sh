@@ -61,7 +61,11 @@ read_cmdline() {
 [[ -f ${images_dir}/rootfs.erofs ]] || die "rootfs.erofs not found in ${images_dir}"
 
 # GPT partition names hold at most 36 characters.
-for label in "${root_label}" "${verity_label}" "${installer_label}" "${installer_verity_label}"; do
+# A second, pretended system image for the A/B test image: the same root
+# under the labels of a newer version.
+ab_version="${version}.abtest"
+for label in "${root_label}" "${verity_label}" "${installer_label}" "${installer_verity_label}" \
+	"dawos-root-${ab_version}" "dawos-verity-${ab_version}"; do
 	((${#label} <= 36)) || die "partition label '${label}' is longer than 36 characters"
 done
 
@@ -239,6 +243,17 @@ installer_uki_name="dawos-installer_${version}.efi"
 build_uki "${uki_dir}/${installer_uki_name}" "${uki_dir}/os-release-installer" "${cmdline_installer}" \
 	--join-profile="${uki_dir}/profile-verbose.efi"
 
+# The A/B test image holds two system images, as a disk does after an
+# update: the current one in slot A and a newer one in slot B. The newer
+# one is this same build under another version: its os-release and its
+# partition labels say "${ab_version}".
+sed -e "s/^IMAGE_VERSION=.*/IMAGE_VERSION=${ab_version}/" \
+	-e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"dawOS ${ab_version} (${variant})\"/" \
+	"${TARGET_DIR}/usr/lib/os-release" > "${uki_dir}/os-release-abtest"
+ab_uki_name="dawos_${ab_version}.efi"
+build_uki "${uki_dir}/${ab_uki_name}" "${uki_dir}/os-release-abtest" \
+	"$(verity_params "dawos-root-${ab_version}" "dawos-verity-${ab_version}") ${cmdline_common}"
+
 # The boot loader is the first thing the firmware checks: signed too.
 sbsign --key "${sb_key}" --cert "${sb_cert}" \
 	--output "${uki_dir}/bootx64.efi" "${efi_dir}/systemd-bootx64.efi" >> "${uki_dir}/ukify.log" 2>&1 ||
@@ -247,13 +262,19 @@ sbsign --key "${sb_key}" --cert "${sb_cert}" \
 # Fill the tree of one EFI System Partition: the signed boot loader, its
 # configuration, and one unified image in EFI/Linux, where systemd-boot
 # finds it by itself (Boot Loader Specification, type 2: no entry file).
-#   $1 = directory, $2 = unified image
+#   $1 = directory, $2 = unified image, $3 = its name on the partition
+#
+# The name decides how systemd-boot treats the image (boot assessment):
+#   dawos_<version>+3.efi  a new image with three attempts to complete a
+#                          boot; a good boot removes the counter, three
+#                          bad ones make systemd-boot prefer another image;
+#   dawos_<version>.efi    an image that has already proved itself.
 populate_esp() {
-	local dir=$1 uki=$2
+	local dir=$1 uki=$2 name=$3
 
 	rm -rf "${dir}"
 	install -D -m 0644 "${uki_dir}/bootx64.efi" "${dir}/EFI/BOOT/bootx64.efi"
-	install -D -m 0644 "${uki}" "${dir}/EFI/Linux/${uki##*/}"
+	install -D -m 0644 "${uki}" "${dir}/EFI/Linux/${name}"
 	install -d -m 0755 "${dir}/loader"
 	cat > "${dir}/loader/loader.conf" <<LOADER
 # dawOS (${variant}): show the menu briefly so an entry can be picked by hand.
@@ -264,11 +285,20 @@ secure-boot-enroll off
 LOADER
 }
 
+# The system as installed: a new image, under assessment.
 esp_dir=${images_dir}/efi-part
-populate_esp "${esp_dir}" "${uki_dir}/${uki_name}"
+populate_esp "${esp_dir}" "${uki_dir}/${uki_name}" "dawos_${version}+3.efi"
 
+# The A/B test image: the current image, already good, and the newer one
+# under assessment.
+ab_dir=${images_dir}/efi-ab
+populate_esp "${ab_dir}" "${uki_dir}/${uki_name}" "${uki_name}"
+install -D -m 0644 "${uki_dir}/${ab_uki_name}" "${ab_dir}/EFI/Linux/dawos_${ab_version}+3.efi"
+
+# The installation medium is not under assessment: it has nothing to fall
+# back to.
 inst_dir=${images_dir}/efi-inst
-populate_esp "${inst_dir}" "${uki_dir}/${installer_uki_name}"
+populate_esp "${inst_dir}" "${uki_dir}/${installer_uki_name}" "${installer_uki_name}"
 # What dawos-install needs to set up the disk travels with the medium:
 # - the unified image of the system to install;
 # - its command line in clear text, for the installer to show and to
@@ -291,6 +321,7 @@ support/scripts/genimage.sh -c "${images_dir}/genimage.cfg"
 
 echo "post-image: ${images_dir}/disk.img ready (dawOS ${version}, ${variant})"
 echo "post-image: ${images_dir}/installer.img ready (installation medium)"
+echo "post-image: ${images_dir}/ab-test.img ready (two system images, for the fallback test)"
 echo "post-image: root hash: ${root_hash}"
 echo "post-image: unified kernel image: ${uki_dir}/${uki_name} (signed)"
 echo "post-image: Secure Boot certificate: ${sb_dir}/db.crt, SHA-256 fingerprint ${sb_fingerprint}"
