@@ -66,6 +66,19 @@ image disk.img {
 		size = 128M
 	}
 
+	# Slot B, free: the place an update is written to. post-image.sh
+	# renames both partitions to "_empty", the label systemd-sysupdate
+	# looks for. Sized as on the real disk; the image file is sparse.
+	partition dawos-free-root {
+		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
+		size = @ROOT_SLOT_SIZE@
+	}
+
+	partition dawos-free-verity {
+		partition-type-uuid = 2c7357ed-ebd2-46d9-aec1-23d437ec2bf5
+		size = 128M
+	}
+
 	# Found by its name by dawos-var-generator.
 	partition state {
 		# Generic Linux data, as dawos-install declares it.
@@ -79,7 +92,7 @@ image disk.img {
 # already marked good, and a newer one in slot B, still under assessment.
 # "make qemu-ab-test" boots it, once as it is and once with slot B damaged,
 # to see the boot loader fall back to slot A. The "newer" image is this
-# same build under the version "@VERSION@.abtest".
+# same build under the version "@VERSION@b".
 
 image efi-ab.vfat {
 	vfat {
@@ -121,13 +134,13 @@ image ab-test.img {
 		size = 16M
 	}
 
-	partition "dawos-root-@VERSION@.abtest" {
+	partition "dawos-root-@VERSION@b" {
 		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
 		image = "rootfs.erofs"
 		size = 128M
 	}
 
-	partition "dawos-verity-@VERSION@.abtest" {
+	partition "dawos-verity-@VERSION@b" {
 		partition-type-uuid = 2c7357ed-ebd2-46d9-aec1-23d437ec2bf5
 		image = "rootfs.verity"
 		size = 16M

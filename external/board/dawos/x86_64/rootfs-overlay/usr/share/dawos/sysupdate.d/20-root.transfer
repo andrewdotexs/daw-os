@@ -1,0 +1,16 @@
+# dawOS update, part 2 of 3: the root file system of the new image.
+# See 10-verity.transfer for how these files are used.
+[Transfer]
+ProtectVersion=%A
+Verify=yes
+
+[Source]
+Type=url-file
+Path=@URL@
+MatchPattern=dawos_@v.root.erofs
+
+[Target]
+Type=partition
+Path=auto
+MatchPattern=dawos-root-@v
+MatchPartitionType=root

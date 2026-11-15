@@ -1,0 +1,29 @@
+# dawOS update, part 3 of 3: the signed unified kernel image.
+# See 10-verity.transfer for how these files are used.
+[Transfer]
+ProtectVersion=%A
+Verify=yes
+
+[Source]
+Type=url-file
+Path=@URL@
+MatchPattern=dawos_@v.efi
+
+[Target]
+Type=regular-file
+# EFI/Linux on the partition the boot loader reads: it finds the image
+# there by itself.
+Path=/EFI/Linux
+PathRelativeTo=boot
+# The three shapes the name can take (boot assessment): with attempts
+# left and done, with attempts left only, and blessed.
+MatchPattern=dawos_@v+@l-@d.efi \
+             dawos_@v+@l.efi \
+             dawos_@v.efi
+Mode=0644
+# A new image starts with three attempts to complete a boot.
+TriesLeft=3
+TriesDone=0
+# Two system images at most: the running one and one other. Installing a
+# third removes the oldest that is not running.
+InstancesMax=2

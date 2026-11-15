@@ -1,0 +1,47 @@
+#!/bin/sh
+# dawOS (dev variant): run one update at boot, for the automatic test of
+# the update path.
+#
+# The marker file holds the URL of the server. It is removed before
+# anything else, so the update is attempted once and the machine cannot
+# loop. The outcome is printed on the console as one line the test reads:
+#
+#   DAWOS-UPDATE-TEST result=installed   then the machine reboots
+#   DAWOS-UPDATE-TEST result=refused     the server answered, the update
+#                                        was not accepted
+#   DAWOS-UPDATE-TEST result=unreachable the server never answered
+
+set -u
+
+marker=/var/lib/dawos/test/update-from
+
+# shellcheck source=/dev/null
+. /etc/os-release
+[ "${VARIANT_ID:-}" = dev ] || exit 0
+[ -r "${marker}" ] || exit 0
+read -r url < "${marker}" || exit 0
+rm -f "${marker}"
+
+# The network may still be coming up: wait until the server answers.
+reachable=no
+attempt=0
+while [ "${attempt}" -lt 20 ]; do
+	if wget -q -O /dev/null "${url}SHA256SUMS" 2> /dev/null; then
+		reachable=yes
+		break
+	fi
+	attempt=$((attempt + 1))
+	sleep 2
+done
+if [ "${reachable}" != yes ]; then
+	echo "DAWOS-UPDATE-TEST result=unreachable url=${url}"
+	exit 0
+fi
+
+if dawos-update --server "${url}"; then
+	echo "DAWOS-UPDATE-TEST result=installed"
+	systemctl --no-block reboot
+else
+	echo "DAWOS-UPDATE-TEST result=refused"
+fi
+exit 0

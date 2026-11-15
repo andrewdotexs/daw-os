@@ -35,7 +35,10 @@ board_dir=${ext_dir}/board/dawos/x86_64
 root_slot_size=4G
 root_slot_bytes=$((4 * 1024 * 1024 * 1024))
 
-version=$(tr -d '[:space:]' < "${repo_dir}/VERSION")
+# Version of this image, as decided by post-build.sh: for a dev build the
+# release number followed by the time of the build.
+[[ -f ${images_dir}/version.txt ]] || { echo "post-image: ${images_dir}/version.txt not found (post-build.sh writes it)" >&2; exit 1; }
+version=$(tr -d '[:space:]' < "${images_dir}/version.txt")
 root_label="dawos-root-${version}"
 verity_label="dawos-verity-${version}"
 installer_label="dawos-inst-${version}"
@@ -61,9 +64,10 @@ read_cmdline() {
 [[ -f ${images_dir}/rootfs.erofs ]] || die "rootfs.erofs not found in ${images_dir}"
 
 # GPT partition names hold at most 36 characters.
-# A second, pretended system image for the A/B test image: the same root
-# under the labels of a newer version.
-ab_version="${version}.abtest"
+# A second, pretended system image for the A/B and update tests: the same
+# root under the labels of a newer version. (A trailing letter sorts after
+# the bare number, and keeps the labels within their 36 characters.)
+ab_version="${version}b"
 for label in "${root_label}" "${verity_label}" "${installer_label}" "${installer_verity_label}" \
 	"dawos-root-${ab_version}" "dawos-verity-${ab_version}"; do
 	((${#label} <= 36)) || die "partition label '${label}' is longer than 36 characters"
@@ -312,6 +316,31 @@ install -D -m 0644 "${sb_dir}/db.cer" "${inst_dir}/dawos/secure-boot/dawos-dev-s
 # Keep a copy next to the images: it is what the measurement reports cite.
 printf '%s\n' "${cmdline}" > "${images_dir}/cmdline.txt"
 
+# --- Release directories: what an update server offers --------------------------
+# One directory per release, holding the three files systemd-sysupdate
+# installs, a list of their checksums and the signature of that list. The
+# machine trusts the signature, not the server: see dawos-update.
+#   $1 = directory, $2 = version, $3 = unified kernel image
+make_release() {
+	local dir=$1 release_version=$2 uki=$3
+
+	rm -rf "${dir}"
+	mkdir -p "${dir}"
+	cp "${images_dir}/rootfs.erofs" "${dir}/dawos_${release_version}.root.erofs"
+	cp "${images_dir}/rootfs.verity" "${dir}/dawos_${release_version}.verity"
+	cp "${uki}" "${dir}/dawos_${release_version}.efi"
+	(cd "${dir}" && sha256sum -- dawos_* > SHA256SUMS)
+	gpg --homedir "${repo_dir}/keys/update/gnupg" --batch --quiet --yes \
+		--detach-sign --output "${dir}/SHA256SUMS.gpg" "${dir}/SHA256SUMS" ||
+		die "signing ${dir}/SHA256SUMS failed"
+}
+
+# This build, for "make remote-update".
+release_dir=${images_dir}/../release
+make_release "${release_dir}" "${version}" "${uki_dir}/${uki_name}"
+# The pretended newer image, for "make qemu-update-test".
+make_release "${images_dir}/../release-test" "${ab_version}" "${uki_dir}/${ab_uki_name}"
+
 # --- Disk images ------------------------------------------------------------
 sed -e "s/@VERSION@/${version}/g" \
 	-e "s/@ROOT_SLOT_SIZE@/${root_slot_size}/g" \
@@ -319,9 +348,24 @@ sed -e "s/@VERSION@/${version}/g" \
 
 support/scripts/genimage.sh -c "${images_dir}/genimage.cfg"
 
+# The free slot of disk.img. systemd-sysupdate recognises a free partition
+# by its label "_empty", and a disk has two of them (root and hash tree);
+# genimage cannot give two partitions the same name, so they are created
+# under provisional names and renamed here.
+sfdisk=${HOST_DIR}/sbin/sfdisk
+[[ -x ${sfdisk} ]] || die "sfdisk not found in ${HOST_DIR}/sbin (host-util-linux)"
+for provisional in dawos-free-root dawos-free-verity; do
+	number=$("${sfdisk}" --dump "${images_dir}/disk.img" |
+		awk -v name="name=\"${provisional}\"" 'index($0, name) { sub(/^[^0-9]*[^:]*img/, "", $1); print $1 }')
+	[[ ${number} =~ ^[0-9]+$ ]] || die "partition ${provisional} not found in disk.img"
+	"${sfdisk}" --quiet --part-label "${images_dir}/disk.img" "${number}" _empty ||
+		die "could not rename partition ${number} of disk.img"
+done
+
 echo "post-image: ${images_dir}/disk.img ready (dawOS ${version}, ${variant})"
 echo "post-image: ${images_dir}/installer.img ready (installation medium)"
 echo "post-image: ${images_dir}/ab-test.img ready (two system images, for the fallback test)"
+echo "post-image: ${release_dir} ready (release ${version}, for 'make remote-update')"
 echo "post-image: root hash: ${root_hash}"
 echo "post-image: unified kernel image: ${uki_dir}/${uki_name} (signed)"
 echo "post-image: Secure Boot certificate: ${sb_dir}/db.crt, SHA-256 fingerprint ${sb_fingerprint}"

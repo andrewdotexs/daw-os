@@ -28,6 +28,7 @@ installer=no
 new_target=no
 tamper=
 ab_test=
+update_test=
 secure_boot=yes
 mode=interactive
 memory=2G
@@ -57,6 +58,13 @@ Usage: ${0##*/} [options]
                     unit fails in it. In the last two cases, after three
                     failed attempts the boot loader must fall back to
                     slot A
+  --update-test WHAT  with --test: boot the image, have it update itself
+                    from a local server and reboot. WHAT is 'good': the
+                    release of output/release-test must be installed in the
+                    free slot and be the one that boots next; or
+                    'tampered': the server offers a changed root image
+                    with checksums to match, but cannot sign them, and the
+                    update must be refused
   --no-secure-boot  start the firmware with Secure Boot off
   --image PATH      disk image to boot (default: output/images/disk.img)
   --installer       boot the installation medium (USB) with a blank NVMe
@@ -89,6 +97,10 @@ while (($# > 0)); do
 		;;
 	--ab-test)
 		ab_test=${2:?--ab-test needs 'good', 'bad' or 'unit'}
+		shift
+		;;
+	--update-test)
+		update_test=${2:?--update-test needs 'good' or 'tampered'}
 		shift
 		;;
 	--no-secure-boot) secure_boot=no ;;
@@ -207,6 +219,52 @@ print("run-qemu: tampered copy %s: byte %d of the image (partition %s) changed f
 PYTHON
 }
 
+# --- Putting a file on the "state" partition of an image ----------------------
+# state_write IMAGE CONTENT PATH
+#   Writes CONTENT as the file PATH (relative to /var of the system, for
+#   example lib/dawos/test/fail-boot-on), creating its directories. The
+#   partition is copied out of the image, changed with debugfs and copied
+#   back: nothing is mounted, so no privileges are needed.
+state_write() {
+	local target=$1 content=$2 path=$3
+	local debugfs=${repo_dir}/output/host/sbin/debugfs
+	[[ -x ${debugfs} ]] || debugfs=$(command -v debugfs) || die "debugfs not found (run 'make image' first)"
+	local start sectors
+	read -r start sectors < <(python3 - "${target}" <<'PYTHON'
+import struct
+import sys
+
+with open(sys.argv[1], "rb") as image:
+    image.seek(512)
+    header = image.read(92)
+    entries_lba, count, size = struct.unpack_from("<QII", header, 72)
+    for index in range(count):
+        image.seek(entries_lba * 512 + index * size)
+        entry = image.read(size)
+        if entry[56:128].decode("utf-16-le").rstrip("\x00") == "state":
+            first, last = struct.unpack_from("<QQ", entry, 32)
+            print(first, last - first + 1)
+PYTHON
+	)
+	[[ ${start:-} =~ ^[0-9]+$ ]] || die "no state partition in ${target}"
+	local copy=${state_dir}/state-copy.ext4 source=${state_dir}/state-file
+	dd if="${target}" of="${copy}" bs=512 skip="${start}" count="${sectors}" status=none
+	printf '%s\n' "${content}" > "${source}"
+	{
+		# Every directory on the way, then the file.
+		local dir='' part parts
+		IFS=/ read -r -a parts <<< "${path%/*}"
+		for part in "${parts[@]}"; do
+			dir=${dir:+${dir}/}${part}
+			echo "mkdir ${dir}"
+		done
+		echo "write ${source} ${path}"
+	} | "${debugfs}" -w -f - "${copy}" > "${state_dir}/debugfs.log" 2>&1 ||
+		die "debugfs failed, see ${state_dir}/debugfs.log"
+	dd if="${copy}" of="${target}" bs=512 seek="${start}" conv=notrunc status=none
+	rm -f "${copy}" "${source}"
+}
+
 # --- Tamper test: one changed byte in a copy of the image --------------------
 if [[ -n ${tamper} ]]; then
 	[[ ${mode} == test ]] || die "--tamper needs --test"
@@ -235,9 +293,9 @@ if [[ -n ${ab_test} ]]; then
 	[[ ${mode} == test ]] || die "--ab-test needs --test"
 	ab_source=${repo_dir}/output/images/ab-test.img
 	[[ -f ${ab_source} ]] || die "image not found: ${ab_source} (run 'make image' first)"
-	version=$(tr -d '[:space:]' < "${repo_dir}/VERSION")
+	version=$(tr -d '[:space:]' < "${repo_dir}/output/images/version.txt")
 	slot_a="dawos-root-${version}"
-	slot_b="dawos-root-${version}.abtest"
+	slot_b="dawos-root-${version}b"
 	image=${state_dir}/ab.img
 	cp --sparse=always "${ab_source}" "${image}"
 	case ${ab_test} in
@@ -253,39 +311,8 @@ if [[ -n ${ab_test} ]]; then
 		;;
 	unit)
 		# The image in slot B boots, but one unit fails in it: the marker
-		# file of dawos-fail-boot-test.service is put on the "state"
-		# partition. The partition is copied out, changed with debugfs
-		# and copied back.
-		debugfs=${repo_dir}/output/host/sbin/debugfs
-		[[ -x ${debugfs} ]] || debugfs=$(command -v debugfs) || die "debugfs not found (run 'make image' first)"
-		read -r state_start state_sectors < <(python3 - "${image}" <<'PYTHON'
-import struct
-import sys
-
-with open(sys.argv[1], "rb") as image:
-    image.seek(512)
-    header = image.read(92)
-    entries_lba, count, size = struct.unpack_from("<QII", header, 72)
-    for index in range(count):
-        image.seek(entries_lba * 512 + index * size)
-        entry = image.read(size)
-        if entry[56:128].decode("utf-16-le").rstrip("\x00") == "state":
-            first, last = struct.unpack_from("<QQ", entry, 32)
-            print(first, last - first + 1)
-PYTHON
-		)
-		[[ ${state_start:-} =~ ^[0-9]+$ ]] || die "no state partition in ${image}"
-		state_copy=${state_dir}/ab-state.ext4
-		dd if="${image}" of="${state_copy}" bs=512 skip="${state_start}" count="${state_sectors}" status=none
-		printf '%s\n' "${slot_b}" > "${state_dir}/fail-boot-on"
-		"${debugfs}" -w "${state_copy}" > "${state_dir}/debugfs.log" 2>&1 <<DEBUGFS || die "debugfs failed, see ${state_dir}/debugfs.log"
-mkdir lib
-mkdir lib/dawos
-mkdir lib/dawos/test
-write ${state_dir}/fail-boot-on lib/dawos/test/fail-boot-on
-DEBUGFS
-		dd if="${state_copy}" of="${image}" bs=512 seek="${state_start}" conv=notrunc status=none
-		rm -f "${state_copy}" "${state_dir}/fail-boot-on"
+		# file of dawos-fail-boot-test.service names it.
+		state_write "${image}" "${slot_b}" lib/dawos/test/fail-boot-on
 		echo "run-qemu: marker written: the image on ${slot_b} will fail a unit at every boot"
 		expected_slot=${slot_a}
 		;;
@@ -293,6 +320,43 @@ DEBUGFS
 	esac
 	expectations+=("rootpart=${expected_slot}")
 	report_pattern="DAWOS-BOOT-REPORT .*rootpart=${expected_slot} .*"
+fi
+
+# --- Update test: the machine updates itself from a local server ---------------
+server_pid=
+if [[ -n ${update_test} ]]; then
+	[[ ${mode} == test ]] || die "--update-test needs --test"
+	[[ -z ${ab_test}${tamper} ]] || die "--update-test cannot be combined with --ab-test or --tamper"
+	[[ ${update_test} == good || ${update_test} == tampered ]] || die "--update-test takes 'good' or 'tampered'"
+	release=${repo_dir}/output/release-test
+	[[ -f ${release}/SHA256SUMS.gpg ]] || die "release not found: ${release} (run 'make image' first)"
+	version=$(tr -d '[:space:]' < "${repo_dir}/output/images/version.txt")
+	served=${state_dir}/served
+	rm -rf "${served}"
+	cp -r "${release}" "${served}"
+	if [[ ${update_test} == tampered ]]; then
+		# What someone in control of the server could do: change the root
+		# image and recompute the checksums. What they cannot do is sign
+		# the new list: the old signature no longer matches it.
+		root_image=$(ls "${served}"/dawos_*.root.erofs)
+		printf 'X' | dd of="${root_image}" bs=1 seek=2048 conv=notrunc status=none
+		(cd "${served}" && sha256sum -- dawos_* > SHA256SUMS)
+		echo "run-qemu: the server offers a changed root image with matching checksums and the old signature"
+	fi
+	# The guest reaches the host's loopback interface as 10.0.2.2.
+	update_port=8642
+	python3 -m http.server "${update_port}" --bind 127.0.0.1 --directory "${served}" \
+		> "${state_dir}/http-server.log" 2>&1 &
+	server_pid=$!
+	image_copy=${state_dir}/update.img
+	cp --sparse=always "${image}" "${image_copy}"
+	image=${image_copy}
+	# dawos-update-test.service runs the update at boot and reboots.
+	state_write "${image}" "http://10.0.2.2:${update_port}/" lib/dawos/test/update-from
+	if [[ ${update_test} == good ]]; then
+		expectations+=("rootpart=dawos-root-${version}b")
+		report_pattern="DAWOS-BOOT-REPORT .*rootpart=dawos-root-${version}b .*"
+	fi
 fi
 
 # --- UEFI firmware ----------------------------------------------------------
@@ -415,7 +479,7 @@ log=${state_dir}/serial.log
 # test should reboot. The A/B test is the exception, its whole point being
 # a machine that restarts by itself until it finds an image that works.
 reboot_option=(-no-reboot)
-[[ -z ${ab_test} ]] || reboot_option=()
+[[ -z ${ab_test}${update_test} ]] || reboot_option=()
 
 # QEMU's own messages go to a side file: on success they are just the
 # notice that we stopped it; on failure they are printed below.
@@ -430,6 +494,7 @@ qemu_pid=$!
 cleanup() {
 	kill "${qemu_pid}" 2> /dev/null || true
 	wait "${qemu_pid}" 2> /dev/null || true
+	[[ -z ${server_pid} ]] || kill "${server_pid}" 2> /dev/null || true
 }
 trap cleanup EXIT
 
@@ -441,6 +506,15 @@ corruption=
 deadline=$((SECONDS + timeout_s))
 while ((SECONDS < deadline)); do
 	# -a: the log contains terminal escape sequences from the firmware.
+	if [[ ${update_test} == tampered ]]; then
+		# The boot report comes first and says nothing here: what counts
+		# is the line the machine prints when the update has ended.
+		corruption=$(grep -a -m 1 -o 'DAWOS-UPDATE-TEST result=[a-z]*' "${log}" || true)
+		[[ -n ${corruption} ]] && break
+		kill -0 "${qemu_pid}" 2> /dev/null || break
+		sleep 1
+		continue
+	fi
 	report=$(grep -a -m 1 -o "${report_pattern}" "${log}" | tr -d '\r' || true)
 	[[ -n ${report} ]] && break
 	if [[ ${tamper} == uki ]]; then
@@ -454,6 +528,19 @@ while ((SECONDS < deadline)); do
 	kill -0 "${qemu_pid}" 2> /dev/null || break
 	sleep 1
 done
+
+# The update with a release the server could not sign must be refused.
+if [[ ${update_test} == tampered ]]; then
+	echo "${corruption:-no DAWOS-UPDATE-TEST line on the console}"
+	tr -d '\r' < "${log}" | grep -a -o -m 1 'gpg: BAD signature.*' || true
+	if [[ ${corruption} != 'DAWOS-UPDATE-TEST result=refused' ]]; then
+		echo "FAIL: the update was not refused" >&2
+		echo "(console log: ${log})" >&2
+		exit 1
+	fi
+	echo "PASS: the update whose checksums carry no valid signature was refused"
+	exit 0
+fi
 
 # A tamper test passes when the boot does NOT complete and the kernel has
 # said why.
@@ -531,6 +618,12 @@ if [[ ${ab_test} == bad || ${ab_test} == unit ]]; then
 		exit 1
 	fi
 	echo "PASS: after 3 failed attempts on slot B the boot loader fell back to slot A"
+	exit 0
+fi
+
+if [[ ${update_test} == good ]]; then
+	grep -a -m 1 -o 'DAWOS-UPDATE-TEST result=[a-z]*' "${log}" || true
+	echo "PASS: the machine installed the release in its free slot and booted it: ${expectations[*]}"
 	exit 0
 fi
 
