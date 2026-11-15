@@ -15,3 +15,30 @@ enable dawos-update-test.service
 # boot. CPU frequency and idle policy belong to one place only, the dawOS
 # tuning step (P0.6): keep this one off.
 disable cpupower.service
+
+# --- Things systemd would do on its own, and must not -------------------------
+# Buildroot enables every unit a package ships unless a preset says
+# otherwise. A workstation that records must not act on a timer.
+
+# Automatic updates from a server, weekly and 15 minutes after boot: dawOS
+# is updated on request only (dawos-update).
+# (The service must be named too: enabling it enables its timer, through
+# the "Also=" line of its [Install] section.)
+disable systemd-sysupdate.timer
+disable systemd-sysupdate.service
+# Reboots the machine every day at 04:10 if a newer image is installed
+# than the one running, which is also the case after a fallback.
+disable systemd-sysupdate-reboot.timer
+disable systemd-sysupdate-reboot.service
+# Copies the boot loader from the root file system to the boot partition
+# when it is newer. That copy is not signed: with Secure Boot on, the
+# machine would no longer start. The boot loader on the boot partition is
+# the signed one put there by dawos-install.
+disable systemd-boot-update.service
+
+# Periodic disk maintenance: a weekly TRIM of every mounted file system
+# and a weekly scrub of the XFS ones. Both are bursts of I/O at a time
+# the machine chooses. Left off until dawOS has a place and a moment for
+# maintenance (open decision D-25).
+disable fstrim.timer
+disable xfs_scrub_all.timer

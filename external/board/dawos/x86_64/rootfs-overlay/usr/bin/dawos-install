@@ -377,6 +377,12 @@ cmd_install() {
 	# up on this image (boot assessment). The first good boot removes
 	# the counter.
 	cp "${esp_src}/dawos/${version}/${uki}" "${WORK}/esp/EFI/Linux/dawos_${version}+3.efi"
+	# The Secure Boot certificate, where the setup menu of the firmware
+	# can read it from the internal disk, without the medium plugged in.
+	if [ -f "${esp_src}/dawos/secure-boot/dawos-dev-secure-boot.cer" ]; then
+		mkdir -p "${WORK}/esp/dawos/secure-boot"
+		cp "${esp_src}/dawos/secure-boot/dawos-dev-secure-boot.cer" "${WORK}/esp/dawos/secure-boot/"
+	fi
 	cat > "${WORK}/esp/loader/loader.conf" <<LOADER
 timeout 5
 console-mode keep
