@@ -498,6 +498,14 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | M-05, watchdog | Non trattato | Punto aperto: un kernel bloccato senza errore non fa scattare il ritorno. Da misurare sul 285K prima di accenderlo, per via degli SMI. |
 | M-04, `/var` | Stato persistente | In più: `/var` è condivisa tra i due slot, quindi il ritorno non riporta indietro i dati. Regola di compatibilità registrata nell'ADR 0016. |
 | Rapporto di avvio | Sette campi | Nuovo campo `rootpart=`, l'etichetta della partizione radice in uso. |
+| P0.5, sotto-passi | Cinque, con l'installazione sul 285K in coda a P0.5e | Sei: **P0.5e** è il meccanismo di aggiornamento, provato in QEMU; **P0.5f** è l'installazione sul 285K con le prove finali. |
+| P0.5, aggiornamento: trasporto | `make serve` e WSL2 in rete speculare con una regola del firewall _(da verificare)_ | **Tunnel SSH inverso** (`make remote-update`): nessuna modifica a WSL2 né al firewall, nessun servizio esposto. ADR 0017. |
+| P0.5, aggiornamento: indirizzo del server | Da `local/` al momento della costruzione | Nessun indirizzo nell'immagine: `dawos-update --server URL`. |
+| P0.5, aggiornamento: versione | «Un suffisso con data e ora; lo schema esatto si fissa in questo passo» | `<rilascio>.<AAAAMMGGhhmmss>` in UTC per le costruzioni `dev`. Il `+` è escluso perché nei nomi dei file separa il contatore dei tentativi. |
+| P0.5, aggiornamento: firma | Chiave di sviluppo in `keys/` | Chiave OpenPGP in `keys/update/`, distinta da quella di Secure Boot; la metà pubblica sostituisce l'archivio di chiavi che systemd installa. |
+| P0.5, accettazione aggiuntiva | «Un'immagine con impronta alterata sul server viene rifiutata prima della scrittura» | Viene rifiutata e **non diventa avviabile**; parte dei dati può essere già stata scritta nello slot libero, che resta marcato come vuoto. |
+| Immagine per QEMU | Uno slot | Due slot, con il B libero, come un disco installato. |
+| Costruzione, opzioni dei pacchetti | Non trattato | Buildroot non ricostruisce un pacchetto quando cambiano solo le sue opzioni. `make image` ora lo fa per systemd (`tools/package-options.sh`), e `post-build.sh` ferma la costruzione se all'immagine manca un programma necessario. Emerso dal fallimento della prima consegna di P0.5e sul PC di sviluppo. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
 Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).

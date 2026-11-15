@@ -1,0 +1,73 @@
+#!/bin/sh
+# dawOS (dev variant): run one update at boot, for the automatic test of
+# the update path.
+#
+# The marker file holds the URL of the server. It is removed before
+# anything else, so the update is attempted once and the machine cannot
+# loop. The outcome is printed on the console as one line the test reads:
+#
+#   DAWOS-UPDATE-TEST result=installed   then the machine reboots
+#   DAWOS-UPDATE-TEST result=refused     the server answered, the update
+#                                        was not accepted
+#   DAWOS-UPDATE-TEST result=unreachable the server never answered
+#   DAWOS-UPDATE-TEST result=timeout     the update did not end in time
+
+set -u
+
+marker=/var/lib/dawos/test/update-from
+
+# shellcheck source=/dev/null
+. /etc/os-release
+[ "${VARIANT_ID:-}" = dev ] || exit 0
+[ -r "${marker}" ] || exit 0
+read -r url < "${marker}" || exit 0
+rm -f "${marker}"
+
+# The network may still be coming up: wait until the server answers.
+reachable=no
+attempt=0
+while [ "${attempt}" -lt 20 ]; do
+	if wget -q -O /dev/null "${url}SHA256SUMS" 2> /dev/null; then
+		reachable=yes
+		break
+	fi
+	attempt=$((attempt + 1))
+	sleep 2
+done
+if [ "${reachable}" != yes ]; then
+	echo "DAWOS-UPDATE-TEST result=unreachable url=${url}"
+	exit 0
+fi
+
+# The update runs in the background with a time limit, so that this test
+# always ends with a result line, whatever happens to the update.
+limit=180
+status_file=/run/dawos-update-test.status
+rm -f "${status_file}"
+(
+	dawos-update --server "${url}"
+	echo $? > "${status_file}"
+) &
+update_pid=$!
+waited=0
+while [ ! -s "${status_file}" ] && [ "${waited}" -lt "${limit}" ]; do
+	sleep 1
+	waited=$((waited + 1))
+done
+
+if [ ! -s "${status_file}" ]; then
+	kill "${update_pid}" 2> /dev/null
+	echo "DAWOS-UPDATE-TEST result=timeout after_s=${waited}"
+	echo "dawOS: processes at the time of the timeout:"
+	pgrep -a -f 'sysupdate|systemd-pull|gpg|dawos-update'
+	exit 0
+fi
+
+read -r status < "${status_file}"
+if [ "${status}" = 0 ]; then
+	echo "DAWOS-UPDATE-TEST result=installed"
+	systemctl --no-block reboot
+else
+	echo "DAWOS-UPDATE-TEST result=refused"
+fi
+exit 0

@@ -1,0 +1,17 @@
+# dawOS (dev variant): run one update at boot when a marker file asks for
+# it. Used by "make qemu-update-test", which cannot type commands into the
+# machine it boots; see /usr/libexec/dawos/update-test.
+[Unit]
+Description=dawOS update at boot (test of the update path)
+ConditionPathExists=/var/lib/dawos/test/update-from
+After=network-online.target multi-user.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/dawos/update-test
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target

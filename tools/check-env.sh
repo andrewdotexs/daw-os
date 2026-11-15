@@ -71,6 +71,8 @@ required_tools=(
 	# python3-virt-firmware: enrols our certificate in the firmware of
 	# the QEMU machine, for the tests with Secure Boot.
 	virt-fw-vars
+	# gnupg: signs the list of checksums of a release.
+	gpg
 )
 missing=()
 for tool in "${required_tools[@]}"; do
@@ -79,7 +81,7 @@ done
 if ((${#missing[@]} == 0)); then
 	ok "all required tools found"
 else
-	fail "missing tools: ${missing[*]} (for sbsign, sbverify and virt-fw-vars: sudo apt install sbsigntool python3-virt-firmware)"
+	fail "missing tools: ${missing[*]} (for sbsign, sbverify, virt-fw-vars and gpg: sudo apt install sbsigntool python3-virt-firmware gnupg)"
 fi
 
 if command -v npx > /dev/null 2>&1; then

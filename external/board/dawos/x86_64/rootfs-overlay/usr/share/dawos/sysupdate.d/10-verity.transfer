@@ -1,0 +1,27 @@
+# dawOS update, part 1 of 3: the dm-verity hash tree of the new root.
+#
+# These files are templates: dawos-update fills in the address of the
+# server (@URL@) and hands the result to systemd-sysupdate. The three
+# transfers are applied as one: the unified kernel image, which is what
+# makes the new system bootable, comes last.
+[Transfer]
+# Never touch the slot of the system that is running.
+ProtectVersion=%A
+# The list of checksums on the server must carry a valid signature by a
+# key of /usr/lib/systemd/import-pubring.pgp (the default; said here
+# because everything rests on it).
+Verify=yes
+
+[Source]
+Type=url-file
+Path=@URL@
+MatchPattern=dawos_@v.verity
+
+[Target]
+Type=partition
+# The disk that holds the running system.
+Path=auto
+# The free slot is the partition of this type labelled "_empty"; it gets
+# the name the kernel command line of the new image looks for.
+MatchPattern=dawos-verity-@v
+MatchPartitionType=root-verity

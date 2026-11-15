@@ -50,6 +50,14 @@ BR2_LINUX_KERNEL_NEEDS_HOST_LIBELF=y
 BR2_PACKAGE_SYSTEMD_BOOT=y
 BR2_PACKAGE_SYSTEMD_ANALYZE=y
 
+# --- Updates (step P0.5e) ---------------------------------------------------
+# systemd-sysupdate writes a new system image to the free slot. It fetches
+# the files with systemd-pull, which is part of the "import" tools, and
+# checks the signature of the list of checksums with gpg.
+BR2_PACKAGE_SYSTEMD_SYSUPDATE=y
+BR2_PACKAGE_SYSTEMD_IMPORTD=y
+BR2_PACKAGE_GNUPG2=y
+
 # --- Remote access (dev variant only, ADR 0005) -----------------------------
 # SSH with public keys only; configuration in the rootfs overlay.
 BR2_PACKAGE_OPENSSH=y

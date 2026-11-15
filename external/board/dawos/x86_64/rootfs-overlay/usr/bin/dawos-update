@@ -1,0 +1,154 @@
+#!/bin/sh
+# dawos-update — install the newest system image a server offers.
+#
+# The image goes to the slot that is not in use; the running system is
+# never touched. Nothing changes until the next boot, when the boot
+# loader starts the new image with three attempts to complete a boot
+# (boot assessment): if it fails them, the machine falls back to the
+# image that is running now.
+#
+# What is trusted, and what is not:
+# - the server and the network are not. The server must offer a list of
+#   checksums (SHA256SUMS) with a signature (SHA256SUMS.gpg) by a key of
+#   /usr/lib/systemd/import-pubring.pgp, and every file must match the
+#   list. Plain HTTP is therefore fine;
+# - a file that fails the check is never made bootable, although part of
+#   it may have been written to the free slot, which stays marked empty.
+#
+# The work is done by systemd-sysupdate, driven by the transfer
+# definitions in /usr/share/dawos/sysupdate.d. They are templates: the
+# address of the server is filled in here.
+
+set -u
+
+PROG=dawos-update
+TEMPLATES=/usr/share/dawos/sysupdate.d
+WORK=/run/dawos-update
+SYSUPDATE=/usr/lib/systemd/systemd-sysupdate
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} --server URL [--reboot]   install the newest image offered at URL
+  ${PROG} --server URL --list       show what the server offers and what is installed
+  ${PROG} --status                  show the installed images
+
+URL is the directory that holds SHA256SUMS, for example http://127.0.0.1:8080/
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# Write the transfer definitions for server $1 to ${WORK}/sysupdate.d.
+render() {
+	rm -rf "${WORK}"
+	mkdir -p "${WORK}/sysupdate.d"
+	for template in "${TEMPLATES}"/*.transfer; do
+		[ -r "${template}" ] || die "no transfer definitions in ${TEMPLATES}"
+		# '|' cannot appear in a URL we accept, so it is a safe delimiter.
+		sed "s|@URL@|$1|" "${template}" > "${WORK}/sysupdate.d/${template##*/}"
+	done
+}
+
+# Print the installed images as the boot loader sees them: the name of a
+# unified kernel image tells whether it is still under assessment.
+show_installed() {
+	esp=$(bootctl --print-esp-path 2> /dev/null) || esp=/boot
+	echo "Installed system images (EFI/Linux on ${esp}):"
+	for image in "${esp}"/EFI/Linux/dawos_*.efi; do
+		[ -e "${image}" ] || continue
+		name=${image##*/}
+		# <name>+<left>-<done>.efi while systemd-boot is counting.
+		case "${name}" in
+		*+0-[0-9]*.efi) echo "  ${name}   (failed: no boot attempts left)" ;;
+		*+[0-9]*.efi) echo "  ${name}   (under assessment)" ;;
+		*) echo "  ${name}   (good)" ;;
+		esac
+	done
+	running=$(sed -n 's/.*PARTLABEL=\(dawos-root-[A-Za-z0-9._+-]*\).*/\1/p' /proc/cmdline)
+	echo "Running: ${running:-unknown}"
+}
+
+server=
+action=update
+reboot=no
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--server)
+		[ $# -ge 2 ] || die "--server needs a URL"
+		server=$2
+		shift
+		;;
+	--list) action=list ;;
+	--status) action=status ;;
+	--reboot) reboot=yes ;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*) die "unknown argument '$1' (try --help)" ;;
+	esac
+	shift
+done
+
+[ "$(id -u)" = 0 ] || die "must run as root"
+
+if [ "${action}" = status ]; then
+	show_installed
+	exit 0
+fi
+
+[ -n "${server}" ] || die "--server URL is required (try --help)"
+case "${server}" in
+http://* | https://*) ;;
+*) die "the server must be an http:// or https:// URL" ;;
+esac
+case "${server}" in
+*[\|\ ]*) die "the URL must not contain spaces or '|'" ;;
+esac
+# systemd-sysupdate wants the directory, with its final slash.
+case "${server}" in
+*/) ;;
+*) server="${server}/" ;;
+esac
+[ -x "${SYSUPDATE}" ] || die "systemd-sysupdate is not in this image"
+
+render "${server}"
+
+if [ "${action}" = list ]; then
+	"${SYSUPDATE}" --definitions="${WORK}/sysupdate.d" list
+	exit $?
+fi
+
+# The unified kernel images present before and after tell whether
+# anything was installed. (Comparing lists, rather than reading the output
+# of systemd-sysupdate through a pipe: a pipe stays open, and its reader
+# waits, for as long as any process started along the way keeps it.)
+installed_images() {
+	esp=$(bootctl --print-esp-path 2> /dev/null) || esp=/boot
+	for image in "${esp}"/EFI/Linux/dawos_*.efi; do
+		[ -e "${image}" ] && echo "${image##*/}"
+	done
+}
+
+echo "${PROG}: looking for a newer image at ${server}"
+before=$(installed_images)
+if ! "${SYSUPDATE}" --definitions="${WORK}/sysupdate.d" update; then
+	echo "${PROG}: NOT UPDATED. The image on the server was refused, or could not be fetched; the installed system is unchanged." >&2
+	exit 1
+fi
+
+show_installed
+if [ "$(installed_images)" = "${before}" ]; then
+	echo "${PROG}: already up to date: the server offers nothing newer than what is installed."
+	exit 0
+fi
+if [ "${reboot}" = yes ]; then
+	echo "${PROG}: rebooting into the new image."
+	systemctl --no-block reboot
+else
+	echo "${PROG}: done. A newly installed image is started at the next boot."
+fi

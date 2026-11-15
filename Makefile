@@ -66,9 +66,18 @@ $(O)/.config: $(EXT_DIR)/configs/$(DEFCONFIG) | $(BR_DIR)/Makefile
 config: | $(BR_DIR)/Makefile ## (Re)apply the defconfig, discarding local menuconfig changes
 	$(BR_MAKE) $(DEFCONFIG)
 
+# Buildroot does not rebuild a package whose options changed. systemd is
+# the one we reconfigure as the system grows (boot loader, updates, ...):
+# when its options differ from those of its last build it is cleaned
+# here, so that "make image" rebuilds it. See tools/package-options.sh.
 .PHONY: image
 image: $(O)/.config ## Build the whole image (output/images/disk.img); JOBS=N limits parallelism
+	@if tools/package-options.sh changed "$(O)" systemd BR2_PACKAGE_SYSTEMD; then \
+		echo "make image: the options of systemd changed since it was built: rebuilding it (several minutes)"; \
+		$(BR_MAKE) systemd-dirclean; \
+	fi
 	$(BR_MAKE) all
+	@tools/package-options.sh record "$(O)" systemd BR2_PACKAGE_SYSTEMD
 
 .PHONY: menuconfig
 menuconfig: $(O)/.config ## Edit the Buildroot configuration
@@ -101,6 +110,10 @@ qemu-tamper-test: ## Change one byte in a copy of the image: the boot must stop.
 qemu-ab-test: ## Two system images on one disk. WHAT=bad (default): slot B damaged; WHAT=unit: a unit fails in slot B; in both slot A must take over. WHAT=good: slot B must boot
 	@tools/run-qemu.sh --test --ab-test $(or $(WHAT),bad)
 
+.PHONY: qemu-update-test
+qemu-update-test: ## The machine updates itself from a local server. WHAT=good (default): the new image must boot; WHAT=tampered: the update must be refused
+	@tools/run-qemu.sh --test --update-test $(or $(WHAT),good)
+
 .PHONY: qemu-installer
 qemu-installer: ## Rehearse the installation: boot the stick image with a blank NVMe disk
 	@tools/run-qemu.sh --installer
@@ -116,6 +129,10 @@ qemu-target-test: ## Boot the disk installed by the rehearsal and check the boot
 .PHONY: remote-test
 remote-test: ## Check a real machine over SSH: make remote-test HOST=<address>
 	@tools/remote-check.sh $(HOST) --expect secureboot=1 --expect verity=1 --expect var=state
+
+.PHONY: remote-update
+remote-update: ## Send the last build to a real machine, which installs it in its free slot: make remote-update HOST=<address> [REBOOT=1]
+	@tools/remote-update.sh $(HOST) $(if $(REBOOT),--reboot)
 
 .PHONY: measure-prepare
 measure-prepare: ## After every boot of a machine: copy the tools, keep results on disk: make measure-prepare HOST=<address>
