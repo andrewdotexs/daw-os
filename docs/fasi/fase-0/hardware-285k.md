@@ -39,7 +39,7 @@ Da `lspci -k`, `lsblk` e dal registro del primo avvio dal disco. Il numero di se
 | --- | --- | --- | --- |
 | Ethernet Intel I226-V (rev 06) | `83:00.0` | `igc` | Confermato. Interfaccia `eno1`. |
 | Disco Samsung SSD 990 PRO 1TB | `02:00.0` | `nvme` | 931,5 GiB reali. Unico disco interno. |
-| Intel VMD (controller RAID NVMe) | `00:0e.0` | `vmd` | VMD è attivo nel firmware: il driver aggiunto per prudenza serviva davvero. |
+| Intel VMD (controller RAID NVMe) | `00:0e.0` | `vmd` | VMD è attivo nel firmware, ma il disco non è collegato attraverso di lui: sta su `0000:02:00.0`, sotto la porta `00:06.4` (verificato il 15 novembre 2026). Il driver non serve al disco di questa macchina. |
 | USB, controller del processore (Thunderbolt 4) | `00:0d.0` | `xhci_hcd` | Primo dei due controller USB. |
 | USB, controller del chipset | `80:14.0` | `xhci_hcd` | Secondo controller USB. |
 | Thunderbolt 4 NHI | `00:0d.2` | nessuno | Il sottosistema Thunderbolt non è nel kernel. |
@@ -112,6 +112,8 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 **Dopo l'intervento del 14 novembre 2026** (RTX 5080 tolta, seconda ventola montata): package a riposo 32 °C e 50 W alla presa; a carico continuo 53 °C a 60 W, 65 °C a 100 W, 79 °C a 150 W, 87 °C a 175 W, senza interventi della protezione termica. I valori del 13 novembre qui sopra descrivono la macchina com'era prima.
 
 **Firmware, stato al 14 novembre 2026**: limite di potenza PL1 = PL2 = **160 W** (prima 250 W); ASPM, Wi-Fi, Bluetooth e _HD Audio_ disattivati; profilo di memoria di base (X.M.P. disattivato, 4800 MT/s); pompa a 5378 giri al minuto; ventola del processore sul profilo _Standard_, al 100 % da 70 °C. Voci cambiate rispetto a prima: Wi-Fi, Bluetooth e _HD Audio_ da attivi a disattivati; i due limiti di potenza da automatici a 160; l'ASPM era già disattivato. Verifica a carico continuo al limite: 83,3 °C con la stanza a 24 °C.
+
+**Secure Boot, stato al 15 novembre 2026**: attivo (_OS Type_: _Windows UEFI mode_; _Secure Boot Mode_: _Custom_; stato _User_). Fino a quel giorno il firmware era senza chiavi, in stato _Setup_. Ora contiene le chiavi di fabbrica (_PK_, _KEK_, _DBX_) e in _DB_ tredici firme: quelle di fabbrica più il certificato di sviluppo di dawOS. Procedura e verifica nella guida del sotto-passo P0.5f.
 
 **Contenitore: da rack 2U modificato (D-22, orientamento del 14 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno), il PC in 2U e 1U libera sopra il PC. Il contenitore scelto è un 2U da 19 pollici per schede micro-ATX (UNYKAch UK2129, 381 × 431 × 90 mm, 4,8 kg), da modificare: un'apertura nel coperchio, il radiatore **appoggiato all'esterno** sopra il coperchio, nell'unità libera, e le ventole da 140 mm avvitate dall'interno attraverso il coperchio. Così restano il dissipatore attuale e le ventole grandi e lente. Punti da verificare a modifica fatta:
 

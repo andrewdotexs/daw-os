@@ -100,7 +100,7 @@ qemu: ## Boot the image in QEMU with a serial console (exit: Ctrl-A then X)
 
 .PHONY: qemu-test
 qemu-test: ## Boot the image in QEMU and check the boot report (PASS/FAIL)
-	@tools/run-qemu.sh --test --expect secureboot=1 --expect verity=1 --expect var=state
+	@tools/run-qemu.sh --test --expect secureboot=1 --expect verity=1 --expect timers=none --expect var=state
 
 .PHONY: qemu-tamper-test
 qemu-tamper-test: ## Change one byte in a copy of the image: the boot must stop. WHAT=root (default), verity or uki
@@ -124,11 +124,11 @@ qemu-target: ## Boot the disk installed by the rehearsal (exit: Ctrl-A then X)
 
 .PHONY: qemu-target-test
 qemu-target-test: ## Boot the disk installed by the rehearsal and check the boot report
-	@tools/run-qemu.sh --target --test --expect secureboot=1 --expect verity=1 --expect var=state
+	@tools/run-qemu.sh --target --test --expect secureboot=1 --expect verity=1 --expect timers=none --expect var=state
 
 .PHONY: remote-test
-remote-test: ## Check a real machine over SSH: make remote-test HOST=<address>
-	@tools/remote-check.sh $(HOST) --expect secureboot=1 --expect verity=1 --expect var=state
+remote-test: ## Check a real machine over SSH: make remote-test HOST=<address> [SECUREBOOT=0 while Secure Boot is still off]
+	@tools/remote-check.sh $(HOST) --expect secureboot=$(or $(SECUREBOOT),1) --expect verity=1 --expect timers=none --expect var=state
 
 .PHONY: remote-update
 remote-update: ## Send the last build to a real machine, which installs it in its free slot: make remote-update HOST=<address> [REBOOT=1]

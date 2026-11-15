@@ -28,8 +28,16 @@ normal_dir=${1:-}
 [ -n "${normal_dir}" ] || exit 0
 
 # Generators have no journal yet: the kernel log is the place to speak.
+# The number in angle brackets is the kernel log level: 6 is "info", 4 is
+# "warning". Without it the kernel files every line as a warning, and the
+# normal outcome would show up in "journalctl -p warning" at every boot.
 log() {
-	echo "dawos-var-generator: $*" > /dev/kmsg 2> /dev/null || true
+	echo "<6>dawos-var-generator: $*" > /dev/kmsg 2> /dev/null || true
+}
+
+# For the outcomes that leave /var in memory on a machine with a disk.
+warn() {
+	echo "<4>dawos-var-generator: $*" > /dev/kmsg 2> /dev/null || true
 }
 
 # Print the kernel names of the partitions whose GPT name is $1, among
@@ -59,13 +67,13 @@ esac
 root_label=$(printf '%s\n' "${cmdline}" |
 	sed -n 's/.*PARTLABEL=\(dawos-root-[A-Za-z0-9._+-]*\).*/\1/p')
 if [ -z "${root_label}" ]; then
-	log "no dawos-root partition on the kernel command line: /var stays in memory"
+	warn "no dawos-root partition on the kernel command line: /var stays in memory"
 	exit 0
 fi
 
 roots=$(partitions_named "${root_label}" /sys/class/block)
 if [ "$(printf '%s\n' "${roots}" | grep -c .)" != 1 ]; then
-	log "expected one partition named ${root_label}, found: ${roots:-none}: /var stays in memory"
+	warn "expected one partition named ${root_label}, found: ${roots:-none}: /var stays in memory"
 	exit 0
 fi
 
@@ -73,7 +81,7 @@ fi
 disk_dir=$(dirname "$(readlink -f "/sys/class/block/${roots}")")
 states=$(partitions_named state "${disk_dir}")
 if [ "$(printf '%s\n' "${states}" | grep -c .)" != 1 ]; then
-	log "expected one partition named state on ${disk_dir##*/}, found: ${states:-none}: /var stays in memory"
+	warn "expected one partition named state on ${disk_dir##*/}, found: ${states:-none}: /var stays in memory"
 	exit 0
 fi
 

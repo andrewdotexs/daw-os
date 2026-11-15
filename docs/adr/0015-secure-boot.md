@@ -12,7 +12,7 @@ Le decisioni vincolanti fissano la forma della catena di avvio: immagine di avvi
 
 1. **Si firmano il boot loader e le immagini di avvio**, con un solo certificato autofirmato (RSA 2048, SHA-256: ciò che ogni firmware UEFI accetta).
 2. **La chiave della variante `dev` è una chiave di sviluppo**, creata alla prima costruzione in `keys/secure-boot/`, fuori dal repository, non cifrata.
-3. **Sulle macchine di sviluppo il certificato si aggiunge all'archivio delle firme (`db`) del firmware**, lasciando le chiavi esistenti del produttore e di Microsoft.
+3. **Sulle macchine di sviluppo il certificato si aggiunge all'archivio delle firme (`db`) del firmware**, accanto alle chiavi del produttore e di Microsoft. Se il firmware ne è privo, prima si installano quelle di fabbrica.
 4. **Strumenti**: `ukify` dal pacchetto `host-systemd` di Buildroot; `sbsign` e `sbverify` dal pacchetto `sbsigntool` del PC di sviluppo; `virt-fw-vars` (pacchetto `python3-virt-firmware`) per iscrivere il certificato nel firmware di QEMU.
 5. **Le varianti della riga di comando sono profili** della stessa immagine firmata.
 6. **Blocco del kernel e vincolo sui moduli restano disattivati** nella variante `dev`.
@@ -30,7 +30,7 @@ Le decisioni vincolanti fissano la forma della catena di avvio: immagine di avvi
 ## Conseguenze
 
 - **Che cosa garantisce sul 285K**: con Secure Boot attivo, il boot loader e l'immagine di avvio di dawOS non si possono alterare senza che il firmware li rifiuti, e attraverso l'impronta radice nemmeno la radice.
-- **Che cosa non garantisce**: il 285K avvia anche qualunque cosa sia firmata dalle chiavi già presenti nel firmware (per esempio un supporto d'installazione di Windows o una distribuzione con _shim_). Chi ha accesso fisico e al menu del firmware può spegnere Secure Boot. La protezione vale contro la modifica di dawOS, non contro l'avvio di altro.
+- **Che cosa non garantisce**: il 285K avvia anche qualunque cosa sia firmata dalle chiavi di fabbrica del firmware (per esempio un supporto d'installazione di Windows o una distribuzione con _shim_). Chi ha accesso fisico e al menu del firmware può spegnere Secure Boot. La protezione vale contro la modifica di dawOS, non contro l'avvio di altro.
 - Con Secure Boot attivo la riga di comando non si modifica dal menu di avvio. Per provare un parametro si spegne Secure Boot, oppure si aggiunge un profilo.
 - Perdere `keys/secure-boot/` obbliga a iscrivere un certificato nuovo su ogni macchina.
 - Il PC di sviluppo ha due pacchetti in più, controllati da `make check-env`.
@@ -55,3 +55,9 @@ Dove vive e come si usa la chiave che firmerà le immagini `prod`: su un disposi
 - Alla definizione della variante `prod` (D-23, D-24).
 - Se una macchina di destinazione avesse un firmware che non permette di aggiungere certificati all'archivio delle firme.
 - Se si decidesse di distribuire dawOS a macchine di terzi: tornerebbe in gioco _shim_.
+
+## Aggiornamento del 15 novembre 2026
+
+Sul 285K il firmware era senza chiavi: archivi vuoti e stato _Setup_ _(verificato nel sotto-passo P0.5f)_. Il punto 3 della decisione presupponeva chiavi già presenti. La decisione non cambia: sono state installate le chiavi di fabbrica (_Install Default Secure Boot Keys_) e il certificato di sviluppo è stato aggiunto a `db`. Stato finale: `Secure Boot: enabled (user)`.
+
+Lo stato vuoto avrebbe permesso di iscrivere una gerarchia tutta nostra senza cancellare nulla. Resta l'alternativa scartata della tabella, per gli stessi motivi, e resta rinviata con D-23 e D-24.
