@@ -115,12 +115,15 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Secure Boot, stato al 15 novembre 2026**: attivo (_OS Type_: _Windows UEFI mode_; _Secure Boot Mode_: _Custom_; stato _User_). Fino a quel giorno il firmware era senza chiavi, in stato _Setup_. Ora contiene le chiavi di fabbrica (_PK_, _KEK_, _DBX_) e in _DB_ tredici firme: quelle di fabbrica più il certificato di sviluppo di dawOS. Procedura e verifica nella guida del sotto-passo P0.5f.
 
-**Contenitore: da rack 2U modificato (D-22, orientamento del 14 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno), il PC in 2U e 1U libera sopra il PC. Il contenitore scelto è un 2U da 19 pollici per schede micro-ATX (UNYKAch UK2129, 381 × 431 × 90 mm, 4,8 kg), da modificare: un'apertura nel coperchio, il radiatore **appoggiato all'esterno** sopra il coperchio, nell'unità libera, e le ventole da 140 mm avvitate dall'interno attraverso il coperchio. Così restano il dissipatore attuale e le ventole grandi e lente. Punti da verificare a modifica fatta:
+**Contenitore: telaio da rack 3U stampato in ASA (D-22, orientamento del 15 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno); il PC occupa le tre unità restanti. Il telaio è un modello aperto da 19 pollici per schede micro-ATX o ITX, stampato in ASA in più pezzi avvitati tra loro. Il radiatore non sta nel telaio: è fissato nella parte posteriore del rack con un supporto stampato, anch'esso in ASA. L'alimentatore resta **SFX**, con una staffa di adattamento ad ATX. Sostituisce l'orientamento del 14 novembre (contenitore metallico 2U UNYKAch UK2129 modificato, con il radiatore sopra il coperchio).
 
-- sopra il radiatore restano circa 17 mm prima dell'apparecchio o del pannello successivo: l'aria deve poter uscire dal fronte e dal retro di quell'unità;
-- l'aria calda esce verso l'alto: il PC sarà l'apparecchio più in alto del rack, e il rack resta aperto davanti e dietro durante l'uso (confermato dall'utente);
-- l'alimentatore è in formato **SFX**: serve una staffa di adattamento da SFX ad ATX, e i suoi cavi, pensati per contenitori piccoli, possono risultare corti in un contenitore profondo 431 mm. Alto 63,5 mm, lascia circa 20 mm liberi per la sua ventola;
-- il coperchio resta legato alla scheda madre dai tubi del dissipatore.
+Punti da verificare a montaggio fatto _(nessuno è ancora verificato)_:
+
+- **Interferenze sull'audio.** Un telaio aperto di plastica non scherma nulla, e nello stesso rack ci sono la scheda audio e il preamplificatore. Prova: registrare il silenzio da un ingresso ad alto guadagno, con il PC spento, a riposo e sotto carico.
+- **Tubi e ingombri.** La lunghezza dei tubi del dissipatore è fissa: deve bastare dal processore al retro del rack. Il radiatore è largo circa 140 mm, più di tre unità (133 mm): non deve coprire i connettori posteriori degli altri apparecchi.
+- **Parti senza ventola.** Senza contenitore non c'è un flusso d'aria su regolatori di tensione, memoria e disco: vanno lette le loro temperature sotto carico continuo.
+- **Tenuta meccanica.** Il telaio regge il PC a sbalzo dalle alette anteriori, in plastica: da controllare la flessione a caldo e dopo qualche settimana.
+- **Rumore.** Pompa e ventole non sono attenuate da alcuna parete.
 
 Un contenitore diverso cambia il raffreddamento: curva termica, limite di potenza e misura di conferma vanno rifatti nel contenitore definitivo, **prima** dei passi P0.6 e P0.7.
 

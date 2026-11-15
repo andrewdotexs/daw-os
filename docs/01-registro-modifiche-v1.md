@@ -510,6 +510,7 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | Costruzione, opzioni dei pacchetti | Non trattato | Buildroot non ricostruisce un pacchetto quando cambiano solo le sue opzioni. `make image` ora lo fa per systemd (`tools/package-options.sh`), e `post-build.sh` ferma la costruzione se all'immagine manca un programma necessario. Emerso dal fallimento della prima consegna di P0.5e sul PC di sviluppo. |
 | P0.5f, Secure Boot sul 285K | Certificato aggiunto alle chiavi già presenti nel firmware | Il firmware era **senza chiavi** (stato _Setup_): prima si installano quelle di fabbrica, poi si aggiunge il certificato. Decisione dell'ADR 0015 invariata. |
 | P0.5f, ingresso nel firmware | `systemctl reboot --firmware-setup` | `bootctl reboot-to-firmware true && systemctl reboot`: il primo richiede `systemd-logind`, che l'immagine non contiene. |
+| D-22, contenitore da rack | 2U metallico modificato, radiatore sopra il coperchio | Orientamento dell'utente del 15 novembre 2026: **telaio aperto 3U stampato in ASA**, radiatore fissato sul retro del rack. Oltre alle misure termiche, a montaggio fatto va provata l'interferenza sull'audio. |
 | 285K, controller VMD | «Il disco è dietro VMD» | VMD è attivo ma il disco è collegato direttamente. Il driver resta nel kernel per prudenza. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
