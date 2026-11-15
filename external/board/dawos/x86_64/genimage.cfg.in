@@ -19,10 +19,6 @@ image efi-part.vfat {
 		file loader {
 			image = "efi-part/loader"
 		}
-
-		file dawos {
-			image = "efi-part/dawos"
-		}
 	}
 
 	size = 256M

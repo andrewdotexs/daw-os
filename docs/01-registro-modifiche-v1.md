@@ -483,11 +483,16 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | M-04, `/var` | «`/var` su `state`» | Montata da un generatore nostro, che cerca la partizione per nome sul disco della radice; in memoria sul supporto d'installazione. ADR 0013. |
 | M-04, `machine-id` | «`machine-id` conservato» | Derivato dall'identificativo SMBIOS con `systemd.machine_id=firmware`: non c'è nulla da conservare. ADR 0013. |
 | M-04, file di `/etc` modificabili | Collegamenti verso `/var/lib/dawos/etc/` | Rinviati a quando un componente ne avrà bisogno. |
-| P0.5, punto 3, `ukify` | «Se il pacchetto systemd di Buildroot non fornisce `ukify` per l'host _(da verificare)_» | Verificato: Buildroot 2026.02.3 non lo offre. Servirà un pacchetto nostro nel sotto-passo P0.5c. |
+| P0.5, punto 3, `ukify` | «Se il pacchetto systemd di Buildroot non fornisce `ukify` per l'host _(da verificare)_» | Lo fornisce: `host-systemd` lo costruisce in `output/host/bin/ukify`, anche se non ha un'opzione nel menu. (Nel sotto-passo P0.5a avevo scritto il contrario: errore mio, corretto in P0.5c.) Mancano invece `sbsign` e `virt-fw-vars`, presi dai pacchetti del PC di sviluppo. |
 | Rapporto di avvio | Cinque campi | Nuovo campo `var=state`, `tmpfs` o `none`; le prove automatiche pretendono `var=state`. |
 | P0.5, punto 2, `PARTLABEL` nella tabella di `dm-mod.create` | _Da verificare_; ripiego su un initrd minimo | **Verificato in QEMU** nel sotto-passo P0.5b: il kernel crea da solo il dispositivo verificato. La decisione D-03 (nessun initrd) regge. |
 | P0.5, politica con un blocco alterato | Non specificata | `panic_on_corruption` con `panic=10`: messaggio, poi riavvio. ADR 0014; da confermare dall'utente. |
 | P0.5, supporto d'installazione | Non specificato | Verificato anch'esso, con etichette proprie; l'installatore copia l'albero di hash e ricontrolla ciò che ha scritto. ADR 0014. |
+| P0.5, punto 3, firma | `ukify` con `keys/db.key` e `keys/db.crt` | Chiave di sviluppo creata alla prima costruzione in `keys/secure-boot/`; firmati boot loader e immagini di avvio. ADR 0015. |
+| P0.5, punto 3, profili | Due profili, `285k` e `generico`, uniti con `--join-profile` | Meccanismo provato con il profilo «verbose» del supporto d'installazione; i profili per macchina arrivano con il passo P0.6. |
+| P0.5, punto 6, Secure Boot in QEMU | «Generare chiavi di sviluppo, iscriverle nelle variabili di OVMF» | Fatto con `virt-fw-vars` e la variante di OVMF che applica Secure Boot; prova automatica `make qemu-tamper-test WHAT=uki`. |
+| Decisioni aperte | D-10 … D-22 | Nuove **D-23** (chiave delle immagini di rilascio) e **D-24** (blocco del kernel e vincolo sui moduli). Proposta: rinviare; non bloccano la Fase 0. |
+| Rapporto di avvio | Sei campi | Nuovo campo `secureboot=0` o `1`. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
 Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).

@@ -27,6 +27,7 @@ target_size=932G
 installer=no
 new_target=no
 tamper=
+secure_boot=yes
 mode=interactive
 memory=2G
 cpus=4
@@ -41,9 +42,13 @@ Usage: ${0##*/} [options]
 
   --test            headless boot; check the boot report; exit 0/1
   --expect K=V      with --test: also require this field in the boot report
-  --tamper WHAT     with --test: change one byte of the 'root' partition or
-                    of its 'verity' hash tree in a copy of the image; the
-                    test passes if the kernel notices and the boot stops
+  --tamper WHAT     with --test: change one byte in a copy of the image and
+                    pass if the boot is stopped. WHAT is 'root' (the root
+                    partition) or 'verity' (its hash tree), both caught by
+                    the kernel; or 'uki' (the dm-verity root hash inside
+                    the signed unified kernel image), caught by the
+                    firmware
+  --no-secure-boot  start the firmware with Secure Boot off
   --image PATH      disk image to boot (default: output/images/disk.img)
   --installer       boot the installation medium (USB) with a blank NVMe
                     target disk, to rehearse dawos-install
@@ -70,9 +75,10 @@ while (($# > 0)); do
 		shift
 		;;
 	--tamper)
-		tamper=${2:?--tamper needs 'root' or 'verity'}
+		tamper=${2:?--tamper needs 'root', 'verity' or 'uki'}
 		shift
 		;;
+	--no-secure-boot) secure_boot=no ;;
 	--image)
 		image=${2:?--image needs a path}
 		shift
@@ -127,24 +133,35 @@ fi
 # --- Tamper test: one changed byte in a copy of the image --------------------
 if [[ -n ${tamper} ]]; then
 	[[ ${mode} == test ]] || die "--tamper needs --test"
-	[[ ${tamper} == root || ${tamper} == verity ]] || die "--tamper takes 'root' or 'verity'"
+	[[ ${tamper} == root || ${tamper} == verity || ${tamper} == uki ]] ||
+		die "--tamper takes 'root', 'verity' or 'uki'"
 	command -v python3 > /dev/null || die "python3 not found"
 
 	tampered=${state_dir}/tampered.img
 	cp --sparse=always "${image}" "${tampered}"
 
-	# Find the partition whose name starts with dawos-root- or
-	# dawos-verity- in the GPT of the image itself, and invert one byte
-	# that is certainly read while booting: in the first block of the
-	# root file system (its superblock), or in the first block of the
-	# hash tree (its top level, on the path of every check). Block 0 of
-	# the hash partition is veritysetup's own superblock, unused by the
-	# kernel, hence the offset of one block.
-	python3 - "${tampered}" "dawos-${tamper}-" "${tamper}" <<'PYTHON' || die "could not tamper with ${tampered}"
+	# What gets changed, always in the copy:
+	#   root    one byte in the first block of the root file system (its
+	#           superblock), certainly read while booting;
+	#   verity  one byte in the first block of the hash tree (its top
+	#           level, on the path of every check). Block 0 of the hash
+	#           partition is veritysetup's own superblock, unused by the
+	#           kernel, hence the offset of one block;
+	#   uki     one digit of the dm-verity root hash inside the signed
+	#           unified kernel image, on the EFI System Partition. The
+	#           image is found by searching the partition for the hash.
+	root_hash=
+	if [[ ${tamper} == uki ]]; then
+		[[ ${secure_boot} == yes ]] || die "--tamper uki makes no sense with --no-secure-boot"
+		[[ -f ${repo_dir}/output/images/rootfs.roothash ]] || die "root hash not found (run 'make image' first)"
+		root_hash=$(tr -d '[:space:]' < "${repo_dir}/output/images/rootfs.roothash")
+	fi
+	python3 - "${tampered}" "${tamper}" "${root_hash}" <<'PYTHON' || die "could not tamper with ${tampered}"
 import struct
 import sys
 
-path, prefix, what = sys.argv[1:4]
+path, what, root_hash = sys.argv[1:4]
+prefix = {"root": "dawos-root-", "verity": "dawos-verity-", "uki": "esp"}[what]
 with open(path, "r+b") as image:
     # GPT header in sector 1: signature, then at offset 72 the first
     # sector of the entry array, the number of entries and their size.
@@ -153,23 +170,37 @@ with open(path, "r+b") as image:
     if header[:8] != b"EFI PART":
         sys.exit("no GPT in " + path)
     entries_lba, count, size = struct.unpack_from("<QII", header, 72)
-    start = None
+    first = last = None
     for index in range(count):
         image.seek(entries_lba * 512 + index * size)
         entry = image.read(size)
         name = entry[56:128].decode("utf-16-le").rstrip("\x00")
         if name.startswith(prefix):
-            start = struct.unpack_from("<Q", entry, 32)[0]
+            first, last = struct.unpack_from("<QQ", entry, 32)
             break
-    if start is None:
+    if first is None:
         sys.exit("no partition named " + prefix + "* in " + path)
-    offset = start * 512 + (1024 if what == "root" else 4096)
+    if what == "uki":
+        # The command line is plain text inside the unified image.
+        image.seek(first * 512)
+        data = image.read((last - first + 1) * 512)
+        needle = ("sha256 " + root_hash).encode()
+        found = data.find(needle)
+        if found < 0:
+            sys.exit("root hash not found on the EFI System Partition")
+        offset = first * 512 + found + len(needle) - 1
+        image.seek(offset)
+        old = image.read(1)[0]
+        new = ord("0") if old != ord("0") else ord("1")
+    else:
+        offset = first * 512 + (1024 if what == "root" else 4096)
+        image.seek(offset)
+        old = image.read(1)[0]
+        new = old ^ 0xFF
     image.seek(offset)
-    old = image.read(1)[0]
-    image.seek(offset)
-    image.write(bytes([old ^ 0xFF]))
+    image.write(bytes([new]))
 print("run-qemu: tampered copy %s: byte %d of the image (partition %s) changed from %d to %d"
-      % (path, offset, name, old, old ^ 0xFF))
+      % (path, offset, name, old, new))
 PYTHON
 	image=${tampered}
 fi
@@ -177,26 +208,60 @@ fi
 # --- UEFI firmware ----------------------------------------------------------
 # OVMF comes as two files: read-only code and a variable store. The names
 # differ between distributions; each line is "<code> <vars template>".
+# With Secure Boot the build of the code that enforces it is needed (it
+# also requires the emulated System Management Mode, see the machine
+# options below); without it, the plain build.
 ovmf_code=
 ovmf_vars_template=
+if [[ ${secure_boot} == yes ]]; then
+	candidates='/usr/share/OVMF/OVMF_CODE_4M.secboot.fd /usr/share/OVMF/OVMF_VARS_4M.fd
+/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd /usr/share/edk2/x64/OVMF_VARS.4m.fd
+/usr/share/edk2/ovmf/OVMF_CODE.secboot.fd /usr/share/edk2/ovmf/OVMF_VARS.fd'
+else
+	candidates='/usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_VARS_4M.fd
+/usr/share/OVMF/OVMF_CODE.fd /usr/share/OVMF/OVMF_VARS.fd
+/usr/share/edk2/x64/OVMF_CODE.4m.fd /usr/share/edk2/x64/OVMF_VARS.4m.fd
+/usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/edk2/ovmf/OVMF_VARS.fd'
+fi
 while read -r code vars; do
 	if [[ -f ${code} && -f ${vars} ]]; then
 		ovmf_code=${code}
 		ovmf_vars_template=${vars}
 		break
 	fi
-done <<'CANDIDATES'
-/usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_VARS_4M.fd
-/usr/share/OVMF/OVMF_CODE.fd /usr/share/OVMF/OVMF_VARS.fd
-/usr/share/edk2/x64/OVMF_CODE.4m.fd /usr/share/edk2/x64/OVMF_VARS.4m.fd
-/usr/share/edk2/ovmf/OVMF_CODE.fd /usr/share/edk2/ovmf/OVMF_VARS.fd
-CANDIDATES
+done <<< "${candidates}"
 [[ -n ${ovmf_code} ]] || die "OVMF firmware not found (package 'ovmf')"
 
-# The variable store is written by the firmware (boot entries, later the
-# Secure Boot keys): each checkout keeps its own private copy.
-ovmf_vars=${state_dir}/OVMF_VARS.fd
-[[ -f ${ovmf_vars} ]] || cp "${ovmf_vars_template}" "${ovmf_vars}"
+# The variable store is written by the firmware (boot entries, keys): each
+# checkout keeps its own private copy.
+machine_options=
+if [[ ${secure_boot} == yes ]]; then
+	# A store with our development certificate enrolled and Secure Boot
+	# switched on: the virtual counterpart of enrolling the certificate
+	# in the setup menu of a real machine. One certificate plays all
+	# three roles here (platform key, key exchange key, signature
+	# database); only the last one matters for what may boot.
+	sb_cert=${repo_dir}/keys/secure-boot/db.crt
+	[[ -f ${sb_cert} ]] || die "Secure Boot certificate not found: ${sb_cert} (run 'make image' first)"
+	command -v virt-fw-vars > /dev/null || die "virt-fw-vars not found: sudo apt install python3-virt-firmware"
+	ovmf_vars=${state_dir}/OVMF_VARS.secboot.fd
+	if [[ ! -f ${ovmf_vars} || ${sb_cert} -nt ${ovmf_vars} ]]; then
+		# Owner GUID of the enrolled entries: any fixed value will do.
+		owner=5a3c1e0e-9b6d-4c57-8f15-da0500000001
+		virt-fw-vars --input "${ovmf_vars_template}" --output "${ovmf_vars}" \
+			--set-pk "${owner}" "${sb_cert}" \
+			--add-kek "${owner}" "${sb_cert}" \
+			--add-db "${owner}" "${sb_cert}" \
+			--secure-boot > "${state_dir}/virt-fw-vars.log" 2>&1 ||
+			die "virt-fw-vars failed, see ${state_dir}/virt-fw-vars.log"
+	fi
+	# The variable store must be writable only from System Management
+	# Mode, or the guest could rewrite the keys.
+	machine_options=',smm=on'
+else
+	ovmf_vars=${state_dir}/OVMF_VARS.fd
+	[[ -f ${ovmf_vars} ]] || cp "${ovmf_vars_template}" "${ovmf_vars}"
+fi
 
 # --- Acceleration -----------------------------------------------------------
 # With KVM the guest sees the host CPU. Without it QEMU emulates one:
@@ -211,7 +276,7 @@ else
 fi
 
 qemu_args=(
-	-machine "q35,accel=${accel}"
+	-machine "q35,accel=${accel}${machine_options}"
 	-cpu "${cpu_model}"
 	-smp "${cpus}"
 	-m "${memory}"
@@ -231,6 +296,11 @@ qemu_args=(
 	-device "virtio-net-pci,netdev=net0"
 	-device virtio-rng-pci
 )
+
+if [[ ${secure_boot} == yes ]]; then
+	# Flash writable from System Management Mode only (see above).
+	qemu_args+=(-global "driver=cfi.pflash01,property=secure,value=on")
+fi
 
 if [[ ${installer} == yes ]]; then
 	# The installation medium is a USB stick and comes first in the boot
@@ -277,7 +347,11 @@ while ((SECONDS < deadline)); do
 	# -a: the log contains terminal escape sequences from the firmware.
 	report=$(grep -a -m 1 -o 'DAWOS-BOOT-REPORT .*' "${log}" | tr -d '\r' || true)
 	[[ -n ${report} ]] && break
-	if [[ -n ${tamper} ]]; then
+	if [[ ${tamper} == uki ]]; then
+		# The firmware refuses to load the image; systemd-boot reports it.
+		corruption=$(grep -a -m 1 -o -i -E '(access denied|security violation)' "${log}" || true)
+		[[ -n ${corruption} ]] && break
+	elif [[ -n ${tamper} ]]; then
 		corruption=$(grep -a -m 1 -o -E 'device-mapper: verity: .* block [0-9]+ is corrupted' "${log}" || true)
 		[[ -n ${corruption} ]] && break
 	fi
@@ -294,15 +368,21 @@ if [[ -n ${tamper} ]]; then
 		exit 1
 	fi
 	if [[ -z ${corruption} ]]; then
-		echo "FAIL: no boot report, but no dm-verity message either; last lines of the console:" >&2
+		echo "FAIL: no boot report, but no message of refusal either; last lines of the console:" >&2
 		tail -n 25 "${log}" | tr -d '\r' >&2
 		exit 1
 	fi
 	# Give the kernel a moment to print what it does about it.
 	sleep 2
-	echo "${corruption}"
-	grep -a -m 1 -o 'Kernel panic - not syncing: .*' "${log}" | tr -d '\r' || true
-	echo "PASS: tampering with the ${tamper} partition was detected and the boot stopped"
+	if [[ ${tamper} == uki ]]; then
+		grep -a -m 1 -o -i -E 'Error loading EFI binary [^:]*: (access denied|security violation)' "${log}" ||
+			echo "${corruption}"
+		echo "PASS: the firmware refused the unified kernel image whose root hash was changed"
+	else
+		echo "${corruption}"
+		grep -a -m 1 -o 'Kernel panic - not syncing: .*' "${log}" | tr -d '\r' || true
+		echo "PASS: tampering with the ${tamper} partition was detected and the boot stopped"
+	fi
 	exit 0
 fi
 
