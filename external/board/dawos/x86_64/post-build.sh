@@ -47,6 +47,29 @@ fi
 install -d -m 0755 "${BINARIES_DIR:?BINARIES_DIR is not set}"
 printf '%s\n' "${image_version}" > "${BINARIES_DIR}/version.txt"
 
+# --- The image must contain what the system relies on --------------------------
+# Each of these comes from a package option. Buildroot does not rebuild a
+# package when only its options change, so an option added to the
+# defconfig can be missing from the image without any error: better to
+# stop here, naming the package, than to find out on the machine.
+while read -r program package; do
+	[[ -e ${target_dir}${program} ]] || {
+		echo "post-build: ${program} is missing from the image." >&2
+		echo "post-build: the package '${package}' was built before one of its options was enabled:" >&2
+		echo "post-build: run 'make br-${package}-dirclean' and then 'make image' again." >&2
+		exit 1
+	}
+done <<'REQUIRED'
+/usr/lib/systemd/systemd-sysupdate systemd
+/usr/lib/systemd/systemd-pull systemd
+/usr/lib/systemd/systemd-bless-boot systemd
+/usr/lib/systemd/boot/efi/linuxx64.efi.stub systemd
+/usr/bin/systemd-repart systemd
+/usr/bin/gpg gnupg2
+/usr/sbin/veritysetup cryptsetup
+/usr/sbin/dmsetup lvm2
+REQUIRED
+
 # Exact source revision, for bug reports and measurement reports. Falls
 # back gracefully when the tree is not a git checkout (release tarball).
 build_id=$(git -C "${repo_dir}" describe --always --dirty --abbrev=12 2>/dev/null || echo unknown)

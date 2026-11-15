@@ -66,9 +66,18 @@ $(O)/.config: $(EXT_DIR)/configs/$(DEFCONFIG) | $(BR_DIR)/Makefile
 config: | $(BR_DIR)/Makefile ## (Re)apply the defconfig, discarding local menuconfig changes
 	$(BR_MAKE) $(DEFCONFIG)
 
+# Buildroot does not rebuild a package whose options changed. systemd is
+# the one we reconfigure as the system grows (boot loader, updates, ...):
+# when its options differ from those of its last build it is cleaned
+# here, so that "make image" rebuilds it. See tools/package-options.sh.
 .PHONY: image
 image: $(O)/.config ## Build the whole image (output/images/disk.img); JOBS=N limits parallelism
+	@if tools/package-options.sh changed "$(O)" systemd BR2_PACKAGE_SYSTEMD; then \
+		echo "make image: the options of systemd changed since it was built: rebuilding it (several minutes)"; \
+		$(BR_MAKE) systemd-dirclean; \
+	fi
 	$(BR_MAKE) all
+	@tools/package-options.sh record "$(O)" systemd BR2_PACKAGE_SYSTEMD
 
 .PHONY: menuconfig
 menuconfig: $(O)/.config ## Edit the Buildroot configuration

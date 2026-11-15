@@ -505,6 +505,7 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | P0.5, aggiornamento: firma | Chiave di sviluppo in `keys/` | Chiave OpenPGP in `keys/update/`, distinta da quella di Secure Boot; la metà pubblica sostituisce l'archivio di chiavi che systemd installa. |
 | P0.5, accettazione aggiuntiva | «Un'immagine con impronta alterata sul server viene rifiutata prima della scrittura» | Viene rifiutata e **non diventa avviabile**; parte dei dati può essere già stata scritta nello slot libero, che resta marcato come vuoto. |
 | Immagine per QEMU | Uno slot | Due slot, con il B libero, come un disco installato. |
+| Costruzione, opzioni dei pacchetti | Non trattato | Buildroot non ricostruisce un pacchetto quando cambiano solo le sue opzioni. `make image` ora lo fa per systemd (`tools/package-options.sh`), e `post-build.sh` ferma la costruzione se all'immagine manca un programma necessario. Emerso dal fallimento della prima consegna di P0.5e sul PC di sviluppo. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
 Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).
