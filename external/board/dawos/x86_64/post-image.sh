@@ -9,13 +9,17 @@
 #   disk.img       the system as installed, for QEMU;
 #   installer.img  the installation medium for the real machine (USB stick).
 #
-# Both carry the same root filesystem and kernel. They differ in the label
-# of the root partition, so that a machine with the stick plugged in and
-# dawOS already on its disk can never mount the wrong one, and in the
-# "dawos.installer" marker on the kernel command line.
+# Both carry the same root filesystem and kernel. They differ in the labels
+# of the root partition and of its hash tree, so that a machine with the
+# stick plugged in and dawOS already on its disk can never mount the wrong
+# one, and in the "dawos.installer" marker on the kernel command line.
 #
-# There is no verity, no UKI and no signature yet; those arrive in step
-# P0.5 and replace the "boot entry" sections below.
+# The chain of trust built here, link by link:
+#   firmware (Secure Boot)  checks the signature of the boot loader and of
+#                           the unified kernel image;
+#   unified kernel image    holds the kernel and its command line, hence
+#                           the dm-verity root hash;
+#   kernel (dm-verity)      checks every block read from the root.
 
 set -euo pipefail
 
@@ -55,7 +59,6 @@ read_cmdline() {
 # --- Sanity checks ----------------------------------------------------------
 [[ -f ${images_dir}/bzImage ]] || die "bzImage not found in ${images_dir}"
 [[ -f ${images_dir}/rootfs.erofs ]] || die "rootfs.erofs not found in ${images_dir}"
-[[ -f ${images_dir}/efi-part/EFI/BOOT/bootx64.efi ]] || die "systemd-boot not found (BR2_PACKAGE_SYSTEMD_BOOT)"
 
 # GPT partition names hold at most 36 characters.
 for label in "${root_label}" "${verity_label}" "${installer_label}" "${installer_verity_label}"; do
@@ -148,58 +151,133 @@ cmdline_installer="$(verity_params "${installer_label}" "${installer_verity_labe
 # on the same screen. Ugly, but nothing is hidden.
 cmdline_installer_verbose="${cmdline_installer} ignore_loglevel earlycon=efifb keep_bootcon systemd.log_target=kmsg systemd.log_level=info"
 
-# --- Boot entries (Boot Loader Specification, type 1) --------------------------
-# Fill the tree of one EFI System Partition.
-#   $1 = directory, $2 = menu title, $3 = kernel command line,
-#   $4 = command line of an extra "verbose" entry (optional)
+# --- Secure Boot signing key (dev variant) --------------------------------------
+# One self-signed certificate signs everything the firmware loads: the
+# boot loader and the unified kernel images. It lives in keys/, which is
+# never committed; it is created on the first build and then reused, so
+# that a machine whose firmware trusts it keeps trusting later builds.
+# This is a DEVELOPMENT key: anyone who holds keys/ can sign an image the
+# machine will boot. The key of released images is a later decision.
+openssl=${HOST_DIR}/bin/openssl
+[[ -x ${openssl} ]] || die "host openssl not found (BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL)"
+command -v sbsign > /dev/null || die "sbsign not found: sudo apt install sbsigntool"
+command -v sbverify > /dev/null || die "sbverify not found: sudo apt install sbsigntool"
+
+sb_dir=${repo_dir}/keys/secure-boot
+sb_key=${sb_dir}/db.key
+sb_cert=${sb_dir}/db.crt
+if [[ ! -f ${sb_key} || ! -f ${sb_cert} ]]; then
+	[[ ${variant} == dev ]] || die "no Secure Boot key in ${sb_dir}, and only the dev variant creates one"
+	echo "post-image: creating the development Secure Boot key in ${sb_dir}"
+	install -d -m 0700 "${sb_dir}"
+	# RSA 2048 with SHA-256 is what every UEFI firmware accepts.
+	(umask 077 && "${openssl}" req -new -x509 -newkey rsa:2048 -sha256 -nodes \
+		-days 3650 -subj "/CN=dawOS development Secure Boot key/" \
+		-keyout "${sb_key}" -out "${sb_cert}" 2> /dev/null)
+fi
+# The same certificate in binary form (DER): the format firmware setup
+# menus read when a key is enrolled from a file.
+"${openssl}" x509 -in "${sb_cert}" -outform DER -out "${sb_dir}/db.cer"
+sb_fingerprint=$("${openssl}" x509 -in "${sb_cert}" -noout -fingerprint -sha256 | cut -d = -f 2)
+
+# --- Unified kernel images ------------------------------------------------------
+# A unified kernel image (UKI) is one EFI program holding the kernel, its
+# command line and the description of the system, glued to a small loader
+# (systemd-stub). It is signed as a whole: with Secure Boot on, the
+# firmware refuses it if a single byte changed, and the stub ignores any
+# command line coming from outside. That is what protects the dm-verity
+# root hash, and through it the whole root file system.
+ukify=(env "PATH=${HOST_DIR}/bin:${PATH}" "${HOST_DIR}/bin/python3" "${HOST_DIR}/bin/ukify")
+[[ -x ${HOST_DIR}/bin/ukify ]] || die "ukify not found in ${HOST_DIR}/bin (host-systemd)"
+efi_dir=${TARGET_DIR:?TARGET_DIR is not set}/usr/lib/systemd/boot/efi
+[[ -f ${efi_dir}/linuxx64.efi.stub ]] || die "systemd-stub not found (BR2_PACKAGE_SYSTEMD_BOOT)"
+[[ -f ${efi_dir}/systemd-bootx64.efi ]] || die "systemd-boot not found (BR2_PACKAGE_SYSTEMD_BOOT)"
+
+uki_dir=${images_dir}/uki
+rm -rf "${uki_dir}"
+mkdir -p "${uki_dir}"
+
+# Build and sign one image.
+#   $1 = output file, $2 = os-release file (name shown in the boot menu),
+#   $3 = kernel command line, $4... = further ukify arguments
+build_uki() {
+	local output=$1 os_release=$2 options=$3
+	shift 3
+	"${ukify[@]}" build \
+		--linux="${images_dir}/bzImage" \
+		--stub="${efi_dir}/linuxx64.efi.stub" \
+		--os-release="@${os_release}" \
+		--cmdline="${options}" \
+		--signtool=sbsign \
+		--secureboot-private-key="${sb_key}" \
+		--secureboot-certificate="${sb_cert}" \
+		--output="${output}" "$@" >> "${uki_dir}/ukify.log" 2>&1 ||
+		die "ukify failed, see ${uki_dir}/ukify.log"
+	sbverify --cert "${sb_cert}" "${output}" >> "${uki_dir}/ukify.log" 2>&1 ||
+		die "the signature of ${output} does not verify"
+}
+
+# The installed system. The file name follows the Boot Loader
+# Specification for unified images: <id>_<version>.efi.
+uki_name="dawos_${version}.efi"
+build_uki "${uki_dir}/${uki_name}" "${TARGET_DIR}/usr/lib/os-release" "${cmdline}"
+
+# The installation medium: same kernel, its own command line and name,
+# plus a second "profile" for the verbose boot. A profile is a named
+# variant of the command line inside the same signed image; the boot
+# loader lists each profile as a menu entry. (The same mechanism will
+# carry the per-machine tuning profiles of step P0.6.)
+sed -e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"dawOS ${version} (${variant}) - installation medium\"/" \
+	"${TARGET_DIR}/usr/lib/os-release" > "${uki_dir}/os-release-installer"
+"${ukify[@]}" build \
+	--stub="${efi_dir}/addonx64.efi.stub" \
+	--profile=$'ID=verbose\nTITLE=verbose (all kernel messages on screen)' \
+	--cmdline="${cmdline_installer_verbose}" \
+	--output="${uki_dir}/profile-verbose.efi" >> "${uki_dir}/ukify.log" 2>&1 ||
+	die "ukify failed, see ${uki_dir}/ukify.log"
+installer_uki_name="dawos-installer_${version}.efi"
+build_uki "${uki_dir}/${installer_uki_name}" "${uki_dir}/os-release-installer" "${cmdline_installer}" \
+	--join-profile="${uki_dir}/profile-verbose.efi"
+
+# The boot loader is the first thing the firmware checks: signed too.
+sbsign --key "${sb_key}" --cert "${sb_cert}" \
+	--output "${uki_dir}/bootx64.efi" "${efi_dir}/systemd-bootx64.efi" >> "${uki_dir}/ukify.log" 2>&1 ||
+	die "signing systemd-boot failed, see ${uki_dir}/ukify.log"
+# --- EFI System Partitions -------------------------------------------------------
+# Fill the tree of one EFI System Partition: the signed boot loader, its
+# configuration, and one unified image in EFI/Linux, where systemd-boot
+# finds it by itself (Boot Loader Specification, type 2: no entry file).
+#   $1 = directory, $2 = unified image
 populate_esp() {
-	local dir=$1 title=$2 options=$3 verbose_options=${4:-}
+	local dir=$1 uki=$2
 
-	install -D -m 0644 "${images_dir}/bzImage" "${dir}/dawos/${version}/linux"
-
-	install -d -m 0755 "${dir}/loader/entries"
+	rm -rf "${dir}"
+	install -D -m 0644 "${uki_dir}/bootx64.efi" "${dir}/EFI/BOOT/bootx64.efi"
+	install -D -m 0644 "${uki}" "${dir}/EFI/Linux/${uki##*/}"
+	install -d -m 0755 "${dir}/loader"
 	cat > "${dir}/loader/loader.conf" <<LOADER
 # dawOS (${variant}): show the menu briefly so an entry can be picked by hand.
 timeout 5
-default dawos-${version}.conf
 console-mode keep
+# Keys are enrolled by hand in the firmware, never by the boot loader.
+secure-boot-enroll off
 LOADER
-
-	cat > "${dir}/loader/entries/dawos-${version}.conf" <<ENTRY
-title   ${title}
-version ${version}
-sort-key dawos
-linux   /dawos/${version}/linux
-options ${options}
-ENTRY
-
-	if [[ -n ${verbose_options} ]]; then
-		cat > "${dir}/loader/entries/dawos-${version}-verbose.conf" <<ENTRY
-title   ${title}, verbose (all kernel messages on screen)
-version ${version}
-sort-key dawos-verbose
-linux   /dawos/${version}/linux
-options ${verbose_options}
-ENTRY
-	fi
 }
 
-# systemd-boot itself is installed by Buildroot in efi-part/EFI.
 esp_dir=${images_dir}/efi-part
-# Drop Buildroot's sample configuration and anything left by an earlier run.
-rm -rf "${esp_dir}/loader" "${esp_dir}/dawos"
-populate_esp "${esp_dir}" "dawOS ${version} (${variant})" "${cmdline}"
+populate_esp "${esp_dir}" "${uki_dir}/${uki_name}"
 
-# The installation medium gets its own tree, with the same boot loader.
 inst_dir=${images_dir}/efi-inst
-rm -rf "${inst_dir}"
-install -D -m 0644 "${esp_dir}/EFI/BOOT/bootx64.efi" "${inst_dir}/EFI/BOOT/bootx64.efi"
-populate_esp "${inst_dir}" "dawOS ${version} (${variant}) - installation medium" \
-	"${cmdline_installer}" "${cmdline_installer_verbose}"
-# The command line of the system to install travels with the medium:
-# dawos-install copies it into the boot entry it writes, and takes the
-# root hash from it to check what it has copied.
+populate_esp "${inst_dir}" "${uki_dir}/${installer_uki_name}"
+# What dawos-install needs to set up the disk travels with the medium:
+# - the unified image of the system to install;
+# - its command line in clear text, for the installer to show and to
+#   take the root hash from, to check what it has copied (the copy that
+#   counts is the one inside the signed image);
+# - the certificate to enrol in the firmware of the machine.
+install -D -m 0644 "${uki_dir}/${uki_name}" "${inst_dir}/dawos/${version}/${uki_name}"
 printf '%s\n' "${cmdline}" > "${inst_dir}/dawos/${version}/options-installed"
+install -D -m 0644 "${sb_dir}/db.cer" "${inst_dir}/dawos/secure-boot/dawos-dev-secure-boot.cer"
 
 # Keep a copy next to the images: it is what the measurement reports cite.
 printf '%s\n' "${cmdline}" > "${images_dir}/cmdline.txt"
@@ -214,4 +292,6 @@ support/scripts/genimage.sh -c "${images_dir}/genimage.cfg"
 echo "post-image: ${images_dir}/disk.img ready (dawOS ${version}, ${variant})"
 echo "post-image: ${images_dir}/installer.img ready (installation medium)"
 echo "post-image: root hash: ${root_hash}"
+echo "post-image: unified kernel image: ${uki_dir}/${uki_name} (signed)"
+echo "post-image: Secure Boot certificate: ${sb_dir}/db.crt, SHA-256 fingerprint ${sb_fingerprint}"
 echo "post-image: kernel command line: ${cmdline}"

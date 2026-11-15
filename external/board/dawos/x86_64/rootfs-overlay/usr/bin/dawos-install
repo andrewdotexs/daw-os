@@ -292,12 +292,15 @@ cmd_install() {
 		die "hash-tree partition of the installation medium not found"
 	esp_src=$(bootctl --print-esp-path 2> /dev/null) || esp_src=/boot
 	[ -f "${esp_src}/EFI/BOOT/bootx64.efi" ] || die "boot loader not found in ${esp_src}"
-	[ -f "${esp_src}/dawos/${version}/linux" ] || die "kernel not found in ${esp_src}"
+	uki="dawos_${version}.efi"
+	[ -f "${esp_src}/dawos/${version}/${uki}" ] || die "unified kernel image not found in ${esp_src}"
 
 	# The command line of the installed system is prepared at build time
-	# and travels on the medium. It names the partitions of the disk
-	# (dawos-root-..., dawos-verity-...) and carries the root hash against
-	# which the kernel will check every block of the root.
+	# and sits inside the signed unified kernel image. It names the
+	# partitions of the disk (dawos-root-..., dawos-verity-...) and
+	# carries the root hash against which the kernel will check every
+	# block of the root. The medium also carries it in clear text: that
+	# copy is used here to show it and to check what gets copied.
 	[ -f "${esp_src}/dawos/${version}/options-installed" ] ||
 		die "command line of the installed system not found in ${esp_src}"
 	cmdline=$(cat "${esp_src}/dawos/${version}/options-installed")
@@ -362,24 +365,20 @@ cmd_install() {
 		die "the root partition written to the disk does not match its root hash, see ${LOG}"
 	state_dev=$(partition_dev "${target}" 6) || die "new state partition not found"
 
-	echo "Installing the boot loader and the kernel..."
+	# Both files are signed: the firmware checks them when Secure Boot is
+	# on. systemd-boot finds the unified image in EFI/Linux by itself, so
+	# there is no boot entry to write.
+	echo "Installing the boot loader and the unified kernel image..."
 	mkdir -p "${WORK}/esp"
 	mount -t vfat "${esp_dev}" "${WORK}/esp"
-	mkdir -p "${WORK}/esp/EFI/BOOT" "${WORK}/esp/dawos/${version}" "${WORK}/esp/loader/entries"
+	mkdir -p "${WORK}/esp/EFI/BOOT" "${WORK}/esp/EFI/Linux" "${WORK}/esp/loader"
 	cp "${esp_src}/EFI/BOOT/bootx64.efi" "${WORK}/esp/EFI/BOOT/bootx64.efi"
-	cp "${esp_src}/dawos/${version}/linux" "${WORK}/esp/dawos/${version}/linux"
+	cp "${esp_src}/dawos/${version}/${uki}" "${WORK}/esp/EFI/Linux/${uki}"
 	cat > "${WORK}/esp/loader/loader.conf" <<LOADER
 timeout 5
-default dawos-${version}.conf
 console-mode keep
+secure-boot-enroll off
 LOADER
-	cat > "${WORK}/esp/loader/entries/dawos-${version}.conf" <<ENTRY
-title   dawOS ${version} (${VARIANT_ID:-dev})
-version ${version}
-sort-key dawos
-linux   /dawos/${version}/linux
-options ${cmdline}
-ENTRY
 	umount "${WORK}/esp"
 
 	# Keep the record of the installation on the disk itself.

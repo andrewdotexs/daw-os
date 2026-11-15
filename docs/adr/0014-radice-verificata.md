@@ -1,6 +1,6 @@
 # ADR 0014 — Radice verificata: politica d'errore e supporto d'installazione
 
-- **Stato**: accettata con il sotto-passo P0.5b; la politica d'errore è da confermare dall'utente
+- **Stato**: accettata con il sotto-passo P0.5b; politica d'errore confermata dall'utente il 15 novembre 2026
 - **Data**: 15 novembre 2026
 - **Origine**: passo P0.5 del documento 0; completa l'ADR 0003
 

@@ -66,6 +66,11 @@ required_tools=(
 	qemu-system-x86_64 shellcheck
 	# openssh-client: host key of dev images, login to the real machine.
 	ssh ssh-keygen
+	# sbsigntool: signs the boot loader and the unified kernel images.
+	sbsign sbverify
+	# python3-virt-firmware: enrols our certificate in the firmware of
+	# the QEMU machine, for the tests with Secure Boot.
+	virt-fw-vars
 )
 missing=()
 for tool in "${required_tools[@]}"; do
@@ -74,7 +79,7 @@ done
 if ((${#missing[@]} == 0)); then
 	ok "all required tools found"
 else
-	fail "missing tools: ${missing[*]}"
+	fail "missing tools: ${missing[*]} (for sbsign, sbverify and virt-fw-vars: sudo apt install sbsigntool python3-virt-firmware)"
 fi
 
 if command -v npx > /dev/null 2>&1; then
@@ -101,9 +106,12 @@ else
 	fail "/dev/kvm missing: set nestedVirtualization=true in .wslconfig, then 'wsl --shutdown'"
 fi
 
-if compgen -G "/usr/share/OVMF/OVMF_CODE*.fd" > /dev/null ||
+if compgen -G "/usr/share/OVMF/OVMF_CODE*secboot*.fd" > /dev/null ||
+	compgen -G "/usr/share/edk2/*/OVMF_CODE*secboot*.fd" > /dev/null; then
+	ok "OVMF firmware found, with the Secure Boot build"
+elif compgen -G "/usr/share/OVMF/OVMF_CODE*.fd" > /dev/null ||
 	compgen -G "/usr/share/edk2/*/OVMF_CODE*.fd" > /dev/null; then
-	ok "OVMF firmware found"
+	fail "OVMF firmware found, but not its Secure Boot build (OVMF_CODE*secboot*.fd): update the package 'ovmf'"
 else
 	fail "OVMF firmware missing (package 'ovmf')"
 fi
