@@ -84,9 +84,13 @@ list_disks() {
 }
 
 # Name of the whole disk this system was started from, found through the
-# root partition named on the kernel command line.
+# root partition named on the kernel command line: "dawos-inst-<version>"
+# on the installation medium, "dawos-root-<version>" on an installed
+# system. The name appears in the dm-verity table (dm-mod.create=).
 boot_disk() {
-	label=$(sed -n 's/.*root=PARTLABEL=\([^ ]*\).*/\1/p' /proc/cmdline)
+	label=$(sed -n 's/.*PARTLABEL=\(dawos-inst-[A-Za-z0-9._+-]*\).*/\1/p' /proc/cmdline)
+	[ -n "${label}" ] ||
+		label=$(sed -n 's/.*PARTLABEL=\(dawos-root-[A-Za-z0-9._+-]*\).*/\1/p' /proc/cmdline)
 	[ -n "${label}" ] || return 1
 	part=$(readlink -f "/dev/disk/by-partlabel/${label}") || return 1
 	part=${part##*/}
@@ -151,7 +155,8 @@ cmd_list() {
 }
 
 # Write the systemd-repart definitions for the layout of document 0,
-# section 3.3. $1 = directory, $2 = image version, $3 = source of slot A.
+# section 3.3. $1 = directory, $2 = image version, $3 = source of the
+# root of slot A, $4 = source of its hash tree.
 write_definitions() {
 	dir=$1
 	rm -rf "${dir}"
@@ -174,15 +179,17 @@ SizeMinBytes=4G
 SizeMaxBytes=4G
 CopyBlocks=$3
 DEF
-	# The verity slots and slot B stay empty until the first signed
-	# image (step P0.5); "_empty" is the label systemd-sysupdate looks for.
+	# Its dm-verity hash tree, copied the same way.
 	cat > "${dir}/21-verity-a.conf" <<DEF
 [Partition]
 Type=root-x86-64-verity
-Label=_empty
+Label=dawos-verity-$2
 SizeMinBytes=128M
 SizeMaxBytes=128M
+CopyBlocks=$4
 DEF
+	# Slot B stays empty until the first update (step P0.5e); "_empty"
+	# is the label systemd-sysupdate looks for.
 	cat > "${dir}/30-root-b.conf" <<DEF
 [Partition]
 Type=root-x86-64
@@ -281,18 +288,24 @@ cmd_install() {
 
 	root_src=$(readlink -f "/dev/disk/by-partlabel/dawos-inst-${version}") ||
 		die "root partition of the installation medium not found"
+	verity_src=$(readlink -f "/dev/disk/by-partlabel/dawos-instv-${version}") ||
+		die "hash-tree partition of the installation medium not found"
 	esp_src=$(bootctl --print-esp-path 2> /dev/null) || esp_src=/boot
 	[ -f "${esp_src}/EFI/BOOT/bootx64.efi" ] || die "boot loader not found in ${esp_src}"
 	[ -f "${esp_src}/dawos/${version}/linux" ] || die "kernel not found in ${esp_src}"
 
-	# The installed system boots with the same command line as this one,
-	# except for the root label; the installer marker and whatever follows
-	# it (the options of the "verbose" entry) are cut off.
-	cmdline=$(sed -e "s/root=PARTLABEL=dawos-inst-/root=PARTLABEL=dawos-root-/" \
-		-e 's/ *dawos\.installer.*$//' /proc/cmdline)
+	# The command line of the installed system is prepared at build time
+	# and travels on the medium. It names the partitions of the disk
+	# (dawos-root-..., dawos-verity-...) and carries the root hash against
+	# which the kernel will check every block of the root.
+	[ -f "${esp_src}/dawos/${version}/options-installed" ] ||
+		die "command line of the installed system not found in ${esp_src}"
+	cmdline=$(cat "${esp_src}/dawos/${version}/options-installed")
+	root_hash=$(printf '%s\n' "${cmdline}" | sed -n 's/.* sha256 \([0-9a-f]\{64\}\) .*/\1/p')
+	[ -n "${root_hash}" ] || die "no root hash in the command line of the installed system"
 
 	mkdir -p "${WORK}"
-	write_definitions "${WORK}/repart.d" "${version}" "${root_src}"
+	write_definitions "${WORK}/repart.d" "${version}" "${root_src}" "${verity_src}"
 
 	# --- Show what is there and what will be done ---------------------------
 	echo "Target disk:"
@@ -338,6 +351,15 @@ cmd_install() {
 	udevadm settle
 
 	esp_dev=$(partition_dev "${target}" 1) || die "new ESP not found"
+	root_dev=$(partition_dev "${target}" 2) || die "new root partition not found"
+	verity_dev=$(partition_dev "${target}" 3) || die "new hash-tree partition not found"
+
+	# Read back what was written and check it block by block against the
+	# hash tree and the root hash: this covers both a bad read from the
+	# medium and a bad write to the disk.
+	echo "Verifying the root partition on the disk..."
+	veritysetup verify "${root_dev}" "${verity_dev}" "${root_hash}" >> "${LOG}" 2>&1 ||
+		die "the root partition written to the disk does not match its root hash, see ${LOG}"
 	state_dev=$(partition_dev "${target}" 6) || die "new state partition not found"
 
 	echo "Installing the boot loader and the kernel..."

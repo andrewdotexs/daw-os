@@ -33,7 +33,13 @@ root_slot_bytes=$((4 * 1024 * 1024 * 1024))
 
 version=$(tr -d '[:space:]' < "${repo_dir}/VERSION")
 root_label="dawos-root-${version}"
+verity_label="dawos-verity-${version}"
 installer_label="dawos-inst-${version}"
+installer_verity_label="dawos-instv-${version}"
+# Size of the partition that holds the hash tree of one root slot. The
+# tree takes a little less than 1/127 of the data: 128 MiB cover the
+# whole 4 GiB slot with room to spare.
+verity_slot_bytes=$((128 * 1024 * 1024))
 
 die() {
 	echo "post-image: $*" >&2
@@ -52,22 +58,82 @@ read_cmdline() {
 [[ -f ${images_dir}/efi-part/EFI/BOOT/bootx64.efi ]] || die "systemd-boot not found (BR2_PACKAGE_SYSTEMD_BOOT)"
 
 # GPT partition names hold at most 36 characters.
-((${#root_label} <= 36)) || die "partition label '${root_label}' is longer than 36 characters"
+for label in "${root_label}" "${verity_label}" "${installer_label}" "${installer_verity_label}"; do
+	((${#label} <= 36)) || die "partition label '${label}' is longer than 36 characters"
+done
 
 root_bytes=$(stat -c %s "${images_dir}/rootfs.erofs")
 ((root_bytes <= root_slot_bytes)) || die "rootfs.erofs (${root_bytes} bytes) does not fit the ${root_slot_size} slot"
 
+# --- Verified root (dm-verity) ------------------------------------------------
+# veritysetup builds a tree of SHA-256 hashes over the root image: one
+# hash per 4096-byte block, then hashes of those hashes, up to a single
+# "root hash". The tree goes to its own partition; the root hash goes on
+# the kernel command line. At run time the kernel checks every block it
+# reads against the tree: a changed block is detected, and whoever can
+# change the tree as well still cannot make it match the root hash.
+veritysetup=${HOST_DIR:?HOST_DIR is not set}/sbin/veritysetup
+[[ -x ${veritysetup} ]] || die "veritysetup not found (BR2_PACKAGE_HOST_CRYPTSETUP)"
+
+verity_block=4096
+((root_bytes % verity_block == 0)) || die "rootfs.erofs is not a whole number of ${verity_block}-byte blocks"
+root_blocks=$((root_bytes / verity_block))
+# Device-mapper counts in 512-byte sectors.
+root_sectors=$((root_bytes / 512))
+
+# Salt and UUID are derived from the image itself instead of being drawn
+# at random: the same root image always gives the same tree and the same
+# root hash, so a build can be reproduced and compared.
+root_sha256=$(sha256sum "${images_dir}/rootfs.erofs" | cut -d ' ' -f 1)
+verity_salt=${root_sha256}
+verity_uuid="${root_sha256:0:8}-${root_sha256:8:4}-${root_sha256:12:4}-${root_sha256:16:4}-${root_sha256:20:12}"
+
+rm -f "${images_dir}/rootfs.verity" "${images_dir}/rootfs.roothash"
+"${veritysetup}" format \
+	--hash=sha256 \
+	--data-block-size="${verity_block}" --hash-block-size="${verity_block}" \
+	--salt="${verity_salt}" --uuid="${verity_uuid}" \
+	--root-hash-file="${images_dir}/rootfs.roothash" \
+	"${images_dir}/rootfs.erofs" "${images_dir}/rootfs.verity" > "${images_dir}/rootfs.verity.txt"
+root_hash=$(tr -d '[:space:]' < "${images_dir}/rootfs.roothash")
+[[ ${root_hash} =~ ^[0-9a-f]{64}$ ]] || die "unexpected root hash '${root_hash}'"
+
+verity_bytes=$(stat -c %s "${images_dir}/rootfs.verity")
+((verity_bytes <= verity_slot_bytes)) || die "rootfs.verity (${verity_bytes} bytes) does not fit its slot"
+
+# Print the kernel parameters that make the kernel build the verified
+# root device by itself, without an initrd.
+#   $1 = label of the data partition, $2 = label of the hash partition
+#
+# dm-mod.create="<name>,<uuid>,<minor>,<flags>,<table>" with the table
+#   0 <sectors> verity <version> <data dev> <hash dev> <data block size>
+#   <hash block size> <data blocks> <hash start block> <algorithm>
+#   <root hash> <salt> <number of options> <options>
+# - the devices are named by GPT label, which carries the version: the
+#   same line works whichever slot the image is written to (PARTLABEL= in
+#   this table is resolved by dm-init at boot: drivers/md/dm-table.c,
+#   dm_devt_from_path, kernel 6.18);
+# - hash start block 1: block 0 of the hash partition is the superblock
+#   written by veritysetup, which the kernel does not use;
+# - panic_on_corruption: a block that fails the check stops the machine
+#   with a message instead of returning an I/O error to whoever read it;
+# - dm-mod.waitfor: do not build the device before both partitions exist.
+verity_params() {
+	printf 'dm-mod.create="dawos-root,,,ro,0 %s verity 1 PARTLABEL=%s PARTLABEL=%s %s %s %s 1 sha256 %s %s 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=%s,PARTLABEL=%s root=/dev/dm-0' \
+		"${root_sectors}" "$1" "$2" "${verity_block}" "${verity_block}" "${root_blocks}" \
+		"${root_hash}" "${verity_salt}" "$1" "$2"
+}
+
 # --- Kernel command lines ---------------------------------------------------
-# The root partition is named by its GPT label, which carries the version:
-# the same command line works whichever slot the image is written to.
 cmdline_common=$(read_cmdline \
 	"${board_dir}/cmdline/common.txt" \
 	"${board_dir}/cmdline/profile-generic.txt")
-cmdline="root=PARTLABEL=${root_label} ${cmdline_common}"
-# dawos-install derives the first form from the second: it swaps the root
-# label back and cuts the line at the "dawos.installer" marker. Anything
-# meant for the installation medium only must therefore come after it.
-cmdline_installer="root=PARTLABEL=${installer_label} ${cmdline_common} dawos.installer"
+cmdline="$(verity_params "${root_label}" "${verity_label}") ${cmdline_common}"
+# The installation medium is verified too, under its own labels, so that a
+# failing stick is noticed while it boots and not after it has been
+# copied. "dawos.installer" marks the medium for dawos-install and for
+# dawos-var-generator.
+cmdline_installer="$(verity_params "${installer_label}" "${installer_verity_label}") ${cmdline_common} dawos.installer"
 # Second menu entry of the installation medium, for bringing up a new
 # machine: the whole boot on the screen.
 #   earlycon=efifb  draws kernel messages straight on the firmware
@@ -130,6 +196,10 @@ rm -rf "${inst_dir}"
 install -D -m 0644 "${esp_dir}/EFI/BOOT/bootx64.efi" "${inst_dir}/EFI/BOOT/bootx64.efi"
 populate_esp "${inst_dir}" "dawOS ${version} (${variant}) - installation medium" \
 	"${cmdline_installer}" "${cmdline_installer_verbose}"
+# The command line of the system to install travels with the medium:
+# dawos-install copies it into the boot entry it writes, and takes the
+# root hash from it to check what it has copied.
+printf '%s\n' "${cmdline}" > "${inst_dir}/dawos/${version}/options-installed"
 
 # Keep a copy next to the images: it is what the measurement reports cite.
 printf '%s\n' "${cmdline}" > "${images_dir}/cmdline.txt"
@@ -143,4 +213,5 @@ support/scripts/genimage.sh -c "${images_dir}/genimage.cfg"
 
 echo "post-image: ${images_dir}/disk.img ready (dawOS ${version}, ${variant})"
 echo "post-image: ${images_dir}/installer.img ready (installation medium)"
+echo "post-image: root hash: ${root_hash}"
 echo "post-image: kernel command line: ${cmdline}"

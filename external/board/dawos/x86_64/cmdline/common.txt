@@ -1,9 +1,17 @@
 # Kernel command line shared by every boot profile.
 # One or more parameters per line; lines starting with '#' are ignored.
-# post-image.sh joins the lines and appends root=PARTLABEL=... itself.
+# post-image.sh joins the lines and puts the parameters of the verified
+# root (dm-mod.create=..., root=/dev/dm-0) in front of them.
 
-# Root filesystem: read-only EROFS, wait for the NVMe device to appear.
+# Root filesystem: read-only EROFS, wait for the device to appear.
 rootfstype=erofs ro rootwait
+
+# After a kernel panic, reboot instead of hanging. The message stays on
+# the screen for ten seconds. A tampered or damaged root partition ends in
+# a panic (dm-verity, panic_on_corruption): with this the machine then
+# restarts by itself, and from step P0.5d the boot loader falls back to
+# the other slot after three failed attempts.
+panic=10
 
 # Consoles: the screen first, the serial port last so that it becomes
 # /dev/console (systemd messages and the QEMU serial console).

@@ -28,3 +28,12 @@ CONFIG_NLS_ISO8859_1=y
 # /run, /tmp and, for now, /var.
 CONFIG_TMPFS=y
 CONFIG_TMPFS_POSIX_ACL=y
+
+# --- Verified root (step P0.5b) -----------------------------------------------
+# dm-verity checks every block read from the root partition against a
+# tree of hashes whose top is on the kernel command line.
+CONFIG_BLK_DEV_DM=y
+CONFIG_DM_VERITY=y
+# Lets the kernel itself create the verified device at boot, from the
+# dm-mod.create= parameter: this is what makes an initrd unnecessary.
+CONFIG_DM_INIT=y

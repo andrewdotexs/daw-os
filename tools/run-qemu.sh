@@ -26,6 +26,7 @@ target_image=${state_dir}/target.img
 target_size=932G
 installer=no
 new_target=no
+tamper=
 mode=interactive
 memory=2G
 cpus=4
@@ -40,6 +41,9 @@ Usage: ${0##*/} [options]
 
   --test            headless boot; check the boot report; exit 0/1
   --expect K=V      with --test: also require this field in the boot report
+  --tamper WHAT     with --test: change one byte of the 'root' partition or
+                    of its 'verity' hash tree in a copy of the image; the
+                    test passes if the kernel notices and the boot stops
   --image PATH      disk image to boot (default: output/images/disk.img)
   --installer       boot the installation medium (USB) with a blank NVMe
                     target disk, to rehearse dawos-install
@@ -63,6 +67,10 @@ while (($# > 0)); do
 	--test) mode='test' ;;
 	--expect)
 		expectations+=("${2:?--expect needs KEY=VALUE}")
+		shift
+		;;
+	--tamper)
+		tamper=${2:?--tamper needs 'root' or 'verity'}
 		shift
 		;;
 	--image)
@@ -115,6 +123,56 @@ if [[ ${installer} == yes ]]; then
 fi
 
 [[ -f ${image} ]] || die "image not found: ${image} (run 'make image' or, for --target, the rehearsal first)"
+
+# --- Tamper test: one changed byte in a copy of the image --------------------
+if [[ -n ${tamper} ]]; then
+	[[ ${mode} == test ]] || die "--tamper needs --test"
+	[[ ${tamper} == root || ${tamper} == verity ]] || die "--tamper takes 'root' or 'verity'"
+	command -v python3 > /dev/null || die "python3 not found"
+
+	tampered=${state_dir}/tampered.img
+	cp --sparse=always "${image}" "${tampered}"
+
+	# Find the partition whose name starts with dawos-root- or
+	# dawos-verity- in the GPT of the image itself, and invert one byte
+	# that is certainly read while booting: in the first block of the
+	# root file system (its superblock), or in the first block of the
+	# hash tree (its top level, on the path of every check). Block 0 of
+	# the hash partition is veritysetup's own superblock, unused by the
+	# kernel, hence the offset of one block.
+	python3 - "${tampered}" "dawos-${tamper}-" "${tamper}" <<'PYTHON' || die "could not tamper with ${tampered}"
+import struct
+import sys
+
+path, prefix, what = sys.argv[1:4]
+with open(path, "r+b") as image:
+    # GPT header in sector 1: signature, then at offset 72 the first
+    # sector of the entry array, the number of entries and their size.
+    image.seek(512)
+    header = image.read(92)
+    if header[:8] != b"EFI PART":
+        sys.exit("no GPT in " + path)
+    entries_lba, count, size = struct.unpack_from("<QII", header, 72)
+    start = None
+    for index in range(count):
+        image.seek(entries_lba * 512 + index * size)
+        entry = image.read(size)
+        name = entry[56:128].decode("utf-16-le").rstrip("\x00")
+        if name.startswith(prefix):
+            start = struct.unpack_from("<Q", entry, 32)[0]
+            break
+    if start is None:
+        sys.exit("no partition named " + prefix + "* in " + path)
+    offset = start * 512 + (1024 if what == "root" else 4096)
+    image.seek(offset)
+    old = image.read(1)[0]
+    image.seek(offset)
+    image.write(bytes([old ^ 0xFF]))
+print("run-qemu: tampered copy %s: byte %d of the image (partition %s) changed from %d to %d"
+      % (path, offset, name, old, old ^ 0xFF))
+PYTHON
+	image=${tampered}
+fi
 
 # --- UEFI firmware ----------------------------------------------------------
 # OVMF comes as two files: read-only code and a variable store. The names
@@ -212,14 +270,41 @@ trap cleanup EXIT
 echo "run-qemu: waiting up to ${timeout_s}s for the boot report (accel=${accel}, log: ${log})"
 
 report=
+# Kernel message of dm-verity when a block does not match the hash tree.
+corruption=
 deadline=$((SECONDS + timeout_s))
 while ((SECONDS < deadline)); do
 	# -a: the log contains terminal escape sequences from the firmware.
 	report=$(grep -a -m 1 -o 'DAWOS-BOOT-REPORT .*' "${log}" | tr -d '\r' || true)
 	[[ -n ${report} ]] && break
+	if [[ -n ${tamper} ]]; then
+		corruption=$(grep -a -m 1 -o -E 'device-mapper: verity: .* block [0-9]+ is corrupted' "${log}" || true)
+		[[ -n ${corruption} ]] && break
+	fi
 	kill -0 "${qemu_pid}" 2> /dev/null || break
 	sleep 1
 done
+
+# A tamper test passes when the boot does NOT complete and the kernel has
+# said why.
+if [[ -n ${tamper} ]]; then
+	if [[ -n ${report} ]]; then
+		echo "${report}"
+		echo "FAIL: the system booted although the ${tamper} partition was tampered with" >&2
+		exit 1
+	fi
+	if [[ -z ${corruption} ]]; then
+		echo "FAIL: no boot report, but no dm-verity message either; last lines of the console:" >&2
+		tail -n 25 "${log}" | tr -d '\r' >&2
+		exit 1
+	fi
+	# Give the kernel a moment to print what it does about it.
+	sleep 2
+	echo "${corruption}"
+	grep -a -m 1 -o 'Kernel panic - not syncing: .*' "${log}" | tr -d '\r' || true
+	echo "PASS: tampering with the ${tamper} partition was detected and the boot stopped"
+	exit 0
+fi
 
 if [[ -z ${report} ]]; then
 	echo "FAIL: no boot report within ${timeout_s}s; last lines of the console:" >&2

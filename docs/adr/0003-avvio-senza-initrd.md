@@ -1,6 +1,6 @@
 # ADR 0003 — Avvio senza initrd, con prova a tempo
 
-- **Stato**: accettata, da confermare nel passo P0.5
+- **Stato**: accettata. Confermata in QEMU nel sotto-passo P0.5b (15 novembre 2026); restano da vedere il 285K e il ritorno allo slot B
 - **Data**: 13 novembre 2026
 - **Origine**: D-03 del documento 0
 
@@ -33,3 +33,9 @@ La prova è superata se, entro un giorno di lavoro: la radice verificata si mont
 ## Quando si riapre
 
 Se la Fase 6 richiederà di sbloccare un volume prima della radice, oppure se l'avvio senza initrd rendesse instabile l'ordine di comparsa dei dispositivi.
+
+## Aggiornamento del 15 novembre 2026
+
+Nel sotto-passo P0.5b la prova ha dato esito positivo in QEMU, in poche ore: il kernel crea il dispositivo dm-verity dalla riga di comando con le partizioni indicate per `PARTLABEL=`, monta `/dev/dm-0`, e la manomissione di un byte della radice o dell'albero di hash ferma l'avvio. Il ripiego sull'initrd non è stato necessario.
+
+Dei tre criteri della prova restano aperti la verifica sul 285K, rinviata all'installazione finale del passo P0.5 per scelta dell'utente, e il ritorno allo slot B (sotto-passo P0.5d). Le scelte collegate, cioè politica d'errore, supporto d'installazione verificato e controllo dopo la copia, sono nell'ADR 0014.

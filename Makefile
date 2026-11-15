@@ -91,7 +91,11 @@ qemu: ## Boot the image in QEMU with a serial console (exit: Ctrl-A then X)
 
 .PHONY: qemu-test
 qemu-test: ## Boot the image in QEMU and check the boot report (PASS/FAIL)
-	@tools/run-qemu.sh --test --expect var=state
+	@tools/run-qemu.sh --test --expect verity=1 --expect var=state
+
+.PHONY: qemu-tamper-test
+qemu-tamper-test: ## Change one byte of the root (or WHAT=verity: of its hash tree) in a copy of the image: the boot must stop
+	@tools/run-qemu.sh --test --tamper $(or $(WHAT),root)
 
 .PHONY: qemu-installer
 qemu-installer: ## Rehearse the installation: boot the stick image with a blank NVMe disk
@@ -103,11 +107,11 @@ qemu-target: ## Boot the disk installed by the rehearsal (exit: Ctrl-A then X)
 
 .PHONY: qemu-target-test
 qemu-target-test: ## Boot the disk installed by the rehearsal and check the boot report
-	@tools/run-qemu.sh --target --test --expect var=state
+	@tools/run-qemu.sh --target --test --expect verity=1 --expect var=state
 
 .PHONY: remote-test
 remote-test: ## Check a real machine over SSH: make remote-test HOST=<address>
-	@tools/remote-check.sh $(HOST) --expect var=state
+	@tools/remote-check.sh $(HOST) --expect verity=1 --expect var=state
 
 .PHONY: measure-prepare
 measure-prepare: ## After every boot of a machine: copy the tools, keep results on disk: make measure-prepare HOST=<address>

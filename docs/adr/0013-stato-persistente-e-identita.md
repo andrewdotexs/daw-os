@@ -1,6 +1,6 @@
 # ADR 0013 — Stato persistente e identità della macchina
 
-- **Stato**: accettata con il sotto-passo P0.5a; da confermare sul 285K
+- **Stato**: accettata con il sotto-passo P0.5a. Il 285K fornisce un identificativo di firmware valido (verificato il 15 novembre 2026); resta da vedere `var=state` all'installazione finale
 - **Data**: 15 novembre 2026
 - **Origine**: punto M-04 del documento 0
 

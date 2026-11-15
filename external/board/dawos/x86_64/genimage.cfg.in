@@ -61,6 +61,15 @@ image disk.img {
 		size = @ROOT_SLOT_SIZE@
 	}
 
+	# Hash tree of the root partition (dm-verity), found by its label
+	# from the kernel command line like the root itself.
+	partition "dawos-verity-@VERSION@" {
+		# Discoverable Partitions Specification: root verity, x86-64.
+		partition-type-uuid = 2c7357ed-ebd2-46d9-aec1-23d437ec2bf5
+		image = "rootfs.verity"
+		size = 128M
+	}
+
 	# Found by its name by dawos-var-generator.
 	partition state {
 		# Generic Linux data, as dawos-install declares it.
@@ -113,5 +122,12 @@ image installer.img {
 	partition "dawos-inst-@VERSION@" {
 		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
 		image = "rootfs.erofs"
+	}
+
+	# Its hash tree: the medium boots verified, and dawos-install copies
+	# this partition to the disk next to the root.
+	partition "dawos-instv-@VERSION@" {
+		partition-type-uuid = 2c7357ed-ebd2-46d9-aec1-23d437ec2bf5
+		image = "rootfs.verity"
 	}
 }

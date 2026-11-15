@@ -6,7 +6,7 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | --- | --- | --- | --- |
 | [0001](0001-due-macchine.md) | Sviluppo e destinazione su due macchine | D-01 | Accettata |
 | [0002](0002-isolamento-statico-dei-core.md) | Isolamento statico dei core al boot | D-02, C-02 | Accettata |
-| [0003](0003-avvio-senza-initrd.md) | Avvio senza initrd, con prova a tempo | D-03 | Accettata, da confermare in P0.5 |
+| [0003](0003-avvio-senza-initrd.md) | Avvio senza initrd, con prova a tempo | D-03 | Accettata; confermata in QEMU (P0.5b), 285K da vedere |
 | [0004](0004-partizioni-dei-dati.md) | Tre partizioni di dati | D-04, C-04 | Accettata, ripiego definito |
 | [0005](0005-varianti-dev-e-prod.md) | Varianti `dev` e `prod` dell'immagine | D-05, C-05 | Accettata |
 | [0006](0006-toolchain-bootlin-glibc.md) | Toolchain esterna Bootlin con glibc | D-06 | Accettata |
@@ -16,7 +16,8 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0010](0010-licenza-gplv3-eccezione-plugin.md) | GPLv3 con eccezione per i plugin | M-11 | Accettata, parere legale da ottenere |
 | [0011](0011-r04-carico-sintetico.md) | R-04 con carico sintetico di riferimento | D-16, K-02 | Accettata |
 | [0012](0012-main-e-tag-a-ogni-passo.md) | Unione in `main` e tag alla chiusura di ogni passo | Proposta dell'utente | Accettata |
-| [0013](0013-stato-persistente-e-identita.md) | Stato persistente e identità della macchina | M-04 | Accettata, da confermare sul 285K |
+| [0013](0013-stato-persistente-e-identita.md) | Stato persistente e identità della macchina | M-04 | Accettata; identificativo del firmware valido sul 285K |
+| [0014](0014-radice-verificata.md) | Radice verificata: politica d'errore e supporto d'installazione | P0.5 | Accettata, politica d'errore da confermare |
 
 ## Modello
 

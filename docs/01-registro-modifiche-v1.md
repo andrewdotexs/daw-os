@@ -485,5 +485,9 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | M-04, file di `/etc` modificabili | Collegamenti verso `/var/lib/dawos/etc/` | Rinviati a quando un componente ne avrà bisogno. |
 | P0.5, punto 3, `ukify` | «Se il pacchetto systemd di Buildroot non fornisce `ukify` per l'host _(da verificare)_» | Verificato: Buildroot 2026.02.3 non lo offre. Servirà un pacchetto nostro nel sotto-passo P0.5c. |
 | Rapporto di avvio | Cinque campi | Nuovo campo `var=state`, `tmpfs` o `none`; le prove automatiche pretendono `var=state`. |
+| P0.5, punto 2, `PARTLABEL` nella tabella di `dm-mod.create` | _Da verificare_; ripiego su un initrd minimo | **Verificato in QEMU** nel sotto-passo P0.5b: il kernel crea da solo il dispositivo verificato. La decisione D-03 (nessun initrd) regge. |
+| P0.5, politica con un blocco alterato | Non specificata | `panic_on_corruption` con `panic=10`: messaggio, poi riavvio. ADR 0014; da confermare dall'utente. |
+| P0.5, supporto d'installazione | Non specificato | Verificato anch'esso, con etichette proprie; l'installatore copia l'albero di hash e ricontrolla ciò che ha scritto. ADR 0014. |
+| P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
 Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).
