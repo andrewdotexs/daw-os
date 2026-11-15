@@ -1,12 +1,12 @@
 
 == identity ==
-utc: 2026-11-14T23:18:00Z
-PRETTY_NAME="dawOS 0.0.1 (dev)"
+utc: 2026-11-15T13:10:03Z
+PRETTY_NAME="dawOS 0.0.1.20261115114454 (dev)"
 VARIANT_ID=dev
-IMAGE_VERSION=0.0.1
-BUILD_ID=df0a10a9fd82
-kernel: Linux 6.18.63-dawos #4 SMP PREEMPT_RT Fri Nov 13 18:12:52 CET 2026
-cmdline: root=PARTLABEL=dawos-root-0.0.1 rootfstype=erofs ro rootwait console=tty0 console=ttyS0,115200n8 loglevel=4
+IMAGE_VERSION=0.0.1.20261115114454
+BUILD_ID=ab5065321d9d
+kernel: Linux 6.18.63-dawos #5 SMP PREEMPT_RT Sun Nov 15 01:38:15 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 112928 verity 1 PARTLABEL=dawos-root-0.0.1.20261115114454 PARTLABEL=dawos-verity-0.0.1.20261115114454 4096 4096 14116 1 sha256 af328de5951fe47fa166128c38777316bab0be441a963b16ce41db07cbd97441 5e4137e71adb62b15624da6b548ed63deeaae9d121367f81d101d530bd1d14e7 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261115114454,PARTLABEL=dawos-verity-0.0.1.20261115114454 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 console=ttyS0,115200n8 systemd.machine_id=firmware loglevel=4
 
 == firmware ==
 /sys/class/dmi/id/sys_vendor: ASUS
@@ -32,7 +32,7 @@ Thread(s) per core:                      1
 Core(s) per socket:                      24
 Socket(s):                               1
 Stepping:                                2
-CPU(s) scaling MHz:                      33%
+CPU(s) scaling MHz:                      37%
 CPU max MHz:                             5800.0000
 CPU min MHz:                             800.0000
 BogoMIPS:                                7372.80
@@ -64,30 +64,30 @@ Vulnerability Vmscape:                   Vulnerable
 
 == lscpu -e ==
 CPU SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
-  0      0    0 0:0:0:0          yes 5600.0000 800.0000  788.3840
-  1      0    1 4:4:1:0          yes 5600.0000 800.0000 1420.0580
-  2      0    2 16:16:4:0        yes 5800.0000 800.0000 2203.3689
-  3      0    3 20:20:5:0        yes 5600.0000 800.0000 2195.6001
-  4      0    4 24:24:6:0        yes 5600.0000 800.0000  800.0000
+  0      0    0 0:0:0:0          yes 5600.0000 800.0000  801.5880
+  1      0    1 4:4:1:0          yes 5600.0000 800.0000  800.0000
+  2      0    2 16:16:4:0        yes 5800.0000 800.0000 2193.9050
+  3      0    3 20:20:5:0        yes 5600.0000 800.0000 2196.9480
+  4      0    4 24:24:6:0        yes 5600.0000 800.0000 2196.9819
   5      0    5 28:28:7:0        yes 5600.0000 800.0000  800.0000
   6      0    6 40:40:10:0       yes 5600.0000 800.0000  800.0000
-  7      0    7 44:44:11:0       yes 5800.0000 800.0000 2196.2710
-  8      0    8 2:0              yes 4600.0000 800.0000 4503.3159
-  9      0    9 18:18:2:0        yes 4600.0000 800.0000 4501.8379
- 10      0   10 2:0              yes 4600.0000 800.0000 3341.8301
- 11      0   11 22:22:2:0        yes 4600.0000 800.0000  800.0000
- 12      0   12 3:0              yes 4600.0000 800.0000 1499.3330
- 13      0   13 26:26:3:0        yes 4600.0000 800.0000 1495.8630
- 14      0   14 3:0              yes 4600.0000 800.0000 1483.3920
- 15      0   15 30:30:3:0        yes 4600.0000 800.0000 1498.6570
- 16      0   16 64:64:8:0        yes 4600.0000 800.0000 1499.8120
- 17      0   17 66:66:8:0        yes 4600.0000 800.0000 1496.5031
- 18      0   18 68:68:8:0        yes 4600.0000 800.0000 4501.2598
- 19      0   19 70:70:8:0        yes 4600.0000 800.0000 1943.7500
- 20      0   20 72:72:9:0        yes 4600.0000 800.0000  800.0000
- 21      0   21 74:74:9:0        yes 4600.0000 800.0000 3282.9861
- 22      0   22 76:76:9:0        yes 4600.0000 800.0000 3827.3479
- 23      0   23 78:78:9:0        yes 4600.0000 800.0000 3050.2900
+  7      0    7 44:44:11:0       yes 5800.0000 800.0000  800.0000
+  8      0    8 2:0              yes 4600.0000 800.0000 1497.2679
+  9      0    9 18:18:2:0        yes 4600.0000 800.0000 1504.2800
+ 10      0   10 2:0              yes 4600.0000 800.0000 2976.4360
+ 11      0   11 22:22:2:0        yes 4600.0000 800.0000 1502.0400
+ 12      0   12 3:0              yes 4600.0000 800.0000 1496.5900
+ 13      0   13 26:26:3:0        yes 4600.0000 800.0000 4560.2251
+ 14      0   14 3:0              yes 4600.0000 800.0000 1204.3290
+ 15      0   15 30:30:3:0        yes 4600.0000 800.0000  800.0000
+ 16      0   16 64:64:8:0        yes 4600.0000 800.0000  800.0000
+ 17      0   17 66:66:8:0        yes 4600.0000 800.0000 4672.0581
+ 18      0   18 68:68:8:0        yes 4600.0000 800.0000 3963.7361
+ 19      0   19 70:70:8:0        yes 4600.0000 800.0000 3371.3789
+ 20      0   20 72:72:9:0        yes 4600.0000 800.0000 2820.8330
+ 21      0   21 74:74:9:0        yes 4600.0000 800.0000 2975.5000
+ 22      0   22 76:76:9:0        yes 4600.0000 800.0000 2657.1279
+ 23      0   23 78:78:9:0        yes 4600.0000 800.0000  800.0000
 
 == hybrid layout ==
 /sys/devices/cpu_core/cpus: 0-7
@@ -138,23 +138,23 @@ cpu  core_id  l2_shared    max_khz      highest_perf driver
 
 == thermal and power limits ==
 hwmon0 acpitz temp1 label="-" input=27800 max=- crit=-
-hwmon1 coretemp temp10 label="Core 8" input=30000 max=85000 crit=105000
-hwmon1 coretemp temp11 label="Core 9" input=30000 max=85000 crit=105000
-hwmon1 coretemp temp12 label="Core 10" input=30000 max=85000 crit=105000
-hwmon1 coretemp temp13 label="Core 11" input=30000 max=85000 crit=105000
-hwmon1 coretemp temp14 label="Core 12" input=30000 max=85000 crit=105000
+hwmon1 coretemp temp10 label="Core 8" input=32000 max=85000 crit=105000
+hwmon1 coretemp temp11 label="Core 9" input=32000 max=85000 crit=105000
+hwmon1 coretemp temp12 label="Core 10" input=32000 max=85000 crit=105000
+hwmon1 coretemp temp13 label="Core 11" input=32000 max=85000 crit=105000
+hwmon1 coretemp temp14 label="Core 12" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp15 label="Core 13" input=30000 max=85000 crit=105000
-hwmon1 coretemp temp16 label="Core 14" input=30000 max=85000 crit=105000
+hwmon1 coretemp temp16 label="Core 14" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp17 label="Core 15" input=30000 max=85000 crit=105000
 hwmon1 coretemp temp18 label="Core 16" input=32000 max=85000 crit=105000
-hwmon1 coretemp temp1 label="Package id 0" input=33000 max=85000 crit=105000
+hwmon1 coretemp temp1 label="Package id 0" input=34000 max=85000 crit=105000
 hwmon1 coretemp temp22 label="Core 20" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp26 label="Core 24" input=32000 max=85000 crit=105000
-hwmon1 coretemp temp2 label="Core 0" input=32000 max=85000 crit=105000
-hwmon1 coretemp temp30 label="Core 28" input=32000 max=85000 crit=105000
+hwmon1 coretemp temp2 label="Core 0" input=34000 max=85000 crit=105000
+hwmon1 coretemp temp30 label="Core 28" input=34000 max=85000 crit=105000
 hwmon1 coretemp temp34 label="Core 32" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp35 label="Core 33" input=32000 max=85000 crit=105000
-hwmon1 coretemp temp36 label="Core 34" input=32000 max=85000 crit=105000
+hwmon1 coretemp temp36 label="Core 34" input=34000 max=85000 crit=105000
 hwmon1 coretemp temp37 label="Core 35" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp38 label="Core 36" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp39 label="Core 37" input=32000 max=85000 crit=105000
@@ -162,7 +162,7 @@ hwmon1 coretemp temp40 label="Core 38" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp41 label="Core 39" input=32000 max=85000 crit=105000
 hwmon1 coretemp temp42 label="Core 40" input=34000 max=85000 crit=105000
 hwmon1 coretemp temp46 label="Core 44" input=32000 max=85000 crit=105000
-hwmon1 coretemp temp6 label="Core 4" input=32000 max=85000 crit=105000
+hwmon1 coretemp temp6 label="Core 4" input=34000 max=85000 crit=105000
 /sys/devices/system/cpu/cpu0/thermal_throttle/package_throttle_count: 0
 /sys/devices/system/cpu/cpu0/thermal_throttle/package_throttle_total_time_ms: 0
 /sys/devices/system/cpu/cpu0/thermal_throttle/package_throttle_max_time_ms: 0
@@ -172,19 +172,17 @@ intel-rapl:0 name=package-0 enabled=1
   constraint_1 name=short_term power_limit_uw=160000000 time_window_us=2440
 intel-rapl:0:0 name=core enabled=0
   constraint_0 name=long_term power_limit_uw=0 time_window_us=976
-intel-rapl:0:1 name=uncore enabled=0
-  constraint_0 name=long_term power_limit_uw=0 time_window_us=976
 
 == time ==
 /sys/devices/system/clocksource/clocksource0/current_clocksource: tsc
 /sys/devices/system/clocksource/clocksource0/available_clocksource: tsc hpet acpi_pm 
 
 == memory ==
-MemTotal:       65179872 kB
-MemFree:        64849252 kB
-MemAvailable:   64468832 kB
-Buffers:           18020 kB
-Cached:            60492 kB
+MemTotal:       65179816 kB
+MemFree:        64866456 kB
+MemAvailable:   64481064 kB
+Buffers:            6872 kB
+Cached:            56204 kB
 
 == pci devices and drivers ==
 00:00.0 Host bridge [0600]: Intel Corporation Device [8086:7d1a] (rev 01)
@@ -298,16 +296,16 @@ Cached:            60492 kB
 /:  Bus 004.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/8p, 20000M/x2
 
 == block devices ==
-NAME          SIZE TYPE FSTYPE PARTLABEL        MODEL
-nvme0n1     931.5G disk                         Samsung SSD 990 PRO 1TB
-|-nvme0n1p1     1G part vfat   esp              
-|-nvme0n1p2     4G part erofs  dawos-root-0.0.1 
-|-nvme0n1p3   128M part        _empty           
-|-nvme0n1p4     4G part        _empty           
-|-nvme0n1p5   128M part        _empty           
-|-nvme0n1p6    32G part ext4   state            
-|-nvme0n1p7   300G part xfs    shared           
-`-nvme0n1p8 590.3G part xfs    homes            
+NAME          SIZE TYPE FSTYPE         PARTLABEL                         MODEL
+nvme0n1     931.5G disk                                                  Samsung SSD 990 PRO 1TB
+|-nvme0n1p1     1G part vfat           esp                               
+|-nvme0n1p2     4G part erofs          dawos-root-0.0.1.20261115121347   
+|-nvme0n1p3   128M part DM_verity_hash dawos-verity-0.0.1.20261115121347 
+|-nvme0n1p4     4G part erofs          dawos-root-0.0.1.20261115114454   
+|-nvme0n1p5   128M part DM_verity_hash dawos-verity-0.0.1.20261115114454 
+|-nvme0n1p6    32G part ext4           state                             
+|-nvme0n1p7   300G part xfs            shared                            
+`-nvme0n1p8 590.3G part xfs            homes                             
 
 == network ==
 IDX LINK TYPE     OPERATIONAL SETUP
@@ -319,8 +317,8 @@ IDX LINK TYPE     OPERATIONAL SETUP
 
 == interrupts ==
             CPU0       CPU1       CPU2       CPU3       CPU4       CPU5       CPU6       CPU7       CPU8       CPU9       CPU10      CPU11      CPU12      CPU13      CPU14      CPU15      CPU16      CPU17      CPU18      CPU19      CPU20      CPU21      CPU22      CPU23      
-   0:         24          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-IO-APIC    2-edge      timer
-   4:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        626          0          0          0          0 IR-IO-APIC    4-edge      ttyS0
+   0:         21          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-IO-APIC    2-edge      timer
+   4:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        681          0          0          0          0 IR-IO-APIC    4-edge      ttyS0
    8:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-IO-APIC    8-edge      rtc0
    9:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-IO-APIC    9-fasteoi   acpi
   18:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          2          0          0          0          0          0 IR-IO-APIC   18-fasteoi   i801_smbus
@@ -369,44 +367,44 @@ IDX LINK TYPE     OPERATIONAL SETUP
  162:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:00:0e.0   29-edge      vmd0
  163:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:00:0e.0   30-edge      vmd0
  164:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:00:0e.0   31-edge      vmd0
- 165:         38          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    0-edge      nvme0q0
- 166:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSI-0000:80:17.0    0-edge      ahci[0000:80:17.0]
- 167:          0        394          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    1-edge      nvme0q1
- 168:          0          0          0        482          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    2-edge      nvme0q2
- 169:          0          0          0          0          0        509          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    3-edge      nvme0q3
- 170:          0          0          0          0          0          0          0        598          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    4-edge      nvme0q4
- 171:          0          0          0          0          0          0          0          0          0        603          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    5-edge      nvme0q5
- 172:          0          0          0          0          0          0          0          0          0          0          0       1765          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    6-edge      nvme0q6
- 173:          0          0          0          0          0          0          0          0          0          0          0          0          0        710          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    7-edge      nvme0q7
- 174:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        509          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    8-edge      nvme0q8
- 175:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        731          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    9-edge      nvme0q9
- 176:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        388          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0   10-edge      nvme0q10
- 177:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        406          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0   11-edge      nvme0q11
- 178:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        407          0          0          0          0 IR-PCI-MSIX-0000:02:00.0   12-edge      nvme0q12
- 179:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        508          0          0          0 IR-PCI-MSIX-0000:02:00.0   13-edge      nvme0q13
- 180:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        442          0          0 IR-PCI-MSIX-0000:02:00.0   14-edge      nvme0q14
- 181:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        266          0 IR-PCI-MSIX-0000:02:00.0   15-edge      nvme0q15
- 182:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        124 IR-PCI-MSIX-0000:02:00.0   16-edge      nvme0q16
+ 165:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSI-0000:80:17.0    0-edge      ahci[0000:80:17.0]
+ 166:         38          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    0-edge      nvme0q0
+ 167:          0        132          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    1-edge      nvme0q1
+ 168:          0          0          0         69          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    2-edge      nvme0q2
+ 169:          0          0          0          0          0        155          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    3-edge      nvme0q3
+ 170:          0          0          0          0          0          0          0         33          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    4-edge      nvme0q4
+ 171:          0          0          0          0          0          0          0          0          0        336          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    5-edge      nvme0q5
+ 172:          0          0          0          0          0          0          0          0          0          0          0        262          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    6-edge      nvme0q6
+ 173:          0          0          0          0          0          0          0          0          0          0          0          0          0        321          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    7-edge      nvme0q7
+ 174:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        165          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    8-edge      nvme0q8
+ 175:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        302          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0    9-edge      nvme0q9
+ 176:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        575          0          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0   10-edge      nvme0q10
+ 177:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        274          0          0          0          0          0 IR-PCI-MSIX-0000:02:00.0   11-edge      nvme0q11
+ 178:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        116          0          0          0          0 IR-PCI-MSIX-0000:02:00.0   12-edge      nvme0q12
+ 179:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        357          0          0          0 IR-PCI-MSIX-0000:02:00.0   13-edge      nvme0q13
+ 180:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0         37          0          0 IR-PCI-MSIX-0000:02:00.0   14-edge      nvme0q14
+ 181:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0         44          0 IR-PCI-MSIX-0000:02:00.0   15-edge      nvme0q15
+ 182:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0         87 IR-PCI-MSIX-0000:02:00.0   16-edge      nvme0q16
  183:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          1          0          0          0 IR-PCI-MSIX-0000:83:00.0    0-edge      eno1
- 184:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0      24041          0          0 IR-PCI-MSIX-0000:83:00.0    1-edge      eno1-TxRx-0
- 185:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0      11756          0 IR-PCI-MSIX-0000:83:00.0    2-edge      eno1-TxRx-1
- 186:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0      10950 IR-PCI-MSIX-0000:83:00.0    3-edge      eno1-TxRx-2
- 187:        281          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:83:00.0    4-edge      eno1-TxRx-3
+ 184:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0       2121          0          0 IR-PCI-MSIX-0000:83:00.0    1-edge      eno1-TxRx-0
+ 185:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        811          0 IR-PCI-MSIX-0000:83:00.0    2-edge      eno1-TxRx-1
+ 186:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0        714 IR-PCI-MSIX-0000:83:00.0    3-edge      eno1-TxRx-2
+ 187:       1082          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSIX-0000:83:00.0    4-edge      eno1-TxRx-3
  188:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSI-0000:00:0d.0    0-edge      xhci_hcd
- 196:          0          0          0          0          0          0          0          0          0        158          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSI-0000:80:14.0    0-edge      xhci_hcd
+ 196:          0          0          0          0          0          0          0          0          0        142          0          0          0          0          0          0          0          0          0          0          0          0          0          0 IR-PCI-MSI-0000:80:14.0    0-edge      xhci_hcd
  NMI:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   Non-maskable interrupts
- LOC:    1103898     872142     945194     909458     947734     844348     722123     812488    1056269     739214     727285     733989     769639    1084292     739454     738268     751975     826095     701894     726712     749570    3466372    2480232     805338   Local timer interrupts
+ LOC:      31231      18063      23786      20186      19176      17133      10323      17848       8569      82660      80295       8272      15461      12050      23580      23265      13863      12958      10817      12220      30031     154612      16594      17830   Local timer interrupts
  SPU:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   Spurious interrupts
  PMI:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   Performance monitoring interrupts
- IWI:       1200       5788      10990       7250      15666       6159        294       1739       8290       6200       3001        381       3925       8867        992       1252       5475       8753       1197         84        177      16418      28799        117   IRQ work interrupts
+ IWI:          8        964       1454         83       2374       2238          0        320         35       1766        799         30         18          6         15        516         12         23         18         35        291         17         16         31   IRQ work interrupts
  RTR:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   APIC ICR read retries
- RES:       1455       1737       2512       1931       2116       2098       2994       4330       3282       1803       2011       2136       6161       4741       4501       5954       1300       2158       2099       1623       1167       1290       1896       2684   Rescheduling interrupts
- CAL:       1863       1488       1069       1195       1028        957        949        860       3424       2292       2403       2212       6790       5354       4875       6838       1050       1226        977       1052       2250       1418       1380       1048   Function call interrupts
- TLB:        751        541       1120        818        617        584        150        233        737        493        378        186        515        980        235        142        491        735        203        194        242       2243       1312        150   TLB shootdowns
+ RES:        109         76         30         40         42         63         33        147        472        282        295        352        135        163        244        116        156        112         46        213        183        100        195         96   Rescheduling interrupts
+ CAL:        888        873        588        821        809        726        804        802       1335       1277       1077       1121       1059        974        996        663        918        872        843        854        822        792        781        788   Function call interrupts
+ TLB:         51        156        195        103        255        245         83        117         94        164        221        107        103        126        152         93         89         89         79         95        104         67         74         79   TLB shootdowns
  TRM:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   Thermal event interrupts
  THR:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   Threshold APIC interrupts
  DFR:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   Deferred Error APIC interrupts
  MCE:          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0          0   Machine check exceptions
- MCP:         49         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50         50   Machine check polls
+ MCP:          4          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5          5   Machine check polls
  ERR:          0
  MIS:          0

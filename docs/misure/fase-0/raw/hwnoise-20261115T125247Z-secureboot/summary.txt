@@ -1,0 +1,28 @@
+directory: /var/lib/dawos/measure/hwnoise-20261115T125247Z-secureboot
+started_utc: 2026-11-15T12:52:47Z
+duration: 15m
+label: secureboot
+kernel: Linux 6.18.63-dawos #5 SMP PREEMPT_RT Sun Nov 15 01:38:15 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 112928 verity 1 PARTLABEL=dawos-root-0.0.1.20261115114454 PARTLABEL=dawos-verity-0.0.1.20261115114454 4096 4096 14116 1 sha256 af328de5951fe47fa166128c38777316bab0be441a963b16ce41db07cbd97441 5e4137e71adb62b15624da6b548ed63deeaae9d121367f81d101d530bd1d14e7 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261115114454,PARTLABEL=dawos-verity-0.0.1.20261115114454 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 console=ttyS0,115200n8 systemd.machine_id=firmware loglevel=4
+bios: 2301 10/04/2025
+image: ab5065321d9d
+junction_limit_c: 105
+throttle_start: core=0 package=0
+rtla_exit_status: 0
+finished_utc: 2026-11-15T13:07:53Z
+throttle_end: core=0 package=0
+cpus_measured: 24
+max_single_noise_us: 0 (no gap of 1 us or more on any cpu)
+hardware_noise_events: 0
+nmi_events: 0
+smi_count: 0
+smi_samples: 129
+package_temperature_max_c: 70
+package_temperature_avg_c: 59.9
+samples_at_or_above_95_c: 0 of 129
+package_temperature_largest_step_c: +11 (from 54, sample 62 of 129, epoch 1794747480)
+busy_frequency_mhz: avg 4852 min 4835
+package_power_w: avg 106.6 max 123.1
+thermal_throttle_events: core 0 package 0
+verdict: PASS (max single noise <= 15 us, no SMI)
+thermal: ok (package stayed below 95 C)
