@@ -508,6 +508,9 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | Unità attivate da Buildroot | Non trattato | Buildroot attiva ogni unità portata da un pacchetto. Disattivate: aggiornamento automatico, **riavvio automatico alle 4:10**, copia del boot loader non firmato sulla partizione di avvio, TRIM e verifica XFS settimanali. Il rapporto di avvio ha il campo `timers=` e le prove pretendono `timers=none`. Emerso dal registro di costruzione dell'utente. |
 | Decisioni aperte | D-10 … D-24 | Nuova **D-25 — Manutenzione periodica dei dischi** (TRIM, verifica XFS): spenta per la Fase 0, d'accordo con l'utente (15 novembre 2026); da decidere con i servizi di sistema. |
 | Costruzione, opzioni dei pacchetti | Non trattato | Buildroot non ricostruisce un pacchetto quando cambiano solo le sue opzioni. `make image` ora lo fa per systemd (`tools/package-options.sh`), e `post-build.sh` ferma la costruzione se all'immagine manca un programma necessario. Emerso dal fallimento della prima consegna di P0.5e sul PC di sviluppo. |
+| P0.5f, Secure Boot sul 285K | Certificato aggiunto alle chiavi già presenti nel firmware | Il firmware era **senza chiavi** (stato _Setup_): prima si installano quelle di fabbrica, poi si aggiunge il certificato. Decisione dell'ADR 0015 invariata. |
+| P0.5f, ingresso nel firmware | `systemctl reboot --firmware-setup` | `bootctl reboot-to-firmware true && systemctl reboot`: il primo richiede `systemd-logind`, che l'immagine non contiene. |
+| 285K, controller VMD | «Il disco è dietro VMD» | VMD è attivo ma il disco è collegato direttamente. Il driver resta nel kernel per prudenza. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
 Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).

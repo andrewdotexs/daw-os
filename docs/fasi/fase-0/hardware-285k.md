@@ -39,7 +39,7 @@ Da `lspci -k`, `lsblk` e dal registro del primo avvio dal disco. Il numero di se
 | --- | --- | --- | --- |
 | Ethernet Intel I226-V (rev 06) | `83:00.0` | `igc` | Confermato. Interfaccia `eno1`. |
 | Disco Samsung SSD 990 PRO 1TB | `02:00.0` | `nvme` | 931,5 GiB reali. Unico disco interno. |
-| Intel VMD (controller RAID NVMe) | `00:0e.0` | `vmd` | VMD è attivo nel firmware: il driver aggiunto per prudenza serviva davvero. |
+| Intel VMD (controller RAID NVMe) | `00:0e.0` | `vmd` | VMD è attivo nel firmware, ma il disco non è collegato attraverso di lui: sta su `0000:02:00.0`, sotto la porta `00:06.4` (verificato il 15 novembre 2026). Il driver non serve al disco di questa macchina. |
 | USB, controller del processore (Thunderbolt 4) | `00:0d.0` | `xhci_hcd` | Primo dei due controller USB. |
 | USB, controller del chipset | `80:14.0` | `xhci_hcd` | Secondo controller USB. |
 | Thunderbolt 4 NHI | `00:0d.2` | nessuno | Il sottosistema Thunderbolt non è nel kernel. |
