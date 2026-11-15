@@ -19,7 +19,8 @@
 #
 # The measurement runs as a transient systemd unit, so it survives the
 # end of the SSH session. Results go to /var/lib/dawos/measure/, which is
-# in memory until the "state" partition is mounted (step P0.5): fetch
+# on the "state" partition of an installed system from step P0.5a on (in
+# memory before that, and always on the installation medium): fetch
 # them before rebooting (tools/fetch-measure.sh on the development PC).
 #
 # While it runs, the machine answers in fits and starts: that is expected.

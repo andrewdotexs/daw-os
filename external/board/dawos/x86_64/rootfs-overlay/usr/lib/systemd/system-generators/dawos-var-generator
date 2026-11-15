@@ -1,0 +1,108 @@
+#!/bin/sh
+# dawos-var-generator — put /var on the "state" partition of the system disk.
+#
+# The root file system is read-only and the same on every machine; what a
+# machine remembers lives in /var, on the partition labelled "state" that
+# dawos-install creates. This generator writes the var.mount unit for it.
+#
+# Why a generator and not a fixed unit:
+# - the installation medium must NOT use the "state" partition of the
+#   disk it is about to erase, and an image without that partition must
+#   still boot: in both cases nothing is written here and the tmpfs
+#   var.mount shipped in /usr/lib (Buildroot's "factory" /var) applies;
+# - the partition is looked for on the disk that holds our own root
+#   partition only, so that a second disk carrying another dawOS can
+#   never lend us its state.
+#
+# systemd runs generators before udev: /dev/disk/by-partlabel does not
+# exist yet. The kernel however publishes the GPT name of every partition
+# in sysfs (PARTNAME in the uevent file), and that is what is read here.
+#
+# Arguments (systemd.generator(7)): normal, early and late output
+# directories. A unit written to the normal one takes precedence over the
+# unit of the same name in /usr/lib/systemd/system.
+
+set -u
+
+normal_dir=${1:-}
+[ -n "${normal_dir}" ] || exit 0
+
+# Generators have no journal yet: the kernel log is the place to speak.
+log() {
+	echo "dawos-var-generator: $*" > /dev/kmsg 2> /dev/null || true
+}
+
+# Print the kernel names of the partitions whose GPT name is $1, among
+# the block devices found directly below the sysfs directory $2.
+partitions_named() {
+	for uevent in "$2"/*/uevent; do
+		[ -r "${uevent}" ] || continue
+		if grep -qx "PARTNAME=$1" "${uevent}"; then
+			device=${uevent%/uevent}
+			echo "${device##*/}"
+		fi
+	done
+}
+
+read -r cmdline < /proc/cmdline
+
+case " ${cmdline} " in
+*" dawos.installer "*)
+	log "installation medium: /var stays in memory"
+	exit 0
+	;;
+esac
+
+# Our root partition is named on the command line as
+# PARTLABEL=dawos-root-<version>, either in root= or, with dm-verity, in
+# the device-mapper table.
+root_label=$(printf '%s\n' "${cmdline}" |
+	sed -n 's/.*PARTLABEL=\(dawos-root-[A-Za-z0-9._+-]*\).*/\1/p')
+if [ -z "${root_label}" ]; then
+	log "no dawos-root partition on the kernel command line: /var stays in memory"
+	exit 0
+fi
+
+roots=$(partitions_named "${root_label}" /sys/class/block)
+if [ "$(printf '%s\n' "${roots}" | grep -c .)" != 1 ]; then
+	log "expected one partition named ${root_label}, found: ${roots:-none}: /var stays in memory"
+	exit 0
+fi
+
+# /sys/class/block/<partition> is a link into the directory of its disk.
+disk_dir=$(dirname "$(readlink -f "/sys/class/block/${roots}")")
+states=$(partitions_named state "${disk_dir}")
+if [ "$(printf '%s\n' "${states}" | grep -c .)" != 1 ]; then
+	log "expected one partition named state on ${disk_dir##*/}, found: ${states:-none}: /var stays in memory"
+	exit 0
+fi
+
+# The file system is checked before it is mounted (a clean ext4 takes a
+# few milliseconds). Kernel names such as nvme0n1p6 need no escaping in a
+# unit name.
+cat > "${normal_dir}/var.mount" <<UNIT
+# Written by dawos-var-generator.
+[Unit]
+Description=dawOS persistent state (/var on /dev/${states})
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+After=swap.target
+Requires=systemd-fsck@dev-${states}.service
+After=systemd-fsck@dev-${states}.service
+
+[Mount]
+What=/dev/${states}
+Where=/var
+Type=ext4
+Options=rw,nosuid,nodev,noatime
+UNIT
+
+# Pulled in by local-fs.target. "wants", not "requires": with a broken
+# state partition the system still reaches a login prompt, and the boot
+# report says var=none.
+mkdir -p "${normal_dir}/local-fs.target.wants"
+ln -sf ../var.mount "${normal_dir}/local-fs.target.wants/var.mount"
+
+log "/var is /dev/${states} (partition 'state' of ${disk_dir##*/})"
+exit 0

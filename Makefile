@@ -30,6 +30,7 @@ SHELL_SOURCES := $(wildcard tools/*.sh) \
 	$(wildcard $(EXT_DIR)/board/dawos/x86_64/*.sh) \
 	$(wildcard $(OVERLAY_DIR)/usr/libexec/dawos/*) \
 	$(wildcard $(OVERLAY_DIR)/usr/bin/*) \
+	$(wildcard $(OVERLAY_DIR)/usr/lib/systemd/system-generators/*) \
 	$(wildcard $(OVERLAY_DIR)/etc/profile.d/*.sh)
 
 # Buildroot refuses paths with spaces, and so do we, early and clearly.
@@ -90,7 +91,7 @@ qemu: ## Boot the image in QEMU with a serial console (exit: Ctrl-A then X)
 
 .PHONY: qemu-test
 qemu-test: ## Boot the image in QEMU and check the boot report (PASS/FAIL)
-	@tools/run-qemu.sh --test
+	@tools/run-qemu.sh --test --expect var=state
 
 .PHONY: qemu-installer
 qemu-installer: ## Rehearse the installation: boot the stick image with a blank NVMe disk
@@ -102,11 +103,11 @@ qemu-target: ## Boot the disk installed by the rehearsal (exit: Ctrl-A then X)
 
 .PHONY: qemu-target-test
 qemu-target-test: ## Boot the disk installed by the rehearsal and check the boot report
-	@tools/run-qemu.sh --target --test
+	@tools/run-qemu.sh --target --test --expect var=state
 
 .PHONY: remote-test
 remote-test: ## Check a real machine over SSH: make remote-test HOST=<address>
-	@tools/remote-check.sh $(HOST)
+	@tools/remote-check.sh $(HOST) --expect var=state
 
 .PHONY: measure-prepare
 measure-prepare: ## After every boot of a machine: copy the tools, keep results on disk: make measure-prepare HOST=<address>

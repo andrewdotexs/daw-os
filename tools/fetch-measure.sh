@@ -4,7 +4,8 @@
 # Usage: fetch-measure.sh HOST [DESTINATION]
 #
 # Results live in /var/lib/dawos/measure/ on the machine, which is in
-# memory until the "state" partition is mounted (step P0.5): fetch them
+# memory on systems installed before step P0.5a (unless "make
+# measure-prepare" was run after the boot): on those, fetch them
 # before rebooting it. The default destination is docs/misure/fase-0/raw/.
 
 set -euo pipefail

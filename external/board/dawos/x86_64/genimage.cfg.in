@@ -28,6 +28,17 @@ image efi-part.vfat {
 	size = 256M
 }
 
+# Empty "state" file system for the QEMU disk, so that the image used by
+# "make qemu-test" mounts /var the way an installed machine does. On a
+# real disk dawos-install creates this partition, 32 GiB.
+image state.ext4 {
+	ext4 {
+		label = "state"
+	}
+	empty = true
+	size = 256M
+}
+
 image disk.img {
 	hdimage {
 		partition-table-type = "gpt"
@@ -48,6 +59,13 @@ image disk.img {
 		partition-type-uuid = 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
 		image = "rootfs.erofs"
 		size = @ROOT_SLOT_SIZE@
+	}
+
+	# Found by its name by dawos-var-generator.
+	partition state {
+		# Generic Linux data, as dawos-install declares it.
+		partition-type-uuid = L
+		image = "state.ext4"
 	}
 }
 
