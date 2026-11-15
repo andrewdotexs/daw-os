@@ -1,0 +1,504 @@
+#!/bin/sh
+# dawos-osnoise — measure what the operating system takes away from the
+# live CPUs, while the other CPUs are under load.
+#
+# "rtla osnoise" runs one thread on each measured CPU. The thread does
+# nothing but read the clock in a loop: every gap between two readings is
+# time something else took, and the kernel tracer behind it tells what:
+# an interrupt, a softirq, another thread, or the hardware. On an isolated
+# CPU the answer should be "nothing but the hardware".
+#
+# Three more things are recorded during the same time window:
+#
+#   - /proc/interrupts at the start and at the end: on a live CPU only the
+#     local timer may have counted;
+#   - every thread switch on the measured CPUs (sched_switch events in a
+#     trace instance of its own): only the measurement thread and kernel
+#     threads bound to that CPU may appear;
+#   - package temperature and power, read every five seconds from two
+#     files the kernel serves from CPU 0. turbostat is not used here: to
+#     read a CPU it moves itself onto it, measured CPUs included (seen in
+#     the thread switches of a trial run), which is exactly the kind of
+#     visit this measurement is there to catch. System management
+#     interrupts therefore have no counter of their own in this tool:
+#     they stop every CPU, so they show up as hardware noise, and
+#     dawos-hwnoise remains the tool that counts them.
+#
+# Meanwhile stress-ng loads every other CPU: computation, memory, thread
+# switches and timers (leave it out with --no-load).
+#
+# The window starts ten seconds after the measurement threads and ends
+# ten seconds before them, so that starting and stopping the tools is not
+# counted.
+#
+# The measured CPUs are the ones the kernel isolated (boot profile; see
+# dawos-profile). --cpus measures any other set, for example the same
+# CPUs under the profile "generic", to have a "before" to compare with.
+#
+# Results go to /var/lib/dawos/measure/osnoise-<time>[-LABEL]; fetch them
+# with "make measure-fetch" on the development PC. "--summary DIR" needs
+# only sh, awk and sed, and also runs there.
+
+set -u
+
+PROG=dawos-osnoise
+BASE=/var/lib/dawos/measure
+UNIT=dawos-osnoise
+# Acceptance of step P0.6: largest single gap, in microseconds.
+LIMIT_US=10
+# Seconds left out at each end of the run.
+MARGIN_S=10
+TRACEFS=/sys/kernel/tracing
+INSTANCE=${TRACEFS}/instances/dawos-osnoise
+SELF=$(readlink -f "$0")
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--cpus LIST] [--no-load] DURATION [LABEL]
+                             start a measurement (DURATION like 10m, 600)
+  ${PROG} --status           show progress, or the last summary
+  ${PROG} --summary DIR      (re)compute the summary of a finished run
+
+Without --cpus the CPUs isolated by the boot profile are measured.
+LABEL is a short word added to the name of the result directory.
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# CPUs of a kernel list ("4-7", "0-3,8-15"), one per line, sorted.
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done | sort -n -u
+}
+
+# CPU numbers on standard input, back into a list.
+compress_list() {
+	sort -n -u | awk '
+		NR == 1 { start = prev = $1; next }
+		$1 == prev + 1 { prev = $1; next }
+		{ printf "%s%s", sep, (start == prev ? start : start "-" prev); sep = ","; start = prev = $1 }
+		END { if (NR) printf "%s%s", sep, (start == prev ? start : start "-" prev); print "" }'
+}
+
+# Print the sysfs directory of the coretemp sensor, whose temp1 is the
+# whole package; nothing if there is none (virtual machines).
+coretemp_dir() {
+	for hwmon in /sys/class/hwmon/hwmon*; do
+		[ -r "${hwmon}/name" ] || continue
+		read -r name < "${hwmon}/name"
+		if [ "${name}" = coretemp ] && [ -r "${hwmon}/temp1_input" ]; then
+			echo "${hwmon}"
+			return 0
+		fi
+	done
+	return 0
+}
+
+# One line every five seconds: seconds since boot, package temperature in
+# thousandths of a degree, package energy counter in microjoules ("-"
+# where the machine has no such file). The first line gives the value at
+# which the energy counter starts again from zero.
+sample_package() {
+	sensor=$(coretemp_dir)
+	energy=/sys/class/powercap/intel-rapl:0/energy_uj
+	echo "# max_energy_range_uj $(cat "${energy%/*}/max_energy_range_uj" 2> /dev/null || echo 0)"
+	while :; do
+		read -r now _ < /proc/uptime
+		temperature=-
+		[ -n "${sensor}" ] && read -r temperature < "${sensor}/temp1_input"
+		joules=-
+		[ -r "${energy}" ] && read -r joules < "${energy}"
+		echo "${now} ${temperature} ${joules}"
+		sleep 5
+	done
+}
+
+# CPUs of list $1 that are not in list $2.
+subtract_list() {
+	for cpu in $(expand_list "$1"); do
+		expand_list "$2" | grep -qx "${cpu}" || echo "${cpu}"
+	done | compress_list
+}
+
+# The list as the hexadecimal mask the kernel reads (groups of 32 CPUs).
+list_to_mask() {
+	mask_cpus=$(expand_list "$1")
+	top=0
+	for cpu in ${mask_cpus}; do
+		[ $((cpu / 32)) -le "${top}" ] || top=$((cpu / 32))
+	done
+	group=${top}
+	mask=
+	while [ "${group}" -ge 0 ]; do
+		value=0
+		for cpu in ${mask_cpus}; do
+			[ $((cpu / 32)) -ne "${group}" ] || value=$((value | (1 << (cpu % 32))))
+		done
+		mask="${mask}${mask:+,}$(printf '%08x' "${value}")"
+		group=$((group - 1))
+	done
+	echo "${mask}"
+}
+
+# "10m" -> 600.
+to_seconds() {
+	number=${1%[smhd]}
+	case "$1" in
+	*m) echo $((number * 60)) ;;
+	*h) echo $((number * 3600)) ;;
+	*d) echo $((number * 86400)) ;;
+	*) echo "${number}" ;;
+	esac
+}
+
+# Write summary.txt from the files of the result directory $1.
+summarize() {
+	dir=$1
+	cpus=$(sed -n 's/^cpus_measured: //p' "${dir}/meta.txt")
+	cpu_words=" $(expand_list "${cpus}" | tr '\n' ' ')"
+	{
+		echo "directory: ${dir}"
+		cat "${dir}/meta.txt"
+
+		# rtla prints one line per CPU: cpu, #periods, runtime, noise,
+		# % available, max noise, max single, then how many times the
+		# hardware, an NMI, an interrupt, a softirq and another thread
+		# got in the way.
+		awk '
+			$1 ~ /^[0-9]+$/ && $2 ~ /^#/ {
+				cpus++
+				if ($7 + 0 > max) { max = $7 + 0; worst = $1 }
+				if ($5 + 0 < avail || !cpus_seen) avail = $5 + 0
+				cpus_seen = 1
+				hw += $8; nmi += $9; irq += $10; softirq += $11; thread += $12
+			}
+			END {
+				if (!cpus) { print "osnoise: no data"; exit }
+				printf "cpus_with_data: %d\n", cpus
+				if (max) printf "max_single_noise_us: %d (cpu %s)\n", max, worst
+				else printf "max_single_noise_us: 0 (no gap of 1 us or more on any cpu)\n"
+				printf "lowest_cpu_availability_percent: %.5f\n", avail
+				printf "noise_events: hardware %d nmi %d interrupt %d softirq %d thread %d\n", hw, nmi, irq, softirq, thread
+			}' "${dir}/osnoise.txt"
+
+		# Interrupts counted on the measured CPUs during the window. Both
+		# files are /proc/interrupts: a header naming the CPU columns,
+		# then one row per interrupt. Rows without per-CPU columns (ERR,
+		# MIS) are skipped.
+		if [ -s "${dir}/interrupts-start.txt" ] && [ -s "${dir}/interrupts-end.txt" ]; then
+			awk -v wanted="${cpu_words}" '
+				FNR == 1 {
+					file++
+					ncol = NF
+					for (i = 1; i <= NF; i++) column[file, i] = substr($i, 4)
+					next
+				}
+				NF <= ncol { next }
+				{
+					name = $1
+					sub(/:$/, "", name)
+					for (i = 1; i <= ncol; i++) {
+						cpu = column[file, i]
+						if (index(wanted, " " cpu " ")) {
+							if (file == 1) before[name, cpu] = $(i + 1)
+							else delta[name] += $(i + 1) - before[name, cpu]
+						}
+					}
+					if (file == 2) {
+						text = ""
+						for (i = ncol + 2; i <= NF; i++) text = text (text ? " " : "") $i
+						label[name] = text
+						if (!(name in seen)) { seen[name] = 1; order[++rows] = name }
+					}
+				}
+				END {
+					printf "interrupts_on_measured_cpus:"
+					for (r = 1; r <= rows; r++) if (delta[order[r]] > 0) { printf " %s=%d", order[r], delta[order[r]]; any = 1 }
+					if (!any) printf " none"
+					printf "\n"
+					printf "unexpected_interrupts:"
+					for (r = 1; r <= rows; r++) {
+						name = order[r]
+						# LOC is the local timer of each CPU.
+						if (delta[name] > 0 && name != "LOC") { printf " %s=%d (%s)", name, delta[name], label[name]; bad = 1 }
+					}
+					if (!bad) printf " none"
+					printf "\n"
+				}' "${dir}/interrupts-start.txt" "${dir}/interrupts-end.txt"
+		else
+			echo "interrupts_on_measured_cpus: no data"
+		fi
+
+		# Threads that were given a measured CPU during the window, from
+		# threads.txt ("count cpu name"). Expected: the measurement thread,
+		# the idle thread, and kernel threads bound to that very CPU, whose
+		# names end in "/<cpu>" or read "kworker/<cpu>:...".
+		if [ -r "${dir}/threads.txt" ]; then
+			awk '
+				{
+					count = $1; cpu = $2
+					name = $0
+					sub(/^[0-9]+ [0-9]+ /, "", name)
+					total[name] += count
+					bound = (name ~ ("/" cpu "$")) || (index(name, "kworker/" cpu ":") == 1)
+					if (!bound) stray[name] += count
+				}
+				END {
+					printf "threads_on_measured_cpus:"
+					for (name in total) { printf " %s=%d", name, total[name]; any = 1 }
+					if (!any) printf " none"
+					printf "\n"
+					printf "unexpected_threads:"
+					for (name in stray) { printf " %s=%d", name, stray[name]; bad = 1 }
+					if (!bad) printf " none"
+					printf "\n"
+				}' "${dir}/threads.txt"
+		else
+			echo "threads_on_measured_cpus: no data"
+		fi
+		[ -r "${dir}/trace-lost.txt" ] && cat "${dir}/trace-lost.txt"
+
+		# Package temperature and power, from the samples of
+		# sample_package. Power is energy over time between two samples;
+		# a counter that went backwards has wrapped around.
+		if [ -s "${dir}/power.txt" ]; then
+			awk '
+				$1 == "#" { range = $3 + 0; next }
+				$2 != "-" { t = $2 / 1000; tsum += t; tn++; if (t > tmax) tmax = t }
+				$3 != "-" {
+					if (have) {
+						joules = $3 - last
+						if (joules < 0) joules += range
+						seconds = $1 - when
+						if (seconds > 0) {
+							total += joules; elapsed += seconds
+							if (joules / seconds > wmax) wmax = joules / seconds
+						}
+					}
+					last = $3; when = $1; have = 1
+				}
+				END {
+					if (tn) printf "package_temperature_c: avg %.1f max %d\n", tsum / tn, tmax
+					if (elapsed) printf "package_power_w: avg %.1f max %.1f\n", total / elapsed / 1000000, wmax / 1000000
+				}' "${dir}/power.txt"
+		fi
+	} > "${dir}/summary.txt"
+
+	# Verdict against the acceptance criteria of step P0.6.
+	max=$(sed -n 's/^max_single_noise_us: \([0-9]*\).*/\1/p' "${dir}/summary.txt")
+	reasons=
+	if [ -z "${max}" ]; then
+		echo "verdict: NO DATA" >> "${dir}/summary.txt"
+	else
+		[ "${max}" -le "${LIMIT_US}" ] || reasons="${reasons} noise>${LIMIT_US}us"
+		grep -q '^unexpected_interrupts: none' "${dir}/summary.txt" || reasons="${reasons} interrupts"
+		grep -q '^unexpected_threads: none' "${dir}/summary.txt" || reasons="${reasons} threads"
+		if [ -z "${reasons}" ]; then
+			echo "verdict: PASS (max single noise <= ${LIMIT_US} us, only the local timer, only bound kernel threads)" >> "${dir}/summary.txt"
+		else
+			echo "verdict: FAIL (${reasons# })" >> "${dir}/summary.txt"
+		fi
+	fi
+	cat "${dir}/summary.txt"
+}
+
+# The measurement itself; runs inside the transient unit.
+#   $1 = directory, $2 = seconds, $3 = CPUs to measure, $4 = load: yes or no
+run_measurement() {
+	dir=$1
+	seconds=$2
+	cpus=$3
+	load=$4
+	online=$(cat /sys/devices/system/cpu/online)
+	others=$(subtract_list "${online}" "${cpus}")
+
+	# A trace instance of our own, recording thread switches on the
+	# measured CPUs only. It stays off until the window opens.
+	grep -q " ${TRACEFS} tracefs " /proc/mounts || mount -t tracefs nodev "${TRACEFS}" 2> /dev/null
+	traced=no
+	if mkdir -p "${INSTANCE}" 2> /dev/null; then
+		echo 0 > "${INSTANCE}/tracing_on"
+		list_to_mask "${cpus}" > "${INSTANCE}/tracing_cpumask"
+		echo 1024 > "${INSTANCE}/buffer_size_kb"
+		echo 1 > "${INSTANCE}/events/sched/sched_switch/enable" && traced=yes
+	fi
+
+	sample_package > "${dir}/power.txt" &
+	sampler_pid=$!
+
+	load_pid=
+	if [ "${load}" = yes ]; then
+		workers=$(expand_list "${others}" | wc -l)
+		stress-ng --taskset "${others}" --temp-path "${dir}" \
+			--cpu "${workers}" --cpu-method matrixprod \
+			--vm 2 --vm-bytes 512M --switch 4 --timer 2 \
+			--timeout "${seconds}s" > "${dir}/load.txt" 2>&1 &
+		load_pid=$!
+	fi
+	sleep 3
+
+	rtla osnoise top -c "${cpus}" -d "${seconds}s" -q > "${dir}/osnoise.txt" 2>&1 &
+	rtla_pid=$!
+
+	sleep "${MARGIN_S}"
+	cat /proc/interrupts > "${dir}/interrupts-start.txt"
+	[ "${traced}" = yes ] && echo 1 > "${INSTANCE}/tracing_on"
+	date -u '+window_start_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+
+	sleep $((seconds - 2 * MARGIN_S))
+	[ "${traced}" = yes ] && echo 0 > "${INSTANCE}/tracing_on"
+	cat /proc/interrupts > "${dir}/interrupts-end.txt"
+	date -u '+window_end_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+	load_alive=no
+	[ -n "${load_pid}" ] && kill -0 "${load_pid}" 2> /dev/null && load_alive=yes
+
+	wait "${rtla_pid}"
+	rtla_status=$?
+	kill "${sampler_pid}" 2> /dev/null
+	[ -n "${load_pid}" ] && kill "${load_pid}" 2> /dev/null
+	wait 2> /dev/null
+
+	if [ "${traced}" = yes ]; then
+		# "count cpu name" for every thread that was switched in. A trace
+		# line reads: ... [004] d..2. 12.345: sched_switch: prev_comm=...
+		# ==> next_comm=NAME next_pid=... The name may contain spaces.
+		awk '
+			/sched_switch:/ {
+				cpu = $0
+				sub(/^[^[]*\[/, "", cpu); sub(/\].*/, "", cpu)
+				name = $0
+				sub(/.*next_comm=/, "", name); sub(/ next_pid=.*/, "", name)
+				count[cpu + 0 " " name]++
+			}
+			END { for (key in count) print count[key], key }' "${INSTANCE}/trace" | sort -k2,2n -k1,1nr > "${dir}/threads.txt"
+		# The first lines of the raw trace, as a sample to read by hand.
+		head -n 400 "${INSTANCE}/trace" > "${dir}/sched_switch-head.txt"
+		# Events dropped because a buffer filled up: the counts above are
+		# then a lower bound.
+		lost=0
+		for stats in "${INSTANCE}"/per_cpu/cpu*/stats; do
+			value=$(sed -n 's/^overrun: //p' "${stats}")
+			lost=$((lost + ${value:-0}))
+		done
+		echo "trace_events_lost: ${lost}" > "${dir}/trace-lost.txt"
+		echo 0 > "${INSTANCE}/events/sched/sched_switch/enable"
+		rmdir "${INSTANCE}" 2> /dev/null
+	fi
+
+	{
+		echo "rtla_exit_status: ${rtla_status}"
+		[ "${load}" = yes ] && echo "load_running_at_window_end: ${load_alive}"
+		date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ'
+	} >> "${dir}/meta.txt"
+	summarize "${dir}" > /dev/null
+}
+
+cpus=
+load=yes
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--status)
+		if systemctl is-active --quiet "${UNIT}"; then
+			echo "A measurement is running:"
+			systemctl show -p ActiveEnterTimestamp --value "${UNIT}" | sed 's/^/  started: /'
+		else
+			echo "No measurement is running."
+		fi
+		last=
+		for candidate in "${BASE}"/osnoise-*; do
+			[ -d "${candidate}" ] && last=${candidate}
+		done
+		if [ -n "${last}" ]; then
+			echo "Latest result directory: ${last}"
+			if [ -r "${last}/summary.txt" ]; then
+				cat "${last}/summary.txt"
+			else
+				sed 's/^/  /' "${last}/meta.txt"
+			fi
+		fi
+		exit 0
+		;;
+	--summary)
+		[ -d "${2:-}" ] || die "--summary needs a result directory"
+		summarize "$2"
+		exit 0
+		;;
+	--run)
+		# Internal: called by the transient unit.
+		run_measurement "$2" "$3" "$4" "$5"
+		exit 0
+		;;
+	--cpus)
+		cpus=${2:-}
+		[ -n "${cpus}" ] || die "--cpus needs a list, for example 4-7"
+		shift
+		;;
+	--no-load) load=no ;;
+	-*) die "unknown option '$1' (try --help)" ;;
+	*) break ;;
+	esac
+	shift
+done
+
+[ $# -ge 1 ] || {
+	usage
+	exit 0
+}
+duration=$1
+label=${2:-}
+
+[ "$(id -u)" = 0 ] || die "must run as root"
+echo "${duration}" | grep -Eq '^[0-9]+[smhd]?$' || die "bad duration '${duration}' (examples: 600, 10m, 4h)"
+seconds=$(to_seconds "${duration}")
+[ "${seconds}" -ge 60 ] || die "the shortest measurement is 60 seconds"
+if [ -n "${label}" ]; then
+	echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' || die "the label may only contain letters, digits, '-' and '_'"
+fi
+systemctl is-active --quiet "${UNIT}" && die "a measurement is already running (see --status)"
+
+isolated=$(grep -v null /sys/devices/system/cpu/isolated 2> /dev/null)
+if [ -z "${cpus}" ]; then
+	cpus=${isolated}
+	[ -n "${cpus}" ] ||
+		die "the kernel isolated no CPU: start a profile with dawos-profile, or name the CPUs with --cpus"
+fi
+echo "${cpus}" | grep -Eq '^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$' || die "bad CPU list '${cpus}'"
+
+dir="${BASE}/osnoise-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}"
+{
+	date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "duration: ${duration}"
+	echo "label: ${label:-none}"
+	echo "cpus_measured: ${cpus}"
+	echo "cpus_isolated_by_kernel: ${isolated:-none}"
+	echo "load_on_other_cpus: ${load}"
+	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+	echo "tune: $(sed -n 's/^  "status": "\([a-z]*\)".*/\1/p' /run/dawos/topology.json 2> /dev/null)"
+	echo "kernel: $(uname -srv)"
+	echo "cmdline: $(cat /proc/cmdline)"
+	echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
+	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+} > "${dir}/meta.txt"
+[ -r /run/dawos/topology.json ] && cp /run/dawos/topology.json "${dir}/topology.json"
+
+systemd-run --quiet --unit="${UNIT}" --collect \
+	--description="dawOS operating system noise measurement" \
+	/bin/sh "${SELF}" --run "${dir}" "${seconds}" "${cpus}" "${load}" ||
+	die "could not start the measurement"
+
+echo "Measurement started for ${duration} on CPUs ${cpus}; results in ${dir}"
+echo "Follow it with: ${PROG} --status"

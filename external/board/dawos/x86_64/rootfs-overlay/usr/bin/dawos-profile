@@ -1,0 +1,223 @@
+#!/bin/sh
+# dawos-profile — choose which boot profile this machine starts.
+#
+# Every dawOS image carries several kernel command lines, the "boot
+# profiles", inside its signed unified kernel image:
+#
+#   generic   no CPU isolation: runs anywhere, and is what boots when
+#             nothing else is chosen;
+#   NAME      one per file in /usr/share/dawos/profiles: the CPU domains
+#             of one machine (which CPUs are live, which take interrupts).
+#
+# The image is the same on every machine, so the choice cannot be in it:
+# it is a setting of the machine, kept on its EFI System Partition in
+# loader/loader.conf, as a pattern the boot loader matches against its
+# menu entries ("default dawos_*@NAME"). The pattern names no version, so
+# it survives updates, and the boot loader lists bad images last, so the
+# automatic fallback keeps working: after three failed attempts of a new
+# image the pattern matches the same profile of the previous one.
+#
+# A profile that isolates the wrong CPUs, or that the kernel cannot boot
+# with, would be started again at every boot. Hence the two steps:
+#
+#   dawos-profile --try NAME    use NAME for the next boot only (a
+#                               variable of the boot loader, cleared when
+#                               read): if the machine does not come up,
+#                               switching it off and on brings back the
+#                               previous choice;
+#   dawos-profile --set NAME    make it the choice for every boot.
+#
+# Neither can make the machine boot anything unsigned: the profiles are
+# inside the signed image, and only the choice among them is made here.
+
+set -u
+
+PROG=dawos-profile
+PROFILES=/usr/share/dawos/profiles
+ESP=/boot
+LOADER_CONF=${ESP}/loader/loader.conf
+ONESHOT_VAR=/sys/firmware/efi/efivars/LoaderEntryOneShot-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--status]            running profile, choice for the next boots
+  ${PROG} --list                profiles of this image, and whether they
+                                fit this machine
+  ${PROG} --try NAME [--force]  start NAME at the next boot only
+  ${PROG} --set NAME [--force]  start NAME at every boot ("generic" clears
+                                the choice)
+
+--force skips the check that the profile was written for this machine.
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+profile_get() {
+	sed -n "s/^$2=//p" "${PROFILES}/$1.conf" | head -n 1
+}
+
+# Number of CPUs of a kernel list such as "0-23".
+count_cpus() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		[ -n "${first}" ] && seq "${first}" "${last:-${first}}"
+	done | wc -l
+}
+
+# Why profile $1 does not fit this machine; nothing if it does.
+misfit() {
+	[ "$1" = generic ] && return 0
+	model=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -n 1)
+	wanted=$(profile_get "$1" cpu_model)
+	if [ "${model}" != "${wanted}" ]; then
+		echo "the processor is '${model}', not '${wanted}'"
+		return 0
+	fi
+	online=$(count_cpus "$(cat /sys/devices/system/cpu/online)")
+	wanted=$(profile_get "$1" cpus)
+	[ "${online}" = "${wanted}" ] || echo "${online} CPUs online, not ${wanted}"
+}
+
+# The boot loader matches these against the identifiers of its entries:
+# "dawos_<version>.efi" for the base profile, "dawos_<version>.efi@NAME"
+# for the others.
+pattern_of() {
+	if [ "$1" = generic ]; then echo 'dawos_*.efi'; else echo "dawos_*@$1"; fi
+}
+
+# The profile a pattern stands for, or the pattern itself if it is not
+# one of ours.
+profile_of() {
+	case "$1" in
+	'') ;;
+	'dawos_*.efi') echo generic ;;
+	'dawos_*@'*) echo "${1#dawos_\*@}" ;;
+	*) echo "$1" ;;
+	esac
+}
+
+running_profile() {
+	name=$(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)
+	echo "${name:-generic}"
+}
+
+configured_pattern() {
+	[ -r "${LOADER_CONF}" ] || return 0
+	awk '$1 == "default" { value = $2 } END { print value }' "${LOADER_CONF}"
+}
+
+# A boot loader variable holds four bytes of attributes, then the text in
+# UTF-16: dropping the zero bytes leaves the ASCII text.
+oneshot_pattern() {
+	[ -r "${ONESHOT_VAR}" ] || return 0
+	dd if="${ONESHOT_VAR}" bs=1 skip=4 2> /dev/null | tr -d '\000'
+}
+
+check_name() {
+	name=$1
+	[ -n "${name}" ] || die "which profile? (see --list)"
+	[ "${name}" = generic ] || [ -r "${PROFILES}/${name}.conf" ] ||
+		die "this image has no profile '${name}' (see --list)"
+	if [ "${force}" != yes ]; then
+		reason=$(misfit "${name}")
+		[ -z "${reason}" ] ||
+			die "profile '${name}' is not for this machine: ${reason} (--force to use it anyway)"
+	fi
+}
+
+show_list() {
+	echo "Boot profiles of this image:"
+	printf '  %-10s %s\n' generic "no CPU isolation"
+	# Sorted without the suffix, so that "285k" comes before "285k-alt".
+	for name in $(find "${PROFILES}" -maxdepth 1 -name '*.conf' | sed 's|.*/||; s/\.conf$//' | LC_ALL=C sort); do
+		reason=$(misfit "${name}")
+		printf '  %-10s %s\n' "${name}" "$(profile_get "${name}" title)"
+		if [ -n "${reason}" ]; then
+			printf '  %-10s   not for this machine: %s\n' '' "${reason}"
+		else
+			printf '  %-10s   live %s, tickless %s, interrupts on %s\n' '' \
+				"$(profile_get "${name}" live)" "$(profile_get "${name}" tickless)" "$(profile_get "${name}" io)"
+		fi
+	done
+}
+
+show_status() {
+	tune=$(sed -n 's/^  "status": "\([a-z]*\)".*/\1/p' /run/dawos/topology.json 2> /dev/null)
+	echo "Running profile:        $(running_profile) (dawos-tune: ${tune:-no report})"
+	configured=$(profile_of "$(configured_pattern)")
+	echo "Choice for every boot:  ${configured:-generic (nothing set)}"
+	oneshot=$(profile_of "$(oneshot_pattern)")
+	echo "Next boot only:         ${oneshot:-nothing set}"
+}
+
+force=no
+action=status
+target=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--status) action=status ;;
+	--list) action=list ;;
+	--try | --set)
+		action=${1#--}
+		target=${2:-}
+		[ $# -ge 2 ] && shift
+		;;
+	--force) force=yes ;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*)
+		usage >&2
+		exit 1
+		;;
+	esac
+	shift
+done
+
+case "${action}" in
+status)
+	show_status
+	;;
+list)
+	show_list
+	;;
+try)
+	[ "$(id -u)" = 0 ] || die "must run as root"
+	check_name "${target}"
+	bootctl set-oneshot "$(pattern_of "${target}")" ||
+		die "could not set the boot loader variable"
+	echo "Profile '${target}' will be started at the next boot only."
+	echo "If the machine does not come up, switch it off and on: it starts the previous choice."
+	;;
+set)
+	[ "$(id -u)" = 0 ] || die "must run as root"
+	check_name "${target}"
+	[ -r "${LOADER_CONF}" ] || die "${LOADER_CONF} not found: is the EFI System Partition mounted on ${ESP}?"
+
+	# A new image has three attempts to complete a boot, counted in its
+	# file name; a good boot removes the counter. While the running image
+	# still has it, an older image without this profile may be the only
+	# fallback: the pattern would then match nothing but the image that
+	# is failing.
+	# shellcheck source=/dev/null
+	. /etc/os-release
+	[ "${target}" = generic ] || [ -e "${ESP}/EFI/Linux/dawos_${IMAGE_VERSION:-}.efi" ] ||
+		die "the running image has not completed a good boot yet: wait a minute, or look at 'dawos-update --status'"
+
+	# Rewrite the file without any earlier choice, then add the new one.
+	grep -v '^default[[:space:]]' "${LOADER_CONF}" > "${LOADER_CONF}.new" || true
+	[ "${target}" = generic ] || echo "default $(pattern_of "${target}")" >> "${LOADER_CONF}.new"
+	mv "${LOADER_CONF}.new" "${LOADER_CONF}" || die "could not write ${LOADER_CONF}"
+	sync
+	if [ "${target}" = generic ]; then
+		echo "Choice cleared: the machine starts the profile 'generic'."
+	else
+		echo "Profile '${target}' will be started at every boot."
+	fi
+	;;
+esac

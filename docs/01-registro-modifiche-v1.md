@@ -512,6 +512,18 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | P0.5f, ingresso nel firmware | `systemctl reboot --firmware-setup` | `bootctl reboot-to-firmware true && systemctl reboot`: il primo richiede `systemd-logind`, che l'immagine non contiene. |
 | D-22, contenitore da rack | 2U metallico modificato, radiatore sopra il coperchio | **Chiusa dall'utente il 15 novembre 2026: resta il contenitore attuale.** Scartato anche un telaio aperto 3U stampato in ASA. Le misure termiche e di rumore già fatte restano valide per P0.6 e P0.7. |
 | 285K, controller VMD | «Il disco è dietro VMD» | VMD è attivo ma il disco è collegato direttamente. Il driver resta nel kernel per prudenza. |
+| P0.6, sotto-passi | Un solo passo | Quattro: **P0.6a** profili, `dawos-tune` e prova di accettazione; **P0.6b** stati di riposo, _fair server_ e frequenza; **P0.6c** cgroup e driver grafico; **P0.6d** streaming nelle home e rapporto tra core. |
+| P0.6, riga di comando del profilo | `nohz_full`, `rcu_nocbs`, `isolcpus`, `irqaffinity`, `nowatchdog nmi_watchdog=0 nosoftlockup skew_tick=1 tsc=reliable transparent_hugepage=madvise` | Senza `nowatchdog`, `nmi_watchdog=0`, `nosoftlockup` (il kernel non ha i rilevatori di blocco) e senza `transparent_hugepage=` (non esiste con `PREEMPT_RT`). In più `dawos.profile=NOME`. I numeri di CPU vengono dal file del profilo. |
+| P0.6, origine dei domini | `dawos-tune` «legge la topologia da `/sys` e calcola i quattro domini» | I domini stanno in un file per profilo, unica fonte per la riga di comando (alla costruzione) e per `dawos-tune` (all'avvio); la topologia letta da `/sys` serve a verificare che il profilo corrisponda alla macchina. ADR 0018. |
+| P0.6, scelta del profilo | Non specificato | Impostazione della macchina nella partizione di avvio (`default dawos_*@NOME`), con `dawos-profile --try` per provare una volta e `--set` per fissare. ADR 0018. |
+| P0.6, profili del 285K | Uno, core live 4–7 | Due, `285k` (4–7) e `285k-alt` (2–5), per confrontarli; scelta dell'utente del 15 novembre 2026. Uno dei due sparisce dopo la misura. |
+| P0.6, console seriale | Nella riga di comando di ogni profilo | Solo nel profilo `generic`; scelta dell'utente del 15 novembre 2026. |
+| P0.6, frequenza dei core live | «Minimo uguale al massimo» | Fissa alla frequenza base garantita; un valore più alto solo dopo la misura di P0.6b; scelta dell'utente del 15 novembre 2026. |
+| P0.6, limite di potenza | Da decidere se `dawos-tune` lo riscrive | Lo abbassa al valore del profilo se il firmware ne consegna uno più alto; non lo alza mai; scelta dell'utente del 15 novembre 2026. |
+| P0.6, `dawos-tune`, punto 5 | `vm.stat_interval`, `kernel.timer_migration`, _fair server_ | `vm.stat_interval=120` e sondaggio degli errori hardware corretti spento; `timer_migration` e _fair server_ restano ai valori del kernel fino all'esperimento E-02. |
+| P0.6, accettazione, strumento | `rtla osnoise top -c 4-7 -d 10m`, differenza di `/proc/interrupts`, traccia `sched_switch` | Riuniti in `dawos-osnoise`, che non usa `turbostat`: per leggere un core ci si sposta sopra, compresi quelli misurati. |
+| Rapporto di avvio | Undici campi | Nuovi campi `profile=` e `tune=`. |
+| Kernel | Supporto alle reti senza fili dalla configurazione di partenza | Tolto. Aggiunto `CONFIG_INTEL_IDLE`. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
 Il dettaglio è in [P0.5a-stato-persistente.md](fasi/fase-0/P0.5a-stato-persistente.md).

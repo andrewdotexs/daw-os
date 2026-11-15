@@ -136,10 +136,86 @@ verity_params() {
 }
 
 # --- Kernel command lines ---------------------------------------------------
-cmdline_common=$(read_cmdline \
-	"${board_dir}/cmdline/common.txt" \
-	"${board_dir}/cmdline/profile-generic.txt")
+# Every command line is made of three parts: the verified root, the
+# parameters shared by all profiles, and those of one boot profile.
+cmdline_shared=$(read_cmdline "${board_dir}/cmdline/common.txt")
+# The base profile, "generic": no CPU isolation.
+cmdline_common="${cmdline_shared} $(read_cmdline "${board_dir}/cmdline/profile-generic.txt")"
 cmdline="$(verity_params "${root_label}" "${verity_label}") ${cmdline_common}"
+
+# --- Boot profiles of real machines -------------------------------------------
+# A profile file (rootfs-overlay/usr/share/dawos/profiles/NAME.conf)
+# describes one machine: which CPUs are live, which take interrupts, and
+# so on. The same file is in the image, where dawos-tune reads it at
+# boot; here its CPU sets become kernel parameters. Kernel and tuning are
+# thus generated from one description and cannot disagree.
+profiles_dir=${board_dir}/rootfs-overlay/usr/share/dawos/profiles
+profile_files=()
+# Sorted by name, so that the menu lists "285k" before "285k-alt".
+while IFS= read -r profile_name; do
+	profile_files+=("${profiles_dir}/${profile_name}.conf")
+done < <(find "${profiles_dir}" -maxdepth 1 -name '*.conf' -printf '%f\n' | sed 's/\.conf$//' | LC_ALL=C sort)
+
+# Value of a key of a profile file.  $1 = file, $2 = key
+profile_get() {
+	sed -n "s/^$2=//p" "$1" | head -n 1
+}
+
+# CPUs of a kernel list ("0-3,8-15"), one per line, sorted, each once.
+expand_cpus() {
+	local part
+	local IFS=,
+	for part in $1; do
+		[[ ${part} =~ ^([0-9]+)(-([0-9]+))?$ ]] || die "bad CPU list '$1'"
+		seq "${BASH_REMATCH[1]}" "${BASH_REMATCH[3]:-${BASH_REMATCH[1]}}"
+	done | sort -n -u
+}
+
+# Refuse a profile that contradicts itself: better here than at boot.
+check_profile() {
+	local file=$1 name key cpus domains live tickless
+	name=$(basename "${file}" .conf)
+	[[ ${name} =~ ^[a-z0-9][a-z0-9-]*$ && ${name} != generic ]] ||
+		die "profile name '${name}': lower-case letters, digits and '-' only, and not 'generic'"
+	for key in title cpu_model cpus performance_cores live preemptive system io tickless; do
+		[[ -n $(profile_get "${file}" "${key}") ]] || die "profile ${name}: '${key}' is missing"
+	done
+	[[ $(profile_get "${file}" title) != *[\"\\]* ]] || die "profile ${name}: the title must not contain quotes or backslashes"
+	cpus=$(profile_get "${file}" cpus)
+	# The four domains must cover CPUs 0..cpus-1, each exactly once.
+	domains=$(for key in live preemptive system io; do expand_cpus "$(profile_get "${file}" "${key}")"; done | sort -n)
+	[[ ${domains} == "$(seq 0 $((cpus - 1)))" ]] ||
+		die "profile ${name}: live, preemptive, system and io must cover CPUs 0-$((cpus - 1)) exactly once"
+	live=$(expand_cpus "$(profile_get "${file}" live)")
+	tickless=$(expand_cpus "$(profile_get "${file}" tickless)")
+	[[ -z $(comm -23 <(echo "${live}") <(echo "${tickless}")) ]] ||
+		die "profile ${name}: every live CPU must also be tickless"
+	# The kernel keeps the boot CPU out of nohz_full, for timekeeping.
+	! grep -qx 0 <<< "${tickless}" || die "profile ${name}: CPU 0 cannot be tickless"
+}
+
+# Kernel parameters of a profile.  $1 = file
+#   isolcpus=domain       take the live CPUs out of the scheduler's load
+#                         balancing: only threads placed there run there;
+#   isolcpus=managed_irq  keep kernel-managed interrupts (disk queues) off
+#                         them whenever another CPU can serve the queue;
+#   nohz_full             stop the periodic tick on a CPU that runs a
+#                         single thread;
+#   rcu_nocbs             run the RCU callbacks of those CPUs elsewhere;
+#   irqaffinity           CPUs that take interrupts by default.
+profile_params() {
+	local file=$1
+	printf '%s isolcpus=domain,managed_irq,%s nohz_full=%s rcu_nocbs=%s irqaffinity=%s dawos.profile=%s' \
+		"$(read_cmdline "${board_dir}/cmdline/profile-tuned.txt")" \
+		"$(profile_get "${file}" live)" \
+		"$(profile_get "${file}" tickless)" "$(profile_get "${file}" tickless)" \
+		"$(profile_get "${file}" io)" \
+		"$(basename "${file}" .conf)"
+}
+
+for profile_file in "${profile_files[@]}"; do
+	check_profile "${profile_file}"
+done
 # The installation medium is verified too, under its own labels, so that a
 # failing stick is noticed while it boots and not after it has been
 # copied. "dawos.installer" marks the medium for dawos-install and for
@@ -225,16 +301,42 @@ build_uki() {
 		die "the signature of ${output} does not verify"
 }
 
+# Build the image of an installed system: the base profile "generic"
+# plus one profile per file in profiles/. A profile is a named variant of
+# the command line inside the same signed image; the boot loader lists
+# each as a menu entry, with the identifier "<file name>@<profile name>".
+# Which one a machine boots by default is that machine's setting, kept on
+# its EFI System Partition (dawos-profile); the base profile is what boots
+# when nothing is set.
+#   $1 = output file, $2 = os-release file,
+#   $3 = label of the root partition, $4 = label of its hash tree
+build_system_uki() {
+	local output=$1 os_release=$2 verity profile_file name part
+	local -a join=()
+	verity=$(verity_params "$3" "$4")
+	for profile_file in "${profile_files[@]}"; do
+		name=$(basename "${profile_file}" .conf)
+		part="${uki_dir}/$(basename "${output}" .efi).profile-${name}.efi"
+		"${ukify[@]}" build \
+			--stub="${efi_dir}/addonx64.efi.stub" \
+			--profile="ID=${name}"$'\n'"TITLE=$(profile_get "${profile_file}" title)" \
+			--cmdline="${verity} ${cmdline_shared} $(profile_params "${profile_file}")" \
+			--output="${part}" >> "${uki_dir}/ukify.log" 2>&1 ||
+			die "ukify failed, see ${uki_dir}/ukify.log"
+		join+=("--join-profile=${part}")
+	done
+	build_uki "${output}" "${os_release}" "${verity} ${cmdline_common}" \
+		--profile=$'ID=generic\nTITLE=generic, no CPU isolation' "${join[@]}"
+}
+
 # The installed system. The file name follows the Boot Loader
 # Specification for unified images: <id>_<version>.efi.
 uki_name="dawos_${version}.efi"
-build_uki "${uki_dir}/${uki_name}" "${TARGET_DIR}/usr/lib/os-release" "${cmdline}"
+build_system_uki "${uki_dir}/${uki_name}" "${TARGET_DIR}/usr/lib/os-release" "${root_label}" "${verity_label}"
 
 # The installation medium: same kernel, its own command line and name,
-# plus a second "profile" for the verbose boot. A profile is a named
-# variant of the command line inside the same signed image; the boot
-# loader lists each profile as a menu entry. (The same mechanism will
-# carry the per-machine tuning profiles of step P0.6.)
+# and a single extra profile, for the verbose boot. It never isolates
+# CPUs: it has no machine profiles.
 sed -e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"dawOS ${version} (${variant}) - installation medium\"/" \
 	"${TARGET_DIR}/usr/lib/os-release" > "${uki_dir}/os-release-installer"
 "${ukify[@]}" build \
@@ -255,8 +357,8 @@ sed -e "s/^IMAGE_VERSION=.*/IMAGE_VERSION=${ab_version}/" \
 	-e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"dawOS ${ab_version} (${variant})\"/" \
 	"${TARGET_DIR}/usr/lib/os-release" > "${uki_dir}/os-release-abtest"
 ab_uki_name="dawos_${ab_version}.efi"
-build_uki "${uki_dir}/${ab_uki_name}" "${uki_dir}/os-release-abtest" \
-	"$(verity_params "dawos-root-${ab_version}" "dawos-verity-${ab_version}") ${cmdline_common}"
+build_system_uki "${uki_dir}/${ab_uki_name}" "${uki_dir}/os-release-abtest" \
+	"dawos-root-${ab_version}" "dawos-verity-${ab_version}"
 
 # The boot loader is the first thing the firmware checks: signed too.
 sbsign --key "${sb_key}" --cert "${sb_cert}" \
@@ -370,3 +472,6 @@ echo "post-image: root hash: ${root_hash}"
 echo "post-image: unified kernel image: ${uki_dir}/${uki_name} (signed)"
 echo "post-image: Secure Boot certificate: ${sb_dir}/db.crt, SHA-256 fingerprint ${sb_fingerprint}"
 echo "post-image: kernel command line: ${cmdline}"
+for profile_file in "${profile_files[@]}"; do
+	echo "post-image: profile '$(basename "${profile_file}" .conf)' adds: $(profile_params "${profile_file}")"
+done

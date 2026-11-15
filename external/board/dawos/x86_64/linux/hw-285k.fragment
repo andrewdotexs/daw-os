@@ -24,3 +24,10 @@ CONFIG_INTEL_RAPL=y
 # Raw access to model-specific registers: turbostat reads the SMI counter
 # and the idle-state residencies from there.
 CONFIG_X86_MSR=y
+
+# Idle states. Without a cpuidle driver an idle core can only halt (HLT):
+# there is nothing to choose between. intel_idle knows the idle states of
+# the processor, from its own tables or, for a model it has no table for
+# (Arrow Lake in 6.18), from the ACPI tables of the firmware. Step P0.6
+# needs it to compare the idle states of the live cores (ADR 0009).
+CONFIG_INTEL_IDLE=y

@@ -1,0 +1,555 @@
+#!/bin/sh
+# dawos-tune — check the CPU domains of the boot profile and apply the
+# run-time part of the real-time tuning.
+#
+# The boot profile is chosen in the boot menu (see dawos-profile) and is
+# named on the kernel command line: dawos.profile=NAME. Its description,
+# /usr/share/dawos/profiles/NAME.conf, is the same file the kernel
+# parameters of that profile were generated from when the image was built.
+#
+# What happens at boot (dawos-tune.service):
+#
+#   1. the machine is compared with the profile: processor model, number
+#      of CPUs, which CPUs are P-cores;
+#   2. the kernel is compared with the profile: the CPUs it isolated and
+#      the CPUs whose tick it can stop must be the ones the profile names.
+#      If 1 or 2 fail, nothing is touched: the profile does not describe
+#      this machine, and applying half of it would only hide that;
+#   3. every interrupt that can be moved goes to the "io" CPUs;
+#   4. kernel work queues not bound to a CPU are kept off the live CPUs;
+#   5. the periodic refresh of memory statistics is slowed down, and the
+#      periodic poll for corrected hardware errors is switched off;
+#   6. the live CPUs get their idle-state limit and a fixed frequency;
+#   7. the package power limit is lowered to the profile's value if the
+#      firmware handed over a higher one;
+#   8. the result is written to /run/dawos/topology.json.
+#
+# The profile "generic" has no domains: only the report is written.
+#
+# Exit status: 0 when the profile is fully applied (or is "generic"),
+# 1 when something could not be checked or applied. The unit then fails,
+# and a failed unit is what marks a boot as bad (ADR 0016).
+#
+# Running it again changes nothing: every step sets a value, none adds to
+# one.
+#
+# For tests the directories it reads and writes can be redirected with
+# DAWOS_SYS, DAWOS_PROC, DAWOS_RUN and DAWOS_PROFILES, and the virtual
+# machine check overridden with DAWOS_VIRTUAL=0|1.
+
+set -u
+
+PROG=dawos-tune
+SYS=${DAWOS_SYS:-/sys}
+PROC=${DAWOS_PROC:-/proc}
+RUN_DIR=${DAWOS_RUN:-/run/dawos}
+PROFILES=${DAWOS_PROFILES:-/usr/share/dawos/profiles}
+REPORT=${RUN_DIR}/topology.json
+CPU_DIR=${SYS}/devices/system/cpu
+# Seconds between two refreshes of the per-CPU memory statistics (the
+# kernel default is 1).
+STAT_INTERVAL=120
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG}            check the boot profile, apply the tuning, write
+                     ${REPORT}
+  ${PROG} --check    only compare machine and kernel with the profile
+  ${PROG} --status   print the report of the last run
+USAGE
+}
+
+# --- CPU lists ----------------------------------------------------------------
+# The kernel writes CPU sets as lists: "4-7", "0-3,8-15".
+
+# Print the CPUs of a list, one per line, sorted, each once.
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done | sort -n -u
+}
+
+# Turn CPU numbers on standard input back into a list.
+compress_list() {
+	sort -n -u | awk '
+		NR == 1 { start = prev = $1; next }
+		$1 == prev + 1 { prev = $1; next }
+		{ printf "%s%s", sep, (start == prev ? start : start "-" prev); sep = ","; start = prev = $1 }
+		END { if (NR) printf "%s%s", sep, (start == prev ? start : start "-" prev); print "" }'
+}
+
+# The same list in its shortest form, so that two can be compared as text.
+canonical() {
+	expand_list "$1" | compress_list
+}
+
+# CPUs of list $1 that are not in list $2.
+subtract_list() {
+	for cpu in $(expand_list "$1"); do
+		expand_list "$2" | grep -qx "${cpu}" || echo "${cpu}"
+	done | compress_list
+}
+
+count_list() {
+	expand_list "$1" | wc -l
+}
+
+# The list as the hexadecimal mask the kernel reads: groups of 32 CPUs,
+# the highest first, separated by commas. (Shell arithmetic: the awk of
+# busybox is built without the power operator.)
+list_to_mask() {
+	mask_cpus=$(expand_list "$1")
+	[ -n "${mask_cpus}" ] || return 0
+	top=0
+	for cpu in ${mask_cpus}; do
+		[ $((cpu / 32)) -le "${top}" ] || top=$((cpu / 32))
+	done
+	group=${top}
+	mask=
+	while [ "${group}" -ge 0 ]; do
+		value=0
+		for cpu in ${mask_cpus}; do
+			[ $((cpu / 32)) -ne "${group}" ] || value=$((value | (1 << (cpu % 32))))
+		done
+		mask="${mask}${mask:+,}$(printf '%08x' "${value}")"
+		group=$((group - 1))
+	done
+	echo "${mask}"
+}
+
+# A mask without commas and leading zeros, to compare two of them.
+plain_mask() {
+	echo "$1" | tr -d ',' | sed 's/^0*//; s/^$/0/'
+}
+
+# --- Small helpers ------------------------------------------------------------
+read_file() {
+	[ -r "$1" ] && cat "$1" 2> /dev/null
+}
+
+# Write $2 to the file $1; quiet when the kernel refuses.
+write_file() {
+	(echo "$2" > "$1") 2> /dev/null
+}
+
+# Value of a key of the profile file.
+profile_get() {
+	sed -n "s/^$1=//p" "${profile_file}" | head -n 1
+}
+
+problems=
+notes=
+problem() {
+	problems="${problems}$*
+"
+}
+note() {
+	notes="${notes}$*
+"
+}
+
+json_string() {
+	printf '"%s"' "$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+}
+
+# A JSON array from the lines of $1.
+json_lines() {
+	printf '['
+	separator=
+	echo "$1" | while IFS= read -r line; do
+		[ -n "${line}" ] || continue
+		printf '%s' "${separator}"
+		json_string "${line}"
+		separator=', '
+	done
+	printf ']'
+}
+
+# --- What the machine and the kernel say ---------------------------------------
+gather_facts() {
+	profile=$(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' "${PROC}/cmdline")
+	# Images older than step P0.6 name no profile: they have no domains.
+	profile=${profile:-generic}
+
+	cpu_model=$(sed -n 's/^model name[[:space:]]*: //p' "${PROC}/cpuinfo" | head -n 1)
+	online=$(read_file "${CPU_DIR}/online")
+	# The kernel prints an empty set as an empty line; older ones as "(null)".
+	isolated=$(read_file "${CPU_DIR}/isolated" | grep -v null)
+	nohz_full=$(read_file "${CPU_DIR}/nohz_full" | grep -v null)
+	# On a hybrid processor the two kinds of core are two "devices" of the
+	# performance counters, each listing its CPUs.
+	performance_cores=$(read_file "${SYS}/devices/cpu_core/cpus")
+	efficiency_cores=$(read_file "${SYS}/devices/cpu_atom/cpus")
+
+	# A virtual machine has no frequency, idle or power controls: those
+	# steps are skipped there, and the kind of core cannot be told.
+	case "${DAWOS_VIRTUAL:-}" in
+	0) virtual=false ;;
+	1) virtual=true ;;
+	*) if systemd-detect-virt --quiet --vm 2> /dev/null; then virtual=true; else virtual=false; fi ;;
+	esac
+}
+
+# --- Steps 1 and 2: does the profile describe this machine and this boot? -------
+check_profile() {
+	live=$(profile_get live)
+	tickless=$(profile_get tickless)
+	preemptive=$(profile_get preemptive)
+	system=$(profile_get system)
+	io=$(profile_get io)
+
+	wanted_model=$(profile_get cpu_model)
+	[ "${cpu_model}" = "${wanted_model}" ] ||
+		problem "processor is '${cpu_model}', the profile is for '${wanted_model}'"
+
+	wanted_cpus=$(profile_get cpus)
+	[ "$(count_list "${online}")" = "${wanted_cpus}" ] ||
+		problem "$(count_list "${online}") CPUs online (${online}), the profile expects ${wanted_cpus}"
+
+	wanted_p=$(profile_get performance_cores)
+	if [ "${virtual}" = true ]; then
+		note "virtual machine: kind of core not checked"
+	elif [ "$(canonical "${performance_cores}")" != "$(canonical "${wanted_p}")" ]; then
+		problem "P-cores are '${performance_cores}', the profile expects '${wanted_p}'"
+	fi
+
+	[ "$(canonical "${isolated}")" = "$(canonical "${live}")" ] ||
+		problem "the kernel isolated CPUs '${isolated}', the profile's live CPUs are '${live}'"
+	[ "$(canonical "${nohz_full}")" = "$(canonical "${tickless}")" ] ||
+		problem "the kernel can stop the tick on CPUs '${nohz_full}', the profile says '${tickless}'"
+}
+
+# --- Step 3: interrupts ---------------------------------------------------------
+# Every interrupt is asked to move to the io CPUs. The kernel refuses for
+# the ones it places itself: per-CPU interrupts and "managed" ones, such
+# as the queues of the NVMe disk, one per CPU. A managed interrupt bound
+# to a live CPU fires only for requests submitted from that CPU, which
+# nothing running there does; it is counted, not treated as a fault.
+move_interrupts() {
+	irq_moved=0
+	irq_fixed=0
+	irq_fixed_on_live=
+	io_mask=$(list_to_mask "${io}")
+	if [ -z "${io_mask}" ] || ! write_file "${PROC}/irq/default_smp_affinity" "${io_mask}"; then
+		problem "could not set the default interrupt affinity"
+	fi
+
+	live_cpus=" $(expand_list "${live}" | tr '\n' ' ')"
+	for dir in "${PROC}"/irq/[0-9]*; do
+		[ -e "${dir}/smp_affinity_list" ] || continue
+		if write_file "${dir}/smp_affinity_list" "${io}"; then
+			irq_moved=$((irq_moved + 1))
+			continue
+		fi
+		irq_fixed=$((irq_fixed + 1))
+		# Where it really is, when the kernel tells; where it may be, else.
+		where=$(read_file "${dir}/effective_affinity_list")
+		[ -n "${where}" ] || where=$(read_file "${dir}/smp_affinity_list")
+		for cpu in $(expand_list "${where}"); do
+			case "${live_cpus}" in
+			*" ${cpu} "*)
+				irq_fixed_on_live="${irq_fixed_on_live}${irq_fixed_on_live:+,}${dir##*/}"
+				break
+				;;
+			esac
+		done
+	done
+}
+
+# --- Step 4: unbound work queues --------------------------------------------------
+limit_workqueues() {
+	workqueue_mask=$(list_to_mask "$(subtract_list "${online}" "${live}")")
+	file=${SYS}/devices/virtual/workqueue/cpumask
+	[ -n "${workqueue_mask}" ] && write_file "${file}" "${workqueue_mask}"
+	if [ -z "${workqueue_mask}" ] ||
+		[ "$(plain_mask "$(read_file "${file}")")" != "$(plain_mask "${workqueue_mask}")" ]; then
+		problem "could not keep unbound work queues off the live CPUs (${file})"
+	fi
+}
+
+# --- Step 5: memory statistics ----------------------------------------------------
+slow_statistics() {
+	file=${PROC}/sys/vm/stat_interval
+	write_file "${file}" "${STAT_INTERVAL}"
+	[ "$(read_file "${file}")" = "${STAT_INTERVAL}" ] ||
+		problem "could not set vm.stat_interval"
+}
+
+# --- Step 5b: poll for corrected hardware errors -----------------------------------
+# Every five minutes each CPU reads its machine-check registers, from a
+# timer of its own: a visit to every live CPU that nothing can move
+# elsewhere. The setting is one for the whole machine. Corrected errors
+# are still reported: the processor raises an interrupt for them (CMCI),
+# and the poll is only the fallback for registers without it. Machine
+# checks that are not corrected are not affected at all.
+stop_error_poll() {
+	file=${SYS}/devices/system/machinecheck/machinecheck0/check_interval
+	error_poll_s=null
+	if [ ! -e "${file}" ]; then
+		note "no machine-check poll to switch off"
+		return
+	fi
+	write_file "${file}" 0
+	# The kernel prints this value in hexadecimal.
+	case "$(read_file "${file}")" in
+	0) error_poll_s=0 ;;
+	*) problem "could not switch off the machine-check poll (${file})" ;;
+	esac
+}
+
+# --- Step 6a: idle states of the live CPUs ----------------------------------------
+# The limit is given to the kernel as the longest wake-up time accepted,
+# in microseconds: it then never picks a state that takes longer to
+# leave. "n/a" accepts no delay at all, so the CPU never halts.
+limit_idle() {
+	idle_limit=$(profile_get live_idle)
+	idle_driver=$(read_file "${CPU_DIR}/cpuidle/current_driver")
+	idle_driver=${idle_driver:-none}
+	idle_latency=null
+
+	if [ "${idle_driver}" = none ]; then
+		note "no idle driver: idle CPUs halt (HLT), the limit '${idle_limit}' is not applied"
+		return
+	fi
+	for cpu in $(expand_list "${live}"); do
+		value=
+		if [ "${idle_limit}" = poll ]; then
+			value=n/a
+		else
+			for state in "${CPU_DIR}/cpu${cpu}"/cpuidle/state[0-9]*; do
+				# (awk: the tr of busybox has no character classes.)
+				name=$(read_file "${state}/name" | awk '{ print tolower($0) }')
+				case "${name}" in
+				"${idle_limit}" | "${idle_limit}"_*)
+					value=$(read_file "${state}/latency")
+					# 0 would mean "no limit" to the kernel.
+					[ "${value:-0}" -gt 0 ] || value=1
+					;;
+				esac
+			done
+		fi
+		if [ -z "${value}" ]; then
+			problem "CPU ${cpu} offers no idle state named '${idle_limit}'"
+			continue
+		fi
+		file=${CPU_DIR}/cpu${cpu}/power/pm_qos_resume_latency_us
+		write_file "${file}" "${value}" ||
+			problem "could not set the idle limit of CPU ${cpu}"
+		if [ "${value}" = n/a ]; then idle_latency=0; else idle_latency=${value}; fi
+	done
+}
+
+# --- Step 6b: frequency of the live CPUs -------------------------------------------
+# Lowest and highest allowed frequency set to the same value: the
+# processor then has nothing to decide, and the computing power of a live
+# CPU does not change with the load of the others.
+fix_frequency() {
+	wanted=$(profile_get live_frequency)
+	live_khz=null
+	for cpu in $(expand_list "${live}"); do
+		dir=${CPU_DIR}/cpu${cpu}/cpufreq
+		if [ "${wanted}" = base ]; then
+			khz=$(read_file "${dir}/base_frequency")
+		else
+			khz=${wanted}
+		fi
+		if [ -z "${khz}" ]; then
+			problem "CPU ${cpu} reports no base frequency (${dir}/base_frequency)"
+			continue
+		fi
+		# The kernel refuses a lowest value above the highest and the
+		# reverse: whichever way the range has to move, one of these
+		# orders works.
+		write_file "${dir}/scaling_max_freq" "${khz}"
+		write_file "${dir}/scaling_min_freq" "${khz}"
+		write_file "${dir}/scaling_max_freq" "${khz}"
+		# Ask the processor not to trade speed for power on these CPUs.
+		write_file "${dir}/energy_performance_preference" performance ||
+			note "CPU ${cpu}: energy preference not changed"
+		# The driver works in steps of its own: accept what it reads back
+		# when lowest and highest are equal and within 1 % of the request.
+		low=$(read_file "${dir}/scaling_min_freq")
+		high=$(read_file "${dir}/scaling_max_freq")
+		if [ -n "${low}" ] && [ "${low}" = "${high}" ] &&
+			[ $(((low > khz ? low - khz : khz - low) * 100)) -le "${khz}" ]; then
+			live_khz=${low}
+		else
+			problem "could not fix CPU ${cpu} at ${khz} kHz (range now ${low:-?}-${high:-?})"
+		fi
+	done
+}
+
+# --- Step 7: package power limit -----------------------------------------------------
+# Two limits, long term and short term, in microwatts. They are only ever
+# lowered: a firmware that was reset comes back with its factory value,
+# above what the cooling was validated for.
+cap_power() {
+	power_limit_w=$(profile_get power_limit_w)
+	power_long_w=null
+	power_short_w=null
+	power_lowered=false
+	[ -n "${power_limit_w}" ] || return
+
+	dir=${SYS}/class/powercap/intel-rapl:0
+	if [ "$(read_file "${dir}/name")" != package-0 ]; then
+		problem "no package power limit to check (${dir})"
+		return
+	fi
+	limit_uw=$((power_limit_w * 1000000))
+	for constraint in 0 1; do
+		file=${dir}/constraint_${constraint}_power_limit_uw
+		current=$(read_file "${file}")
+		if [ -z "${current}" ]; then
+			problem "cannot read ${file}"
+			continue
+		fi
+		if [ "${current}" -gt "${limit_uw}" ]; then
+			note "power limit ${constraint} was $((current / 1000000)) W, lowered to ${power_limit_w} W"
+			write_file "${file}" "${limit_uw}"
+			power_lowered=true
+			current=$(read_file "${file}")
+			[ "${current:-0}" -le "${limit_uw}" ] ||
+				problem "could not lower the power limit ${constraint} to ${power_limit_w} W"
+		fi
+		if [ "${constraint}" = 0 ]; then
+			power_long_w=$((${current:-0} / 1000000))
+		else
+			power_short_w=$((${current:-0} / 1000000))
+		fi
+	done
+}
+
+# --- Step 8: the report ----------------------------------------------------------------
+write_report() {
+	mkdir -p "${RUN_DIR}"
+	{
+		echo '{'
+		echo '  "version": 1,'
+		echo "  \"generated_utc\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\","
+		echo "  \"profile\": $(json_string "${profile}"),"
+		echo "  \"status\": \"${status}\","
+		echo "  \"problems\": $(json_lines "${problems}"),"
+		echo "  \"notes\": $(json_lines "${notes}"),"
+		echo '  "machine": {'
+		echo "    \"cpu_model\": $(json_string "${cpu_model}"),"
+		echo "    \"virtual\": ${virtual},"
+		echo "    \"online\": $(json_string "${online}"),"
+		echo "    \"performance_cores\": $(json_string "${performance_cores}"),"
+		echo "    \"efficiency_cores\": $(json_string "${efficiency_cores}")"
+		echo '  },'
+		echo '  "kernel": {'
+		echo "    \"isolated\": $(json_string "${isolated}"),"
+		echo "    \"nohz_full\": $(json_string "${nohz_full}")"
+		if [ "${profile}" = generic ] || [ ! -r "${profile_file}" ]; then
+			echo '  }'
+		else
+			echo '  },'
+			echo '  "domains": {'
+			echo "    \"live\": $(json_string "${live}"),"
+			echo "    \"tickless\": $(json_string "${tickless}"),"
+			echo "    \"preemptive\": $(json_string "${preemptive}"),"
+			echo "    \"system\": $(json_string "${system}"),"
+			echo "    \"io\": $(json_string "${io}")"
+			if [ "${applied}" = yes ]; then
+				echo '  },'
+				echo '  "tuning": {'
+				echo "    \"interrupts\": {\"moved\": ${irq_moved}, \"fixed\": ${irq_fixed}, \"fixed_on_live\": $(json_string "${irq_fixed_on_live}")},"
+				echo "    \"workqueue_cpumask\": $(json_string "${workqueue_mask}"),"
+				echo "    \"vm_stat_interval_s\": ${STAT_INTERVAL},"
+				echo "    \"machine_check_poll_s\": ${error_poll_s},"
+				echo "    \"idle\": {\"driver\": $(json_string "${idle_driver}"), \"limit\": $(json_string "${idle_limit}"), \"resume_latency_us\": ${idle_latency}},"
+				echo "    \"frequency\": {\"live_khz\": ${live_khz}},"
+				echo "    \"power_limit\": {\"profile_w\": ${power_limit_w:-null}, \"long_term_w\": ${power_long_w}, \"short_term_w\": ${power_short_w}, \"lowered\": ${power_lowered}}"
+				echo '  }'
+			else
+				echo '  }'
+			fi
+		fi
+		echo '}'
+	} > "${REPORT}.new"
+	mv "${REPORT}.new" "${REPORT}"
+}
+
+# One line for the journal, then each problem and note on its own line.
+print_result() {
+	echo "${PROG}: profile '${profile}': ${status}"
+	echo "${problems}" | while IFS= read -r line; do
+		[ -n "${line}" ] && echo "${PROG}: problem: ${line}"
+	done
+	echo "${notes}" | while IFS= read -r line; do
+		[ -n "${line}" ] && echo "${PROG}: note: ${line}"
+	done
+	return 0
+}
+
+# --- Main ------------------------------------------------------------------------------
+mode=apply
+case "${1:-}" in
+"") ;;
+--check) mode=check ;;
+--status)
+	[ -r "${REPORT}" ] || {
+		echo "${PROG}: no report yet (${REPORT})" >&2
+		exit 1
+	}
+	cat "${REPORT}"
+	exit 0
+	;;
+-h | --help)
+	usage
+	exit 0
+	;;
+*)
+	usage >&2
+	exit 1
+	;;
+esac
+
+gather_facts
+profile_file=${PROFILES}/${profile}.conf
+applied=no
+
+if [ "${profile}" = generic ]; then
+	status=off
+elif [ ! -r "${profile_file}" ]; then
+	problem "the kernel command line names the profile '${profile}', which this image does not have"
+	status=degraded
+else
+	check_profile
+	if [ -n "${problems}" ]; then
+		status=degraded
+	elif [ "${mode}" = apply ]; then
+		applied=yes
+		move_interrupts
+		limit_workqueues
+		slow_statistics
+		stop_error_poll
+		if [ "${virtual}" = true ]; then
+			note "virtual machine: idle states, frequency and power limit not touched"
+			idle_driver=none
+			idle_limit=$(profile_get live_idle)
+			idle_latency=null
+			live_khz=null
+			power_limit_w=$(profile_get power_limit_w)
+			power_long_w=null
+			power_short_w=null
+			power_lowered=false
+		else
+			limit_idle
+			fix_frequency
+			cap_power
+		fi
+		if [ -n "${problems}" ]; then status=degraded; else status=ok; fi
+	else
+		status=ok
+	fi
+fi
+
+[ "${mode}" = apply ] && write_report
+print_result
+[ "${status}" = degraded ] && exit 1
+exit 0
