@@ -115,17 +115,9 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Secure Boot, stato al 15 novembre 2026**: attivo (_OS Type_: _Windows UEFI mode_; _Secure Boot Mode_: _Custom_; stato _User_). Fino a quel giorno il firmware era senza chiavi, in stato _Setup_. Ora contiene le chiavi di fabbrica (_PK_, _KEK_, _DBX_) e in _DB_ tredici firme: quelle di fabbrica più il certificato di sviluppo di dawOS. Procedura e verifica nella guida del sotto-passo P0.5f.
 
-**Contenitore: telaio da rack 3U stampato in ASA (D-22, orientamento del 15 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno); il PC occupa le tre unità restanti. Il telaio è un modello aperto da 19 pollici per schede micro-ATX o ITX, stampato in ASA in più pezzi avvitati tra loro. Il radiatore non sta nel telaio: è fissato nella parte posteriore del rack con un supporto stampato, anch'esso in ASA. L'alimentatore resta **SFX**, con una staffa di adattamento ad ATX. Sostituisce l'orientamento del 14 novembre (contenitore metallico 2U UNYKAch UK2129 modificato, con il radiatore sopra il coperchio).
+**Contenitore: resta quello attuale (D-22, chiusa dall'utente il 15 novembre 2026).** Sono state valutate e scartate due alternative da rack: un contenitore metallico 2U da modificare, con il radiatore sopra il coperchio (14 novembre), e un telaio aperto 3U stampato in ASA, con il radiatore sul retro del rack (15 novembre). Il secondo avrebbe tolto ogni schermatura a pochi centimetri dalla scheda audio.
 
-Punti da verificare a montaggio fatto _(nessuno è ancora verificato)_:
-
-- **Interferenze sull'audio.** Un telaio aperto di plastica non scherma nulla, e nello stesso rack ci sono la scheda audio e il preamplificatore. Prova: registrare il silenzio da un ingresso ad alto guadagno, con il PC spento, a riposo e sotto carico.
-- **Tubi e ingombri.** La lunghezza dei tubi del dissipatore è fissa: deve bastare dal processore al retro del rack. Il radiatore è largo circa 140 mm, più di tre unità (133 mm): non deve coprire i connettori posteriori degli altri apparecchi.
-- **Parti senza ventola.** Senza contenitore non c'è un flusso d'aria su regolatori di tensione, memoria e disco: vanno lette le loro temperature sotto carico continuo.
-- **Tenuta meccanica.** Il telaio regge il PC a sbalzo dalle alette anteriori, in plastica: da controllare la flessione a caldo e dopo qualche settimana.
-- **Rumore.** Pompa e ventole non sono attenuate da alcuna parete.
-
-Un contenitore diverso cambia il raffreddamento: curva termica, limite di potenza e misura di conferma vanno rifatti nel contenitore definitivo, **prima** dei passi P0.6 e P0.7.
+Conseguenza: la curva termica, il limite di potenza a 160 W e le misure di rumore di fondo dei passi P0.4b e P0.5f **restano valide** per i passi P0.6 e P0.7, e non vanno rifatte. Se in futuro il contenitore o il dissipatore cambiano, vanno rifatte prima di ogni misura di riferimento.
 
 **Ambiente d'uso**: stanza climatizzata, al massimo 24–25 °C tutto l'anno (indicato dall'utente il 13 novembre 2026). È la temperatura di riferimento per il limite di potenza.
 
