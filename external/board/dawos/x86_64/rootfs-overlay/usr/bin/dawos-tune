@@ -19,7 +19,8 @@
 #   4. kernel work queues not bound to a CPU are kept off the live CPUs;
 #   5. the periodic refresh of memory statistics is slowed down, and the
 #      periodic poll for corrected hardware errors is switched off;
-#   6. the live CPUs get their idle-state limit and a fixed frequency;
+#   6. the live CPUs get their fair-server setting, their idle-state
+#      limit and a fixed frequency;
 #   7. the package power limit is lowered to the profile's value if the
 #      firmware handed over a higher one;
 #   8. the result is written to /run/dawos/topology.json.
@@ -301,6 +302,24 @@ stop_error_poll() {
 	esac
 }
 
+# --- Step 6: fair server of the live CPUs -------------------------------------------
+# The kernel exposes it per CPU in debugfs, as the nanoseconds reserved
+# in each period; 0 switches it off. The kernel logs a warning for every
+# CPU where it is switched off: that line at boot is expected.
+set_fair_server() {
+	fair_server=$(profile_get live_fair_server)
+	fair_server=${fair_server:-on}
+	[ "${fair_server}" = off ] || return 0
+	dir=${SYS}/kernel/debug/sched/fair_server
+	[ -d "${dir}" ] || mount -t debugfs debugfs "${SYS}/kernel/debug" 2> /dev/null
+	for cpu in $(expand_list "${live}"); do
+		file=${dir}/cpu${cpu}/runtime
+		write_file "${file}" 0
+		[ "$(read_file "${file}")" = 0 ] ||
+			problem "could not switch off the fair server of CPU ${cpu} (${file})"
+	done
+}
+
 # --- Step 6a: idle states of the live CPUs ----------------------------------------
 # The limit is given to the kernel as the longest wake-up time accepted,
 # in microseconds: it then never picks a state that takes longer to
@@ -461,6 +480,7 @@ write_report() {
 				echo "    \"workqueue_cpumask\": $(json_string "${workqueue_mask}"),"
 				echo "    \"vm_stat_interval_s\": ${STAT_INTERVAL},"
 				echo "    \"machine_check_poll_s\": ${error_poll_s},"
+				echo "    \"fair_server_on_live\": $(json_string "${fair_server}"),"
 				echo "    \"idle\": {\"driver\": $(json_string "${idle_driver}"), \"limit\": $(json_string "${idle_limit}"), \"resume_latency_us\": ${idle_latency}},"
 				echo "    \"frequency\": {\"live_khz\": ${live_khz}},"
 				echo "    \"power_limit\": {\"profile_w\": ${power_limit_w:-null}, \"long_term_w\": ${power_long_w}, \"short_term_w\": ${power_short_w}, \"lowered\": ${power_lowered}}"
@@ -528,6 +548,7 @@ else
 		limit_workqueues
 		slow_statistics
 		stop_error_poll
+		set_fair_server
 		if [ "${virtual}" = true ]; then
 			note "virtual machine: idle states, frequency and power limit not touched"
 			idle_driver=none

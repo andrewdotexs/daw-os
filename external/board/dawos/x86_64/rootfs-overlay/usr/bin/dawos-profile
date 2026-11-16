@@ -132,7 +132,8 @@ check_name() {
 show_list() {
 	echo "Boot profiles of this image:"
 	printf '  %-10s %s\n' generic "no CPU isolation"
-	# Sorted without the suffix, so that "285k" comes before "285k-alt".
+	# Sorted without the suffix, so that a name comes before its longer
+	# variants.
 	for name in $(find "${PROFILES}" -maxdepth 1 -name '*.conf' | sed 's|.*/||; s/\.conf$//' | LC_ALL=C sort); do
 		reason=$(misfit "${name}")
 		printf '  %-10s %s\n' "${name}" "$(profile_get "${name}" title)"

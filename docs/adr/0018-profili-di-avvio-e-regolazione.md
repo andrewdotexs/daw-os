@@ -26,6 +26,8 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 10. **Frequenza dei core live: fissa.** Il valore di partenza è la frequenza base che il processore garantisce a qualunque carico; un valore più alto si adotta solo se una misura dimostra che regge a pieno carico entro il limite di potenza. _(Scelta dell'utente, 15 novembre 2026; la misura è nel sotto-passo P0.6b.)_
 11. **La console seriale sta solo nel profilo `generic`.** _(Scelta dell'utente, 15 novembre 2026.)_
 12. **Il sondaggio periodico degli errori hardware corretti è spento** sulle macchine con un profilo. Vedi «Conseguenze».
+13. **Il _fair server_ è spento sui core live** (`live_fair_server=off` nel profilo). _(Scelta dell'utente, 16 novembre 2026, sulla misura del sotto-passo P0.6a; da confermare con l'esperimento E-02.)_
+14. **Il 285K ha un solo profilo, `285k`, con i core live 4–7.** _(Scelta dell'utente, 16 novembre 2026: a parità di rumore è risultato più fresco dell'alternativa 2–5.)_
 
 ## Alternative scartate
 
@@ -48,12 +50,13 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 - **La scelta del profilo non è firmata**, ma può solo indicare uno dei profili firmati: chi scrive sulla partizione di avvio può far partire `generic`, non altro.
 - **Sondaggio degli errori hardware.** Ogni cinque minuti ogni CPU legge i propri registri degli errori da un timer proprio, che non si può spostare: è una visita periodica a ogni core live. Spento il sondaggio, gli errori corretti restano segnalati dall'interrupt del processore (CMCI) per i registri che lo prevedono; quelli non corretti non sono toccati. Si perde la segnalazione degli errori corretti dei registri senza CMCI _(quanti siano sul 285K è da verificare)_. L'impostazione vale per tutta la macchina.
 - **In una macchina virtuale** frequenza, stati di riposo e limite di potenza non esistono: `dawos-tune` salta quei passi e lo annota. Isolamento, interrupt e code di lavoro sono applicati e verificati davvero: è ciò che `make qemu-profile-test` prova.
-- **Due profili per il 285K, per ora**: `285k` (core live 4–7) e `285k-alt` (core live 2–5). Uno dei due sparisce dopo il confronto.
+- **_Fair server_.** Il suo timer raggiungeva ogni core live una volta al secondo (verificato con una traccia: `dl_task_timer`); spento, il rumore misurato è zero. In cambio, un thread real-time che non si ferma mai può lasciare senza tempo i thread del kernel legati a quel core: è il rischio K-04, che l'esperimento E-02 misura. Lo spegnimento passa da `debugfs`: se un giorno il kernel verrà bloccato (D-24), va verificato che resti scrivibile all'avvio.
+- **Confronto tra i due profili del 285K** (una misura da dieci minuti ciascuno, sotto carico): rumore massimo 7 µs in entrambi; temperatura del package 72 °C di media e 78 °C di punta con i core 4–7, 78 °C e 87 °C con i core 2–5.
 - Quando esisterà `dawosd`, la verifica all'avvio e il file `topology.json` passano a lui (documento 0, C-03); il formato del file è il punto di contatto.
 
 ## Quando si riapre
 
-- Alla scelta tra `285k` e `285k-alt`, sui numeri del sotto-passo P0.6a.
+- Con l'esperimento E-02 (sotto-passo P0.6b), per il _fair server_.
 - Alla fine del sotto-passo P0.6b, per la frequenza dei core live e per lo stato di riposo (ADR 0009).
 - Se sul 285K compaiono errori hardware corretti che il sondaggio avrebbe segnalato.
 - Con la seconda macchina supportata: il modo di scegliere il profilo andrà rivisto se le macchine diventano molte.

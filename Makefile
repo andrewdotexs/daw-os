@@ -103,7 +103,7 @@ qemu-test: ## Boot the image in QEMU and check the boot report (PASS/FAIL)
 	@tools/run-qemu.sh --test --expect secureboot=1 --expect verity=1 --expect profile=generic --expect tune=off --expect timers=none --expect var=state
 
 .PHONY: qemu-profile-test
-qemu-profile-test: ## Boot a machine profile in a virtual machine shaped after it: PROFILE=285k (default) or 285k-alt
+qemu-profile-test: ## Boot a machine profile in a virtual machine shaped after it: PROFILE=<name> (default 285k)
 	@tools/run-qemu.sh --test --profile $(or $(PROFILE),285k) --expect secureboot=1 --expect verity=1 --expect timers=none --expect var=state
 
 .PHONY: qemu-tamper-test

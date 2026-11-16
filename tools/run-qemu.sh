@@ -467,11 +467,13 @@ if [[ ${secure_boot} == yes ]]; then
 	sb_cert=${repo_dir}/keys/secure-boot/db.crt
 	[[ -f ${sb_cert} ]] || die "Secure Boot certificate not found: ${sb_cert} (run 'make image' first)"
 	command -v virt-fw-vars > /dev/null || die "virt-fw-vars not found: sudo apt install python3-virt-firmware"
-	ovmf_vars=${state_dir}/OVMF_VARS.secboot.fd
-	if [[ ! -f ${ovmf_vars} || ${sb_cert} -nt ${ovmf_vars} ]]; then
+	# Kept as made, never given to a virtual machine: the stores the
+	# machines write to are copies of it (see below).
+	enrolled_vars=${state_dir}/OVMF_VARS.secboot.enrolled.fd
+	if [[ ! -f ${enrolled_vars} || ${sb_cert} -nt ${enrolled_vars} ]]; then
 		# Owner GUID of the enrolled entries: any fixed value will do.
 		owner=5a3c1e0e-9b6d-4c57-8f15-da0500000001
-		virt-fw-vars --input "${ovmf_vars_template}" --output "${ovmf_vars}" \
+		virt-fw-vars --input "${ovmf_vars_template}" --output "${enrolled_vars}" \
 			--set-pk "${owner}" "${sb_cert}" \
 			--add-kek "${owner}" "${sb_cert}" \
 			--add-db "${owner}" "${sb_cert}" \
@@ -481,9 +483,21 @@ if [[ ${secure_boot} == yes ]]; then
 	# The variable store must be writable only from System Management
 	# Mode, or the guest could rewrite the keys.
 	machine_options=',smm=on'
+	ovmf_vars_template=${enrolled_vars}
+	ovmf_vars=${state_dir}/OVMF_VARS.secboot.fd
 else
 	ovmf_vars=${state_dir}/OVMF_VARS.fd
-	[[ -f ${ovmf_vars} ]] || cp "${ovmf_vars_template}" "${ovmf_vars}"
+fi
+if [[ ${mode} == test ]]; then
+	# A test starts from a clean store, every time. The boot loader keeps
+	# its own settings there (the entry to boot once, the default one):
+	# what an earlier session left behind, for example with
+	# "dawos-profile --try", must not decide what a test boots.
+	ovmf_vars=${ovmf_vars%.fd}.test.fd
+	cp "${ovmf_vars_template}" "${ovmf_vars}"
+elif [[ ! -f ${ovmf_vars} || ${ovmf_vars_template} -nt ${ovmf_vars} ]]; then
+	# Interactive sessions keep theirs, like a real machine.
+	cp "${ovmf_vars_template}" "${ovmf_vars}"
 fi
 
 # --- Acceleration -----------------------------------------------------------

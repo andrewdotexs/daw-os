@@ -151,7 +151,8 @@ cmdline="$(verity_params "${root_label}" "${verity_label}") ${cmdline_common}"
 # thus generated from one description and cannot disagree.
 profiles_dir=${board_dir}/rootfs-overlay/usr/share/dawos/profiles
 profile_files=()
-# Sorted by name, so that the menu lists "285k" before "285k-alt".
+# Sorted by name without the suffix, so that the menu lists a name
+# before its longer variants.
 while IFS= read -r profile_name; do
 	profile_files+=("${profiles_dir}/${profile_name}.conf")
 done < <(find "${profiles_dir}" -maxdepth 1 -name '*.conf' -printf '%f\n' | sed 's/\.conf$//' | LC_ALL=C sort)
