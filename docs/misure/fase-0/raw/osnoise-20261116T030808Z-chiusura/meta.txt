@@ -1,0 +1,17 @@
+started_utc: 2026-11-16T03:08:08Z
+duration: 10m
+label: chiusura
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+load_on_other_cpus: yes
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 113000 verity 1 PARTLABEL=dawos-root-0.0.1.20261116030320 PARTLABEL=dawos-verity-0.0.1.20261116030320 4096 4096 14125 1 sha256 1155f2f9d46ff4c64adda03e8702db8b4479c305f1b49aab6c9de00c0143440c 1ebf6719b78a606d2079eb0e2c0471eb136204107cae2eb93bd2ec453731f76b 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116030320,PARTLABEL=dawos-verity-0.0.1.20261116030320 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 2301 10/04/2025
+image: a52f41ad81b2
+window_start_utc: 2026-11-16T03:08:21Z
+window_end_utc: 2026-11-16T03:18:01Z
+rtla_exit_status: 0
+load_running_at_window_end: yes
+finished_utc: 2026-11-16T03:18:13Z
