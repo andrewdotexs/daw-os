@@ -1,0 +1,314 @@
+#!/bin/sh
+# dawos-freq-sweep — which fixed frequency the live CPUs really hold when
+# the whole machine is busy.
+#
+# dawos-tune pins the live CPUs to one frequency, so that the computing
+# power of the audio engine does not change with what the other CPUs do.
+# The pin is a request: when the package reaches its power limit the
+# processor lowers a ceiling common to all cores, and a live CPU pinned
+# above that ceiling runs slower than asked. This tool finds the ceiling.
+#
+# For each frequency given, in MHz:
+#   - the live CPUs are pinned to it (lowest = highest allowed frequency);
+#   - every CPU of the machine computes without pause: one stress-ng
+#     worker on each live CPU, one on each of the others (matrix products,
+#     heavy on vector instructions like audio processing);
+#   - after a settling time, turbostat readings give the frequency each
+#     live CPU actually ran at, the package power and its temperature.
+# A step "holds" when every live CPU stayed within 1 % of what was asked
+# in every reading.
+#
+# turbostat visits every CPU to read it: fine here, where frequency is
+# measured and not noise. The pin found at the start is written back at
+# the end, on every way out. The sweep stops by itself if the package
+# reaches STOP_TEMP_C.
+#
+# Runs as a transient systemd unit; results in
+# /var/lib/dawos/measure/freq-<time>[-LABEL]. "--summary DIR" needs only
+# sh and awk and also runs on the development PC.
+
+set -u
+
+PROG=dawos-freq-sweep
+BASE=/var/lib/dawos/measure
+UNIT=dawos-freq-sweep
+CPU_DIR=/sys/devices/system/cpu
+STOP_TEMP_C=97
+STEP_SECONDS=150
+# Seconds at the start of each step left out of its figures.
+SETTLE_SECONDS=30
+SELF=$(readlink -f "$0")
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--step SECONDS] [--label WORD] MHZ...
+                           start a sweep, e.g.: ${PROG} 3700 4000 4300 4600
+  ${PROG} --status         show progress, or the last summary
+  ${PROG} --summary DIR    (re)compute the summary of a finished sweep
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done | sort -n -u
+}
+
+compress_list() {
+	sort -n -u | awk '
+		NR == 1 { start = prev = $1; next }
+		$1 == prev + 1 { prev = $1; next }
+		{ printf "%s%s", sep, (start == prev ? start : start "-" prev); sep = ","; start = prev = $1 }
+		END { if (NR) printf "%s%s", sep, (start == prev ? start : start "-" prev); print "" }'
+}
+
+subtract_list() {
+	for cpu in $(expand_list "$1"); do
+		expand_list "$2" | grep -qx "${cpu}" || echo "${cpu}"
+	done | compress_list
+}
+
+# Pin the live CPUs to $1 kHz. (Highest first and again last: the kernel
+# refuses a lowest value above the highest, whichever way the range moves.)
+pin_live() {
+	for cpu in $(expand_list "${live}"); do
+		dir=${CPU_DIR}/cpu${cpu}/cpufreq
+		echo "$1" > "${dir}/scaling_max_freq" 2> /dev/null
+		echo "$1" > "${dir}/scaling_min_freq" 2> /dev/null
+		echo "$1" > "${dir}/scaling_max_freq" 2> /dev/null
+	done
+}
+
+# Package temperature in degrees, from the coretemp sensor; empty if none.
+package_temp() {
+	for hwmon in /sys/class/hwmon/hwmon*; do
+		[ "$(cat "${hwmon}/name" 2> /dev/null)" = coretemp ] || continue
+		echo $(($(cat "${hwmon}/temp1_input") / 1000))
+		return
+	done
+}
+
+# Write summary.txt of the sweep in directory $1.
+summarize() {
+	dir=$1
+	live=$(sed -n 's/^live_cpus: //p' "${dir}/meta.txt")
+	live_words=" $(expand_list "${live}" | tr '\n' ' ')"
+	{
+		echo "directory: ${dir}"
+		cat "${dir}/meta.txt"
+		printf '%-8s %-13s %-13s %-15s %-10s %-9s %-11s %s\n' \
+			set_mhz live_min_mhz live_avg_mhz others_avg_mhz pkg_w_avg pkg_w_max pkg_temp_max holds
+		# steps.txt: "MHz first_second last_second" (seconds since 1970,
+		# settling time already left out). power.txt: turbostat rows,
+		# each starting with its time; the row "-" is the whole machine.
+		awk -v wanted="${live_words}" '
+			FNR == NR { set[NR] = $1; from[NR] = $2; to[NR] = $3; steps = NR; next }
+			!hdr { for (i = 1; i <= NF; i++) col[$i] = i; if ("Bzy_MHz" in col) hdr = 1; else delete col; next }
+			$col["Time_Of_Day_Seconds"] + 0 == 0 { next }
+			{
+				when = $col["Time_Of_Day_Seconds"] + 0
+				step = 0
+				for (s = 1; s <= steps; s++) if (when >= from[s] && when <= to[s]) step = s
+				if (!step) next
+				cpu = $col["CPU"]
+				mhz = $col["Bzy_MHz"] + 0
+				if (cpu == "-") {
+					if ("PkgWatt" in col) { w = $col["PkgWatt"] + 0; wsum[step] += w; wn[step]++; if (w > wmax[step]) wmax[step] = w }
+					if ("PkgTmp" in col) { t = $col["PkgTmp"] + 0; if (t > tmax[step]) tmax[step] = t }
+				} else if (index(wanted, " " cpu " ")) {
+					lsum[step] += mhz; ln[step]++
+					if (!(step in lmin) || mhz < lmin[step]) lmin[step] = mhz
+				} else { osum[step] += mhz; on[step]++ }
+			}
+			END {
+				for (s = 1; s <= steps; s++) {
+					if (!ln[s]) { printf "%-8d no data\n", set[s]; continue }
+					holds = (lmin[s] >= set[s] * 0.99) ? "yes" : "NO"
+					printf "%-8d %-13d %-13d %-15d %-10.1f %-9.1f %-11d %s\n", set[s], lmin[s], lsum[s] / ln[s],
+						(on[s] ? osum[s] / on[s] : 0), (wn[s] ? wsum[s] / wn[s] : 0), wmax[s], tmax[s], holds
+				}
+			}' "${dir}/steps.txt" "${dir}/power.txt"
+	} > "${dir}/summary.txt"
+	cat "${dir}/summary.txt"
+}
+
+# Stop the load and put the pin back; runs on every way out of the sweep.
+# shellcheck disable=SC2317 # reached through the trap in run_sweep
+cleanup() {
+	# shellcheck disable=SC2086 # a list of process numbers
+	kill ${pids} 2> /dev/null
+	wait 2> /dev/null
+	pin_live "${original}"
+	echo "live_khz_after: $(cat "${CPU_DIR}/cpu${first_live}/cpufreq/scaling_min_freq")-$(cat "${CPU_DIR}/cpu${first_live}/cpufreq/scaling_max_freq")" >> "${dir}/meta.txt"
+}
+
+# The sweep itself; runs inside the transient unit.  $1 = directory,
+# $2 = seconds per step, then the frequencies in MHz.
+run_sweep() {
+	dir=$1
+	step_seconds=$2
+	shift 2
+	live=$(sed -n 's/^live_cpus: //p' "${dir}/meta.txt")
+	others=$(subtract_list "$(cat ${CPU_DIR}/online)" "${live}")
+	first_live=$(expand_list "${live}" | head -n 1)
+	original=$(cat "${CPU_DIR}/cpu${first_live}/cpufreq/scaling_max_freq")
+
+	pids=
+	trap cleanup EXIT
+	trap 'exit 1' INT TERM HUP
+
+	workers=$(expand_list "${others}" | wc -l)
+	stress-ng --taskset "${others}" --temp-path "${dir}" --cpu "${workers}" --cpu-method matrixprod \
+		--timeout 0 > "${dir}/load-others.txt" 2>&1 &
+	pids="${pids} $!"
+	# One worker per live CPU, each bound to its own: on isolated CPUs
+	# the kernel does not spread threads by itself.
+	for cpu in $(expand_list "${live}"); do
+		stress-ng --taskset "${cpu}" --temp-path "${dir}" --cpu 1 --cpu-method matrixprod \
+			--timeout 0 > "${dir}/load-live-${cpu}.txt" 2>&1 &
+		pids="${pids} $!"
+	done
+	turbostat --quiet --interval 5 --show Time_Of_Day_Seconds,CPU,Busy%,Bzy_MHz,PkgTmp,PkgWatt \
+		--out "${dir}/power.txt" 2> "${dir}/power.err" &
+	pids="${pids} $!"
+
+	: > "${dir}/steps.txt"
+	for mhz in "$@"; do
+		pin_live $((mhz * 1000))
+		start=$(date +%s)
+		end=$((start + step_seconds))
+		while [ "$(date +%s)" -lt "${end}" ]; do
+			sleep 5
+			temp=$(package_temp)
+			if [ -n "${temp}" ] && [ "${temp}" -ge "${STOP_TEMP_C}" ]; then
+				echo "stopped: package at ${temp} C during the ${mhz} MHz step" >> "${dir}/meta.txt"
+				echo "${mhz} $((start + SETTLE_SECONDS)) $(date +%s)" >> "${dir}/steps.txt"
+				exit 0
+			fi
+		done
+		echo "${mhz} $((start + SETTLE_SECONDS)) ${end}" >> "${dir}/steps.txt"
+	done
+	date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+}
+
+step_seconds=${STEP_SECONDS}
+label=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--status)
+		if systemctl is-active --quiet "${UNIT}"; then
+			echo "A sweep is running:"
+			systemctl show -p ActiveEnterTimestamp --value "${UNIT}" | sed 's/^/  started: /'
+		else
+			echo "No sweep is running."
+		fi
+		last=
+		for candidate in "${BASE}"/freq-*; do
+			[ -d "${candidate}" ] && last=${candidate}
+		done
+		[ -n "${last}" ] || exit 0
+		echo "Latest result directory: ${last}"
+		if systemctl is-active --quiet "${UNIT}"; then
+			sed 's/^/  /' "${last}/meta.txt"
+			[ -s "${last}/steps.txt" ] && sed 's/^/  step done: /' "${last}/steps.txt"
+		else
+			summarize "${last}"
+		fi
+		exit 0
+		;;
+	--summary)
+		[ -d "${2:-}" ] || die "--summary needs a result directory"
+		summarize "$2"
+		exit 0
+		;;
+	--run)
+		shift
+		run_sweep "$@"
+		exit 0
+		;;
+	--step)
+		step_seconds=${2:-}
+		shift
+		;;
+	--label)
+		label=${2:-}
+		shift
+		;;
+	-*) die "unknown option '$1' (try --help)" ;;
+	*) break ;;
+	esac
+	shift
+done
+
+[ $# -ge 1 ] || {
+	usage
+	exit 0
+}
+[ "$(id -u)" = 0 ] || die "must run as root"
+echo "${step_seconds}" | grep -Eq '^[0-9]+$' || die "bad step '${step_seconds}'"
+[ "${step_seconds}" -gt $((SETTLE_SECONDS + 30)) ] || die "a step must last more than $((SETTLE_SECONDS + 30)) seconds"
+if [ -n "${label}" ]; then
+	echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' || die "the label may only contain letters, digits, '-' and '_'"
+fi
+systemctl is-active --quiet "${UNIT}" && die "a sweep is already running (see --status)"
+
+live=$(grep -v null ${CPU_DIR}/isolated 2> /dev/null)
+[ -n "${live}" ] || die "the kernel isolated no CPU: start a profile with dawos-profile first"
+first_live=$(expand_list "${live}" | head -n 1)
+freq_dir=${CPU_DIR}/cpu${first_live}/cpufreq
+[ -w "${freq_dir}/scaling_max_freq" ] || die "CPU ${first_live} has no frequency control"
+highest=$(($(cat "${freq_dir}/cpuinfo_max_freq") / 1000))
+lowest=$(($(cat "${freq_dir}/cpuinfo_min_freq") / 1000))
+# The live CPUs may differ in their top frequency: the lowest top counts.
+for cpu in $(expand_list "${live}"); do
+	top=$(($(cat "${CPU_DIR}/cpu${cpu}/cpufreq/cpuinfo_max_freq") / 1000))
+	[ "${top}" -ge "${highest}" ] || highest=${top}
+done
+for mhz in "$@"; do
+	echo "${mhz}" | grep -Eq '^[0-9]+$' || die "'${mhz}' is not a frequency in MHz"
+	if [ "${mhz}" -lt "${lowest}" ] || [ "${mhz}" -gt "${highest}" ]; then
+		die "${mhz} MHz is outside what the live CPUs offer (${lowest}-${highest} MHz)"
+	fi
+done
+for tool in stress-ng turbostat; do
+	command -v "${tool}" > /dev/null || die "${tool} is not in this image"
+done
+
+dir="${BASE}/freq-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}"
+{
+	date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "frequencies_mhz: $*"
+	echo "step_seconds: ${step_seconds} (first ${SETTLE_SECONDS} left out)"
+	echo "label: ${label:-none}"
+	echo "live_cpus: ${live}"
+	echo "live_khz_before: $(cat "${freq_dir}/scaling_min_freq")-$(cat "${freq_dir}/scaling_max_freq")"
+	echo "base_khz: $(cat "${freq_dir}/base_frequency" 2> /dev/null)"
+	echo "power_limits_uw: long=$(cat /sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw 2> /dev/null) short=$(cat /sys/class/powercap/intel-rapl:0/constraint_1_power_limit_uw 2> /dev/null)"
+	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+	echo "kernel: $(uname -srv)"
+	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+	echo "temperature_at_start_c: $(package_temp)"
+} > "${dir}/meta.txt"
+
+systemd-run --quiet --unit="${UNIT}" --collect \
+	--description="dawOS live CPU frequency sweep" \
+	/bin/sh "${SELF}" --run "${dir}" "${step_seconds}" "$@" ||
+	die "could not start the sweep"
+
+echo "Sweep started: live CPUs ${live} at $* MHz, ${step_seconds} s each, about $((($# * step_seconds + 59) / 60)) minutes in all."
+echo "Results in ${dir}"
+echo "Follow it with: ${PROG} --status"
