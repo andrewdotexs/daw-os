@@ -1,3 +1,12 @@
 # Boot profile "generic": no CPU isolation.
-# Used in QEMU and as the safe fallback on real hardware (document 0, C-03).
-# The "285k" profile with the isolation masks is added in step P0.6.
+# The base profile of every image: what QEMU boots, what the installation
+# medium boots, and the safe fallback on real hardware (document 0, C-03).
+
+# Serial console, after the screen so that it becomes /dev/console: QEMU
+# tests read the boot from it, and on a real machine it is the way to
+# read a kernel panic. A real serial port is slow and raises interrupts,
+# so the profiles of real machines leave it out.
+console=ttyS0,115200n8
+
+# Tells dawos-tune and the boot report which profile was started.
+dawos.profile=generic

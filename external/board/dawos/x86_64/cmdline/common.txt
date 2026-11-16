@@ -13,9 +13,9 @@ rootfstype=erofs ro rootwait
 # the other slot after three failed attempts.
 panic=10
 
-# Consoles: the screen first, the serial port last so that it becomes
-# /dev/console (systemd messages and the QEMU serial console).
-console=tty0 console=ttyS0,115200n8
+# Console: the screen. The profile "generic" adds the serial port after
+# it; the profiles of real machines do not (see profile-generic.txt).
+console=tty0
 
 # Machine identity: the root is read-only and identical on every machine,
 # so /etc/machine-id cannot be stored there. systemd derives it from the

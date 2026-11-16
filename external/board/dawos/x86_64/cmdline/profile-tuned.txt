@@ -1,0 +1,19 @@
+# Kernel parameters shared by every boot profile that isolates CPUs.
+# post-image.sh adds the CPU sets of the profile after these:
+#   isolcpus=domain,managed_irq,<live>  nohz_full=<tickless>
+#   rcu_nocbs=<tickless>  irqaffinity=<io>  dawos.profile=<name>
+# (see rootfs-overlay/usr/share/dawos/profiles/*.conf).
+
+# Spread the periodic ticks of the CPUs in time instead of firing them
+# all at once: fewer CPUs contend for the same locks at the same instant.
+skew_tick=1
+
+# Do not run the periodic check of the time-stamp counter against another
+# clock. On this class of processor the kernel already trusts the counter
+# (constant, non-stop, known frequency); said here so that a kernel that
+# decided otherwise would not start a timer that walks over every CPU.
+tsc=reliable
+
+# Not here, on purpose: nowatchdog, nosoftlockup, nmi_watchdog=0 (the
+# kernel is built without the lockup detectors, the parameters would be
+# unknown to it) and transparent_hugepage= (not available with PREEMPT_RT).

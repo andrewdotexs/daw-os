@@ -1,0 +1,30 @@
+directory: /var/lib/dawos/measure/osnoise-20261116T014238Z-prima
+started_utc: 2026-11-16T01:42:38Z
+duration: 10m
+label: prima
+cpus_measured: 4-7
+cpus_isolated_by_kernel: none
+load_on_other_cpus: yes
+profile: generic
+tune: off
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 113000 verity 1 PARTLABEL=dawos-root-0.0.1.20261116010352 PARTLABEL=dawos-verity-0.0.1.20261116010352 4096 4096 14125 1 sha256 851e8f9605ab8c3edeac9beef5530e9e561c8c622135e06684ad7a9d2b7b896b 1a76b5ec0ef4c9319fcebbf05b5f0dd6e1542c38be54279e3a943c1ea4443e25 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116010352,PARTLABEL=dawos-verity-0.0.1.20261116010352 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 console=ttyS0,115200n8 dawos.profile=generic
+bios: 2301 10/04/2025
+image: e63621d975b2
+window_start_utc: 2026-11-16T01:42:51Z
+window_end_utc: 2026-11-16T01:52:31Z
+rtla_exit_status: 0
+load_running_at_window_end: yes
+finished_utc: 2026-11-16T01:52:44Z
+cpus_with_data: 4
+max_single_noise_us: 438 (cpu 4)
+lowest_cpu_availability_percent: 99.95760
+noise_events: hardware 7 nmi 0 interrupt 2392130 softirq 0 thread 81392
+interrupts_on_measured_cpus: LOC=2320033 IWI=2 RES=60 CAL=27 TLB=19 MCP=4
+unexpected_interrupts: IWI=2 (IRQ work interrupts) RES=60 (Rescheduling interrupts) CAL=27 (Function call interrupts) TLB=19 (TLB shootdowns) MCP=4 (Machine check polls)
+threads_on_measured_cpus: osnoise/4=7590 sleep=5 osnoise/5=7393 osnoise/6=7603 osnoise/7=7554 migration/7=4 ktimers/4=2 ktimers/5=425 ktimers/7=85 ksoftirqd/4=293 ksoftirqd/5=93 sh=9 ksoftirqd/6=102 rcu_preempt=3 ksoftirqd/7=96 systemd-udevd=2 kworker/7:1=94 kcompactd0=425 rcuc/4=7297 rcuc/5=6885 rcuc/6=7505 rcuc/7=7352
+unexpected_threads: sleep=5 sh=9 rcu_preempt=3 systemd-udevd=2 kcompactd0=425
+trace_events_lost: 94504
+package_temperature_c: avg 76.0 max 79
+package_power_w: avg 157.8 max 158.9
+verdict: FAIL (noise>10us interrupts threads)

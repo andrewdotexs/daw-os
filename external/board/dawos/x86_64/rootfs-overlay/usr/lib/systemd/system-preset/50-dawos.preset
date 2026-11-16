@@ -1,5 +1,6 @@
 # dawOS presets: units shipped by the platform that must be enabled.
 enable dawos-boot-report.service
+enable dawos-tune.service
 
 # Boot assessment: a boot is good, and its boot entry is kept, only if no
 # unit ended in failed state (see /usr/libexec/dawos/boot-failed).

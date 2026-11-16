@@ -1,0 +1,21 @@
+# dawOS: compare the machine and the kernel with the boot profile named
+# on the kernel command line (dawos.profile=NAME), then apply the part of
+# the real-time tuning that is set at run time: interrupts, work queues,
+# idle states, frequency and power limit. See /usr/bin/dawos-tune.
+#
+# It fails when the profile cannot be applied in full. A failed unit marks
+# the boot as bad: an update that breaks the tuning of the machine is
+# then rolled back like any other bad update (ADR 0016).
+[Unit]
+Description=dawOS CPU domains and real-time tuning
+# The fair server is set through debugfs.
+Wants=sys-kernel-debug.mount
+After=sys-kernel-debug.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/dawos-tune
+
+[Install]
+WantedBy=multi-user.target

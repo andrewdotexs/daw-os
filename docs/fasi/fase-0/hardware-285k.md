@@ -79,7 +79,7 @@ Conferme e scoperte:
 
 - **La numerazione è quella ipotizzata nel documento 0**: P-core sulle CPU 0–7, E-core sulle 8–23, quattro cluster da quattro E-core con la cache L2 in comune. Nessun thread aggiuntivo per core.
 - **Disposizione fisica sul chip**, ricavata dagli identificativi dei core: `P P | E1 E2 | P P P P | E3 E4 | P P`. Le CPU 0–1 stanno a un'estremità, le CPU 2–5 al centro tra i due gruppi di E-core, le CPU 6–7 all'altra estremità. Conta per il calore: core vicini si scaldano a vicenda.
-- **Due candidati per il dominio live**, da confrontare nel passo P0.6: le CPU 4–7 (ipotesi del documento 0; comprendono un core favorito ma sono due coppie separate) oppure le CPU 2–5 (quattro core contigui al centro, con l'altro core favorito).
+- **Due candidati per il dominio live**, da confrontare nel passo P0.6: le CPU 4–7 (ipotesi del documento 0; comprendono un core favorito ma sono due coppie separate) oppure le CPU 2–5 (quattro core contigui al centro, con l'altro core favorito). Confrontati nel sotto-passo P0.6a come due profili di avvio: stesso rumore, ma i core 4–7 sono risultati più freschi; l'utente ha scelto 4–7 il 16 novembre 2026.
 - **Nessun driver per gli stati di riposo** (`cpuidle current_driver: none`): al kernel manca `CONFIG_INTEL_IDLE`. Oggi i core a riposo usano solo l'istruzione di arresto, senza stati profondi. Per l'esperimento E-01 (polling, C1, C1E) il driver va aggiunto, e nel firmware gli stati di riposo vanno lasciati al sistema operativo.
 - **Frequenza**: `intel_pstate` in modalità attiva, regolatore `powersave`, preferenza `balance_performance`, turbo acceso. È la configurazione di partenza; quella a frequenza fissa sui core live arriva con il passo P0.6.
 - **Orologio**: `tsc`, come deve essere.
@@ -113,16 +113,13 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Firmware, stato al 14 novembre 2026**: limite di potenza PL1 = PL2 = **160 W** (prima 250 W); ASPM, Wi-Fi, Bluetooth e _HD Audio_ disattivati; profilo di memoria di base (X.M.P. disattivato, 4800 MT/s); pompa a 5378 giri al minuto; ventola del processore sul profilo _Standard_, al 100 % da 70 °C. Voci cambiate rispetto a prima: Wi-Fi, Bluetooth e _HD Audio_ da attivi a disattivati; i due limiti di potenza da automatici a 160; l'ASPM era già disattivato. Verifica a carico continuo al limite: 83,3 °C con la stanza a 24 °C.
 
+**Ventole del radiatore, 16 novembre 2026**: una delle due non era collegata al connettore della ventola del processore e partiva in ritardo sotto carico (circa quattro minuti). Corretto dall'utente. La curva termica e la verifica del limite a 160 W del passo P0.4b sono state fatte con quel collegamento: valgono come limite prudente, e vanno ripetute prima delle misure di frequenza e potenza del sotto-passo P0.6b.
+
 **Secure Boot, stato al 15 novembre 2026**: attivo (_OS Type_: _Windows UEFI mode_; _Secure Boot Mode_: _Custom_; stato _User_). Fino a quel giorno il firmware era senza chiavi, in stato _Setup_. Ora contiene le chiavi di fabbrica (_PK_, _KEK_, _DBX_) e in _DB_ tredici firme: quelle di fabbrica più il certificato di sviluppo di dawOS. Procedura e verifica nella guida del sotto-passo P0.5f.
 
-**Contenitore: da rack 2U modificato (D-22, orientamento del 14 novembre 2026).** L'utente userà un rack da 6U con scheda audio, preamplificatore per cuffie e condizionatore di rete (1U ciascuno), il PC in 2U e 1U libera sopra il PC. Il contenitore scelto è un 2U da 19 pollici per schede micro-ATX (UNYKAch UK2129, 381 × 431 × 90 mm, 4,8 kg), da modificare: un'apertura nel coperchio, il radiatore **appoggiato all'esterno** sopra il coperchio, nell'unità libera, e le ventole da 140 mm avvitate dall'interno attraverso il coperchio. Così restano il dissipatore attuale e le ventole grandi e lente. Punti da verificare a modifica fatta:
+**Contenitore: resta quello attuale (D-22, chiusa dall'utente il 15 novembre 2026).** Sono state valutate e scartate due alternative da rack: un contenitore metallico 2U da modificare, con il radiatore sopra il coperchio (14 novembre), e un telaio aperto 3U stampato in ASA, con il radiatore sul retro del rack (15 novembre). Il secondo avrebbe tolto ogni schermatura a pochi centimetri dalla scheda audio.
 
-- sopra il radiatore restano circa 17 mm prima dell'apparecchio o del pannello successivo: l'aria deve poter uscire dal fronte e dal retro di quell'unità;
-- l'aria calda esce verso l'alto: il PC sarà l'apparecchio più in alto del rack, e il rack resta aperto davanti e dietro durante l'uso (confermato dall'utente);
-- l'alimentatore è in formato **SFX**: serve una staffa di adattamento da SFX ad ATX, e i suoi cavi, pensati per contenitori piccoli, possono risultare corti in un contenitore profondo 431 mm. Alto 63,5 mm, lascia circa 20 mm liberi per la sua ventola;
-- il coperchio resta legato alla scheda madre dai tubi del dissipatore.
-
-Un contenitore diverso cambia il raffreddamento: curva termica, limite di potenza e misura di conferma vanno rifatti nel contenitore definitivo, **prima** dei passi P0.6 e P0.7.
+Conseguenza: la curva termica, il limite di potenza a 160 W e le misure di rumore di fondo dei passi P0.4b e P0.5f **restano valide** per i passi P0.6 e P0.7, e non vanno rifatte. Se in futuro il contenitore o il dissipatore cambiano, vanno rifatte prima di ogni misura di riferimento.
 
 **Ambiente d'uso**: stanza climatizzata, al massimo 24–25 °C tutto l'anno (indicato dall'utente il 13 novembre 2026). È la temperatura di riferimento per il limite di potenza.
 

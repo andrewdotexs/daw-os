@@ -29,6 +29,8 @@ new_target=no
 tamper=
 ab_test=
 update_test=
+profile=
+cpu_model_id=
 secure_boot=yes
 mode=interactive
 memory=2G
@@ -65,6 +67,13 @@ Usage: ${0##*/} [options]
                     'tampered': the server offers a changed root image
                     with checksums to match, but cannot sign them, and the
                     update must be refused
+  --profile NAME    boot the machine profile NAME of the image instead of
+                    the base profile: a copy of the image gets the boot
+                    loader setting that 'dawos-profile --set NAME' writes,
+                    and the virtual machine gets the number of CPUs and
+                    the processor name the profile is written for. With
+                    --test the boot report must then say profile=NAME and
+                    tune=ok
   --no-secure-boot  start the firmware with Secure Boot off
   --image PATH      disk image to boot (default: output/images/disk.img)
   --installer       boot the installation medium (USB) with a blank NVMe
@@ -93,6 +102,10 @@ while (($# > 0)); do
 		;;
 	--tamper)
 		tamper=${2:?--tamper needs 'root', 'verity' or 'uki'}
+		shift
+		;;
+	--profile)
+		profile=${2:?--profile needs the name of a profile}
 		shift
 		;;
 	--ab-test)
@@ -265,6 +278,62 @@ PYTHON
 	rm -f "${copy}" "${source}"
 }
 
+# --- Choosing a boot profile in a copy of the image ---------------------------
+# esp_set_default IMAGE PATTERN
+#   Adds "default PATTERN" to loader/loader.conf on the EFI System
+#   Partition of the image, as dawos-profile does on a machine. The FAT
+#   file system is edited in place with mtools: nothing is mounted.
+esp_set_default() {
+	local target=$1 pattern=$2
+	local mcopy=${repo_dir}/output/host/bin/mcopy
+	[[ -x ${mcopy} ]] || mcopy=$(command -v mcopy) || die "mcopy not found (run 'make image' first)"
+	local start
+	start=$(python3 - "${target}" <<'PYTHON'
+import struct
+import sys
+
+with open(sys.argv[1], "rb") as image:
+    image.seek(512)
+    header = image.read(92)
+    entries_lba, count, size = struct.unpack_from("<QII", header, 72)
+    for index in range(count):
+        image.seek(entries_lba * 512 + index * size)
+        entry = image.read(size)
+        if entry[56:128].decode("utf-16-le").rstrip("\x00") == "esp":
+            print(struct.unpack_from("<Q", entry, 32)[0])
+PYTHON
+	)
+	[[ ${start:-} =~ ^[0-9]+$ ]] || die "no esp partition in ${target}"
+	local conf=${state_dir}/loader.conf
+	MTOOLS_SKIP_CHECK=1 "${mcopy}" -n -i "${target}@@$((start * 512))" ::loader/loader.conf "${conf}" ||
+		die "could not read loader.conf from ${target}"
+	{
+		grep -v '^default[[:space:]]' "${conf}" || true
+		echo "default ${pattern}"
+	} > "${conf}.new"
+	MTOOLS_SKIP_CHECK=1 "${mcopy}" -o -i "${target}@@$((start * 512))" "${conf}.new" ::loader/loader.conf ||
+		die "could not write loader.conf to ${target}"
+	rm -f "${conf}" "${conf}.new"
+}
+
+# --- Profile test: boot a machine profile ---------------------------------------
+# The virtual machine is shaped after the profile: as many CPUs, and the
+# processor name it is written for. It has no hybrid cores, no frequency
+# scaling and no power limit: dawos-tune skips those steps in a virtual
+# machine, and everything else (kernel isolation, interrupts, work
+# queues) is applied and checked for real.
+if [[ -n ${profile} ]]; then
+	profile_file=${repo_dir}/external/board/dawos/x86_64/rootfs-overlay/usr/share/dawos/profiles/${profile}.conf
+	[[ -f ${profile_file} ]] || die "no such profile: ${profile} (${profile_file})"
+	cpus=$(sed -n 's/^cpus=//p' "${profile_file}")
+	cpu_model_id=$(sed -n 's/^cpu_model=//p' "${profile_file}")
+	profile_image=${state_dir}/profile-test.img
+	cp --sparse=always "${image}" "${profile_image}"
+	image=${profile_image}
+	esp_set_default "${image}" "dawos_*@${profile}"
+	expectations+=("profile=${profile}" tune=ok)
+fi
+
 # --- Tamper test: one changed byte in a copy of the image --------------------
 if [[ -n ${tamper} ]]; then
 	[[ ${mode} == test ]] || die "--tamper needs --test"
@@ -398,11 +467,13 @@ if [[ ${secure_boot} == yes ]]; then
 	sb_cert=${repo_dir}/keys/secure-boot/db.crt
 	[[ -f ${sb_cert} ]] || die "Secure Boot certificate not found: ${sb_cert} (run 'make image' first)"
 	command -v virt-fw-vars > /dev/null || die "virt-fw-vars not found: sudo apt install python3-virt-firmware"
-	ovmf_vars=${state_dir}/OVMF_VARS.secboot.fd
-	if [[ ! -f ${ovmf_vars} || ${sb_cert} -nt ${ovmf_vars} ]]; then
+	# Kept as made, never given to a virtual machine: the stores the
+	# machines write to are copies of it (see below).
+	enrolled_vars=${state_dir}/OVMF_VARS.secboot.enrolled.fd
+	if [[ ! -f ${enrolled_vars} || ${sb_cert} -nt ${enrolled_vars} ]]; then
 		# Owner GUID of the enrolled entries: any fixed value will do.
 		owner=5a3c1e0e-9b6d-4c57-8f15-da0500000001
-		virt-fw-vars --input "${ovmf_vars_template}" --output "${ovmf_vars}" \
+		virt-fw-vars --input "${ovmf_vars_template}" --output "${enrolled_vars}" \
 			--set-pk "${owner}" "${sb_cert}" \
 			--add-kek "${owner}" "${sb_cert}" \
 			--add-db "${owner}" "${sb_cert}" \
@@ -412,9 +483,21 @@ if [[ ${secure_boot} == yes ]]; then
 	# The variable store must be writable only from System Management
 	# Mode, or the guest could rewrite the keys.
 	machine_options=',smm=on'
+	ovmf_vars_template=${enrolled_vars}
+	ovmf_vars=${state_dir}/OVMF_VARS.secboot.fd
 else
 	ovmf_vars=${state_dir}/OVMF_VARS.fd
-	[[ -f ${ovmf_vars} ]] || cp "${ovmf_vars_template}" "${ovmf_vars}"
+fi
+if [[ ${mode} == test ]]; then
+	# A test starts from a clean store, every time. The boot loader keeps
+	# its own settings there (the entry to boot once, the default one):
+	# what an earlier session left behind, for example with
+	# "dawos-profile --try", must not decide what a test boots.
+	ovmf_vars=${ovmf_vars%.fd}.test.fd
+	cp "${ovmf_vars_template}" "${ovmf_vars}"
+elif [[ ! -f ${ovmf_vars} || ${ovmf_vars_template} -nt ${ovmf_vars} ]]; then
+	# Interactive sessions keep theirs, like a real machine.
+	cp "${ovmf_vars_template}" "${ovmf_vars}"
 fi
 
 # --- Acceleration -----------------------------------------------------------
@@ -428,6 +511,8 @@ else
 	cpu_model=max
 	echo "run-qemu: /dev/kvm not usable, falling back to slow emulation (TCG)" >&2
 fi
+# The processor name the guest reports, when a profile asks for one.
+[[ -z ${cpu_model_id} ]] || cpu_model="${cpu_model},model-id=${cpu_model_id}"
 
 qemu_args=(
 	-machine "q35,accel=${accel}${machine_options}"
@@ -480,6 +565,10 @@ log=${state_dir}/serial.log
 # a machine that restarts by itself until it finds an image that works.
 reboot_option=(-no-reboot)
 [[ -z ${ab_test}${update_test} ]] || reboot_option=()
+# So is the profile test: with a different number of CPUs the firmware
+# sizes its memory map anew, stores it and resets the machine once
+# before it starts anything (OVMF, "memory type information").
+[[ -z ${profile} ]] || reboot_option=()
 
 # QEMU's own messages go to a side file: on success they are just the
 # notice that we stopped it; on failure they are printed below.

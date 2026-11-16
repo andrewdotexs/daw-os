@@ -10,6 +10,14 @@
 # Intel Management Engine interface: no use for it, one less driver with
 # its own interrupts and firmware conversations.
 # CONFIG_INTEL_MEI is not set
+# Wireless networking: dawOS uses none (Wi-Fi and Bluetooth are switched
+# off in the firmware of the reference machine). The stack came with the
+# architecture default; at every boot it looked for a regulatory database
+# and logged a warning. RFKILL is the radio kill switch of the same stack.
+# CONFIG_WIRELESS is not set
+# CONFIG_WLAN is not set
+# CONFIG_RFKILL is not set
+
 # Kernel log over the network and AGP graphics.
 # CONFIG_NETCONSOLE is not set
 # CONFIG_AGP is not set
