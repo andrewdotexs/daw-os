@@ -1,6 +1,6 @@
 # ADR 0018 — Profili di avvio e regolazione all'avvio
 
-- **Stato**: accettata con il sotto-passo P0.6a per la variante `dev`, superato il 16 novembre 2026; frequenza, stato di riposo e _fair server_ dei core live si confermano sulle misure del sotto-passo P0.6b
+- **Stato**: accettata con il sotto-passo P0.6a per la variante `dev`, superato il 16 novembre 2026; frequenza, stato di riposo e _fair server_ dei core live decisi sulle misure del sotto-passo P0.6b
 - **Data**: 15 novembre 2026
 - **Origine**: documento 0, contraddizione C-03 e passo P0.6; ADR 0002 (isolamento statico dei core); ADR 0015, punto 5 (le varianti della riga di comando sono profili dell'immagine firmata)
 
@@ -28,6 +28,7 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 12. **Il sondaggio periodico degli errori hardware corretti è spento** sulle macchine con un profilo. Vedi «Conseguenze».
 13. **Il _fair server_ è spento sui core live** (`live_fair_server=off` nel profilo). _(Scelta dell'utente, 16 novembre 2026, sulla misura del sotto-passo P0.6a; da confermare con l'esperimento E-02.)_
 14. **Il 285K ha un solo profilo, `285k`, con i core live 4–7.** _(Scelta dell'utente, 16 novembre 2026: a parità di rumore è risultato più fresco dell'alternativa 2–5.)_
+15. **Lo stato di riposo dei core live è verificato, non impostato.** Sul 285K il kernel non ha stati tra cui scegliere e il C1E è una voce del firmware: con `live_idle=c1` `dawos-tune` legge dal processore se il C1 viene trasformato in C1E e, se sì, dichiara il profilo `degraded`. _(Scelta dell'utente, 16 novembre 2026; i numeri sono nell'ADR 0009.)_
 
 ## Alternative scartate
 
@@ -57,6 +58,6 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 ## Quando si riapre
 
 - Con l'esperimento E-02 (sotto-passo P0.6b), per il _fair server_. **Esito del 16 novembre 2026**: spento, un thread real-time che non si ferma blocca il lavoro normale del suo core per tutto il tempo (misurato sul 285K); acceso, sul 285K il lavoro normale è partito dopo 0,97 s togliendo al thread 428 µs, ma in macchina virtuale un processo interrotto dentro il kernel non è stato più rimesso in esecuzione e l'intera macchina si è fermata. Resta spento per la Fase 0; la protezione va costruita nel motore (Fase 1, rischio K-04).
-- Alla fine del sotto-passo P0.6b, per lo stato di riposo (ADR 0009). **Frequenza dei core live, 16 novembre 2026**: misurata a pieno carico, tiene esattamente fino a 4,8 GHz e non oltre; l'utente ha scelto 4,6 GHz.
+- **Stato di riposo, 16 novembre 2026**: deciso, C1 senza attesa attiva (ADR 0009, punto 15 qui sopra). **Frequenza dei core live, 16 novembre 2026**: misurata a pieno carico, tiene esattamente fino a 4,8 GHz e non oltre; l'utente ha scelto 4,6 GHz.
 - Se sul 285K compaiono errori hardware corretti che il sondaggio avrebbe segnalato.
 - Con la seconda macchina supportata: il modo di scegliere il profilo andrà rivisto se le macchine diventano molte.

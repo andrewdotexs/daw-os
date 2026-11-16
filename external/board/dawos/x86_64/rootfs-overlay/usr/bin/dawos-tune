@@ -20,7 +20,9 @@
 #   5. the periodic refresh of memory statistics is slowed down, and the
 #      periodic poll for corrected hardware errors is switched off;
 #   6. the live CPUs get their fair-server setting, their idle-state
-#      limit and a fixed frequency;
+#      limit and a fixed frequency; what the processor does on its own
+#      with a stopped CPU (C1E) is a firmware setting, which is compared
+#      with the profile;
 #   7. the package power limit is lowered to the profile's value if the
 #      firmware handed over a higher one;
 #   8. the result is written to /run/dawos/topology.json.
@@ -35,14 +37,15 @@
 # one.
 #
 # For tests the directories it reads and writes can be redirected with
-# DAWOS_SYS, DAWOS_PROC, DAWOS_RUN and DAWOS_PROFILES, and the virtual
-# machine check overridden with DAWOS_VIRTUAL=0|1.
+# DAWOS_SYS, DAWOS_PROC, DAWOS_DEV, DAWOS_RUN and DAWOS_PROFILES, and the
+# virtual machine check overridden with DAWOS_VIRTUAL=0|1.
 
 set -u
 
 PROG=dawos-tune
 SYS=${DAWOS_SYS:-/sys}
 PROC=${DAWOS_PROC:-/proc}
+DEV=${DAWOS_DEV:-/dev}
 RUN_DIR=${DAWOS_RUN:-/run/dawos}
 PROFILES=${DAWOS_PROFILES:-/usr/share/dawos/profiles}
 REPORT=${RUN_DIR}/topology.json
@@ -321,49 +324,100 @@ set_fair_server() {
 }
 
 # --- Step 6a: idle states of the live CPUs ----------------------------------------
-# The limit is given to the kernel as the longest wake-up time accepted,
-# in microseconds: it then never picks a state that takes longer to
-# leave. "n/a" accepts no delay at all, so the CPU never halts.
+# Where the kernel has idle states to choose from, the limit is given to
+# it as the longest wake-up time accepted, in microseconds: it then never
+# picks a state that takes longer to leave. "n/a" accepts no delay at
+# all, so the CPU never halts.
+#
+# Where it has none (no idle driver: the firmware declares no state) the
+# kernel stops an idle CPU with one instruction, which asks for the state
+# C1. In both cases the processor may turn C1 into C1E on its own, and
+# whether it does is a setting of the firmware ("Enhanced C-states" on
+# the reference machine): measured there, C1E adds about 6 us to every
+# wake-up, C1 two tenths of one. A profile that says "c1" therefore
+# requires that setting to be off. It is only read here, never written:
+# after a firmware reset the profile is "degraded" until the firmware is
+# set again.
+
+# Print "on" or "off": whether the processor turns C1 into C1E on CPU $1
+# ("C1E auto-promotion", bit 1 of the register IA32_POWER_CTL, number
+# 0x1fc = 508); nothing if it cannot be read. The kernel serves the
+# registers of each CPU as a file: eight bytes at the offset equal to the
+# register number, lowest byte first. Reading it interrupts that CPU
+# once: this runs at boot, before anything live does.
+c1e_promotion() {
+	low=$(dd if="${DEV}/cpu/$1/msr" bs=8 skip=508 count=1 iflag=skip_bytes 2> /dev/null |
+		od -An -tx1 | awk 'NR == 1 { print $1 }')
+	case "${low}" in
+	[0-9a-f][0-9a-f]) ;;
+	*) return 0 ;;
+	esac
+	if [ $((0x${low} & 2)) -ne 0 ]; then echo on; else echo off; fi
+}
+
 limit_idle() {
 	idle_limit=$(profile_get live_idle)
 	idle_driver=$(read_file "${CPU_DIR}/cpuidle/current_driver")
 	idle_driver=${idle_driver:-none}
 	idle_latency=null
+	idle_c1e=null
 
 	if [ "${idle_driver}" = none ]; then
-		# The kernel then stops an idle CPU with a single instruction
-		# (MWAIT for the state C1 where the processor has it, HLT
-		# otherwise), and what the processor does with a stopped CPU is
-		# a setting of the firmware: measured by dawos-wakeup.
-		note "no idle driver: the kernel offers no choice of idle state, the limit '${idle_limit}' is not applied"
-		return
-	fi
-	for cpu in $(expand_list "${live}"); do
-		value=
 		if [ "${idle_limit}" = poll ]; then
-			value=n/a
+			problem "no idle driver: the limit 'poll' cannot be applied"
 		else
-			for state in "${CPU_DIR}/cpu${cpu}"/cpuidle/state[0-9]*; do
-				# (awk: the tr of busybox has no character classes.)
-				name=$(read_file "${state}/name" | awk '{ print tolower($0) }')
-				case "${name}" in
-				"${idle_limit}" | "${idle_limit}"_*)
-					value=$(read_file "${state}/latency")
-					# 0 would mean "no limit" to the kernel.
-					[ "${value:-0}" -gt 0 ] || value=1
-					;;
-				esac
-			done
+			note "no idle driver: idle CPUs stop in C1, the kernel has no other state to choose"
 		fi
-		if [ -z "${value}" ]; then
-			problem "CPU ${cpu} offers no idle state named '${idle_limit}'"
-			continue
-		fi
-		file=${CPU_DIR}/cpu${cpu}/power/pm_qos_resume_latency_us
-		write_file "${file}" "${value}" ||
-			problem "could not set the idle limit of CPU ${cpu}"
-		if [ "${value}" = n/a ]; then idle_latency=0; else idle_latency=${value}; fi
+	else
+		for cpu in $(expand_list "${live}"); do
+			value=
+			if [ "${idle_limit}" = poll ]; then
+				value=n/a
+			else
+				for state in "${CPU_DIR}/cpu${cpu}"/cpuidle/state[0-9]*; do
+					# (awk: the tr of busybox has no character classes.)
+					name=$(read_file "${state}/name" | awk '{ print tolower($0) }')
+					case "${name}" in
+					"${idle_limit}" | "${idle_limit}"_*)
+						value=$(read_file "${state}/latency")
+						# 0 would mean "no limit" to the kernel.
+						[ "${value:-0}" -gt 0 ] || value=1
+						;;
+					esac
+				done
+			fi
+			if [ -z "${value}" ]; then
+				problem "CPU ${cpu} offers no idle state named '${idle_limit}'"
+				continue
+			fi
+			file=${CPU_DIR}/cpu${cpu}/power/pm_qos_resume_latency_us
+			write_file "${file}" "${value}" ||
+				problem "could not set the idle limit of CPU ${cpu}"
+			if [ "${value}" = n/a ]; then idle_latency=0; else idle_latency=${value}; fi
+		done
+	fi
+
+	# A CPU that never stops is not concerned by C1E.
+	[ "${idle_limit}" = poll ] && return 0
+	promoted=
+	unread=
+	for cpu in $(expand_list "${live}"); do
+		case "$(c1e_promotion "${cpu}")" in
+		on) promoted="${promoted:+${promoted} }${cpu}" ;;
+		off) ;;
+		*) unread="${unread:+${unread} }${cpu}" ;;
+		esac
 	done
+	if [ -n "${unread}" ]; then
+		[ "${idle_limit}" != c1 ] ||
+			problem "could not read whether the processor turns C1 into C1E (${DEV}/cpu/N/msr, CPUs $(echo "${unread}" | tr ' ' '\n' | compress_list))"
+	elif [ -n "${promoted}" ]; then
+		idle_c1e='"on"'
+		[ "${idle_limit}" != c1 ] ||
+			problem "the processor turns C1 into C1E on CPUs $(echo "${promoted}" | tr ' ' '\n' | compress_list): the profile asks for 'c1', switch C1E off in the firmware (Enhanced C-states)"
+	else
+		idle_c1e='"off"'
+	fi
 }
 
 # --- Step 6b: frequency of the live CPUs -------------------------------------------
@@ -485,7 +539,7 @@ write_report() {
 				echo "    \"vm_stat_interval_s\": ${STAT_INTERVAL},"
 				echo "    \"machine_check_poll_s\": ${error_poll_s},"
 				echo "    \"fair_server_on_live\": $(json_string "${fair_server}"),"
-				echo "    \"idle\": {\"driver\": $(json_string "${idle_driver}"), \"limit\": $(json_string "${idle_limit}"), \"resume_latency_us\": ${idle_latency}},"
+				echo "    \"idle\": {\"driver\": $(json_string "${idle_driver}"), \"limit\": $(json_string "${idle_limit}"), \"resume_latency_us\": ${idle_latency}, \"c1e_auto_promotion\": ${idle_c1e}},"
 				echo "    \"frequency\": {\"live_khz\": ${live_khz}},"
 				echo "    \"power_limit\": {\"profile_w\": ${power_limit_w:-null}, \"long_term_w\": ${power_long_w}, \"short_term_w\": ${power_short_w}, \"lowered\": ${power_lowered}}"
 				echo '  }'
@@ -558,6 +612,7 @@ else
 			idle_driver=none
 			idle_limit=$(profile_get live_idle)
 			idle_latency=null
+			idle_c1e=null
 			live_khz=null
 			power_limit_w=$(profile_get power_limit_w)
 			power_long_w=null

@@ -60,6 +60,11 @@ WARMUP_S=5
 PAUSE_S=10
 # Seconds after boot from which a measurement counts as a reference.
 SETTLED_S=300
+# ADR 0009: largest delay accepted with the CPUs at rest (the 50 us of
+# the project less 20 us of margin), and how much worse than with the
+# CPUs kept awake it may be, both in microseconds.
+ADR_LIMIT_US=30
+ADR_MARGIN_US=5
 SELF=$(readlink -f "$0")
 
 usage() {
@@ -277,9 +282,10 @@ summarize() {
 	} > "${result}/summary.txt"
 
 	# The two prices, where both cases of a pair are there. Columns of the
-	# table: 1 case, 2 samples, 5 irq_avg, 7 thr_avg, 9 usr_avg, 12 pkg_w.
-	awk '
-		$2 ~ /^[0-9]+$/ && $2 > 0 { irq[$1] = $5; thr[$1] = $7; usr[$1] = $9; have[$1] = 1 }
+	# table: 1 case, 2 samples, 5 irq_avg, 7 thr_avg, 9 usr_avg, 11 usr_max,
+	# 12 pkg_w.
+	awk -v limit="${ADR_LIMIT_US}" -v margin="${ADR_MARGIN_US}" '
+		$2 ~ /^[0-9]+$/ && $2 > 0 { irq[$1] = $5; thr[$1] = $7; usr[$1] = $9; worst[$1] = $11; have[$1] = 1 }
 		$1 ~ /^(rest|idle-|busy-)/ { watts[$1] = $12 }
 		function pair(kind,    idle, busy) {
 			idle = "idle-" kind; busy = "busy-" kind
@@ -291,7 +297,17 @@ summarize() {
 			if (watts[idle] != "-" && watts[busy] != "-")
 				printf "staying_awake_cost_%s_w: %+.1f (%s minus %s)\n", kind, watts[busy] - watts[idle], busy, idle
 		}
-		END { pair("quiet"); pair("load") }' "${result}/summary.txt" > "${result}/summary.tmp"
+		# The criterion of ADR 0009 for a rest state against active
+		# waiting: the largest delay within the limit, and not more
+		# than the allowed amount worse than with the CPU kept awake.
+		function criterion(kind,    idle, busy, worse) {
+			idle = "idle-" kind; busy = "busy-" kind
+			if (!have[idle] || !have[busy] || worst[idle] == "-" || worst[busy] == "-") return
+			worse = worst[idle] - worst[busy]
+			printf "adr0009_%s: usr_max %.2f us, %+.2f against %s: %s (limits: %d us, +%d us)\n", kind, worst[idle], worse, busy,
+				(worst[idle] <= limit && worse <= margin) ? "PASS" : "FAIL", limit, margin
+		}
+		END { pair("quiet"); pair("load"); criterion("quiet"); criterion("load") }' "${result}/summary.txt" > "${result}/summary.tmp"
 	cat "${result}/summary.tmp" >> "${result}/summary.txt"
 	rm -f "${result}/summary.tmp"
 
