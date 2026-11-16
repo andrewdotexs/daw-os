@@ -1,0 +1,35 @@
+directory: /var/lib/dawos/measure/osnoise-20261116T230315Z-utente
+started_utc: 2026-11-16T23:03:15Z
+duration: 10m
+label: utente
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+load_on_other_cpus: yes
+workload: user
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #7 SMP PREEMPT_RT Mon Nov 16 23:39:42 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 121704 verity 1 PARTLABEL=dawos-root-0.0.1.20261116224015 PARTLABEL=dawos-verity-0.0.1.20261116224015 4096 4096 15213 1 sha256 fc2379c1f96a47694af3f1baa5318ee4ac1396dcaad8342dd64379a3bd4f5593 ea900e4ec80c0af16a56cc336a8c98be73ab8b930999ca963a6b2ed4be8fa549 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116224015,PARTLABEL=dawos-verity-0.0.1.20261116224015 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 3402 09/18/2026
+image: ae8e38c3250f
+uptime_at_start_s: 1139
+live_khz: 4600000-4600000
+window_start_utc: 2026-11-16T23:03:28Z
+window_start_uptime_s: 1152.98
+window_end_utc: 2026-11-16T23:13:08Z
+window_end_uptime_s: 1732.99
+rtla_exit_status: 0
+load_running_at_window_end: yes
+finished_utc: 2026-11-16T23:13:21Z
+no noise figure: the measured CPUs ran a loop in user space, not the tracer
+interrupts_on_measured_cpus: none
+interrupts_from_the_tracer_itself: IWI=0
+unexpected_interrupts: none
+threads_on_measured_cpus: none
+unexpected_threads: none
+trace_events_lost: 0
+noise_sources_in_window: none
+noise_sources_in_the_margins: timer schedule_page_work_fn x4; timer tick_nohz_handler x11;
+package_temperature_c: avg 73.7 max 76
+package_power_w: avg 124.2 max 128.0
+verdict: PASS (loop in user space: only the local timer, only bound kernel threads)

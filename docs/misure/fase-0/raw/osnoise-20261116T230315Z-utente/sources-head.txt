@@ -1,0 +1,27 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 15/15   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+       ktimers/4-57      [004] ..s.2  1142.839617: hrtimer_expire_entry: hrtimer=00000000a580a6bd function=schedule_page_work_fn now=1142939641148
+              sh-2276    [004] d.h..  1142.840059: hrtimer_expire_entry: hrtimer=000000009bcb0dde function=tick_nohz_handler now=1142940083712
+              sh-2276    [004] d.h..  1142.841059: hrtimer_expire_entry: hrtimer=000000009bcb0dde function=tick_nohz_handler now=1142941083785
+       ktimers/5-66      [005] ..s.2  1142.844662: hrtimer_expire_entry: hrtimer=000000003076d215 function=schedule_page_work_fn now=1142944686050
+              sh-2278    [005] d.h..  1142.845080: hrtimer_expire_entry: hrtimer=000000009488dd13 function=tick_nohz_handler now=1142945104554
+       ktimers/6-75      [006] ..s.2  1142.855577: hrtimer_expire_entry: hrtimer=00000000d675346c function=schedule_page_work_fn now=1142955601674
+              sh-2282    [006] d.h..  1142.856101: hrtimer_expire_entry: hrtimer=00000000d8ad8205 function=tick_nohz_handler now=1142956125390
+              sh-2282    [006] d.h..  1142.857101: hrtimer_expire_entry: hrtimer=00000000d8ad8205 function=tick_nohz_handler now=1142957125395
+       ktimers/7-85      [007] ..s.2  1142.884393: hrtimer_expire_entry: hrtimer=00000000e311f35c function=schedule_page_work_fn now=1142984416961
+              sh-2285    [007] d.h..  1142.885122: hrtimer_expire_entry: hrtimer=00000000f0ef81de function=tick_nohz_handler now=1142985146342
+              sh-2285    [007] d.h..  1142.886122: hrtimer_expire_entry: hrtimer=00000000f0ef81de function=tick_nohz_handler now=1142986146143
+          <idle>-0       [004] d.h1.  1742.884228: hrtimer_expire_entry: hrtimer=000000009bcb0dde function=tick_nohz_handler now=1742980084021
+          <idle>-0       [005] d.h1.  1742.888249: hrtimer_expire_entry: hrtimer=000000009488dd13 function=tick_nohz_handler now=1742984104816
+          <idle>-0       [006] d.h1.  1742.891270: hrtimer_expire_entry: hrtimer=00000000d8ad8205 function=tick_nohz_handler now=1742987125674
+          <idle>-0       [007] d.h1.  1742.893290: hrtimer_expire_entry: hrtimer=00000000f0ef81de function=tick_nohz_handler now=1742989146601
