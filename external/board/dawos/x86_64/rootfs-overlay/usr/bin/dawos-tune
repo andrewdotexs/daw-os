@@ -331,7 +331,11 @@ limit_idle() {
 	idle_latency=null
 
 	if [ "${idle_driver}" = none ]; then
-		note "no idle driver: idle CPUs halt (HLT), the limit '${idle_limit}' is not applied"
+		# The kernel then stops an idle CPU with a single instruction
+		# (MWAIT for the state C1 where the processor has it, HLT
+		# otherwise), and what the processor does with a stopped CPU is
+		# a setting of the firmware: measured by dawos-wakeup.
+		note "no idle driver: the kernel offers no choice of idle state, the limit '${idle_limit}' is not applied"
 		return
 	fi
 	for cpu in $(expand_list "${live}"); do

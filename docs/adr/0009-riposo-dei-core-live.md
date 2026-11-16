@@ -25,6 +25,27 @@ Quattro configurazioni sui core live, ciascuna con una prova `timerlat` di 30 mi
 
 Per ciascuna: latenza massima e 99,999-esimo percentile, temperatura dei core, potenza del package da `turbostat`, residenza negli stati di riposo, e, se possibile, la velocità delle ventole.
 
+## Aggiornamento del 16 novembre 2026: i casi sul 285K
+
+I quattro casi qui sopra presuppongono che il kernel abbia più stati di riposo tra cui scegliere, e che un limite dato core per core (PM QoS) ne escluda alcuni. Sul 285K non è così _(verificato nel sotto-passo P0.6b, parte 4a)_:
+
+- il firmware non dichiara al sistema alcuno stato di riposo: il kernel ferma un core con una sola istruzione, e il limite per core non ha nulla su cui agire;
+- che cosa succeda a un core fermo lo decide una voce del firmware, _Enhanced C-states_, uguale per tutti i core: accesa (è il valore di fabbrica) il core scende a C1E, spenta resta in C1;
+- stati più profondi non ci sono, per nessun core.
+
+I casi diventano:
+
+| Caso | Sul 285K |
+| --- | --- |
+| A, solo polling | Attesa attiva: un processo tiene sveglio ogni core live. È una scelta del motore, non del sistema. |
+| B, fino a C1 | _Enhanced C-states: Disabled_ nel firmware. Vale per tutta la macchina. |
+| C, fino a C1E | _Enhanced C-states_ acceso. Vale per tutta la macchina. |
+| D, predefinito | Coincide con C. |
+
+Si misurano con `dawos-wakeup`: ritardo di risveglio con e senza attesa attiva, a macchina tranquilla e sotto carico, più potenza e temperatura a riposo, una volta per ciascuna impostazione del firmware. Ogni caso dura due minuti, che bastano per media e minimo; massimo e 99,999-esimo percentile della configurazione scelta si confermano con una misura lunga prima di chiudere questo ADR. La residenza negli stati di riposo non si può leggere (senza driver il kernel non la conta); al suo posto c'è la quota di tempo in cui i core sono stati fermi.
+
+Il criterio di scelta non cambia. Cambia una conseguenza: tra B e C non si sceglie per i soli core live ma per l'intera macchina, quindi nel conto entrano anche consumo e temperatura a riposo di tutti gli altri core.
+
 ## Criterio di scelta
 
 Si adotta la configurazione più parca che rispetti entrambe le condizioni:

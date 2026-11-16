@@ -524,6 +524,7 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | P0.6, `dawos-tune`, punto 5 | `vm.stat_interval`, `kernel.timer_migration`, _fair server_ | `vm.stat_interval=120` e sondaggio degli errori hardware corretti spento; `timer_migration` e _fair server_ restano ai valori del kernel fino all'esperimento E-02. |
 | P0.6, accettazione, strumento | `rtla osnoise top -c 4-7 -d 10m`, differenza di `/proc/interrupts`, traccia `sched_switch` | Riuniti in `dawos-osnoise`, che non usa `turbostat`: per leggere un core ci si sposta sopra, compresi quelli misurati. |
 | Rapporto di avvio | Undici campi | Nuovi campi `profile=` e `tune=`. |
+| P0.6, esperimento E-01 | Quattro casi ottenuti con un limite per core (PM QoS), 30 minuti ciascuno | Sul 285K il firmware non dichiara stati di riposo e il limite per core non ha effetto: i casi sono attesa attiva (un processo), C1 e C1E (voce _Enhanced C-states_ del firmware, uguale per tutti i core). Strumento `dawos-wakeup`, due minuti per caso e una misura lunga per la configurazione scelta. Vedi [ADR 0009](adr/0009-riposo-dei-core-live.md). |
 | Kernel | Supporto alle reti senza fili dalla configurazione di partenza | Tolto. Aggiunto `CONFIG_INTEL_IDLE`. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 
