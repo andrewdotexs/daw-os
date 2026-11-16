@@ -1,6 +1,6 @@
 # ADR 0018 — Profili di avvio e regolazione all'avvio
 
-- **Stato**: accettata con il sotto-passo P0.6a per la variante `dev`; i valori dei profili del 285K si decidono sulle misure dei sotto-passi P0.6a e P0.6b
+- **Stato**: accettata con il sotto-passo P0.6a per la variante `dev`, superato il 16 novembre 2026; frequenza, stato di riposo e _fair server_ dei core live si confermano sulle misure del sotto-passo P0.6b
 - **Data**: 15 novembre 2026
 - **Origine**: documento 0, contraddizione C-03 e passo P0.6; ADR 0002 (isolamento statico dei core); ADR 0015, punto 5 (le varianti della riga di comando sono profili dell'immagine firmata)
 

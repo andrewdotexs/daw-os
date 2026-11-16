@@ -21,7 +21,7 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0015](0015-secure-boot.md) | Secure Boot: che cosa si firma, con quale chiave, con quali strumenti | P0.5 | Accettata per `dev`; D-23 e D-24 rinviate d'accordo con l'utente |
 | [0016](0016-valutazione-dell-avvio.md) | Valutazione dell'avvio e ritorno all'immagine precedente | P0.5 | Accettata |
 | [0017](0017-aggiornamenti.md) | Aggiornamenti: meccanismo, firma, trasporto, versioni | Modifica 5 dell'utente | Accettata per `dev` |
-| [0018](0018-profili-di-avvio-e-regolazione.md) | Profili di avvio e regolazione all'avvio | C-03, P0.6 | Accettata per `dev`; valori da decidere sulle misure |
+| [0018](0018-profili-di-avvio-e-regolazione.md) | Profili di avvio e regolazione all'avvio | C-03, P0.6 | Accettata per `dev`; frequenza, riposo e _fair server_ da confermare in P0.6b |
 
 ## Modello
 
