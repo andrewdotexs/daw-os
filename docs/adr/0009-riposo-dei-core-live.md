@@ -1,6 +1,6 @@
 # ADR 0009 — Stato di riposo dei core live
 
-- **Stato**: accettata il 16 novembre 2026 per il 285K, sui numeri del sotto-passo P0.6b (esperimento E-01); il ritardo massimo si conferma con la misura lunga dello stesso sotto-passo
+- **Stato**: accettata il 16 novembre 2026 per il 285K, sui numeri del sotto-passo P0.6b (esperimento E-01), e confermata lo stesso giorno da una misura di mezz'ora per caso
 - **Data**: 13 novembre 2026
 - **Origine**: D-09 e K-04 del documento 0
 
@@ -30,6 +30,8 @@ Misurati sul 285K con `dawos-wakeup` il 16 novembre 2026: core live 4–7 a 4,6 
 - Il risveglio da C1E costa in media 5,7–6,3 µs, e in una quota dei risvegli (dall'1,5 al 20 % secondo il core) circa 15 µs. Peggiora il massimo di 13 µs rispetto all'attesa attiva: oltre i 5 µs del criterio.
 - Il risveglio da C1 costa 0,13–0,25 µs, e peggiora il massimo di circa 1 µs: meno della differenza tra due misure uguali.
 - L'attesa attiva costa 37–38 W e porta il package da 34 a 57 °C a macchina altrimenti ferma.
+
+**Conferma su mezz'ora per caso, sotto carico** (7,2 milioni di scadenze per caso, `wakeup-20261116T162952Z-lunga`): con i core live in C1 ritardo medio 1,70 µs, 99,999-esimo percentile 4,0 µs, massimo 6,74 µs; con l'attesa attiva 1,55, 3,0 e 6,22 µs. Il massimo peggiora di 0,52 µs: entro il criterio.
 
 Il dettaglio è nella guida del sotto-passo P0.6b, parte 4; i file grezzi in `docs/misure/fase-0/raw/wakeup-20261116T145023Z-c1e-on` e `wakeup-20261116T150938Z-c1e-off`.
 
@@ -103,6 +105,6 @@ L'aspettativa del 13 novembre era: C1 a motore fermo e polling a motore armato, 
 
 ## Quando si riapre
 
-- Se la misura lunga del sotto-passo P0.6b o la campagna P0.7 mostrano un massimo che queste misure da due minuti non hanno visto.
+- Se la campagna P0.7 mostra un massimo che queste misure non hanno visto.
 - Con una seconda macchina supportata: i numeri sono del 285K, e un firmware che dichiara gli stati di riposo permette una scelta core per core.
 - Se un aggiornamento del firmware cambia nome o comportamento alla voce.
