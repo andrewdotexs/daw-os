@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunto A-27.
 
 ## La regola d'ordine
 
@@ -23,6 +23,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
 | A-01 | Il kernel non ha il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`): `MemoryMax=` di systemd oggi non ha effetto | Trovato il 16 novembre 2026 provando E-03 | Aggiungerlo nella stessa ricostruzione del kernel che porta `i915` (parte 2), e ripetere la misura di rumore: il controllo della memoria ha lavoro periodico suo. |
+| A-27 | Firmware del 285K: dalla 2301 (ottobre 2025) alla 3402 (settembre 2026), con l'Intel ME | Visto dall'utente il 16 novembre 2026, che ha scelto di aggiornare subito | Parte 0 di P0.6c: aggiornamento, impostazioni rimesse, stato della macchina prima e dopo, misure rifatte. Chiude anche A-04 e dà una risposta su A-22. |
 | A-02 | Driver grafico: `i915` come modulo; `xe` solo se `i915` fa rumore | E-04; scelta dell'utente del 16 novembre 2026 | Parte 2 di P0.6c. |
 
 ## Da chiudere in P0.6d
