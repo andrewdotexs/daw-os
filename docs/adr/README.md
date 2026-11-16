@@ -5,7 +5,7 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | N. | Decisione | Origine | Stato |
 | --- | --- | --- | --- |
 | [0001](0001-due-macchine.md) | Sviluppo e destinazione su due macchine | D-01 | Accettata |
-| [0002](0002-isolamento-statico-dei-core.md) | Isolamento statico dei core al boot | D-02, C-02 | Accettata |
+| [0002](0002-isolamento-statico-dei-core.md) | Isolamento statico dei core al boot | D-02, C-02 | Accettata; confermata da E-03 il 16 novembre 2026 |
 | [0003](0003-avvio-senza-initrd.md) | Avvio senza initrd, con prova a tempo | D-03 | Accettata; confermata in QEMU (P0.5b), 285K da vedere |
 | [0004](0004-partizioni-dei-dati.md) | Tre partizioni di dati | D-04, C-04 | Accettata, ripiego definito |
 | [0005](0005-varianti-dev-e-prod.md) | Varianti `dev` e `prod` dell'immagine | D-05, C-05 | Accettata |
