@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "generated_utc": "2026-11-16T02:13:20Z",
+  "profile": "285k-alt",
+  "status": "ok",
+  "problems": [],
+  "notes": ["no idle driver: idle CPUs halt (HLT), the limit 'c1' is not applied"],
+  "machine": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 9 285K",
+    "virtual": false,
+    "online": "0-23",
+    "performance_cores": "0-7",
+    "efficiency_cores": "8-23"
+  },
+  "kernel": {
+    "isolated": "2-5",
+    "nohz_full": "2-7"
+  },
+  "domains": {
+    "live": "2-5",
+    "tickless": "2-7",
+    "preemptive": "0-1,6-15",
+    "system": "16-19",
+    "io": "20-23"
+  },
+  "tuning": {
+    "interrupts": {"moved": 69, "fixed": 18, "fixed_on_live": "168,169"},
+    "workqueue_cpumask": "00ffffc3",
+    "vm_stat_interval_s": 120,
+    "machine_check_poll_s": 0,
+    "idle": {"driver": "none", "limit": "c1", "resume_latency_us": null},
+    "frequency": {"live_khz": 3700000},
+    "power_limit": {"profile_w": 160, "long_term_w": 160, "short_term_w": 160, "lowered": false}
+  }
+}

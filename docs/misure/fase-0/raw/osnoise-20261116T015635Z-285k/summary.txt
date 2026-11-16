@@ -1,0 +1,30 @@
+directory: /var/lib/dawos/measure/osnoise-20261116T015635Z-285k
+started_utc: 2026-11-16T01:56:35Z
+duration: 10m
+label: 285k
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+load_on_other_cpus: yes
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 113000 verity 1 PARTLABEL=dawos-root-0.0.1.20261116010352 PARTLABEL=dawos-verity-0.0.1.20261116010352 4096 4096 14125 1 sha256 851e8f9605ab8c3edeac9beef5530e9e561c8c622135e06684ad7a9d2b7b896b 1a76b5ec0ef4c9319fcebbf05b5f0dd6e1542c38be54279e3a943c1ea4443e25 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116010352,PARTLABEL=dawos-verity-0.0.1.20261116010352 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 2301 10/04/2025
+image: e63621d975b2
+window_start_utc: 2026-11-16T01:56:48Z
+window_end_utc: 2026-11-16T02:06:28Z
+rtla_exit_status: 0
+load_running_at_window_end: yes
+finished_utc: 2026-11-16T02:06:41Z
+cpus_with_data: 4
+max_single_noise_us: 7 (cpu 4)
+lowest_cpu_availability_percent: 99.99996
+noise_events: hardware 4 nmi 0 interrupt 2362 softirq 0 thread 9
+interrupts_on_measured_cpus: LOC=22 RES=2268
+unexpected_interrupts: RES=2268 (Rescheduling interrupts)
+threads_on_measured_cpus: none
+unexpected_threads: none
+trace_events_lost: 0
+package_temperature_c: avg 72.3 max 78
+package_power_w: avg 136.7 max 149.3
+verdict: FAIL (interrupts)
