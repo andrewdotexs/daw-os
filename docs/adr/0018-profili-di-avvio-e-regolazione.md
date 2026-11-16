@@ -56,7 +56,7 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 
 ## Quando si riapre
 
-- Con l'esperimento E-02 (sotto-passo P0.6b), per il _fair server_.
+- Con l'esperimento E-02 (sotto-passo P0.6b), per il _fair server_. **Esito del 16 novembre 2026**: spento, un thread real-time che non si ferma blocca il lavoro normale del suo core per tutto il tempo (misurato sul 285K); acceso, sul 285K il lavoro normale è partito dopo 0,97 s togliendo al thread 428 µs, ma in macchina virtuale un processo interrotto dentro il kernel non è stato più rimesso in esecuzione e l'intera macchina si è fermata. Resta spento per la Fase 0; la protezione va costruita nel motore (Fase 1, rischio K-04).
 - Alla fine del sotto-passo P0.6b, per la frequenza dei core live e per lo stato di riposo (ADR 0009).
 - Se sul 285K compaiono errori hardware corretti che il sondaggio avrebbe segnalato.
 - Con la seconda macchina supportata: il modo di scegliere il profilo andrà rivisto se le macchine diventano molte.
