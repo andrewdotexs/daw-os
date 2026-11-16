@@ -1,0 +1,28 @@
+directory: /var/lib/dawos/measure/wakeup-20261116T162952Z-lunga
+started_utc: 2026-11-16T16:29:55Z
+label: lunga
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+period_us: 1000
+seconds_per_case: 1800
+cases: idle-load busy-load
+idle_driver: none
+idle_routine: mwait
+c1e_auto_promotion: DISabled
+package_cstate_control: locked, pkg-cstate-limit=0 (pc0)
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 113064 verity 1 PARTLABEL=dawos-root-0.0.1.20261116153853 PARTLABEL=dawos-verity-0.0.1.20261116153853 4096 4096 14133 1 sha256 41812faa33666b8e5f5d69b746f779e258d1dca56dab31a63d0626fec4eaa0d0 ba9bda058585634c3e9c268c8529432ae16a4bb8b2b31f715416d5422d1c8013 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116153853,PARTLABEL=dawos-verity-0.0.1.20261116153853 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 2301 10/04/2025
+image: 492586eb9196
+uptime_at_start_s: 2894
+live_khz: 4600000-4600000
+finished_utc: 2026-11-16T17:30:37Z
+delays in microseconds; p = 99.999th percentile; idle_pct = share of time the measured CPUs were stopped
+case          samples idle_pct  irq_min irq_avg irq_max  thr_avg thr_max  usr_avg   usr_p usr_max   pkg_w temp_avg temp_max
+idle-load     7200019     99.9     0.48    0.54    3.29     1.37    6.17     1.70     4.0    6.74   152.8     79.9       82
+busy-load     7200012      0.0     0.34    0.40    3.29     1.12    5.74     1.55     3.0    6.22   142.8     78.9       80
+wakeup_cost_load_us: irq_avg +0.14 thr_avg +0.25 usr_avg +0.15 (idle-load minus busy-load)
+staying_awake_cost_load_w: -10.0 (busy-load minus idle-load)
+adr0009_load: usr_max 6.74 us, +0.52 against busy-load: PASS (limits: 30 us, +5 us)
