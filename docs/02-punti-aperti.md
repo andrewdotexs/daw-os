@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-04 e A-27.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28.
 
 ## La regola d'ordine
 
@@ -22,14 +22,13 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-01 | Il kernel non aveva il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`): `MemoryMax=` di systemd non aveva effetto | Trovato il 16 novembre 2026 provando E-03 | Aggiunto nel kernel con la parte 2 di P0.6c. Si chiude quando la misura di rumore con il kernel nuovo passa e `dawos-cgroup-test` conferma il limite di memoria. |
-| A-02 | Driver grafico: `xe`, l'unico possibile su un kernel real-time (in Linux 6.18 `i915` dipende da `!PREEMPT_RT`); per Arrow Lake è sperimentale | E-04; scelta dell'utente del 16 novembre 2026 | Parte 2 di P0.6c: funziona? disturba i core live? |
+| A-02 | Driver grafico `xe`: funziona sul 285K e con lo schermo fermo non porta rumore; con lo schermo che cambia immagine, due volte in dieci minuti un interrupt di chiamata di funzione raggiunge tutti i core live | E-04; P0.6c, parte 2 | Sapere chi lo manda (diagnosi nella guida di P0.6c), poi decidere: toglierlo, o accettarlo per la Fase 0 e riprenderlo nella Fase 3 con il carico grafico vero. |
 
 ## Da chiudere in P0.6d
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-03 | Sotto il profilo `285k` i core non live girano piano e il package resta lontano dai 160 W (121 W con il firmware 3402, 134 W con la 2301); senza profilo, a parità di watt, i core girano circa il 20 % più veloci. Con il firmware 3402 gli altri core sono il 14–16 % più lenti che con la 2301 | P0.6b, parti 3 e 4; P0.6c, parte 0 | Scartati: _Intel Default Settings_ su _Extreme_ (stessi watt) e la preferenza energetica dei core live (ne hanno già una diversa dagli altri, e non cambia nulla). Prossima prova: core live non fissati a parità di carico (`dawos-freq-sweep free 4600`, nella parte 2 di P0.6c). Poi la voce _HwP Autonomous EPP Grouping_ del firmware e i limiti di corrente. Si chiude in P0.6d con E-06, o prima. |
+| A-03 | Sotto il profilo `285k` i core non live girano piano e il package resta lontano dai 160 W (121 W con il firmware 3402); senza profilo, a parità di watt, i core girano circa il 20 % più veloci | P0.6b, parti 3 e 4; P0.6c | Scartati: _Extreme_; il fissare la frequenza dei core live (lasciati liberi salgono a 5,3 GHz e gli altri scendono ancora). Ipotesi attuale: `dawos-tune` dà ai core live la preferenza energetica `performance`, e il processore favorisce quei core. Prova: stessa preferenza degli altri, nella guida di P0.6c. Se è così il rimedio è togliere quella riga da `dawos-tune`, dopo aver verificato che i core live tengano la frequenza lo stesso. |
 
 ## Da chiudere in P0.6e, prima della campagna
 
@@ -52,7 +51,6 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
 | A-16 | Buchi «hardware» rari, da 1 a 6 µs, senza causa nota, anche su core non live | P0.6b, parti 3 e 4c | Su 24 ore se ne vede la frequenza e se hanno un periodo. La campagna parte con la traccia armata sopra soglia. |
-| A-28 | Con il firmware 3402 ogni misura di rumore conta, dopo qualche secondo, il tick dello scheduler seguito dal thread `rcuc` sui core live (1–2 µs l'uno); con la 2301 erano zero. Il tick viene riacceso dal thread di misura stesso, che è un thread del kernel, a un confine dei suoi periodi | P0.6c, parte 0 | Sapere se un thread in spazio utente lo riceve: `dawos-osnoise --user`, nella parte 2 di P0.6c. Se no, riguarda lo strumento e non il motore, e resta da capire perché solo con il firmware nuovo. Se sì, va tolto prima della campagna. |
 | A-17 | Regola per le misure di riferimento: cominciano almeno cinque minuti dopo l'accensione | P0.6b, parte 3 | Già negli strumenti come nota; la campagna la rispetta. |
 
 ## Prima della Fase 1
@@ -79,5 +77,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Chiuso |
 | --- | --- | --- |
+| A-01 | Il kernel non aveva il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`) | 16 novembre 2026 (P0.6c, parte 2): aggiunto; la misura di rumore con il kernel nuovo passa e `dawos-cgroup-test` conferma il limite al gruppo del processo. |
+| A-28 | Con il firmware 3402 le misure di rumore contavano a tratti il tick dello scheduler seguito da `rcuc` sui core live | 16 novembre 2026 (P0.6c, parte 2): è un effetto del thread del tracciatore, che vive nel kernel. Con un ciclo in spazio utente al suo posto (`dawos-osnoise --user`), in dieci minuti il kernel non è mai entrato sui core live. Perché compaia più spesso con il firmware nuovo non è spiegato; non riguarda il motore. |
 | A-27 | Firmware del 285K dalla 2301 alla 3402, con l'Intel ME | 16 novembre 2026 (P0.6c, parte 0): aggiornato; nessun SMI; frequenza, risveglio e limite di potenza rimisurati; 4,6 GHz confermati. Ha lasciato A-28 e ha aggravato A-03. |
 | A-04 | Il ramo d'errore della verifica del C1E non era provato sulla macchina vera | 16 novembre 2026: al primo avvio dopo l'aggiornamento del firmware, con i valori di fabbrica, `make remote-test` è fallito con `tune=degraded` (riferito dall'utente; l'uscita non è stata conservata). |
