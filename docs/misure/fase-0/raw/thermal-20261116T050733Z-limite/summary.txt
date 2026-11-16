@@ -1,0 +1,19 @@
+directory: /var/lib/dawos/measure/thermal-20261116T050733Z-limite
+started_utc: 2026-11-16T05:07:33Z
+limits_w: 160
+step_seconds: 600
+label: limite
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+bios: 2301 10/04/2025
+image: a52f41ad81b2
+power_limits_before_uw: long=160000000 short=160000000
+junction_limit_c: 105
+temperature_at_start_c: 30
+throttle_start: core=0 package=0
+finished_utc: 2026-11-16T05:19:10Z
+power_limits_after_uw: long=160000000 short=160000000
+throttle_end: core=0 package=0
+limit_w    measured_w temp_end_c temp_max_c drift_c_per_min busy_mhz smi  note
+160        160.0      79.6       83         +0.1            4340     0    -
+cooldown_c: 0s=76 1s=47 2s=42 3s=38 5s=36 10s=34 20s=34 30s=33 60s=33 90s=32
+thermal_throttle_events: core 0 package 0

@@ -1,0 +1,605 @@
+#!/bin/sh
+# dawos-wakeup — measure how late a live CPU starts working again after it
+# stopped, and what keeping it awake costs.
+#
+# When a CPU has nothing to run the kernel stops it, and the processor
+# puts it to rest; the deeper the rest, the longer the way back. On a
+# live CPU that time is added to every audio cycle. Which rest is used
+# depends on the firmware and on the kernel (see "idle_driver",
+# "idle_routine" and "c1e_auto_promotion" in the result): this tool does
+# not change it, it measures what the machine does as it is, so that two
+# firmware settings can be compared by running it once under each.
+#
+# "rtla timerlat" arms a timer on each measured CPU, once per period, and
+# records three delays for every expiry, all counted from the programmed
+# time: to the interrupt handler ("irq"), to the moment the kernel gives
+# the CPU to the thread the interrupt woke ("thr"), and to the moment
+# that thread, a real-time user process as an audio thread is, is back
+# in its own code ("usr"). The measurement is repeated in these cases:
+#
+#   rest         nothing runs: package power and temperature of the
+#                machine at rest (no timer armed);
+#   idle-quiet   the measured CPUs stop between two expiries; the other
+#                CPUs have nothing to do;
+#   busy-quiet   a low-priority loop keeps every measured CPU awake: the
+#                timer never finds it at rest;
+#   idle-load    as idle-quiet, with stress-ng on all the other CPUs;
+#   busy-load    as busy-quiet, with stress-ng on all the other CPUs.
+#
+# "idle" minus "busy" is the price of the wake-up in time; "busy" minus
+# "idle", in watts, is the price of never resting. The loop of the busy
+# cases is a user process, so the interrupt has to leave user mode
+# first: a waiting loop inside the kernel would be found slightly
+# earlier (a fraction of a microsecond, estimated).
+#
+# Delays are collected in nanoseconds in a histogram with steps of half
+# a microsecond up to 100 us; the summary gives them in microseconds.
+#
+# Results go to /var/lib/dawos/measure/wakeup-<time>[-LABEL]; fetch them
+# with "make measure-fetch" on the development PC. "--summary DIR" needs
+# only sh, awk and sed, and also runs there.
+
+set -u
+
+PROG=dawos-wakeup
+BASE=/var/lib/dawos/measure
+UNIT=dawos-wakeup
+ALL_CASES="rest idle-quiet busy-quiet idle-load busy-load"
+# Seconds per case, and for the case "rest".
+STEP_S=120
+REST_S=60
+# Timer period in microseconds: one millisecond is an audio cycle of 48
+# frames at 48 kHz.
+PERIOD_US=1000
+# Histogram: bucket width in nanoseconds, number of buckets.
+BUCKET_NS=500
+BUCKETS=200
+# Seconds the timers run before their delays are collected.
+WARMUP_S=5
+# Seconds between two cases.
+PAUSE_S=10
+# Seconds after boot from which a measurement counts as a reference.
+SETTLED_S=300
+# ADR 0009: largest delay accepted with the CPUs at rest (the 50 us of
+# the project less 20 us of margin), and how much worse than with the
+# CPUs kept awake it may be, both in microseconds.
+ADR_LIMIT_US=30
+ADR_MARGIN_US=5
+SELF=$(readlink -f "$0")
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--cpus LIST] [--period US] [--step SECONDS] [--cases LIST] [LABEL]
+                             start a measurement
+  ${PROG} --status           show progress, or the last summary
+  ${PROG} --summary DIR      (re)compute the summary of a finished run
+
+Without --cpus the CPUs isolated by the boot profile are measured.
+Cases (default: all, in this order): $(echo "${ALL_CASES}" | tr ' ' ',')
+Defaults: period ${PERIOD_US} us, ${STEP_S} s per case, ${REST_S} s for the case "rest".
+LABEL is a short word added to the name of the result directory.
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# CPUs of a kernel list ("4-7", "0-3,8-15"), one per line, sorted.
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done | sort -n -u
+}
+
+# CPU numbers on standard input, back into a list.
+compress_list() {
+	sort -n -u | awk '
+		NR == 1 { start = prev = $1; next }
+		$1 == prev + 1 { prev = $1; next }
+		{ printf "%s%s", sep, (start == prev ? start : start "-" prev); sep = ","; start = prev = $1 }
+		END { if (NR) printf "%s%s", sep, (start == prev ? start : start "-" prev); print "" }'
+}
+
+# CPUs of list $1 that are not in list $2.
+subtract_list() {
+	for candidate in $(expand_list "$1"); do
+		expand_list "$2" | grep -qx "${candidate}" || echo "${candidate}"
+	done | compress_list
+}
+
+# Print the sysfs directory of the coretemp sensor, whose temp1 is the
+# whole package; nothing if there is none (virtual machines).
+coretemp_dir() {
+	for hwmon in /sys/class/hwmon/hwmon*; do
+		[ -r "${hwmon}/name" ] || continue
+		read -r hwmon_name < "${hwmon}/name"
+		if [ "${hwmon_name}" = coretemp ] && [ -r "${hwmon}/temp1_input" ]; then
+			echo "${hwmon}"
+			return 0
+		fi
+	done
+	return 0
+}
+
+# One line every two seconds: seconds since boot, package temperature in
+# thousandths of a degree, package energy counter in microjoules ("-"
+# where the machine has no such file). The first line gives the value at
+# which the energy counter starts again from zero. Both files are served
+# from wherever the reader runs: no measured CPU is visited.
+sample_package() {
+	sensor=$(coretemp_dir)
+	energy=/sys/class/powercap/intel-rapl:0/energy_uj
+	echo "# max_energy_range_uj $(cat "${energy%/*}/max_energy_range_uj" 2> /dev/null || echo 0)"
+	while :; do
+		read -r sample_time _ < /proc/uptime
+		temperature=-
+		[ -n "${sensor}" ] && read -r temperature < "${sensor}/temp1_input"
+		joules=-
+		[ -r "${energy}" ] && read -r joules < "${energy}"
+		echo "${sample_time} ${temperature} ${joules}"
+		sleep 2
+	done
+}
+
+uptime_now() {
+	read -r uptime_value _ < /proc/uptime
+	echo "${uptime_value}"
+}
+
+# Latency figures of one case, from the histogram file $1:
+# "samples irq_min irq_avg irq_max thr_avg thr_max usr_avg usr_p usr_max",
+# in microseconds; p is the 99.999th percentile, as the upper edge of its
+# bucket. rtla prints a header naming the columns (IRQ-004 Thr-004
+# Usr-004 ...), one row per bucket that is not empty, then the rows
+# over:, count:, min:, avg:, max: with the same columns, then a block
+# for all CPUs together, which starts with "ALL:" and is not read.
+latency_fields() {
+	awk -v bucket="${BUCKET_NS}" -v buckets="${BUCKETS}" '
+		function percentile(kind,    target, sum, i) {
+			target = total[kind] * 0.99999
+			sum = 0
+			for (i = 1; i <= rows; i++) {
+				sum += hist[kind, row[i]]
+				if (sum >= target) return sprintf("%.1f", (row[i] + bucket) / 1000)
+			}
+			return sprintf(">%d", bucket * buckets / 1000)
+		}
+		function show(value) { return sprintf("%.2f", value / 1000) }
+		/^ALL:/ { done = 1 }
+		done { next }
+		$1 == "Index" {
+			for (i = 2; i <= NF; i++) kind[i] = substr($i, 1, 3)
+			columns = NF
+			next
+		}
+		!columns { next }
+		$1 ~ /^[0-9]+$/ {
+			row[++rows] = $1
+			for (i = 2; i <= NF; i++) hist[kind[i], $1] += $i
+			next
+		}
+		$1 == "count:" {
+			for (i = 2; i <= NF; i++) { count[i] = $i + 0; total[kind[i]] += $i }
+			next
+		}
+		$1 == "min:" {
+			for (i = 2; i <= NF; i++) if ($i != "-" && (low[kind[i]] == "" || $i + 0 < low[kind[i]])) low[kind[i]] = $i + 0
+			next
+		}
+		$1 == "avg:" {
+			for (i = 2; i <= NF; i++) if ($i != "-") weighted[kind[i]] += $i * count[i]
+			next
+		}
+		$1 == "max:" {
+			for (i = 2; i <= NF; i++) if ($i != "-" && $i + 0 > high[kind[i]]) high[kind[i]] = $i + 0
+			next
+		}
+		END {
+			if (!total["IRQ"]) { print "0 - - - - - - - -"; exit }
+			printf "%d %s %s %s", total["IRQ"], show(low["IRQ"]), show(weighted["IRQ"] / total["IRQ"]), show(high["IRQ"])
+			if (total["Thr"]) printf " %s %s", show(weighted["Thr"] / total["Thr"]), show(high["Thr"])
+			else printf " - -"
+			if (total["Usr"]) printf " %s %s %s", show(weighted["Usr"] / total["Usr"]), percentile("Usr"), show(high["Usr"])
+			else printf " - - -"
+			printf "\n"
+		}' "$1"
+}
+
+# "watts temperature_avg temperature_max" between the uptimes $2 and $3,
+# from the samples in file $1; "-" for what the machine does not report.
+package_fields() {
+	awk -v first="$2" -v last="$3" '
+		$1 == "#" { range = $3 + 0; next }
+		$1 + 0 < first + 0 || $1 + 0 > last + 0 { next }
+		$2 != "-" { t = $2 / 1000; tsum += t; tn++; if (t > tmax) tmax = t }
+		$3 != "-" {
+			if (have) {
+				joules = $3 - before
+				if (joules < 0) joules += range
+				energy += joules; elapsed += $1 - when
+			}
+			before = $3; when = $1; have = 1
+		}
+		END {
+			if (elapsed > 0) printf "%.1f", energy / elapsed / 1000000; else printf "-"
+			if (tn) printf " %.1f %d\n", tsum / tn, tmax; else printf " - -\n"
+		}' "$1"
+}
+
+# Share of time, in percent, the CPUs of list $1 spent stopped between the
+# two copies of /proc/stat $2 and $3 ("-" if a copy is missing). A row
+# reads: cpuN user nice system idle iowait irq softirq steal ...
+idle_percent() {
+	if [ ! -s "$2" ] || [ ! -s "$3" ]; then
+		echo -
+		return 0
+	fi
+	awk -v wanted=" $(expand_list "$1" | tr '\n' ' ')" '
+		FNR == 1 { file++ }
+		$1 ~ /^cpu[0-9]+$/ && index(wanted, " " substr($1, 4) " ") {
+			busy = $2 + $3 + $4 + $7 + $8 + $9
+			still = $5 + $6
+			if (file == 1) { busy0[$1] = busy; still0[$1] = still }
+			else { busy_sum += busy - busy0[$1]; still_sum += still - still0[$1] }
+		}
+		END {
+			if (busy_sum + still_sum > 0) printf "%.1f\n", 100 * still_sum / (busy_sum + still_sum)
+			else print "-"
+		}' "$2" "$3"
+}
+
+# Write summary.txt from the files of the result directory $1.
+summarize() {
+	result=$1
+	measured=$(sed -n 's/^cpus_measured: //p' "${result}/meta.txt")
+	{
+		echo "directory: ${result}"
+		cat "${result}/meta.txt"
+		echo "delays in microseconds; p = 99.999th percentile; idle_pct = share of time the measured CPUs were stopped"
+		printf '%-11s %9s %8s  %7s %7s %7s  %7s %7s  %7s %7s %7s  %6s %8s %8s\n' \
+			case samples idle_pct irq_min irq_avg irq_max thr_avg thr_max usr_avg usr_p usr_max pkg_w temp_avg temp_max
+		if [ -s "${result}/steps.txt" ]; then
+			while read -r name first last _; do
+				# The case "rest" arms no timer.
+				fields="- - - - - - - - -"
+				[ "${name}" = rest ] || fields=$(latency_fields "${result}/timerlat-${name}.txt" 2> /dev/null)
+				[ -n "${fields}" ] || fields="0 - - - - - - - -"
+				stopped=$(idle_percent "${measured}" "${result}/stat-${name}-start.txt" "${result}/stat-${name}-end.txt")
+				package=$(package_fields "${result}/power.txt" "${first}" "${last}")
+				# shellcheck disable=SC2086 # the fields are words
+				printf '%-11s %9s %8s  %7s %7s %7s  %7s %7s  %7s %7s %7s  %6s %8s %8s\n' \
+					"${name}" ${fields%% *} "${stopped}" ${fields#* } ${package}
+			done < "${result}/steps.txt"
+		else
+			echo "no case completed"
+		fi
+	} > "${result}/summary.txt"
+
+	# The two prices, where both cases of a pair are there. Columns of the
+	# table: 1 case, 2 samples, 5 irq_avg, 7 thr_avg, 9 usr_avg, 11 usr_max,
+	# 12 pkg_w.
+	awk -v limit="${ADR_LIMIT_US}" -v margin="${ADR_MARGIN_US}" '
+		$2 ~ /^[0-9]+$/ && $2 > 0 { irq[$1] = $5; thr[$1] = $7; usr[$1] = $9; worst[$1] = $11; have[$1] = 1 }
+		$1 ~ /^(rest|idle-|busy-)/ { watts[$1] = $12 }
+		function pair(kind,    idle, busy) {
+			idle = "idle-" kind; busy = "busy-" kind
+			if (!have[idle] || !have[busy]) return
+			printf "wakeup_cost_%s_us: irq_avg %+.2f", kind, irq[idle] - irq[busy]
+			if (thr[idle] != "-" && thr[busy] != "-") printf " thr_avg %+.2f", thr[idle] - thr[busy]
+			if (usr[idle] != "-" && usr[busy] != "-") printf " usr_avg %+.2f", usr[idle] - usr[busy]
+			printf " (%s minus %s)\n", idle, busy
+			if (watts[idle] != "-" && watts[busy] != "-")
+				printf "staying_awake_cost_%s_w: %+.1f (%s minus %s)\n", kind, watts[busy] - watts[idle], busy, idle
+		}
+		# The criterion of ADR 0009 for a rest state against active
+		# waiting: the largest delay within the limit, and not more
+		# than the allowed amount worse than with the CPU kept awake.
+		function criterion(kind,    idle, busy, worse) {
+			idle = "idle-" kind; busy = "busy-" kind
+			if (!have[idle] || !have[busy] || worst[idle] == "-" || worst[busy] == "-") return
+			worse = worst[idle] - worst[busy]
+			printf "adr0009_%s: usr_max %.2f us, %+.2f against %s: %s (limits: %d us, +%d us)\n", kind, worst[idle], worse, busy,
+				(worst[idle] <= limit && worse <= margin) ? "PASS" : "FAIL", limit, margin
+		}
+		END { pair("quiet"); pair("load"); criterion("quiet"); criterion("load") }' "${result}/summary.txt" > "${result}/summary.tmp"
+	cat "${result}/summary.tmp" >> "${result}/summary.txt"
+	rm -f "${result}/summary.tmp"
+
+	# What would make the figures wrong, said rather than left to notice.
+	for report in "${result}"/timerlat-*.txt; do
+		[ -r "${report}" ] || continue
+		beyond=$(awk '/^ALL:/ { exit } $1 == "over:" { for (i = 2; i <= NF; i++) n += $i } END { print n + 0 }' "${report}")
+		[ "${beyond}" -eq 0 ] ||
+			echo "note: ${report##*/}: ${beyond} delays beyond the histogram ($((BUCKET_NS * BUCKETS / 1000)) us)" >> "${result}/summary.txt"
+	done
+	grep -h '^note: ' "${result}/steps.txt" "${result}/meta.txt" 2> /dev/null >> "${result}/summary.txt"
+	started=$(sed -n 's/^uptime_at_start_s: //p' "${result}/meta.txt")
+	[ -z "${started}" ] || [ "${started}" -ge "${SETTLED_S}" ] ||
+		echo "note: started ${started} s after boot, before the machine had settled (${SETTLED_S} s)" >> "${result}/summary.txt"
+	cat "${result}/summary.txt"
+}
+
+# One loop per measured CPU, each in a unit of its own bound to that CPU:
+# the image has no taskset, and on isolated CPUs the kernel does not
+# spread processes by itself. Normal priority: the measurement thread,
+# which is real-time, always runs first.
+start_spinners() {
+	for spin_cpu in $(expand_list "$1"); do
+		systemd-run --quiet --collect --unit="${UNIT}-spin-${spin_cpu}" \
+			--description="dawOS wake-up measurement: CPU ${spin_cpu} kept awake" \
+			-p CPUAffinity="${spin_cpu}" -p RuntimeMaxSec="$2" \
+			/bin/sh -c 'while :; do :; done' || return 1
+	done
+}
+
+stop_spinners() {
+	for spin_cpu in $(expand_list "$1"); do
+		systemctl stop "${UNIT}-spin-${spin_cpu}.service" 2> /dev/null
+	done
+	return 0
+}
+
+cleanup() {
+	trap - EXIT
+	stop_spinners "${run_cpus}"
+	# shellcheck disable=SC2086 # a list of process numbers
+	[ -z "${run_pids}" ] || kill ${run_pids} 2> /dev/null
+	wait 2> /dev/null
+}
+
+# The measurement itself; runs inside the transient unit.
+#   $1 = directory, $2 = seconds per case, $3 = CPUs, $4 = period in
+#   microseconds, $5 = cases separated by spaces
+run_measurement() {
+	run_dir=$1
+	run_step=$2
+	run_cpus=$3
+	run_period=$4
+	run_cases=$5
+	run_others=$(subtract_list "$(cat /sys/devices/system/cpu/online)" "${run_cpus}")
+	run_pids=
+	trap cleanup EXIT
+	trap 'exit 1' INT TERM HUP
+
+	sample_package > "${run_dir}/power.txt" &
+	sampler_pid=$!
+	run_pids=${sampler_pid}
+	: > "${run_dir}/steps.txt"
+
+	for case_name in ${run_cases}; do
+		if [ "${case_name}" = rest ]; then
+			sleep "${PAUSE_S}"
+			first=$(uptime_now)
+			cat /proc/stat > "${run_dir}/stat-rest-start.txt"
+			sleep "${REST_S}"
+			cat /proc/stat > "${run_dir}/stat-rest-end.txt"
+			echo "rest ${first} $(uptime_now)" >> "${run_dir}/steps.txt"
+			continue
+		fi
+
+		load_pid=
+		case "${case_name}" in
+		*-load)
+			workers=$(expand_list "${run_others}" | wc -l)
+			stress-ng --taskset "${run_others}" --temp-path "${run_dir}" \
+				--cpu "${workers}" --cpu-method matrixprod \
+				--vm 2 --vm-bytes 512M --switch 4 --timer 2 \
+				--timeout 0 > "${run_dir}/load-${case_name}.txt" 2>&1 &
+			load_pid=$!
+			run_pids="${sampler_pid} ${load_pid}"
+			;;
+		esac
+		case "${case_name}" in
+		busy-*)
+			start_spinners "${run_cpus}" $((run_step + WARMUP_S + 60)) ||
+				echo "note: ${case_name}: could not keep every measured CPU awake" >> "${run_dir}/steps.txt"
+			;;
+		esac
+		sleep 3
+
+		rtla timerlat hist -c "${run_cpus}" -p "${run_period}" -d "${run_step}s" \
+			-n -b "${BUCKET_NS}" -E "${BUCKETS}" --warm-up "${WARMUP_S}" --no-aa \
+			> "${run_dir}/timerlat-${case_name}.txt" 2>&1 &
+		rtla_pid=$!
+		run_pids="${run_pids} ${rtla_pid}"
+		sleep $((WARMUP_S + 2))
+		first=$(uptime_now)
+		cat /proc/stat > "${run_dir}/stat-${case_name}-start.txt"
+		sleep $((run_step - 6))
+		cat /proc/stat > "${run_dir}/stat-${case_name}-end.txt"
+		last=$(uptime_now)
+		wait "${rtla_pid}"
+		rtla_status=$?
+
+		stop_spinners "${run_cpus}"
+		if [ -n "${load_pid}" ]; then
+			kill "${load_pid}" 2> /dev/null
+			wait "${load_pid}" 2> /dev/null
+		fi
+		run_pids=${sampler_pid}
+		[ "${rtla_status}" -eq 0 ] ||
+			echo "note: ${case_name}: rtla ended with status ${rtla_status}" >> "${run_dir}/steps.txt"
+		echo "${case_name} ${first} ${last}" >> "${run_dir}/steps.txt"
+		sleep "${PAUSE_S}"
+	done
+
+	kill "${sampler_pid}" 2> /dev/null
+	wait 2> /dev/null
+	run_pids=
+	date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ' >> "${run_dir}/meta.txt"
+	summarize "${run_dir}" > /dev/null
+}
+
+cpus=
+period=${PERIOD_US}
+step=${STEP_S}
+cases=${ALL_CASES}
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--status)
+		if systemctl is-active --quiet "${UNIT}"; then
+			echo "A measurement is running:"
+			systemctl show -p ActiveEnterTimestamp --value "${UNIT}" | sed 's/^/  started: /'
+		else
+			echo "No measurement is running."
+		fi
+		latest=
+		for candidate in "${BASE}"/wakeup-*; do
+			[ -d "${candidate}" ] && latest=${candidate}
+		done
+		if [ -n "${latest}" ]; then
+			echo "Latest result directory: ${latest}"
+			if [ -r "${latest}/summary.txt" ]; then
+				cat "${latest}/summary.txt"
+			else
+				sed 's/^/  /' "${latest}/meta.txt"
+				[ -s "${latest}/steps.txt" ] && sed 's/^/  case done: /' "${latest}/steps.txt"
+			fi
+		fi
+		exit 0
+		;;
+	--summary)
+		[ -d "${2:-}" ] || die "--summary needs a result directory"
+		summarize "$2"
+		exit 0
+		;;
+	--run)
+		# Internal: called by the transient unit.
+		run_measurement "$2" "$3" "$4" "$5" "$6"
+		exit 0
+		;;
+	--cpus)
+		cpus=${2:-}
+		[ -n "${cpus}" ] || die "--cpus needs a list, for example 4-7"
+		shift
+		;;
+	--period)
+		period=${2:-}
+		shift
+		;;
+	--step)
+		step=${2:-}
+		shift
+		;;
+	--cases)
+		cases=$(echo "${2:-}" | tr ',' ' ')
+		shift
+		;;
+	-*) die "unknown option '$1' (try --help)" ;;
+	*) break ;;
+	esac
+	shift
+done
+label=${1:-}
+
+[ "$(id -u)" = 0 ] || die "must run as root"
+echo "${period}" | grep -Eq '^[0-9]{3,7}$' || die "bad period '${period}': microseconds, from 100 to 1000000"
+[ "${period}" -le 1000000 ] || die "bad period '${period}': microseconds, from 100 to 1000000"
+echo "${step}" | grep -Eq '^[0-9]{2,6}$' || die "bad step '${step}': seconds, from 20 to 999999"
+[ "${step}" -ge 20 ] || die "bad step '${step}': seconds, from 20 to 999999"
+[ -n "${cases}" ] || die "--cases needs a list, for example idle-quiet,busy-quiet"
+for case_name in ${cases}; do
+	echo " ${ALL_CASES} " | grep -q " ${case_name} " || die "unknown case '${case_name}' (try --help)"
+done
+if [ -n "${label}" ]; then
+	echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' || die "the label may only contain letters, digits, '-' and '_'"
+fi
+# The kernel runs one tracer of this family at a time, and a load left
+# by another tool would be measured as if it were ours.
+for other in "${UNIT}" dawos-osnoise dawos-hwnoise dawos-freq-sweep dawos-thermal-sweep dawos-starve-hog; do
+	systemctl is-active --quiet "${other}" && die "'${other}' is running: wait for it, or stop it"
+done
+for tool in rtla stress-ng systemd-run turbostat; do
+	command -v "${tool}" > /dev/null || die "'${tool}' not found: this needs the dev variant of the image"
+done
+
+isolated=$(grep -v null /sys/devices/system/cpu/isolated 2> /dev/null)
+if [ -z "${cpus}" ]; then
+	cpus=${isolated}
+	[ -n "${cpus}" ] ||
+		die "the kernel isolated no CPU: start a profile with dawos-profile, or name the CPUs with --cpus"
+fi
+echo "${cpus}" | grep -Eq '^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$' || die "bad CPU list '${cpus}'"
+
+read -r uptime _ < /proc/uptime
+[ "${uptime%%.*}" -ge "${SETTLED_S}" ] ||
+	echo "${PROG}: note: the machine booted ${uptime%%.*} s ago; for a reference measurement wait until ${SETTLED_S} s"
+
+dir="${BASE}/wakeup-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}" || die "could not create ${dir}"
+
+# What the processor does with a stopped CPU. turbostat prints it at its
+# start, among the settings it reads from the processor (it visits the
+# CPUs to do so: here, before anything is measured). In a virtual
+# machine it prints nothing and never ends, and busybox has no
+# "timeout": it gets five seconds, then the answer is "unknown".
+turbostat --num_iterations 1 --interval 1 > "${dir}/processor.txt" 2>&1 &
+reader_pid=$!
+waited=0
+while kill -0 "${reader_pid}" 2> /dev/null && [ "${waited}" -lt 5 ]; do
+	sleep 1
+	waited=$((waited + 1))
+done
+kill "${reader_pid}" 2> /dev/null
+wait "${reader_pid}" 2> /dev/null
+c1e=$(sed -n 's/.*C1E auto-promotion: \([A-Za-z]*\)).*/\1/p' "${dir}/processor.txt" | head -n 1)
+package_limit=$(sed -n 's/.*MSR_PKG_CST_CONFIG_CONTROL: [^(]*(\(.*\))$/\1/p' "${dir}/processor.txt" | head -n 1)
+# Without an idle driver the kernel stops a CPU with one instruction,
+# chosen at boot and said in its log only when it is not the plain halt.
+if dmesg 2> /dev/null | grep -q 'using mwait in idle threads' ||
+	journalctl -k -b --no-pager 2> /dev/null | grep -q 'using mwait in idle threads'; then
+	idle_routine=mwait
+else
+	idle_routine="hlt (or the line has left the kernel log)"
+fi
+first_cpu=$(expand_list "${cpus}" | head -n 1)
+frequency_dir=/sys/devices/system/cpu/cpu${first_cpu}/cpufreq
+
+{
+	date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "label: ${label:-none}"
+	echo "cpus_measured: ${cpus}"
+	echo "cpus_isolated_by_kernel: ${isolated:-none}"
+	echo "period_us: ${period}"
+	echo "seconds_per_case: ${step}"
+	echo "cases: ${cases}"
+	echo "idle_driver: $(cat /sys/devices/system/cpu/cpuidle/current_driver 2> /dev/null || echo unknown)"
+	echo "idle_routine: ${idle_routine}"
+	echo "c1e_auto_promotion: ${c1e:-unknown}"
+	echo "package_cstate_control: ${package_limit:-unknown}"
+	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+	echo "tune: $(sed -n 's/^  "status": "\([a-z]*\)".*/\1/p' /run/dawos/topology.json 2> /dev/null)"
+	echo "kernel: $(uname -srv)"
+	echo "cmdline: $(cat /proc/cmdline)"
+	echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
+	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+	echo "uptime_at_start_s: ${uptime%%.*}"
+	echo "live_khz: $(cat "${frequency_dir}/scaling_min_freq" 2> /dev/null)-$(cat "${frequency_dir}/scaling_max_freq" 2> /dev/null)"
+} > "${dir}/meta.txt"
+[ -r /run/dawos/topology.json ] && cp /run/dawos/topology.json "${dir}/topology.json"
+
+systemd-run --quiet --unit="${UNIT}" --collect \
+	--description="dawOS wake-up delay measurement" \
+	/bin/sh "${SELF}" --run "${dir}" "${step}" "${cpus}" "${period}" "${cases}" ||
+	die "could not start the measurement"
+
+total=0
+for case_name in ${cases}; do
+	if [ "${case_name}" = rest ]; then
+		total=$((total + REST_S + PAUSE_S))
+	else
+		total=$((total + step + WARMUP_S + PAUSE_S + 8))
+	fi
+done
+echo "Measurement started on CPUs ${cpus}: $(echo "${cases}" | wc -w) cases, about $(((total + 59) / 60)) minutes; results in ${dir}"
+echo "Follow it with: ${PROG} --status"

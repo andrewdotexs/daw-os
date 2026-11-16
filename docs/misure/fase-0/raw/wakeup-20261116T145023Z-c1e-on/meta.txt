@@ -1,0 +1,20 @@
+started_utc: 2026-11-16T14:50:25Z
+label: c1e-on
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+period_us: 1000
+seconds_per_case: 120
+cases: rest idle-quiet busy-quiet idle-load busy-load
+idle_driver: none
+idle_routine: mwait
+c1e_auto_promotion: ENabled
+package_cstate_control: locked, pkg-cstate-limit=0 (pc0)
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 113064 verity 1 PARTLABEL=dawos-root-0.0.1.20261116143115 PARTLABEL=dawos-verity-0.0.1.20261116143115 4096 4096 14133 1 sha256 b06965c667ea391de353dc6a82e36246fa4c631fb550fcb755dd335445732c32 61205ac06453f93c3aefb66c03aa39d4b674889ded6852fa8f5bc09c2a6ac722 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116143115,PARTLABEL=dawos-verity-0.0.1.20261116143115 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 2301 10/04/2025
+image: 7bda3f07da03
+uptime_at_start_s: 643
+live_khz: 4600000-4600000
+finished_utc: 2026-11-16T15:00:57Z

@@ -403,7 +403,7 @@ Questo esperimento richiede un programma di misura di poche decine di righe: uno
 | D-06 | Chiusa: toolchain Bootlin con glibc | [ADR 0006](adr/0006-toolchain-bootlin-glibc.md) |
 | D-07 | Chiusa: Buildroot 2026.02.x e kernel fissato | [ADR 0007](adr/0007-versioni-buildroot-e-kernel.md) |
 | D-08 | Chiusa: `fcp-server` come processo separato | [ADR 0008](adr/0008-fcp-server-processo-separato.md) |
-| D-09 | In sospeso fino al passo P0.6 | [ADR 0009](adr/0009-riposo-dei-core-live.md) |
+| D-09 | Chiusa il 16 novembre 2026: C1 (C1E spento nel firmware), nessuna attesa attiva, verifica a ogni avvio | [ADR 0009](adr/0009-riposo-dei-core-live.md) |
 | D-16 | Chiusa: carico sintetico, soglia del 60 %, freeze nell'MVP | [ADR 0011](adr/0011-r04-carico-sintetico.md) |
 | D-10…D-15, D-17…D-21 | Rinviate: le ripropongo prima della Fase 1 con le raccomandazioni aggiornate | — |
 
@@ -519,11 +519,13 @@ Il dettaglio è in [P0.4b-rumore-di-fondo.md](fasi/fase-0/P0.4b-rumore-di-fondo.
 | P0.6, profili del 285K | Uno, core live 4–7 | Confermato dopo il confronto con l'alternativa 2–5 (profilo `285k-alt`, poi tolto): stesso rumore, 6 °C in meno di media. Scelta dell'utente del 16 novembre 2026. |
 | P0.6, _fair server_ | «Secondo l'esito delle prove (K-04)» | Spento sui core live già in P0.6a: il suo timer mandava un interrupt al secondo a ogni core live. Scelta dell'utente del 16 novembre 2026; l'esperimento E-02 resta in P0.6b per misurarne il rischio. |
 | P0.6, console seriale | Nella riga di comando di ogni profilo | Solo nel profilo `generic`; scelta dell'utente del 15 novembre 2026. |
-| P0.6, frequenza dei core live | «Minimo uguale al massimo» | Fissa alla frequenza base garantita; un valore più alto solo dopo la misura di P0.6b; scelta dell'utente del 15 novembre 2026. |
+| P0.6, frequenza dei core live | «Minimo uguale al massimo» | Fissa a **4,6 GHz** dal 16 novembre 2026 (scelta dell'utente sulla misura di P0.6b: a pieno carico tengono fino a 4,8 GHz, sopra no). Prima era la frequenza base garantita, 3,7 GHz. |
 | P0.6, limite di potenza | Da decidere se `dawos-tune` lo riscrive | Lo abbassa al valore del profilo se il firmware ne consegna uno più alto; non lo alza mai; scelta dell'utente del 15 novembre 2026. |
 | P0.6, `dawos-tune`, punto 5 | `vm.stat_interval`, `kernel.timer_migration`, _fair server_ | `vm.stat_interval=120` e sondaggio degli errori hardware corretti spento; `timer_migration` e _fair server_ restano ai valori del kernel fino all'esperimento E-02. |
 | P0.6, accettazione, strumento | `rtla osnoise top -c 4-7 -d 10m`, differenza di `/proc/interrupts`, traccia `sched_switch` | Riuniti in `dawos-osnoise`, che non usa `turbostat`: per leggere un core ci si sposta sopra, compresi quelli misurati. |
 | Rapporto di avvio | Undici campi | Nuovi campi `profile=` e `tune=`. |
+| P0.6, esperimento E-01 | Quattro casi ottenuti con un limite per core (PM QoS), 30 minuti ciascuno | Sul 285K il firmware non dichiara stati di riposo e il limite per core non ha effetto: i casi sono attesa attiva (un processo), C1 e C1E (voce _Enhanced C-states_ del firmware, uguale per tutti i core). Strumento `dawos-wakeup`, due minuti per caso e una misura lunga per la configurazione scelta. Vedi [ADR 0009](adr/0009-riposo-dei-core-live.md). |
+| P0.6, `dawos-tune`, stato di riposo | Limite dato al kernel core per core | Sul 285K il kernel non ha stati tra cui scegliere: `live_idle=c1` diventa una verifica, a ogni avvio, che il processore non trasformi il C1 in C1E; se lo fa, il profilo è `degraded`. Scelta dell'utente del 16 novembre 2026. |
 | Kernel | Supporto alle reti senza fili dalla configurazione di partenza | Tolto. Aggiunto `CONFIG_INTEL_IDLE`. |
 | P0.5, accettazione | «`veritysetup status root` riporta `verified`» | Il dispositivo si chiama `dawos-root`; il rapporto di avvio ha il campo `verity=1`; la prova di manomissione è automatica (`make qemu-tamper-test`). |
 

@@ -1,0 +1,242 @@
+#!/bin/sh
+# dawos-starve-test — what a real-time thread that never sleeps does to
+# the rest of its CPU, with the fair server off and on (experiment E-02).
+#
+# The fair server is the part of every second (50 ms by default) the
+# kernel keeps for normal threads on a CPU that real-time threads would
+# otherwise fill. dawOS switches it off on the live CPUs, because its
+# timer reaches them once a second (step P0.6a). This test measures what
+# that choice costs and what the alternative costs, on one live CPU:
+#
+#   the hog      a user-space SCHED_FIFO process that spins without ever
+#                sleeping (an endless shell loop, started by systemd on
+#                that CPU): it stands for an audio thread gone wrong. A
+#                trace of the thread switches on that CPU tells how often
+#                and for how long it was pushed aside;
+#   probe 1      a normal process bound to the same CPU: how long until
+#                it gets to run?
+#   probe 2      a kernel operation that needs every CPU to run a piece
+#                of work (reading /proc/sys/vm/stat_refresh): how long
+#                until it returns? This is how a starved CPU can hold up
+#                the whole machine.
+#
+# Both variants run one after the other, the hog for 30 seconds each. With
+# the fair server off the probes are expected to wait until the hog
+# stops: nothing is damaged, they complete then. The setting found at the
+# start is written back at the end, whatever happens.
+#
+# The hog is a user-space process on purpose. A kernel thread spinning at
+# real-time priority would also starve the kernel's own housekeeping of
+# that CPU (RCU), which user-space code on a tickless CPU does not need.
+#
+# Results go to /var/lib/dawos/measure/starve-<time>[-LABEL].
+
+set -u
+
+PROG=dawos-starve-test
+BASE=/var/lib/dawos/measure
+FAIR=/sys/kernel/debug/sched/fair_server
+# Seconds the hog runs in each variant, and how long a probe is waited
+# for before it is declared stuck.
+HOG_SECONDS=30
+PROBE_WAIT=8
+# Default fair server reservation, in nanoseconds per second.
+DEFAULT_RUNTIME_NS=50000000
+HOG_UNIT=dawos-starve-hog
+TRACEFS=/sys/kernel/tracing
+INSTANCE=${TRACEFS}/instances/dawos-starve
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--cpu N] [--priority P] [LABEL]
+
+  --cpu N       the live CPU to test (default: the last isolated one)
+  --priority P  SCHED_FIFO priority of the hog, 1-99 (default: 50)
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# Seconds since boot, with hundredths.
+now() {
+	cut -d ' ' -f 1 /proc/uptime
+}
+
+# $2 - $1, in seconds with two decimals.
+elapsed() {
+	awk -v a="$1" -v b="$2" 'BEGIN { printf "%.2f", b - a }'
+}
+
+# Rescheduling interrupts counted so far on CPU $1.
+res_count() {
+	awk -v cpu="$1" '$1 == "RES:" { print $(cpu + 2) }' /proc/interrupts
+}
+
+# Wait up to PROBE_WAIT seconds for the file $1 to have content.
+wait_for() {
+	tries=0
+	while [ ! -s "$1" ] && [ "${tries}" -lt "${PROBE_WAIT}" ]; do
+		sleep 1
+		tries=$((tries + 1))
+	done
+	[ -s "$1" ]
+}
+
+cpu=
+priority=50
+label=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--cpu)
+		cpu=${2:-}
+		shift
+		;;
+	--priority)
+		priority=${2:-}
+		shift
+		;;
+	-*) die "unknown option '$1' (try --help)" ;;
+	*) label=$1 ;;
+	esac
+	shift
+done
+
+[ "$(id -u)" = 0 ] || die "must run as root"
+isolated=$(grep -v null /sys/devices/system/cpu/isolated 2> /dev/null)
+[ -n "${isolated}" ] || die "the kernel isolated no CPU: start a profile with dawos-profile first"
+[ -n "${cpu}" ] || cpu=$(echo "${isolated}" | sed 's/.*[-,]//')
+echo "${cpu}" | grep -Eq '^[0-9]+$' || die "bad CPU '${cpu}'"
+echo "${priority}" | grep -Eq '^[0-9]+$' || die "bad priority '${priority}'"
+[ -n "${label}" ] && { echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' || die "the label may only contain letters, digits, '-' and '_'"; }
+systemctl is-active --quiet "${HOG_UNIT}" && die "a test is already running"
+[ -d "${FAIR}" ] || mount -t debugfs debugfs /sys/kernel/debug 2> /dev/null
+setting=${FAIR}/cpu${cpu}/runtime
+[ -w "${setting}" ] || die "cannot reach the fair server of CPU ${cpu} (${setting})"
+
+original=$(cat "${setting}")
+restore() {
+	systemctl stop "${HOG_UNIT}" 2> /dev/null
+	echo "${original}" > "${setting}" 2> /dev/null
+	rmdir "${INSTANCE}" 2> /dev/null
+}
+trap restore EXIT
+trap 'exit 1' INT TERM HUP
+
+dir="${BASE}/starve-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}"
+{
+	date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "cpu: ${cpu}"
+	echo "hog: shell loop, SCHED_FIFO priority ${priority}, ${HOG_SECONDS} s per variant"
+	echo "fair_server_runtime_ns_at_start: ${original}"
+	echo "sched_rt_runtime_us: $(cat /proc/sys/kernel/sched_rt_runtime_us 2> /dev/null)"
+	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+	echo "kernel: $(uname -srv)"
+	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+} > "${dir}/meta.txt"
+
+echo "Testing CPU ${cpu}: two runs of ${HOG_SECONDS} seconds. Results in ${dir}"
+printf '%-12s %-26s %-26s %-18s %-20s %s\n' fair_server normal_process_wait_s kernel_work_wait_s hog_pushed_aside hog_longest_gap_us res_interrupts > "${dir}/table.txt"
+
+# Thread switches on the CPU under test, in a trace instance of our own.
+grep -q " ${TRACEFS} tracefs " /proc/mounts || mount -t tracefs nodev "${TRACEFS}" 2> /dev/null
+mkdir -p "${INSTANCE}" || die "cannot create a trace instance"
+echo 0 > "${INSTANCE}/tracing_on"
+printf '%x\n' $((1 << cpu)) > "${INSTANCE}/tracing_cpumask"
+echo 4096 > "${INSTANCE}/buffer_size_kb"
+echo 1 > "${INSTANCE}/events/sched/sched_switch/enable"
+
+for variant in off on; do
+	if [ "${variant}" = off ]; then runtime=0; else runtime=${DEFAULT_RUNTIME_NS}; fi
+	echo "${runtime}" > "${setting}" || die "could not set the fair server of CPU ${cpu}"
+	sleep 1
+
+	# The hog, bound to the CPU and given its priority before its first
+	# instruction.
+	systemd-run --quiet --collect --unit="${HOG_UNIT}" \
+		-p CPUAffinity="${cpu}" -p CPUSchedulingPolicy=fifo -p CPUSchedulingPriority="${priority}" \
+		/bin/sh -c 'while :; do :; done' || die "could not start the hog"
+	hog_start=$(now)
+	sleep 3
+	hog_pid=$(systemctl show -p MainPID --value "${HOG_UNIT}")
+	echo > "${INSTANCE}/trace"
+	echo 1 > "${INSTANCE}/tracing_on"
+	sleep 3
+	res_before=$(res_count "${cpu}")
+
+	# Probe 1: a normal process that can only run on that CPU. When it
+	# runs, it writes the time itself. systemd starts it, bound to the
+	# CPU before its first instruction; that start-up costs a few
+	# hundredths of a second, included in the figure.
+	task_out=${dir}/probe-task-${variant}.txt
+	task_start=$(now)
+	systemd-run --quiet --collect --pipe --wait -p CPUAffinity="${cpu}" \
+		cat /proc/uptime > "${task_out}" 2> /dev/null &
+	if wait_for "${task_out}"; then
+		task_wait=$(elapsed "${task_start}" "$(cut -d ' ' -f 1 "${task_out}")")
+	else
+		task_wait=stuck
+	fi
+
+	# Probe 2: kernel work on every CPU, asked for from another CPU.
+	work_out=${dir}/probe-work-${variant}.txt
+	work_start=$(now)
+	(
+		cat /proc/sys/vm/stat_refresh > /dev/null 2>&1
+		now > "${work_out}"
+	) &
+	if wait_for "${work_out}"; then
+		work_wait=$(elapsed "${work_start}" "$(cat "${work_out}")")
+	else
+		work_wait=stuck
+	fi
+
+	# Let the hog have its full time, then stop it.
+	while [ "$(elapsed "${hog_start}" "$(now)" | cut -d . -f 1)" -lt "${HOG_SECONDS}" ]; do
+		sleep 1
+	done
+	echo 0 > "${INSTANCE}/tracing_on"
+	res_after=$(res_count "${cpu}")
+	systemctl stop "${HOG_UNIT}"
+	hog_end=$(now)
+	# Whatever was stuck completes now that the CPU is free: say when.
+	wait
+	if [ "${task_wait}" = stuck ]; then
+		task_wait="stuck, ran after $(elapsed "${task_start}" "$(cut -d ' ' -f 1 "${task_out}")")"
+	fi
+	if [ "${work_wait}" = stuck ]; then
+		work_wait="stuck, ran after $(elapsed "${work_start}" "$(cat "${work_out}")")"
+	fi
+	echo "hog_seconds_${variant}: $(elapsed "${hog_start}" "${hog_end}")" >> "${dir}/meta.txt"
+
+	# How many times the hog was switched out, and the longest time until
+	# it ran again. A trace line reads: ... 123.456789: sched_switch:
+	# prev_comm=sh prev_pid=N ... ==> next_comm=... next_pid=M ...
+	grep sched_switch "${INSTANCE}/trace" > "${dir}/switches-${variant}.txt"
+	gaps=$(awk -v pid="${hog_pid}" '
+		{
+			when = $0
+			sub(/: sched_switch:.*/, "", when); sub(/.* /, "", when)
+			if ($0 ~ ("prev_pid=" pid " ")) { out = when; count++ }
+			else if ($0 ~ ("next_pid=" pid " ") && out != "") {
+				gap = (when - out) * 1000000
+				if (gap > longest) longest = gap
+				out = ""
+			}
+		}
+		END { printf "%d %d", count, longest }' "${dir}/switches-${variant}.txt")
+	printf '%-12s %-26s %-26s %-18s %-20s %s\n' "${variant}" "${task_wait}" "${work_wait}" \
+		"${gaps% *} times" "${gaps#* }" "$((res_after - res_before))" >> "${dir}/table.txt"
+done
+
+restore
+echo "fair_server_runtime_ns_at_end: $(cat "${setting}")" >> "${dir}/meta.txt"
+cat "${dir}/table.txt"

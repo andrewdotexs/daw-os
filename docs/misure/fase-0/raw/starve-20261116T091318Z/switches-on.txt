@@ -1,0 +1,7 @@
+              sh-1588    [007] d..2.    90.037001: sched_switch: prev_comm=sh prev_pid=1588 prev_prio=49 prev_state=R ==> next_comm=(cat) next_pid=1600 next_prio=120
+             cat-1600    [007] d..23    90.037418: sched_switch: prev_comm=cat prev_pid=1600 prev_prio=120 prev_state=R+ ==> next_comm=kworker/7:1 next_pid=379 next_prio=120
+     kworker/7:1-379     [007] d..2.    90.037421: sched_switch: prev_comm=kworker/7:1 prev_pid=379 prev_prio=120 prev_state=D ==> next_comm=cat next_pid=1600 next_prio=120
+             cat-1600    [007] d..2.    90.037426: sched_switch: prev_comm=cat prev_pid=1600 prev_prio=120 prev_state=Z ==> next_comm=kworker/7:1 next_pid=379 next_prio=120
+     kworker/7:1-379     [007] d..2.    90.037430: sched_switch: prev_comm=kworker/7:1 prev_pid=379 prev_prio=120 prev_state=I ==> next_comm=sh next_pid=1588 next_prio=49
+              sh-1588    [007] d..2.    90.071255: sched_switch: prev_comm=sh prev_pid=1588 prev_prio=49 prev_state=R ==> next_comm=kworker/7:1 next_pid=379 next_prio=120
+     kworker/7:1-379     [007] d..2.    90.071258: sched_switch: prev_comm=kworker/7:1 prev_pid=379 prev_prio=120 prev_state=I ==> next_comm=sh next_pid=1588 next_prio=49

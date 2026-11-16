@@ -1,0 +1,20 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 8/8   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+       osnoise/4-1707    [004] d..21    39.400437: sched_switch: prev_comm=osnoise/4 prev_pid=1707 prev_prio=120 prev_state=R+ ==> next_comm=irq_work/4 next_pid=54 next_prio=98
+      irq_work/4-54      [004] d..2.    39.400443: sched_switch: prev_comm=irq_work/4 prev_pid=54 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1707 next_prio=120
+       osnoise/4-1707    [004] d..21    39.401384: sched_switch: prev_comm=osnoise/4 prev_pid=1707 prev_prio=120 prev_state=R+ ==> next_comm=rcuc/4 next_pid=56 next_prio=98
+          rcuc/4-56      [004] d..2.    39.401385: sched_switch: prev_comm=rcuc/4 prev_pid=56 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1707 next_prio=120
+       osnoise/4-1707    [004] d..21    40.400446: sched_switch: prev_comm=osnoise/4 prev_pid=1707 prev_prio=120 prev_state=R+ ==> next_comm=irq_work/4 next_pid=54 next_prio=98
+      irq_work/4-54      [004] d..2.    40.400450: sched_switch: prev_comm=irq_work/4 prev_pid=54 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1707 next_prio=120
+       osnoise/4-1707    [004] d..21    40.401383: sched_switch: prev_comm=osnoise/4 prev_pid=1707 prev_prio=120 prev_state=R+ ==> next_comm=rcuc/4 next_pid=56 next_prio=98
+          rcuc/4-56      [004] d..2.    40.401384: sched_switch: prev_comm=rcuc/4 prev_pid=56 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1707 next_prio=120
