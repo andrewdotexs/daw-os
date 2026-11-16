@@ -79,12 +79,15 @@ subtract_list() {
 
 # Pin the live CPUs to $1 kHz. (Highest first and again last: the kernel
 # refuses a lowest value above the highest, whichever way the range moves.)
+# (Shell functions share their variables with the rest of the script: the
+# name "policy" is used nowhere else. An earlier version called it "dir"
+# and so redirected every later write of the sweep into sysfs.)
 pin_live() {
-	for cpu in $(expand_list "${live}"); do
-		dir=${CPU_DIR}/cpu${cpu}/cpufreq
-		echo "$1" > "${dir}/scaling_max_freq" 2> /dev/null
-		echo "$1" > "${dir}/scaling_min_freq" 2> /dev/null
-		echo "$1" > "${dir}/scaling_max_freq" 2> /dev/null
+	for live_cpu in $(expand_list "${live}"); do
+		policy=${CPU_DIR}/cpu${live_cpu}/cpufreq
+		echo "$1" > "${policy}/scaling_max_freq" 2> /dev/null
+		echo "$1" > "${policy}/scaling_min_freq" 2> /dev/null
+		echo "$1" > "${policy}/scaling_max_freq" 2> /dev/null
 	done
 }
 
@@ -102,6 +105,15 @@ summarize() {
 	dir=$1
 	live=$(sed -n 's/^live_cpus: //p' "${dir}/meta.txt")
 	live_words=" $(expand_list "${live}" | tr '\n' ' ')"
+	if [ ! -s "${dir}/steps.txt" ]; then
+		{
+			echo "directory: ${dir}"
+			cat "${dir}/meta.txt"
+			echo "no step was recorded: nothing to summarize"
+		} > "${dir}/summary.txt"
+		cat "${dir}/summary.txt"
+		return
+	fi
 	{
 		echo "directory: ${dir}"
 		cat "${dir}/meta.txt"
