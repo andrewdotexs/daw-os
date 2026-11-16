@@ -1,0 +1,19 @@
+started_utc: 2026-11-16T12:05:43Z
+duration: 10m
+label: a3700
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+load_on_other_cpus: yes
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 113032 verity 1 PARTLABEL=dawos-root-0.0.1.20261116113133 PARTLABEL=dawos-verity-0.0.1.20261116113133 4096 4096 14129 1 sha256 27842445a2849ed670e5255bc904670d33ede92a159d104caa273fd3141094b0 74a7b6ef39b68bdf8566e384f7400441ddd444b027771cd3664f130fe2bb04d5 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116113133,PARTLABEL=dawos-verity-0.0.1.20261116113133 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 2301 10/04/2025
+image: 96f24ea36e0b
+uptime_at_start_s: 1984
+live_khz: 3700000-3700000
+window_start_utc: 2026-11-16T12:05:56Z
+window_end_utc: 2026-11-16T12:15:36Z
+rtla_exit_status: 0
+load_running_at_window_end: yes
+finished_utc: 2026-11-16T12:15:48Z
