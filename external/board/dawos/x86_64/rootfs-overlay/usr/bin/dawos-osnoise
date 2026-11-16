@@ -48,6 +48,8 @@ UNIT=dawos-osnoise
 LIMIT_US=10
 # Seconds left out at each end of the run.
 MARGIN_S=10
+# Seconds after boot from which a measurement counts as a reference.
+SETTLED_S=300
 TRACEFS=/sys/kernel/tracing
 INSTANCE=${TRACEFS}/instances/dawos-osnoise
 SELF=$(readlink -f "$0")
@@ -225,11 +227,17 @@ summarize() {
 					for (r = 1; r <= rows; r++) if (delta[order[r]] > 0) { printf " %s=%d", order[r], delta[order[r]]; any = 1 }
 					if (!any) printf " none"
 					printf "\n"
+					# IWI is deferred interrupt work. The tracer itself
+					# queues one each time it records a new largest
+					# noise (callback latency_fsnotify_workfn_irq, seen
+					# in a trace on the reference machine): it follows
+					# a noise event, it does not cause one.
+					printf "interrupts_from_the_tracer_itself: IWI=%d\n", delta["IWI"]
 					printf "unexpected_interrupts:"
 					for (r = 1; r <= rows; r++) {
 						name = order[r]
 						# LOC is the local timer of each CPU.
-						if (delta[name] > 0 && name != "LOC") { printf " %s=%d (%s)", name, delta[name], label[name]; bad = 1 }
+						if (delta[name] > 0 && name != "LOC" && name != "IWI") { printf " %s=%d (%s)", name, delta[name], label[name]; bad = 1 }
 					}
 					if (!bad) printf " none"
 					printf "\n"
@@ -292,6 +300,10 @@ summarize() {
 				}' "${dir}/power.txt"
 		fi
 	} > "${dir}/summary.txt"
+
+	started=$(sed -n 's/^uptime_at_start_s: //p' "${dir}/meta.txt")
+	[ -z "${started}" ] || [ "${started}" -ge "${SETTLED_S}" ] ||
+		echo "note: started ${started} s after boot, before the machine had settled (${SETTLED_S} s)" >> "${dir}/summary.txt"
 
 	# Verdict against the acceptance criteria of step P0.6.
 	max=$(sed -n 's/^max_single_noise_us: \([0-9]*\).*/\1/p' "${dir}/summary.txt")
@@ -477,6 +489,14 @@ if [ -z "${cpus}" ]; then
 fi
 echo "${cpus}" | grep -Eq '^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$' || die "bad CPU list '${cpus}'"
 
+# The first minutes after boot still carry work of the boot itself: on the
+# reference machine a run started 26 seconds after boot counted ten
+# function-call interrupts per live CPU, one started after 15 minutes
+# none. The run is not refused, the summary says when it was started.
+read -r uptime _ < /proc/uptime
+[ "${uptime%%.*}" -ge "${SETTLED_S}" ] ||
+	echo "${PROG}: note: the machine booted ${uptime%%.*} s ago; for a reference measurement wait until ${SETTLED_S} s"
+
 dir="${BASE}/osnoise-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
 mkdir -p "${dir}"
 {
@@ -492,6 +512,8 @@ mkdir -p "${dir}"
 	echo "cmdline: $(cat /proc/cmdline)"
 	echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
 	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+	echo "uptime_at_start_s: ${uptime%%.*}"
+	echo "live_khz: $(cat "/sys/devices/system/cpu/cpu$(echo "${cpus}" | sed 's/[-,].*//')/cpufreq/scaling_min_freq" 2> /dev/null)-$(cat "/sys/devices/system/cpu/cpu$(echo "${cpus}" | sed 's/[-,].*//')/cpufreq/scaling_max_freq" 2> /dev/null)"
 } > "${dir}/meta.txt"
 [ -r /run/dawos/topology.json ] && cp /run/dawos/topology.json "${dir}/topology.json"
 
