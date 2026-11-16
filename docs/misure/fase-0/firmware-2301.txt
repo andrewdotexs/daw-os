@@ -1,0 +1,67 @@
+bios: 2301 10/04/2025
+microcode	: 0x11a
+      Firmware: UEFI 2.90 (American Megatrends 5.32)
+   Secure Boot: enabled (user)
+idle_driver: none
+cpu0: base 3700000 max 5600000 min 800000
+cpu4: base 3700000 max 5600000 min 800000
+cpu8: base 3200000 max 4600000 min 800000
+cpu16: base 3200000 max 4600000 min 800000
+constraint_0_power_limit_uw: 160000000
+constraint_1_power_limit_uw: 160000000
+  "status": "ok",
+  "problems": [],
+  "notes": ["no idle driver: idle CPUs stop in C1, the kernel has no other state to choose"],
+    "idle": {"driver": "none", "limit": "c1", "resume_latency_us": null, "c1e_auto_promotion": "off"},
+    "power_limit": {"profile_w": 160, "long_term_w": 160, "short_term_w": 160, "lowered": false}
+CPUID(0): GenuineIntel 0x23 CPUID levels
+CPUID(1): family:model:stepping 0x6:c6:2 (6:198:2) microcode 0x11a
+CPUID(0x80000000): max_extended_levels: 0x80000008
+CPUID(1): SSE3 MONITOR SMX EIST TM2 TSC MSR ACPI-TM HT TM
+CPUID(6): APERF, TURBO, DTS, PTM, HWP, HWPnotify, HWPwindow, HWPepp, HWPpkg, No-EPB
+cpu0: MSR_IA32_MISC_ENABLE: 0x00850089 (TCC EIST MWAIT PREFETCH TURBO)
+CPUID(7): No-SGX Hybrid
+CPUID(0x15): eax_crystal: 2 ebx_tsc: 192 ecx_crystal_hz: 38400000
+CPUID(0x16): base_mhz: 3700 max_mhz: 4600 bus_mhz: 100
+cpu0: MSR_PLATFORM_INFO: 0x8040838f1812500
+cpu0: MSR_TURBO_RATIO_LIMIT: 0x3636363636363939
+cpu0: MSR_SECONDARY_TURBO_RATIO_LIMIT: 0x2e2e2e2e2e2e2e2e
+cpu0: MSR_CONFIG_TDP_NOMINAL: 0x00000025 (base_ratio=37)
+cpu0: MSR_CONFIG_TDP_LEVEL_1: 0x00000000 ()
+cpu0: MSR_CONFIG_TDP_LEVEL_2: 0x00000000 ()
+cpu0: MSR_CONFIG_TDP_CONTROL: 0x80000000 ( lock=1)
+cpu0: MSR_TURBO_ACTIVATION_RATIO: 0x00000000 (MAX_NON_TURBO_RATIO=0 lock=0)
+cpu0: cpufreq driver: intel_pstate
+cpu0: cpufreq governor: powersave
+cpu0: MSR_MISC_PWR_MGMT: 0x000030c2 (ENable-EIST_Coordination ENable-EPB DISable-OOB)
+cpu0: MSR_PM_ENABLE: 0x00000001 (HWP)
+cpu0: MSR_HWP_CAPABILITIES: 0x011a2b40 (high 64 guar 43 eff 26 low 1)
+cpu0: MSR_HWP_REQUEST: 0x4000400a (min 10 max 64 des 0 epp 0x40 window 0x0 pkg 0x0)
+cpu0: MSR_HWP_REQUEST_PKG: 0x8000ff01 (min 1 max 255 des 0 epp 0x80 window 0x0)
+cpu0: MSR_HWP_INTERRUPT: 0x00000005 (EN_Guaranteed_Perf_Change, Dis_Excursion_Min)
+cpu0: MSR_HWP_STATUS: 0x00000004 (No-Guaranteed_Perf_Change, Excursion_Min)
+cpu0: MSR_IA32_POWER_CTL: 0x00f8005d (C1E auto-promotion: DISabled)
+cpu0: MSR_PKG_CST_CONFIG_CONTROL: 0x00008000 (locked, pkg-cstate-limit=0 (pc0))
+cpu0: MSR_PKGC3_IRTL: 0x00000000 (NOTvalid, 0 ns)
+cpu0: MSR_PKGC6_IRTL: 0x00000000 (NOTvalid, 0 ns)
+cpu0: MSR_PKGC8_IRTL: 0x00000000 (NOTvalid, 0 ns)
+cpu0: MSR_PKGC10_IRTL: 0x00000000 (NOTvalid, 0 ns)
+cpu0: MSR_RAPL_POWER_UNIT: 0x000a0e03 (0.125000 Watts, 0.000061 Joules, 0.000977 sec.)
+cpu0: MSR_PKG_POWER_INFO: 0x120000000003e8 (125 W TDP, RAPL 0 - 0 W, 0.017578 sec.)
+cpu0: MSR_PKG_POWER_LIMIT: 0x42850000df8500 (UNlocked)
+cpu0: PKG Limit #1: ENabled (160.000 Watts, 56.000000 sec, clamp ENabled)
+cpu0: PKG Limit #2: ENabled (160.000 Watts, 0.002441* sec, clamp DISabled)
+cpu0: MSR_VR_CURRENT_CONFIG: 0x80000d48
+cpu0: PKG Limit #4: 425.000000 Watts (locked)
+cpu0: MSR_DRAM_POWER_LIMIT: 0x00000000 (UNlocked)
+cpu0: DRAM Limit: DISabled (0.000 Watts, 0.000977 sec, clamp DISabled)
+cpu0: MSR_PP0_POLICY: 0
+cpu0: MSR_PP0_POWER_LIMIT: 0x00000000 (UNlocked)
+cpu0: Cores Limit: DISabled (0.000 Watts, 0.000977 sec, clamp DISabled)
+cpu0: MSR_PP1_POLICY: 0
+cpu0: MSR_PP1_POWER_LIMIT: 0x00000000 (UNlocked)
+cpu0: GFX Limit: DISabled (0.000 Watts, 0.000977 sec, clamp DISabled)
+cpu0: MSR_IA32_TEMPERATURE_TARGET: 0x00691400 (105 C) (105 default - 0 offset)
+cpu0: MSR_IA32_PACKAGE_THERM_STATUS: 0x88460000 (35 C)
+cpu0: MSR_IA32_PACKAGE_THERM_INTERRUPT: 0x02000003 (105 C, 105 C)
+cpu0: MSR_MISC_FEATURE_CONTROL: 0x00000000 (L2-Prefetch L2-Prefetch-pair L1-Prefetch L1-IP-Prefetch)
