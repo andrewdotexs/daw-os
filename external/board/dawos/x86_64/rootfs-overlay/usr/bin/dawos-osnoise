@@ -24,6 +24,12 @@
 #     they stop every CPU, so they show up as hardware noise, and
 #     dawos-hwnoise remains the tool that counts them.
 #
+# A fourth record covers the whole run, margins included: the tracer's
+# own account of every interruption it counted on the measured CPUs
+# (which interrupt, which thread, for how long). The counts of rtla
+# cover the whole run too, while the window does not: without this
+# record an event counted in the first or last seconds has no name.
+#
 # Meanwhile stress-ng loads every other CPU: computation, memory, thread
 # switches and timers (leave it out with --no-load).
 #
@@ -52,6 +58,7 @@ MARGIN_S=10
 SETTLED_S=300
 TRACEFS=/sys/kernel/tracing
 INSTANCE=${TRACEFS}/instances/dawos-osnoise
+SOURCES=${TRACEFS}/instances/dawos-osnoise-sources
 SELF=$(readlink -f "$0")
 
 usage() {
@@ -275,6 +282,20 @@ summarize() {
 		fi
 		[ -r "${dir}/trace-lost.txt" ] && cat "${dir}/trace-lost.txt"
 
+		# Who caused each interruption the tracer counted, over the whole
+		# run: sources.txt holds one line per source, "where kind name
+		# count longest_ns", where "in" is the window and "out" the
+		# margins, in which starting and stopping the tools falls.
+		if [ -r "${dir}/sources.txt" ]; then
+			awk '
+				{ line[$1] = line[$1] sprintf(" %s %s x%d (longest %.1f us);", $2, $3, $4, $5 / 1000) }
+				END {
+					printf "noise_sources_in_window:%s\n", (line["in"] == "" ? " none" : line["in"])
+					printf "noise_sources_in_the_margins:%s\n", (line["out"] == "" ? " none" : line["out"])
+				}' "${dir}/sources.txt"
+			[ -r "${dir}/sources-lost.txt" ] && cat "${dir}/sources-lost.txt"
+		fi
+
 		# Package temperature and power, from the samples of
 		# sample_package. Power is energy over time between two samples;
 		# a counter that went backwards has wrapped around.
@@ -344,6 +365,20 @@ run_measurement() {
 		echo 1 > "${INSTANCE}/events/sched/sched_switch/enable" && traced=yes
 	fi
 
+	# A second instance, on for the whole run: the events with which the
+	# tracer names what it counted. They exist only where its threads
+	# run, that is on the measured CPUs.
+	sourced=no
+	if mkdir -p "${SOURCES}" 2> /dev/null; then
+		list_to_mask "${cpus}" > "${SOURCES}/tracing_cpumask"
+		echo 4096 > "${SOURCES}/buffer_size_kb"
+		sourced=yes
+		for event in irq_noise thread_noise softirq_noise nmi_noise; do
+			echo 1 > "${SOURCES}/events/osnoise/${event}/enable" 2> /dev/null || sourced=no
+		done
+		echo 1 > "${SOURCES}/tracing_on"
+	fi
+
 	sample_package > "${dir}/power.txt" &
 	sampler_pid=$!
 
@@ -365,11 +400,15 @@ run_measurement() {
 	cat /proc/interrupts > "${dir}/interrupts-start.txt"
 	[ "${traced}" = yes ] && echo 1 > "${INSTANCE}/tracing_on"
 	date -u '+window_start_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+	read -r moment _ < /proc/uptime
+	echo "window_start_uptime_s: ${moment}" >> "${dir}/meta.txt"
 
 	sleep $((seconds - 2 * MARGIN_S))
 	[ "${traced}" = yes ] && echo 0 > "${INSTANCE}/tracing_on"
 	cat /proc/interrupts > "${dir}/interrupts-end.txt"
 	date -u '+window_end_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+	read -r moment _ < /proc/uptime
+	echo "window_end_uptime_s: ${moment}" >> "${dir}/meta.txt"
 	load_alive=no
 	[ -n "${load_pid}" ] && kill -0 "${load_pid}" 2> /dev/null && load_alive=yes
 
@@ -378,6 +417,53 @@ run_measurement() {
 	kill "${sampler_pid}" 2> /dev/null
 	[ -n "${load_pid}" ] && kill "${load_pid}" 2> /dev/null
 	wait 2> /dev/null
+
+	if [ "${sourced}" = yes ]; then
+		echo 0 > "${SOURCES}/tracing_on"
+		# A trace line ends in one of:
+		#   irq_noise: local_timer:236 start 12.345678901 duration 1234 ns
+		#   thread_noise: kworker/4:1:567 start 12.345678901 duration 1234 ns
+		#   softirq_noise:    TIMER:1 start 12.345678901 duration 1234 ns
+		#   nmi_noise: start 12.345678901 duration 1234 ns
+		# The name may contain spaces and colons; the number after its
+		# last colon is the interrupt vector or the process number. The
+		# start is in seconds since boot, like the two ends of the window.
+		# Only the totals are kept, one line per source: on CPUs that
+		# still have their tick there is an event every millisecond.
+		head -n 300 "${SOURCES}/trace" > "${dir}/sources-head.txt"
+		awk -v first="$(sed -n 's/^window_start_uptime_s: //p' "${dir}/meta.txt")" \
+			-v last="$(sed -n 's/^window_end_uptime_s: //p' "${dir}/meta.txt")" '
+			/_noise: / {
+				kind = $0
+				sub(/_noise: .*/, "", kind); sub(/.* /, "", kind)
+				rest = $0
+				sub(/.*_noise: */, "", rest)
+				name = rest
+				if (kind == "nmi") name = "nmi"
+				else { sub(/ start [0-9.]* duration .*/, "", name); sub(/:[0-9-]*$/, "", name); gsub(/ /, "_", name) }
+				when = rest
+				sub(/.*start /, "", when); sub(/ duration.*/, "", when)
+				length_ns = rest
+				sub(/.* duration /, "", length_ns); sub(/ ns.*/, "", length_ns)
+				where = (first != "" && when + 0 >= first + 0 && when + 0 <= last + 0) ? "in" : "out"
+				key = where " " kind " " name
+				if (!(key in count)) order[++keys] = key
+				count[key]++
+				if (length_ns + 0 > longest[key]) longest[key] = length_ns + 0
+			}
+			END { for (k = 1; k <= keys; k++) print order[k], count[order[k]], longest[order[k]] }' \
+			"${SOURCES}/trace" > "${dir}/sources.txt"
+		lost=0
+		for stats in "${SOURCES}"/per_cpu/cpu*/stats; do
+			value=$(sed -n 's/^overrun: //p' "${stats}")
+			lost=$((lost + ${value:-0}))
+		done
+		[ "${lost}" -eq 0 ] || echo "noise_source_events_lost: ${lost} (the counts above are a lower bound)" > "${dir}/sources-lost.txt"
+		for event in irq_noise thread_noise softirq_noise nmi_noise; do
+			echo 0 > "${SOURCES}/events/osnoise/${event}/enable" 2> /dev/null
+		done
+	fi
+	[ ! -d "${SOURCES}" ] || rmdir "${SOURCES}" 2> /dev/null
 
 	if [ "${traced}" = yes ]; then
 		# "count cpu name" for every thread that was switched in. A trace

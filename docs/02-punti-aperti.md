@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunto A-27.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27 e A-28, chiuso A-04.
 
 ## La regola d'ordine
 
@@ -23,15 +23,14 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
 | A-01 | Il kernel non ha il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`): `MemoryMax=` di systemd oggi non ha effetto | Trovato il 16 novembre 2026 provando E-03 | Aggiungerlo nella stessa ricostruzione del kernel che porta `i915` (parte 2), e ripetere la misura di rumore: il controllo della memoria ha lavoro periodico suo. |
-| A-27 | Firmware del 285K: dalla 2301 (ottobre 2025) alla 3402 (settembre 2026), con l'Intel ME | Visto dall'utente il 16 novembre 2026, che ha scelto di aggiornare subito | Parte 0 di P0.6c: aggiornamento, impostazioni rimesse, stato della macchina prima e dopo, misure rifatte. Chiude anche A-04 e dà una risposta su A-22. |
+| A-27 | Firmware del 285K: dalla 2301 (ottobre 2025) alla 3402 (settembre 2026), con l'Intel ME | Visto dall'utente il 16 novembre 2026, che ha scelto di aggiornare subito | Aggiornamento fatto il 16 novembre 2026; nessun SMI. Restano le misure da rifare (frequenza, risveglio, limite di potenza) con _Intel Default Settings_ su _Performance_, e il commento del profilo sulle frequenze. |
 | A-02 | Driver grafico: `i915` come modulo; `xe` solo se `i915` fa rumore | E-04; scelta dell'utente del 16 novembre 2026 | Parte 2 di P0.6c. |
 
 ## Da chiudere in P0.6d
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-03 | Sotto carico i core non live girano più piano del previsto e il package resta sotto i 160 W; con i core live occupati scende ancora di 5–10 W | P0.6b, parti 3 e 4 | Si misura con E-06, che guarda proprio la resa dei core. Due sospetti, entrambi voci del firmware: _HwP Autonomous EPP Grouping_ (acceso: il manuale dice che con questa voce il processore chiede lo stesso valore per tutti i core con la stessa preferenza energetica) e i limiti di corrente (_CPU Core/Cache Current Limit Max._, _IA CEP_). |
-| A-04 | Il ramo d'errore della verifica del C1E non è provato sulla macchina vera | P0.6b, parte 4c | Alla prima visita nel firmware, che sarà quella di A-03: rimettere _Enhanced C-states_ su _Auto_, vedere `tune=degraded`, rimetterlo su _Disabled_. |
+| A-03 | Sotto carico i core non live girano più piano del previsto e il package resta sotto i 160 W; con i core live occupati scende ancora di 5–10 W | P0.6b, parti 3 e 4 | Si misura con E-06, che guarda proprio la resa dei core. Due sospetti, entrambi voci del firmware: _HwP Autonomous EPP Grouping_ (acceso: il manuale dice che con questa voce il processore chiede lo stesso valore per tutti i core con la stessa preferenza energetica) e i limiti di corrente (_CPU Core/Cache Current Limit Max._, _IA CEP_). Terzo candidato, dal 16 novembre 2026: _Intel Default Settings_ su _Extreme_ invece di _Performance_ (alza il limite di corrente e di picco). Con il firmware 3402 lo stesso carico assorbe 120 W invece di 137: prima va capito che cosa è cambiato. |
 
 ## Da chiudere in P0.6e, prima della campagna
 
@@ -54,6 +53,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
 | A-16 | Buchi «hardware» rari, da 1 a 6 µs, senza causa nota, anche su core non live | P0.6b, parti 3 e 4c | Su 24 ore se ne vede la frequenza e se hanno un periodo. La campagna parte con la traccia armata sopra soglia. |
+| A-28 | Dopo l'aggiornamento del firmware, una misura di rumore ha contato su ogni core live uno o due interrupt con un thread del kernel, e un buco hardware da 3 µs, fuori dalla finestra; prima erano zero | P0.6c, parte 0 | `dawos-osnoise` ora dice chi li causa. Si guarda a ogni misura; se restano, la campagna dirà quanto spesso. |
 | A-17 | Regola per le misure di riferimento: cominciano almeno cinque minuti dopo l'accensione | P0.6b, parte 3 | Già negli strumenti come nota; la campagna la rispetta. |
 
 ## Prima della Fase 1
@@ -79,4 +79,4 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Chiuso |
 | --- | --- | --- |
-| — | Ancora nessuno: il registro nasce il 16 novembre 2026. | — |
+| A-04 | Il ramo d'errore della verifica del C1E non era provato sulla macchina vera | 16 novembre 2026: al primo avvio dopo l'aggiornamento del firmware, con i valori di fabbrica, `make remote-test` è fallito con `tune=degraded` (riferito dall'utente; l'uscita non è stata conservata). |
