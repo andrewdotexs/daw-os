@@ -1,0 +1,23 @@
+directory: /var/lib/dawos/measure/freq-20261116T202940Z
+started_utc: 2026-11-16T20:29:40Z
+frequencies_mhz: 3700 4000 4300 4600 4900 5200 5500
+step_seconds: 150 (first 30 left out)
+label: none
+live_cpus: 4-7
+live_khz_before: 4600000-4600000
+base_khz: 3700000
+power_limits_uw: long=160000000 short=160000000
+profile: 285k
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+image: 7bac3d908f6a
+temperature_at_start_c: 33
+finished_utc: 2026-11-16T20:47:13Z
+live_khz_after: 4600000-4600000
+set_mhz  live_min_mhz  live_avg_mhz  others_avg_mhz  pkg_w_avg  pkg_w_max pkg_temp_max holds
+3700     3694          3699          3117            120.9      121.2     70          yes
+4000     3995          3999          3006            120.6      120.9     71          yes
+4300     4296          4299          2918            120.8      121.2     72          yes
+4600     4600          4600          2833            122.2      122.7     71          yes
+4900     4900          4900          2810            129.0      129.6     75          yes
+5200     5090          5098          2792            136.2      136.6     80          NO
+5500     5289          5298          2684            142.4      143.5     85          NO

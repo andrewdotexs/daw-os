@@ -51,8 +51,8 @@ cpu0: MSR_PKG_POWER_INFO: 0x120000000003e8 (125 W TDP, RAPL 0 - 0 W, 0.017578 se
 cpu0: MSR_PKG_POWER_LIMIT: 0x42850000df8500 (UNlocked)
 cpu0: PKG Limit #1: ENabled (160.000 Watts, 56.000000 sec, clamp ENabled)
 cpu0: PKG Limit #2: ENabled (160.000 Watts, 0.002441* sec, clamp DISabled)
-cpu0: MSR_VR_CURRENT_CONFIG: 0x80000f50
-cpu0: PKG Limit #4: 490.000000 Watts (locked)
+cpu0: MSR_VR_CURRENT_CONFIG: 0x80000d48
+cpu0: PKG Limit #4: 425.000000 Watts (locked)
 cpu0: MSR_DRAM_POWER_LIMIT: 0x00000000 (UNlocked)
 cpu0: DRAM Limit: DISabled (0.000 Watts, 0.000977 sec, clamp DISabled)
 cpu0: MSR_PP0_POLICY: 0
@@ -62,6 +62,6 @@ cpu0: MSR_PP1_POLICY: 0
 cpu0: MSR_PP1_POWER_LIMIT: 0x00000000 (UNlocked)
 cpu0: GFX Limit: DISabled (0.000 Watts, 0.000977 sec, clamp DISabled)
 cpu0: MSR_IA32_TEMPERATURE_TARGET: 0x00691400 (105 C) (105 default - 0 offset)
-cpu0: MSR_IA32_PACKAGE_THERM_STATUS: 0x88480000 (33 C)
+cpu0: MSR_IA32_PACKAGE_THERM_STATUS: 0x88470000 (34 C)
 cpu0: MSR_IA32_PACKAGE_THERM_INTERRUPT: 0x02000003 (105 C, 105 C)
 cpu0: MSR_MISC_FEATURE_CONTROL: 0x00000000 (L2-Prefetch L2-Prefetch-pair L1-Prefetch L1-IP-Prefetch)

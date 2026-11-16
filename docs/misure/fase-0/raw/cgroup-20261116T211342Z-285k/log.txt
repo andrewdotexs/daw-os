@@ -1,0 +1,49 @@
+write '+cpuset' > cgroup.subtree_control: ok
+write '+cpuset +pids' > dawos-test/cgroup.subtree_control: ok
+write '15' > dawos-test/plain/cpuset.cpus: ok
+write 'isolated' > dawos-test/plain/cpuset.cpus.partition: ok
+read dawos-test/plain/cpuset.cpus.partition = isolated invalid (Invalid cpu list in cpuset.cpus.exclusive)
+write 'member' > dawos-test/plain/cpuset.cpus.partition: ok
+write 'threaded' > dawos-test/first/live/cgroup.type: ok
+write 'threaded' > dawos-test/first/rest/cgroup.type: ok
+read dawos-test/first/cgroup.type = domain threaded
+first is now: domain threaded
+write '+cpuset' > dawos-test/first/cgroup.subtree_control: ok
+write '15' > dawos-test/cpuset.cpus.exclusive: ok
+write '15' > dawos-test/first/cpuset.cpus.exclusive: ok
+write '15' > dawos-test/first/live/cpuset.cpus.exclusive: ok
+write 'isolated' > dawos-test/first/live/cpuset.cpus.partition: ok
+read dawos-test/first/live/cpuset.cpus.partition = isolated
+read cpuset.cpus.isolated = 4-7,15
+read cpuset.cpus.effective = 0-14,16-23
+root: isolated CPUs 4-7,15, effective 0-14,16-23
+write '4668' > dawos-test/first/cgroup.procs: ok
+write '4673' > dawos-test/first/live/cgroup.threads: ok
+write '4668' > dawos-test/first/rest/cgroup.threads: ok
+tid 4668 cpus 0-14,16-23 SCHED_OTHER/0 group /dawos-test/first/rest
+tid 4673 cpus 15 SCHED_FIFO/80 group /dawos-test/first/live
+tid 4674 cpus 0-14,16-23 SCHED_FIFO/80 group /dawos-test/first
+taskset -pc 1 4673: pid 4673's current affinity list: 15 taskset: can't set pid 4673's affinity: Invalid argument 
+taskset -pc 15 4668: pid 4668's current affinity list: 0-14,16-23 taskset: can't set pid 4668's affinity: Invalid argument 
+write '64' > dawos-test/first/pids.max: ok
+write '+io' > cgroup.subtree_control: ok
+write '+io' > dawos-test/cgroup.subtree_control: ok
+write '+io' > dawos-test/first/cgroup.subtree_control: refused: 
+write 'threaded' > dawos-test/second/live/cgroup.type: ok
+write 'threaded' > dawos-test/second/rest/cgroup.type: ok
+write '+cpuset' > dawos-test/second/cgroup.subtree_control: ok
+write '4751' > dawos-test/second/cgroup.procs: ok
+write '4755' > dawos-test/first/live/cgroup.threads: refused: 
+write '15' > dawos-test/second/cpuset.cpus.exclusive: refused: 
+write '15' > dawos-test/second/live/cpuset.cpus.exclusive: ok
+write 'isolated' > dawos-test/second/live/cpuset.cpus.partition: ok
+read dawos-test/second/live/cpuset.cpus.partition = isolated invalid (Invalid cpu list in cpuset.cpus.exclusive)
+taskset -pc 15 4755: pid 4755's current affinity list: 0-14,16-23 taskset: can't set pid 4755's affinity: Invalid argument 
+write 'member' > dawos-test/first/live/cpuset.cpus.partition: ok
+write 'member' > dawos-test/second/live/cpuset.cpus.partition: ok
+read cpuset.cpus.effective = 0-23
+root after the partitions: effective 0-23
+tid 4825 cpus 1 SCHED_OTHER/0 group /system.slice/dawos-cgroup-test-static.service
+tid 4829 cpus 4 SCHED_FIFO/80 group /system.slice/dawos-cgroup-test-static.service
+read system.slice/dawos-cgroup-test-static.service/pids.max = 16
+service group /system.slice/dawos-cgroup-test-static.service: pids.max 16

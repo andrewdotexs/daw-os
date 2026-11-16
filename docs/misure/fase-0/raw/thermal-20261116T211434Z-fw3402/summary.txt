@@ -1,0 +1,19 @@
+directory: /var/lib/dawos/measure/thermal-20261116T211434Z-fw3402
+started_utc: 2026-11-16T21:14:34Z
+limits_w: 160
+step_seconds: 600
+label: fw3402
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+bios: 3402 09/18/2026
+image: 7bac3d908f6a
+power_limits_before_uw: long=160000000 short=160000000
+junction_limit_c: 105
+temperature_at_start_c: 34
+throttle_start: core=0 package=0
+finished_utc: 2026-11-16T21:26:10Z
+power_limits_after_uw: long=160000000 short=160000000
+throttle_end: core=0 package=0
+limit_w    measured_w temp_end_c temp_max_c drift_c_per_min busy_mhz smi  note
+160        160.0      79.8       82         +0.0            4484     0    -
+cooldown_c: 0s=80 1s=48 2s=43 3s=41 5s=38 10s=36 20s=35 30s=34 60s=34 90s=33
+thermal_throttle_events: core 0 package 0

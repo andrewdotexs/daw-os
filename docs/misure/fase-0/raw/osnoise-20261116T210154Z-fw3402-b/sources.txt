@@ -1,0 +1,7 @@
+out irq local_timer 3 1508
+out thread rcuc/4 1 1204
+out thread rcuc/5 1 1642
+out thread rcuc/7 1 1740
+in irq local_timer 2 1018
+in thread rcuc/5 1 382
+in thread rcuc/4 1 674
