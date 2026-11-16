@@ -18,6 +18,11 @@
 # A step "holds" when every live CPU stayed within 1 % of what was asked
 # in every reading.
 #
+# The word "free" in place of a frequency is a step with the live CPUs
+# not pinned at all (lowest and highest allowed frequency as wide as the
+# processor offers): the same load, to see what the pin itself costs the
+# rest of the machine.
+#
 # turbostat visits every CPU to read it: fine here, where frequency is
 # measured and not noise. The pin found at the start is written back at
 # the end, on every way out. The sweep stops by itself if the package
@@ -42,8 +47,9 @@ SELF=$(readlink -f "$0")
 usage() {
 	cat <<USAGE
 Usage:
-  ${PROG} [--step SECONDS] [--label WORD] MHZ...
+  ${PROG} [--step SECONDS] [--label WORD] MHZ|free...
                            start a sweep, e.g.: ${PROG} 3700 4000 4300 4600
+                           ("free": a step with the live CPUs not pinned)
   ${PROG} --status         show progress, or the last summary
   ${PROG} --summary DIR    (re)compute the summary of a finished sweep
 USAGE
@@ -88,6 +94,16 @@ pin_live() {
 		echo "$1" > "${policy}/scaling_max_freq" 2> /dev/null
 		echo "$1" > "${policy}/scaling_min_freq" 2> /dev/null
 		echo "$1" > "${policy}/scaling_max_freq" 2> /dev/null
+	done
+}
+
+# Remove the pin: every live CPU may again choose between its lowest and
+# its highest frequency.
+free_live() {
+	for live_cpu in $(expand_list "${live}"); do
+		policy=${CPU_DIR}/cpu${live_cpu}/cpufreq
+		cat "${policy}/cpuinfo_min_freq" > "${policy}/scaling_min_freq" 2> /dev/null
+		cat "${policy}/cpuinfo_max_freq" > "${policy}/scaling_max_freq" 2> /dev/null
 	done
 }
 
@@ -143,9 +159,10 @@ summarize() {
 			}
 			END {
 				for (s = 1; s <= steps; s++) {
-					if (!ln[s]) { printf "%-8d no data\n", set[s]; continue }
-					holds = (lmin[s] >= set[s] * 0.99) ? "yes" : "NO"
-					printf "%-8d %-13d %-13d %-15d %-10.1f %-9.1f %-11d %s\n", set[s], lmin[s], lsum[s] / ln[s],
+					if (!ln[s]) { printf "%-8s no data\n", set[s]; continue }
+					if (set[s] == "free") holds = "-"
+					else holds = (lmin[s] >= set[s] * 0.99) ? "yes" : "NO"
+					printf "%-8s %-13d %-13d %-15d %-10.1f %-9.1f %-11d %s\n", set[s], lmin[s], lsum[s] / ln[s],
 						(on[s] ? osum[s] / on[s] : 0), (wn[s] ? wsum[s] / wn[s] : 0), wmax[s], tmax[s], holds
 				}
 			}' "${dir}/steps.txt" "${dir}/power.txt"
@@ -195,7 +212,7 @@ run_sweep() {
 
 	: > "${dir}/steps.txt"
 	for mhz in "$@"; do
-		pin_live $((mhz * 1000))
+		if [ "${mhz}" = free ]; then free_live; else pin_live $((mhz * 1000)); fi
 		start=$(date +%s)
 		end=$((start + step_seconds))
 		while [ "$(date +%s)" -lt "${end}" ]; do
@@ -290,7 +307,8 @@ for cpu in $(expand_list "${live}"); do
 	[ "${top}" -ge "${highest}" ] || highest=${top}
 done
 for mhz in "$@"; do
-	echo "${mhz}" | grep -Eq '^[0-9]+$' || die "'${mhz}' is not a frequency in MHz"
+	[ "${mhz}" != free ] || continue
+	echo "${mhz}" | grep -Eq '^[0-9]+$' || die "'${mhz}' is neither a frequency in MHz nor 'free'"
 	if [ "${mhz}" -lt "${lowest}" ] || [ "${mhz}" -gt "${highest}" ]; then
 		die "${mhz} MHz is outside what the live CPUs offer (${lowest}-${highest} MHz)"
 	fi

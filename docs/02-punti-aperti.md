@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27 e A-28, chiusi A-04 e A-27.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-04 e A-27.
 
 ## La regola d'ordine
 
@@ -22,14 +22,14 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-01 | Il kernel non ha il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`): `MemoryMax=` di systemd oggi non ha effetto | Trovato il 16 novembre 2026 provando E-03 | Aggiungerlo nella stessa ricostruzione del kernel che porta `i915` (parte 2), e ripetere la misura di rumore: il controllo della memoria ha lavoro periodico suo. |
-| A-02 | Driver grafico: `i915` come modulo; `xe` solo se `i915` fa rumore | E-04; scelta dell'utente del 16 novembre 2026 | Parte 2 di P0.6c. |
+| A-01 | Il kernel non aveva il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`): `MemoryMax=` di systemd non aveva effetto | Trovato il 16 novembre 2026 provando E-03 | Aggiunto nel kernel con la parte 2 di P0.6c. Si chiude quando la misura di rumore con il kernel nuovo passa e `dawos-cgroup-test` conferma il limite di memoria. |
+| A-02 | Driver grafico: `xe`, l'unico possibile su un kernel real-time (in Linux 6.18 `i915` dipende da `!PREEMPT_RT`); per Arrow Lake è sperimentale | E-04; scelta dell'utente del 16 novembre 2026 | Parte 2 di P0.6c: funziona? disturba i core live? |
 
 ## Da chiudere in P0.6d
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-03 | Sotto il profilo `285k` i core non live girano piano e il package resta lontano dai 160 W (121 W con il firmware 3402, 134 W con la 2301); senza profilo, a parità di watt, i core girano circa il 20 % più veloci. Con il firmware 3402 gli altri core sono il 14–16 % più lenti che con la 2301 | P0.6b, parti 3 e 4; P0.6c, parte 0 | Primo sospetto: _HwP Autonomous EPP Grouping_ (il manuale: con questa voce il processore chiede lo stesso valore per tutti i core con la stessa preferenza energetica); la prova dal sistema è nella guida di P0.6c. Scartato: _Intel Default Settings_ su _Extreme_ (stessi watt). Poi i limiti di corrente. Si chiude in P0.6d con E-06, o prima se la prova dà la risposta. |
+| A-03 | Sotto il profilo `285k` i core non live girano piano e il package resta lontano dai 160 W (121 W con il firmware 3402, 134 W con la 2301); senza profilo, a parità di watt, i core girano circa il 20 % più veloci. Con il firmware 3402 gli altri core sono il 14–16 % più lenti che con la 2301 | P0.6b, parti 3 e 4; P0.6c, parte 0 | Scartati: _Intel Default Settings_ su _Extreme_ (stessi watt) e la preferenza energetica dei core live (ne hanno già una diversa dagli altri, e non cambia nulla). Prossima prova: core live non fissati a parità di carico (`dawos-freq-sweep free 4600`, nella parte 2 di P0.6c). Poi la voce _HwP Autonomous EPP Grouping_ del firmware e i limiti di corrente. Si chiude in P0.6d con E-06, o prima. |
 
 ## Da chiudere in P0.6e, prima della campagna
 
@@ -52,7 +52,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
 | A-16 | Buchi «hardware» rari, da 1 a 6 µs, senza causa nota, anche su core non live | P0.6b, parti 3 e 4c | Su 24 ore se ne vede la frequenza e se hanno un periodo. La campagna parte con la traccia armata sopra soglia. |
-| A-28 | Con il firmware 3402 ogni misura di rumore conta, nei primi secondi, alcuni interrupt del timer locale seguiti dal thread `rcuc` sui core live (1–1,7 µs l'uno, due momenti a un secondo di distanza); con la 2301 erano zero | P0.6c, parte 0 | Capire quale timer scade e perché: la diagnosi è nella guida di P0.6c. Poi decidere se è un difetto da togliere prima della campagna. |
+| A-28 | Con il firmware 3402 ogni misura di rumore conta, dopo qualche secondo, il tick dello scheduler seguito dal thread `rcuc` sui core live (1–2 µs l'uno); con la 2301 erano zero. Il tick viene riacceso dal thread di misura stesso, che è un thread del kernel, a un confine dei suoi periodi | P0.6c, parte 0 | Sapere se un thread in spazio utente lo riceve: `dawos-osnoise --user`, nella parte 2 di P0.6c. Se no, riguarda lo strumento e non il motore, e resta da capire perché solo con il firmware nuovo. Se sì, va tolto prima della campagna. |
 | A-17 | Regola per le misure di riferimento: cominciano almeno cinque minuti dopo l'accensione | P0.6b, parte 3 | Già negli strumenti come nota; la campagna la rispetta. |
 
 ## Prima della Fase 1
@@ -69,6 +69,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Quando |
 | --- | --- | --- | --- |
+| A-29 | Su un kernel real-time l'unico driver per la GPU integrata del 285K è `xe`, sperimentale per questo processore in Linux 6.18. L'interfaccia della Fase 3 ne dipende | P0.6c, parte 2 | Seguire lo stato di `xe` per Arrow Lake e di `i915` sul real-time nelle prossime versioni del kernel; rivalutare alla scelta della LTS successiva. Il rischio è nel registro delle modifiche come K-16. |
 | A-23 | Il carico grafico vero (disegno con la GPU) non è misurato: in P0.6c si misura solo lo schermo attivo | E-04 | Fase 3, quando entra l'interfaccia. |
 | A-24 | Profilo delle ventole: oggi quello del firmware | P0.4b | Con il contenitore definitivo e le misure di rumore acustico. |
 | A-25 | Revisione legale della licenza (GPLv3 con eccezione per i plugin) | [ADR 0010](adr/0010-licenza-gplv3-eccezione-plugin.md) | Prima di qualunque rilascio. |

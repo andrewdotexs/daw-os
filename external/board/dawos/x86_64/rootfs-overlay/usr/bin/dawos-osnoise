@@ -26,9 +26,12 @@
 #
 # A fourth record covers the whole run, margins included: the tracer's
 # own account of every interruption it counted on the measured CPUs
-# (which interrupt, which thread, for how long). The counts of rtla
-# cover the whole run too, while the window does not: without this
-# record an event counted in the first or last seconds has no name.
+# (which interrupt, which thread, for how long), and every timer that
+# expired there. The counts of rtla cover the whole run too, while the
+# window does not: without this record an event counted in the first or
+# last seconds has no name. A timer tells more than its interrupt: the
+# function it calls says whether it was the scheduler tick or something
+# armed on that CPU.
 #
 # Meanwhile stress-ng loads every other CPU: computation, memory, thread
 # switches and timers (leave it out with --no-load).
@@ -36,6 +39,13 @@
 # The window starts ten seconds after the measurement threads and ends
 # ten seconds before them, so that starting and stopping the tools is not
 # counted.
+#
+# With --user the tracer is left out: a plain loop in user space keeps
+# each measured CPU busy, as a thread of the audio engine will. There is
+# then no noise figure, but the other records say what such a thread
+# sees: interrupts, other threads, timers. The tracer's own thread never
+# leaves the kernel, which the kernel's housekeeping (RCU) has to work
+# around; a thread in user space asks nothing of it.
 #
 # The measured CPUs are the ones the kernel isolated (boot profile; see
 # dawos-profile). --cpus measures any other set, for example the same
@@ -64,12 +74,14 @@ SELF=$(readlink -f "$0")
 usage() {
 	cat <<USAGE
 Usage:
-  ${PROG} [--cpus LIST] [--no-load] DURATION [LABEL]
+  ${PROG} [--cpus LIST] [--no-load] [--user] DURATION [LABEL]
                              start a measurement (DURATION like 10m, 600)
   ${PROG} --status           show progress, or the last summary
   ${PROG} --summary DIR      (re)compute the summary of a finished run
 
 Without --cpus the CPUs isolated by the boot profile are measured.
+--user keeps them busy with a loop in user space instead of the tracer:
+no noise figure, only interrupts, threads and timers.
 LABEL is a short word added to the name of the result directory.
 USAGE
 }
@@ -174,6 +186,8 @@ summarize() {
 	dir=$1
 	cpus=$(sed -n 's/^cpus_measured: //p' "${dir}/meta.txt")
 	cpu_words=" $(expand_list "${cpus}" | tr '\n' ' ')"
+	workload=$(sed -n 's/^workload: //p' "${dir}/meta.txt")
+	workload=${workload:-tracer}
 	{
 		echo "directory: ${dir}"
 		cat "${dir}/meta.txt"
@@ -182,7 +196,8 @@ summarize() {
 		# % available, max noise, max single, then how many times the
 		# hardware, an NMI, an interrupt, a softirq and another thread
 		# got in the way.
-		awk '
+		[ "${workload}" = tracer ] || echo "no noise figure: the measured CPUs ran a loop in user space, not the tracer"
+		[ "${workload}" != tracer ] || awk '
 			$1 ~ /^[0-9]+$/ && $2 ~ /^#/ {
 				cpus++
 				if ($7 + 0 > max) { max = $7 + 0; worst = $1 }
@@ -258,13 +273,15 @@ summarize() {
 		# the idle thread, and kernel threads bound to that very CPU, whose
 		# names end in "/<cpu>" or read "kworker/<cpu>:...".
 		if [ -r "${dir}/threads.txt" ]; then
-			awk '
+			awk -v loop="$([ "${workload}" = user ] && echo sh)" '
 				{
 					count = $1; cpu = $2
 					name = $0
 					sub(/^[0-9]+ [0-9]+ /, "", name)
 					total[name] += count
 					bound = (name ~ ("/" cpu "$")) || (index(name, "kworker/" cpu ":") == 1)
+					# With --user the loop itself is a shell.
+					if (loop != "" && name == loop) bound = 1
 					if (!bound) stray[name] += count
 				}
 				END {
@@ -288,6 +305,7 @@ summarize() {
 		# margins, in which starting and stopping the tools falls.
 		if [ -r "${dir}/sources.txt" ]; then
 			awk '
+				$2 == "timer" { line[$1] = line[$1] sprintf(" timer %s x%d;", $3, $4); next }
 				{ line[$1] = line[$1] sprintf(" %s %s x%d (longest %.1f us);", $2, $3, $4, $5 / 1000) }
 				END {
 					printf "noise_sources_in_window:%s\n", (line["in"] == "" ? " none" : line["in"])
@@ -329,7 +347,15 @@ summarize() {
 	# Verdict against the acceptance criteria of step P0.6.
 	max=$(sed -n 's/^max_single_noise_us: \([0-9]*\).*/\1/p' "${dir}/summary.txt")
 	reasons=
-	if [ -z "${max}" ]; then
+	if [ "${workload}" = user ]; then
+		grep -q '^unexpected_interrupts: none' "${dir}/summary.txt" || reasons="${reasons} interrupts"
+		grep -q '^unexpected_threads: none' "${dir}/summary.txt" || reasons="${reasons} threads"
+		if [ -z "${reasons}" ]; then
+			echo "verdict: PASS (loop in user space: only the local timer, only bound kernel threads)" >> "${dir}/summary.txt"
+		else
+			echo "verdict: FAIL (${reasons# })" >> "${dir}/summary.txt"
+		fi
+	elif [ -z "${max}" ]; then
 		echo "verdict: NO DATA" >> "${dir}/summary.txt"
 	else
 		[ "${max}" -le "${LIMIT_US}" ] || reasons="${reasons} noise>${LIMIT_US}us"
@@ -345,12 +371,14 @@ summarize() {
 }
 
 # The measurement itself; runs inside the transient unit.
-#   $1 = directory, $2 = seconds, $3 = CPUs to measure, $4 = load: yes or no
+#   $1 = directory, $2 = seconds, $3 = CPUs to measure, $4 = load: yes or
+#   no, $5 = workload on the measured CPUs: tracer or user
 run_measurement() {
 	dir=$1
 	seconds=$2
 	cpus=$3
 	load=$4
+	workload=$5
 	online=$(cat /sys/devices/system/cpu/online)
 	others=$(subtract_list "${online}" "${cpus}")
 
@@ -376,6 +404,8 @@ run_measurement() {
 		for event in irq_noise thread_noise softirq_noise nmi_noise; do
 			echo 1 > "${SOURCES}/events/osnoise/${event}/enable" 2> /dev/null || sourced=no
 		done
+		# Not an event of the tracer: its absence is not an error.
+		echo 1 > "${SOURCES}/events/timer/hrtimer_expire_entry/enable" 2> /dev/null
 		echo 1 > "${SOURCES}/tracing_on"
 	fi
 
@@ -393,7 +423,20 @@ run_measurement() {
 	fi
 	sleep 3
 
-	rtla osnoise top -c "${cpus}" -d "${seconds}s" -q > "${dir}/osnoise.txt" 2>&1 &
+	if [ "${workload}" = user ]; then
+		# One loop per measured CPU, each a unit of its own bound to that
+		# CPU; the stand-in for rtla below only waits.
+		for spin_cpu in $(expand_list "${cpus}"); do
+			systemd-run --quiet --collect --unit="${UNIT}-spin-${spin_cpu}" \
+				--description="dawOS noise measurement: user-space loop on CPU ${spin_cpu}" \
+				-p CPUAffinity="${spin_cpu}" -p RuntimeMaxSec=$((seconds + 60)) \
+				/bin/sh -c 'while :; do :; done' ||
+				echo "note: no user-space loop on CPU ${spin_cpu}" >> "${dir}/meta.txt"
+		done
+		sleep "${seconds}" &
+	else
+		rtla osnoise top -c "${cpus}" -d "${seconds}s" -q > "${dir}/osnoise.txt" 2>&1 &
+	fi
 	rtla_pid=$!
 
 	sleep "${MARGIN_S}"
@@ -414,6 +457,11 @@ run_measurement() {
 
 	wait "${rtla_pid}"
 	rtla_status=$?
+	if [ "${workload}" = user ]; then
+		for spin_cpu in $(expand_list "${cpus}"); do
+			systemctl stop "${UNIT}-spin-${spin_cpu}.service" 2> /dev/null
+		done
+	fi
 	kill "${sampler_pid}" 2> /dev/null
 	[ -n "${load_pid}" ] && kill "${load_pid}" 2> /dev/null
 	wait 2> /dev/null
@@ -425,14 +473,31 @@ run_measurement() {
 		#   thread_noise: kworker/4:1:567 start 12.345678901 duration 1234 ns
 		#   softirq_noise:    TIMER:1 start 12.345678901 duration 1234 ns
 		#   nmi_noise: start 12.345678901 duration 1234 ns
+		#   hrtimer_expire_entry: hrtimer=... function=tick_nohz_handler now=12345678901
 		# The name may contain spaces and colons; the number after its
 		# last colon is the interrupt vector or the process number. The
-		# start is in seconds since boot, like the two ends of the window.
+		# start is in seconds since boot, like the two ends of the window;
+		# a timer gives its time in nanoseconds and has no duration.
 		# Only the totals are kept, one line per source: on CPUs that
 		# still have their tick there is an event every millisecond.
 		head -n 300 "${SOURCES}/trace" > "${dir}/sources-head.txt"
 		awk -v first="$(sed -n 's/^window_start_uptime_s: //p' "${dir}/meta.txt")" \
 			-v last="$(sed -n 's/^window_end_uptime_s: //p' "${dir}/meta.txt")" '
+			function record(kind, name, when, length_ns,    where, key) {
+				where = (first != "" && when + 0 >= first + 0 && when + 0 <= last + 0) ? "in" : "out"
+				key = where " " kind " " name
+				if (!(key in count)) order[++keys] = key
+				count[key]++
+				if (length_ns + 0 > longest[key]) longest[key] = length_ns + 0
+			}
+			/hrtimer_expire_entry: / {
+				name = $0
+				sub(/.*function=/, "", name); sub(/ .*/, "", name)
+				when = $0
+				sub(/.*now=/, "", when)
+				record("timer", name, when / 1000000000, 0)
+				next
+			}
 			/_noise: / {
 				kind = $0
 				sub(/_noise: .*/, "", kind); sub(/.* /, "", kind)
@@ -445,11 +510,7 @@ run_measurement() {
 				sub(/.*start /, "", when); sub(/ duration.*/, "", when)
 				length_ns = rest
 				sub(/.* duration /, "", length_ns); sub(/ ns.*/, "", length_ns)
-				where = (first != "" && when + 0 >= first + 0 && when + 0 <= last + 0) ? "in" : "out"
-				key = where " " kind " " name
-				if (!(key in count)) order[++keys] = key
-				count[key]++
-				if (length_ns + 0 > longest[key]) longest[key] = length_ns + 0
+				record(kind, name, when, length_ns)
 			}
 			END { for (k = 1; k <= keys; k++) print order[k], count[order[k]], longest[order[k]] }' \
 			"${SOURCES}/trace" > "${dir}/sources.txt"
@@ -462,6 +523,7 @@ run_measurement() {
 		for event in irq_noise thread_noise softirq_noise nmi_noise; do
 			echo 0 > "${SOURCES}/events/osnoise/${event}/enable" 2> /dev/null
 		done
+		echo 0 > "${SOURCES}/events/timer/hrtimer_expire_entry/enable" 2> /dev/null
 	fi
 	[ ! -d "${SOURCES}" ] || rmdir "${SOURCES}" 2> /dev/null
 
@@ -502,6 +564,7 @@ run_measurement() {
 
 cpus=
 load=yes
+workload=tracer
 while [ $# -gt 0 ]; do
 	case "$1" in
 	-h | --help)
@@ -536,7 +599,7 @@ while [ $# -gt 0 ]; do
 		;;
 	--run)
 		# Internal: called by the transient unit.
-		run_measurement "$2" "$3" "$4" "$5"
+		run_measurement "$2" "$3" "$4" "$5" "${6:-tracer}"
 		exit 0
 		;;
 	--cpus)
@@ -545,6 +608,7 @@ while [ $# -gt 0 ]; do
 		shift
 		;;
 	--no-load) load=no ;;
+	--user) workload=user ;;
 	-*) die "unknown option '$1' (try --help)" ;;
 	*) break ;;
 	esac
@@ -592,6 +656,7 @@ mkdir -p "${dir}"
 	echo "cpus_measured: ${cpus}"
 	echo "cpus_isolated_by_kernel: ${isolated:-none}"
 	echo "load_on_other_cpus: ${load}"
+	echo "workload: ${workload}"
 	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
 	echo "tune: $(sed -n 's/^  "status": "\([a-z]*\)".*/\1/p' /run/dawos/topology.json 2> /dev/null)"
 	echo "kernel: $(uname -srv)"
@@ -605,7 +670,7 @@ mkdir -p "${dir}"
 
 systemd-run --quiet --unit="${UNIT}" --collect \
 	--description="dawOS operating system noise measurement" \
-	/bin/sh "${SELF}" --run "${dir}" "${seconds}" "${cpus}" "${load}" ||
+	/bin/sh "${SELF}" --run "${dir}" "${seconds}" "${cpus}" "${load}" "${workload}" ||
 	die "could not start the measurement"
 
 echo "Measurement started for ${duration} on CPUs ${cpus}; results in ${dir}"

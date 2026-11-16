@@ -1,0 +1,18 @@
+# Graphics driver of the integrated GPU, and memory control per group.
+
+# xe: Intel's driver for recent integrated and discrete GPUs. On a
+# real-time kernel it is the only one that can be built for the GPU of
+# the reference machine: in Linux 6.18 the older driver, i915, depends on
+# !PREEMPT_RT. For Arrow Lake xe is still experimental in 6.18: it binds
+# only when told to (module parameter force_probe=<PCI device id>).
+#
+# A module, and never loaded by itself (see /etc/modprobe.d): without it
+# the console stays on the firmware's framebuffer, as it has been so far.
+# dawos-gpu-test loads it on request (experiment E-04, step P0.6c).
+CONFIG_DRM_XE=m
+CONFIG_DRM_XE_DISPLAY=y
+# CONFIG_DRM_I915 is not set
+
+# Memory controller of control groups: without it MemoryMax= of a systemd
+# unit has no effect, and ADR 0002 counts on a memory limit per process.
+CONFIG_MEMCG=y
