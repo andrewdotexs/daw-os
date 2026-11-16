@@ -78,6 +78,9 @@ BR2_PACKAGE_CRYPTSETUP=y
 # lvm2 package. Only that and dmsetup: no logical volume manager, whose
 # tools and boot-time services dawOS has no use for.
 # BR2_PACKAGE_LVM2_STANDARD_INSTALL is not set
+# BusyBox with Buildroot's default configuration plus our additions
+# (taskset). A change to the fragment rebuilds BusyBox by itself.
+BR2_PACKAGE_BUSYBOX_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/busybox/dawos.fragment"
 # lsblk, to show what is on a disk before it is erased.
 BR2_PACKAGE_UTIL_LINUX=y
 BR2_PACKAGE_UTIL_LINUX_BINARIES=y
