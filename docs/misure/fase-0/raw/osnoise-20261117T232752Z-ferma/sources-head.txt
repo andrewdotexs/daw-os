@@ -1,0 +1,24 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 12/12   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+       osnoise/4-2012    [004] d.h.1   910.535229: hrtimer_expire_entry: hrtimer=000000000544a514 function=tick_nohz_handler now=910840001259
+       osnoise/4-2012    [004] dNh11   910.535232: irq_noise: local_timer:236 start 910.535228981 duration 2570 ns
+          rcuc/4-56      [004] d..3.   910.535235: thread_noise:   rcuc/4:56 start 910.535232616 duration 1787 ns
+       osnoise/7-2015    [007] d.h21   910.540229: hrtimer_expire_entry: hrtimer=0000000028ebf4c5 function=tick_nohz_handler now=910845001181
+       osnoise/7-2015    [007] dNh31   910.540232: irq_noise: local_timer:236 start 910.540228772 duration 2873 ns
+          rcuc/7-84      [007] d..3.   910.540235: thread_noise:   rcuc/7:84 start 910.540232645 duration 2228 ns
+       osnoise/4-2012    [004] d.h.1   911.535202: hrtimer_expire_entry: hrtimer=000000000544a514 function=tick_nohz_handler now=911840000584
+       osnoise/4-2012    [004] dNh11   911.535203: irq_noise: local_timer:236 start 911.535201434 duration 1034 ns
+          rcuc/4-56      [004] d..3.   911.535204: thread_noise:   rcuc/4:56 start 911.535203446 duration 324 ns
+       osnoise/7-2015    [007] d.h.1   911.540202: hrtimer_expire_entry: hrtimer=0000000028ebf4c5 function=tick_nohz_handler now=911845000707
+       osnoise/7-2015    [007] dNh11   911.540202: irq_noise: local_timer:236 start 911.540201342 duration 1042 ns
+          rcuc/7-84      [007] d..3.   911.540203: thread_noise:   rcuc/7:84 start 911.540202901 duration 451 ns

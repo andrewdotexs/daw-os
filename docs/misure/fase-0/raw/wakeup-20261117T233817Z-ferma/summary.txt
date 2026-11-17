@@ -1,0 +1,34 @@
+directory: /var/lib/dawos/measure/wakeup-20261117T233817Z-ferma
+started_utc: 2026-11-17T23:38:20Z
+label: ferma
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+period_us: 1000
+seconds_per_case: 120
+cases: rest idle-quiet busy-quiet idle-load busy-load
+idle_driver: none
+idle_routine: mwait
+c1e_auto_promotion: DISabled
+package_cstate_control: locked, pkg-cstate-limit=0 (pc0)
+profile: 285k
+tune: ok
+kernel: Linux 6.18.64-dawos #1 SMP PREEMPT_RT Tue Nov 17 22:49:31 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 135280 verity 1 PARTLABEL=dawos-root-0.0.1.20261117231225 PARTLABEL=dawos-verity-0.0.1.20261117231225 4096 4096 16910 1 sha256 368ee91656306b6f246b9c0bf6198ccdbba5a366a567fe6c547c2d3c52f3eddd bd952f0aaacf427d15e3221ead272132f367eed86880d394fd3f19ede00b8312 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261117231225,PARTLABEL=dawos-verity-0.0.1.20261117231225 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 3402 09/18/2026
+image: 4cdf08ce310e
+uptime_at_start_s: 1524
+live_khz: 4600000-4600000
+finished_utc: 2026-11-17T23:48:52Z
+delays in microseconds; p = 99.999th percentile; idle_pct = share of time the measured CPUs were stopped
+case          samples idle_pct  irq_min irq_avg irq_max  thr_avg thr_max  usr_avg   usr_p usr_max   pkg_w temp_avg temp_max
+rest                -    100.0        -       -       -        -       -        -       -       -     8.2     35.9       37
+idle-quiet     480000     99.9     0.51    0.58    0.99     1.43    4.06     1.78     4.5    4.39     7.3     34.4       35
+busy-quiet     480000      0.0     0.36    0.46    0.76     1.16    2.25     1.63     3.0    2.77    44.9     57.6       58
+idle-load      480000     99.9     0.51    0.57    2.50     1.41   13.05     1.75     7.0   13.41   159.9     80.8       82
+busy-load      480000      0.0     0.33    0.40    1.28     1.10    8.51     1.51     5.0    9.78   160.0     81.0       83
+wakeup_cost_quiet_us: irq_avg +0.12 thr_avg +0.27 usr_avg +0.15 (idle-quiet minus busy-quiet)
+staying_awake_cost_quiet_w: +37.6 (busy-quiet minus idle-quiet)
+wakeup_cost_load_us: irq_avg +0.17 thr_avg +0.31 usr_avg +0.24 (idle-load minus busy-load)
+staying_awake_cost_load_w: +0.1 (busy-load minus idle-load)
+adr0009_quiet: usr_max 4.39 us, +1.62 against busy-quiet: PASS (limits: 30 us, +5 us)
+adr0009_load: usr_max 13.41 us, +3.63 against busy-load: PASS (limits: 30 us, +5 us)
