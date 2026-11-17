@@ -1,0 +1,28 @@
+[  874.324871] Setting dangerous option force_probe - tainting kernel
+[  874.329041] Console: switching to colour dummy device 80x25
+[  874.338160] xe 0000:00:02.0: vgaarb: deactivate vga console
+[  874.338304] xe 0000:00:02.0: [drm] Found meteorlake (device ID 7d67) integrated display version 14.00 stepping D0
+[  874.351004] xe 0000:00:02.0: vgaarb: VGA decodes changed: olddecodes=io+mem,decodes=none:owns=io+mem
+[  874.357014] xe 0000:00:02.0: [drm] Finished loading DMC firmware i915/mtl_dmc.bin (v2.23)
+[  874.407268] xe 0000:00:02.0: [drm] Tile0: GT0: Using GuC firmware from i915/mtl_guc_70.bin version 70.49.4
+[  874.607606] xe 0000:00:02.0: [drm] Tile0: GT1: Using GuC firmware from i915/mtl_guc_70.bin version 70.49.4
+[  874.614908] xe 0000:00:02.0: [drm] Tile0: GT1: Using HuC firmware from i915/mtl_huc_gsc.bin version 8.5.4
+[  874.618209] xe 0000:00:02.0: [drm] Tile0: GT1: Using GSC firmware from i915/mtl_gsc_1.bin version 102.1.15.1926
+[  874.618657] xe 0000:00:02.0: [drm] Tile0: GT1: can't init GSC proxy due to missing mei component
+[  874.630531] xe 0000:00:02.0: [drm] Tile0: GT1: vcs1 fused off
+[  874.630540] xe 0000:00:02.0: [drm] Tile0: GT1: vcs3 fused off
+[  874.630548] xe 0000:00:02.0: [drm] Tile0: GT1: vcs4 fused off
+[  874.630555] xe 0000:00:02.0: [drm] Tile0: GT1: vcs5 fused off
+[  874.630562] xe 0000:00:02.0: [drm] Tile0: GT1: vcs6 fused off
+[  874.630568] xe 0000:00:02.0: [drm] Tile0: GT1: vcs7 fused off
+[  874.630574] xe 0000:00:02.0: [drm] Tile0: GT1: vecs1 fused off
+[  874.630579] xe 0000:00:02.0: [drm] Tile0: GT1: vecs2 fused off
+[  874.630585] xe 0000:00:02.0: [drm] Tile0: GT1: vecs3 fused off
+[  874.783712] [drm] Initialized xe 1.1.0 for 0000:00:02.0 on minor 0
+[  874.786326] ACPI: video: Video Device [GFX0] (multi-head: yes  rom: no  post: no)
+[  874.787072] input: Video Bus as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input10
+[  874.802277] xe 0000:00:02.0: [drm] Tile0: GT1: found GSC cv102.1.0
+[  874.913171] xe 0000:00:02.0: [drm] Allocated fbdev into stolen
+[  875.027039] Console: switching to colour frame buffer device 240x67
+[  875.044452] xe 0000:00:02.0: [drm] fb0: xedrmfb frame buffer device
+[  876.618674] usb 3-12: USB disconnect, device number 5
