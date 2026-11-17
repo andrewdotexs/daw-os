@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36; chiusi A-34 e A-31; scelto il rimedio per A-33.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36; chiusi A-34 e A-31; scelto e verificato il rimedio per A-33, alla chiusura del sotto-passo P0.6d.
 
 ## La regola d'ordine
 
@@ -28,8 +28,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-33 | Un core live a riposo si risveglia fino a 55 µs in ritardo quando gli altri P-core (0–3) lavorano a raffiche brevi e a frequenza bassa (circa 1,3 GHz). Un core live al lavoro non ne risente; gli E-core non hanno effetto; tenendo alta la frequenza dei P-core 0–3 il ritardo scende a 5–8 µs | E-05 e due giri di diagnosi, parte 2 di P0.6d | Rimedio scelto dall'utente il 17 novembre 2026 e consegnato (parte 3): P-core non live a frequenza fissa al massimo. Da verificare sul 285K: il caso che ha fatto scoprire il problema, consumo a riposo, rumore, capacità. Poi passa alla campagna P0.7, che deve avere un carico a raffiche brevi sui P-core non live. |
-| — | Il resto è chiuso: vedi in fondo A-31 e A-34. | — | — |
+| — | Nessuno: il sotto-passo P0.6d è superato. A-31 e A-34 sono chiusi, in fondo; A-33 ha il suo rimedio ed è passato alla campagna. | — | — |
 
 ## Da chiudere in P0.6e, prima della campagna
 
@@ -55,6 +54,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | A-16 | Buchi «hardware» rari, da 1 a 6 µs, senza causa nota, anche su core non live | P0.6b, parti 3 e 4c | Su 24 ore se ne vede la frequenza e se hanno un periodo. La campagna parte con la traccia armata sopra soglia. |
 | A-30 | Con gli altri venti core a piena potenza (160 W) il ritardo massimo di risveglio sotto carico è salito da 4 a 7 µs, e a 11,6 µs con l'attesa attiva; due minuti per caso | P0.6c, chiusura | La campagna misura in questa condizione per 24 ore: dirà se è una coda stabile o un caso. |
 | A-36 | Il collegamento di rete è caduto per 3,5 secondi, 2,3 secondi dopo il primo caricamento dei moduli della macchina virtuale. Non si è ripetuto né al secondo caricamento, a macchina ferma, né al terzo, nelle condizioni del primo (misura in corso, package a 160 W). Una sola caduta in oltre un'ora | P0.6e, parte 1 | La campagna registra ogni caduta del collegamento. |
+| A-33 | Un core live a riposo si risvegliava fino a 55 µs in ritardo quando gli altri P-core lavoravano a raffiche brevi e a frequenza bassa. Rimedio in opera dal 17 novembre 2026: P-core non live a frequenza fissa al massimo; misurato 6 µs nel caso che aveva fatto scoprire il problema | P0.6d, parti 2 e 3; [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md), punto 17 | Il rimedio è provato con un solo carico a raffiche brevi, la cifratura. La campagna deve avere un carico a raffiche brevi suo sui P-core non live, con i core live a riposo tra un ciclo e l'altro. Se i risvegli lenti tornano, si riapre l'ADR 0009 (attesa attiva). |
 | A-17 | Regola per le misure di riferimento: cominciano almeno cinque minuti dopo l'accensione | P0.6b, parte 3 | Già negli strumenti come nota; la campagna la rispetta. |
 
 ## Prima della Fase 1

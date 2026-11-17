@@ -64,4 +64,4 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 - Se sul 285K compaiono errori hardware corretti che il sondaggio avrebbe segnalato.
 - Con la seconda macchina supportata: il modo di scegliere il profilo andrà rivisto se le macchine diventano molte.
 - Se una misura mostra che con la preferenza energetica comune i core live perdono qualcosa (frequenza tenuta, ritardo di risveglio): finora non è così.
-- **Frequenza dei P-core non live, 17 novembre 2026**: fissa al massimo (punto 17). Da verificare sul 285K dopo la modifica: consumo e temperatura a riposo, e che la capacità misurata in E-06 non cambi.
+- **Frequenza dei P-core non live, 17 novembre 2026**: fissa al massimo (punto 17). Verificato sul 285K lo stesso giorno: nel caso che aveva fatto scoprire il problema il ritardo di risveglio passa da 43–57 µs a 6 µs; il package a riposo da 3,0 a 6,0 W; rumore sui core live zero a 160 W; capacità del dominio anticipativo invariata. Si riapre se la campagna P0.7 mostra risvegli lenti sotto un altro carico a raffiche.
