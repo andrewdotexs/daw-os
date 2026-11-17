@@ -1,0 +1,21 @@
+started_utc: 2026-11-17T14:03:43Z
+label: cifra-0-3
+configs: l
+mode: partial
+loads: w2
+w2_seconds: 150
+timerlat: yes
+crypt_cpus: 0-3
+shared: /dev/disk/by-partlabel/shared (300G)
+homes: /dev/nvme0n1p8 (590.3G)
+io_cpus: 20-23
+live_cpus: 4-7
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #9 SMP PREEMPT_RT Tue Nov 17 13:53:23 CET 2026
+bios: 3402 09/18/2026
+image: 057c7e49a8b3
+fio: fio-3.41
+cryptsetup: cryptsetup 2.8.4
+uptime_at_start_s: 3942
+finished_utc: 2026-11-17T14:06:22Z

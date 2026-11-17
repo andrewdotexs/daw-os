@@ -1,0 +1,29 @@
+utc: 2026-11-17T14:01:18Z
+label: rete2
+loaded_at_uptime_s: 3794.68
+kernel: Linux 6.18.63-dawos #9 SMP PREEMPT_RT Tue Nov 17 13:53:23 CET 2026
+image: 057c7e49a8b3
+profile: 285k
+processor_has_vmx: yes
+modules_added: 
+kernel_threads_added: 
+kvm_enables_virtualization_at_load: Y
+kernel_tainted: 0
+kvm_intel: loaded
+vhost_net: loaded
+vhost_vsock: loaded
+tun: loaded
+nft_nat: loaded
+nft_masq: loaded
+/dev/kvm: present
+problems: none
+--- modprobe:
+kvm_intel: loaded
+vhost_net: loaded
+vhost_vsock: loaded
+tun: loaded
+nft_nat: loaded
+nft_masq: loaded
+--- kernel log since loading:
+[ 3794.714031] dawos kernel: tun: Universal TUN/TAP device driver, 1.6
+[ 3794.715222] dawos kernel: NET: Registered PF_VSOCK protocol family
