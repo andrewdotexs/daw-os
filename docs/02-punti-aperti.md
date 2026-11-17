@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36; chiuso A-34.
 
 ## La regola d'ordine
 
@@ -28,8 +28,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-33 | Con dm-crypt nella forma normale (cifratura sulle code di lavoro del kernel, quindi sui domini `preemptive` e `system`) i core live restano senza interrupt fino a 57 µs, cinque o sei volte al secondo: oltre la soglia di fase e oltre il requisito. Non succede in chiaro né quando cifrano i core `io` | E-05, parte 2 di P0.6d | Trovare la causa (diagnosi consegnata: su quali core, hardware o kernel, a riposo o al lavoro). Se è un effetto del lavoro vettoriale a raffiche sugli altri core, riguarda il dominio anticipativo intero e non solo la cifratura. Va chiuso prima della campagna P0.7. |
-| A-34 | Su loop ogni `fdatasync` di un file che cresce costa il doppio (10,2 ms contro 4,8 ms; il disco da solo impiega 4,8 ms): la soglia di E-05 è superata del 3–4 % | E-05, parte 2 di P0.6d | Misurare il journal su un file già scritto (`w3b`); poi decidere tra il ripiego (partizione LUKS per utente), un journal che riusa i suoi segmenti, o una soglia rivista. Aggiornare l'ADR 0004. |
+| A-33 | Un core live a riposo si risveglia fino a 55 µs in ritardo quando gli altri P-core (0–3) lavorano a raffiche: oltre la soglia di fase e oltre il requisito. Un core live al lavoro non ne risente; il lavoro a raffiche sugli E-core non ha effetto. Scoperto con dm-crypt, ma è ciò che farà il dominio anticipativo con i plugin | E-05 e diagnosi, parte 2 di P0.6d | Secondo giro consegnato (`tools/diag-a33.sh`): lo stesso carico con la frequenza dei P-core 0–3 tenuta in modi diversi, e un carico che non è cifratura. Poi scegliere il rimedio: frequenza dei P-core non live, attesa attiva (43 W, rilettura dell'ADR 0009), o P-core fuori dal lavoro a raffiche. Va chiuso prima della campagna P0.7 e pesa sulla leva di A-31. |
 | A-31 | La sessione di riferimento di R-04 a 96 kHz usa tra il 64 % e il 70 % del dominio anticipativo: fuori dalla soglia del 60 % | E-06; [ADR 0011](adr/0011-r04-carico-sintetico.md) | Scegliere la leva, alla chiusura di P0.6d, con l'utilizzo del dominio di I/O misurato da E-05: due E-core in più al dominio anticipativo, soglia distinta, o sessione più piccola. |
 
 ## Da chiudere in P0.6e, prima della campagna
@@ -55,7 +54,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | --- | --- | --- | --- |
 | A-16 | Buchi «hardware» rari, da 1 a 6 µs, senza causa nota, anche su core non live | P0.6b, parti 3 e 4c | Su 24 ore se ne vede la frequenza e se hanno un periodo. La campagna parte con la traccia armata sopra soglia. |
 | A-30 | Con gli altri venti core a piena potenza (160 W) il ritardo massimo di risveglio sotto carico è salito da 4 a 7 µs, e a 11,6 µs con l'attesa attiva; due minuti per caso | P0.6c, chiusura | La campagna misura in questa condizione per 24 ore: dirà se è una coda stabile o un caso. |
-| A-36 | Il collegamento di rete è caduto per 3,5 secondi, 2,3 secondi dopo il primo caricamento dei moduli della macchina virtuale (a pieno carico); al secondo caricamento, a macchina ferma, no. Una sola caduta in 58 minuti | P0.6e, parte 1 | La campagna registra ogni caduta del collegamento. Prima, riprovare il caricamento nelle condizioni della prima volta (misura in corso, package a 160 W). |
+| A-36 | Il collegamento di rete è caduto per 3,5 secondi, 2,3 secondi dopo il primo caricamento dei moduli della macchina virtuale. Non si è ripetuto né al secondo caricamento, a macchina ferma, né al terzo, nelle condizioni del primo (misura in corso, package a 160 W). Una sola caduta in oltre un'ora | P0.6e, parte 1 | La campagna registra ogni caduta del collegamento. |
 | A-17 | Regola per le misure di riferimento: cominciano almeno cinque minuti dopo l'accensione | P0.6b, parte 3 | Già negli strumenti come nota; la campagna la rispetta. |
 
 ## Prima della Fase 1
@@ -83,6 +82,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Chiuso |
 | --- | --- | --- |
+| A-34 | Su loop ogni `fdatasync` di un file che cresce costa il doppio (10–13 ms contro 5–6 ms): soglia di E-05 superata | 17 novembre 2026 (P0.6d, parte 2): su un file già scritto costa 4,9–6,1 ms. Scelta dell'utente: resta l'immagine su loop, con due vincoli scritti nell'ADR 0004 (dm-crypt senza code di lavoro; journal su segmenti già scritti). Il ripiego non si adotta. |
 | A-03 | Sotto il profilo `285k` i core non live giravano piano e il package restava lontano dai 160 W | 17 novembre 2026 (P0.6c): la causa era la preferenza energetica `performance` data da `dawos-tune` ai soli core live; ora hanno quella degli altri. A pieno carico gli altri core passano da 2860 a 4454 MHz, il package da 122 a 160 W; i core live tengono i 4600 MHz, senza rumore e con lo stesso ritardo medio di risveglio. Con la macchina a piena potenza il ritardo massimo sotto carico sale da 4 a 7–12 µs: da seguire nella campagna P0.7. |
 | A-02 | Driver grafico (esperimento E-04) | 17 novembre 2026 (P0.6c, parte 2): `xe`, l'unico che si compila su un kernel real-time; funziona sul 285K, zero rumore a schermo fermo. Il limite trovato con lo schermo che cambia è accettato dall'utente e passa ad A-23 e al rischio K-16. Il driver non si carica all'avvio. |
 | A-01 | Il kernel non aveva il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`) | 16 novembre 2026 (P0.6c, parte 2): aggiunto; la misura di rumore con il kernel nuovo passa e `dawos-cgroup-test` conferma il limite al gruppo del processo. |
