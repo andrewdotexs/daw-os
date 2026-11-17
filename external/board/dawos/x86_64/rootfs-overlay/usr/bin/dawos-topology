@@ -141,6 +141,65 @@ for zone in /sys/class/powercap/intel-rapl:*; do
 	done
 done
 
+section "machine check banks"
+# Corrected hardware errors are reported bank by bank. A bank that can
+# raise its own interrupt (CMCI) needs no polling; the others are only
+# seen by the periodic poll, which dawos-tune switches off on a machine
+# with a boot profile. Register IA32_MCG_CAP (0x179) gives the number of
+# banks; bit 30 of IA32_MCi_CTL2 (0x280 + i) says the interrupt is on.
+show /sys/devices/system/machinecheck/machinecheck0/check_interval
+msr() {
+	dd if="/dev/cpu/$1/msr" bs=8 skip="$2" count=1 iflag=skip_bytes 2> /dev/null | od -An -tu8 | tr -d ' '
+}
+for cpu in 0 $(cut -d - -f 1 /sys/devices/cpu_atom/cpus 2> /dev/null | cut -d , -f 1) \
+	$(grep -v null /sys/devices/system/cpu/isolated 2> /dev/null | cut -d - -f 1 | cut -d , -f 1); do
+	capability=$(msr "${cpu}" 377)
+	if [ -z "${capability}" ]; then
+		echo "cpu${cpu}: registers not readable"
+		continue
+	fi
+	banks=$((capability & 255))
+	with=
+	without=
+	bank=0
+	while [ "${bank}" -lt "${banks}" ]; do
+		control=$(msr "${cpu}" $((640 + bank)))
+		if [ -n "${control}" ] && [ $(((control >> 30) & 1)) -eq 1 ]; then
+			with="${with} ${bank}"
+		else
+			without="${without} ${bank}"
+		fi
+		bank=$((bank + 1))
+	done
+	echo "cpu${cpu}: ${banks} banks; own interrupt:${with:- none}; poll only:${without:- none}"
+done
+
+section "pcie link power management"
+# What each PCIe link was left in: the firmware manages ASPM on this
+# machine, and its entries are set to off.
+show /sys/module/pcie_aspm/parameters/policy
+lspci -vv 2> /dev/null | awk '
+	/^[0-9a-f][0-9a-f]:/ { device = $1 " " $2 " " $3 " " $4 }
+	/LnkCtl:/ { sub(/^[ \t]+/, ""); sub(/;.*/, ""); print device ": " $0 }'
+
+section "tpm"
+show /sys/class/tpm/tpm0/tpm_version_major
+show /sys/class/tpm/tpm0/device/description
+if [ -e /sys/firmware/acpi/tables/TPM2 ]; then echo "firmware table TPM2: present"; else echo "firmware table TPM2: absent"; fi
+ls /dev/tpm* 2> /dev/null
+
+section "sound cards"
+cat /proc/asound/cards 2> /dev/null || echo "(no sound subsystem)"
+
+section "boot time"
+systemd-analyze time 2> /dev/null || echo "(systemd-analyze not available)"
+grep -E '^timeout' /boot/loader/loader.conf 2> /dev/null
+
+section "name resolution"
+# Only which protocols are on: the addresses of the resolvers belong to
+# the network the machine sits on and stay out of this report.
+resolvectl status 2> /dev/null | grep -E 'Protocols' | head -n 4
+
 section "time"
 show /sys/devices/system/clocksource/clocksource0/current_clocksource
 show /sys/devices/system/clocksource/clocksource0/available_clocksource

@@ -1,0 +1,25 @@
+# dawOS (measurement): trace what reaches the live CPUs in the first
+# minutes after a boot. See /usr/bin/dawos-boot-trace.
+#
+# It only runs on a boot that was armed beforehand (dawos-boot-trace
+# --arm), and as early as its two needs allow: /var, where the mark and
+# the result live, and the kernel's tracing directory. It does not hold
+# the boot back: the trace goes on in the background.
+[Unit]
+Description=dawOS trace of the first minutes after boot
+DefaultDependencies=no
+ConditionPathExists=/var/lib/dawos/boot-trace-armed
+RequiresMountsFor=/var/lib/dawos
+Wants=sys-kernel-tracing.mount
+After=sys-kernel-tracing.mount
+Conflicts=shutdown.target
+Before=shutdown.target
+
+# A failed unit would mark the boot as bad (ADR 0016), and a measurement
+# aid must never do that: whatever happens to it is ignored.
+[Service]
+Type=exec
+ExecStart=-/usr/bin/dawos-boot-trace --run
+
+[Install]
+WantedBy=sysinit.target

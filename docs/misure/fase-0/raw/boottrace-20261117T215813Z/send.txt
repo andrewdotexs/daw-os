@@ -1,0 +1,57 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 6/6   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+    kworker/23:0-235     [023] ...1.     4.548733: ipi_send_cpumask: cpumask=00000000,007fffff callsite=on_each_cpu_cond_mask+0x1f/0x40 callback=generic_smp_call_function_single_interrupt+0x0/0x10
+    kworker/23:0-235     [023] ...1.     4.548746: <stack trace>
+ => trace_event_raw_event_ipi_send_cpumask
+ => smp_call_function_many_cond
+ => on_each_cpu_cond_mask
+ => smp_text_poke_batch_finish
+ => arch_jump_label_transform_apply
+ => static_key_disable_cpuslocked
+ => static_key_disable
+ => once_deferred
+ => process_one_work
+ => worker_thread
+ => kthread
+ => ret_from_fork
+ => ret_from_fork_asm
+    kworker/23:0-235     [023] ...1.     4.548758: ipi_send_cpumask: cpumask=00000000,007fffff callsite=on_each_cpu_cond_mask+0x1f/0x40 callback=generic_smp_call_function_single_interrupt+0x0/0x10
+    kworker/23:0-235     [023] ...1.     4.548763: <stack trace>
+ => trace_event_raw_event_ipi_send_cpumask
+ => smp_call_function_many_cond
+ => on_each_cpu_cond_mask
+ => smp_text_poke_batch_finish
+ => arch_jump_label_transform_apply
+ => static_key_disable_cpuslocked
+ => static_key_disable
+ => once_deferred
+ => process_one_work
+ => worker_thread
+ => kthread
+ => ret_from_fork
+ => ret_from_fork_asm
+    kworker/23:0-235     [023] ...1.     4.548772: ipi_send_cpumask: cpumask=00000000,007fffff callsite=on_each_cpu_cond_mask+0x1f/0x40 callback=generic_smp_call_function_single_interrupt+0x0/0x10
+    kworker/23:0-235     [023] ...1.     4.548775: <stack trace>
+ => trace_event_raw_event_ipi_send_cpumask
+ => smp_call_function_many_cond
+ => on_each_cpu_cond_mask
+ => smp_text_poke_batch_finish
+ => arch_jump_label_transform_apply
+ => static_key_disable_cpuslocked
+ => static_key_disable
+ => once_deferred
+ => process_one_work
+ => worker_thread
+ => kthread
+ => ret_from_fork
+ => ret_from_fork_asm

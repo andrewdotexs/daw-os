@@ -1,0 +1,40 @@
+started_utc: 2026-11-17T21:58:13Z
+started_at_uptime_s: 2.38
+seconds: 300
+live_cpus: 4-7
+kernel: Linux 6.18.64-dawos #1 SMP PREEMPT_RT Tue Nov 17 22:49:31 CET 2026
+image: 607b62d47652
+profile: 285k
+recording_from_uptime_s: 3.47
+finished_at_uptime_s: 303.48
+
+requests to interrupt a live CPU, by the task that asked, where in the kernel, and what was to be run (count, task, callsite, callback):
+      3 kworker/23: on_each_cpu_cond_mask+0x1f/0x40 generic_smp_call_function_single_interrupt+0x0/0x10
+
+the same, by second after the start of the kernel (second, count):
+4:3 
+
+on the live CPUs (count, event):
+     12 call_function_entry:
+
+threads that ran on the live CPUs (count, name):
+
+interrupt counters of the live CPUs: when the tool started (boot), when it began to record (start), at the end:
+  interrupts-boot.txt:
+    LOC: cpu4=357 cpu5=356 cpu6=356 cpu7=355
+    IWI: cpu4=7 cpu5=7 cpu6=6 cpu7=5
+    RES: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+    CAL: cpu4=191 cpu5=196 cpu6=196 cpu7=197
+    TLB: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+  interrupts-start.txt:
+    LOC: cpu4=358 cpu5=357 cpu6=357 cpu7=356
+    IWI: cpu4=7 cpu5=7 cpu6=6 cpu7=6
+    RES: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+    CAL: cpu4=311 cpu5=316 cpu6=316 cpu7=316
+    TLB: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+  interrupts-end.txt:
+    LOC: cpu4=358 cpu5=357 cpu6=357 cpu7=356
+    IWI: cpu4=7 cpu5=7 cpu6=6 cpu7=6
+    RES: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+    CAL: cpu4=314 cpu5=319 cpu6=319 cpu7=319
+    TLB: cpu4=0 cpu5=0 cpu6=0 cpu7=0
