@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36; chiuso A-34.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36; chiusi A-34 e A-31; scelto il rimedio per A-33.
 
 ## La regola d'ordine
 
@@ -28,8 +28,8 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-33 | Un core live a riposo si risveglia fino a 55 µs in ritardo quando gli altri P-core (0–3) lavorano a raffiche: oltre la soglia di fase e oltre il requisito. Un core live al lavoro non ne risente; il lavoro a raffiche sugli E-core non ha effetto. Scoperto con dm-crypt, ma è ciò che farà il dominio anticipativo con i plugin | E-05 e diagnosi, parte 2 di P0.6d | Secondo giro consegnato (`tools/diag-a33.sh`): lo stesso carico con la frequenza dei P-core 0–3 tenuta in modi diversi, e un carico che non è cifratura. Poi scegliere il rimedio: frequenza dei P-core non live, attesa attiva (43 W, rilettura dell'ADR 0009), o P-core fuori dal lavoro a raffiche. Va chiuso prima della campagna P0.7 e pesa sulla leva di A-31. |
-| A-31 | La sessione di riferimento di R-04 a 96 kHz usa tra il 64 % e il 70 % del dominio anticipativo: fuori dalla soglia del 60 % | E-06; [ADR 0011](adr/0011-r04-carico-sintetico.md) | Scegliere la leva, alla chiusura di P0.6d, con l'utilizzo del dominio di I/O misurato da E-05: due E-core in più al dominio anticipativo, soglia distinta, o sessione più piccola. |
+| A-33 | Un core live a riposo si risveglia fino a 55 µs in ritardo quando gli altri P-core (0–3) lavorano a raffiche brevi e a frequenza bassa (circa 1,3 GHz). Un core live al lavoro non ne risente; gli E-core non hanno effetto; tenendo alta la frequenza dei P-core 0–3 il ritardo scende a 5–8 µs | E-05 e due giri di diagnosi, parte 2 di P0.6d | Rimedio scelto dall'utente il 17 novembre 2026 e consegnato (parte 3): P-core non live a frequenza fissa al massimo. Da verificare sul 285K: il caso che ha fatto scoprire il problema, consumo a riposo, rumore, capacità. Poi passa alla campagna P0.7, che deve avere un carico a raffiche brevi sui P-core non live. |
+| — | Il resto è chiuso: vedi in fondo A-31 e A-34. | — | — |
 
 ## Da chiudere in P0.6e, prima della campagna
 
@@ -82,6 +82,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Chiuso |
 | --- | --- | --- |
+| A-31 | La sessione di riferimento di R-04 a 96 kHz usa tra il 64 % e il 70 % del dominio anticipativo: fuori dalla soglia del 60 % | 17 novembre 2026 (P0.6d): scelta dell'utente, soglia distinta per il dominio anticipativo al 75 %; quella del dominio live resta il 60 %. Di riserva per la Fase 2: due E-core dal dominio di I/O, che E-05 ha misurato largo (2–11 %). ADR 0011 aggiornato. |
 | A-34 | Su loop ogni `fdatasync` di un file che cresce costa il doppio (10–13 ms contro 5–6 ms): soglia di E-05 superata | 17 novembre 2026 (P0.6d, parte 2): su un file già scritto costa 4,9–6,1 ms. Scelta dell'utente: resta l'immagine su loop, con due vincoli scritti nell'ADR 0004 (dm-crypt senza code di lavoro; journal su segmenti già scritti). Il ripiego non si adotta. |
 | A-03 | Sotto il profilo `285k` i core non live giravano piano e il package restava lontano dai 160 W | 17 novembre 2026 (P0.6c): la causa era la preferenza energetica `performance` data da `dawos-tune` ai soli core live; ora hanno quella degli altri. A pieno carico gli altri core passano da 2860 a 4454 MHz, il package da 122 a 160 W; i core live tengono i 4600 MHz, senza rumore e con lo stesso ritardo medio di risveglio. Con la macchina a piena potenza il ritardo massimo sotto carico sale da 4 a 7–12 µs: da seguire nella campagna P0.7. |
 | A-02 | Driver grafico (esperimento E-04) | 17 novembre 2026 (P0.6c, parte 2): `xe`, l'unico che si compila su un kernel real-time; funziona sul 285K, zero rumore a schermo fermo. Il limite trovato con lo schermo che cambia è accettato dall'utente e passa ad A-23 e al rischio K-16. Il driver non si carica all'avvio. |

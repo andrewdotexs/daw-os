@@ -30,6 +30,7 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 14. **Il 285K ha un solo profilo, `285k`, con i core live 4–7.** _(Scelta dell'utente, 16 novembre 2026: a parità di rumore è risultato più fresco dell'alternativa 2–5.)_
 15. **Lo stato di riposo dei core live è verificato, non impostato.** Sul 285K il kernel non ha stati tra cui scegliere e il C1E è una voce del firmware: con `live_idle=c1` `dawos-tune` legge dal processore se il C1 viene trasformato in C1E e, se sì, dichiara il profilo `degraded`. _(Scelta dell'utente, 16 novembre 2026; i numeri sono nell'ADR 0009.)_
 16. **I core live hanno la stessa preferenza energetica degli altri core.** `dawos-tune` la legge da un core non live, la scrive sui core live e verifica. La prima versione dava loro `performance`, come chiedeva il documento 0: misurato sul 285K, il processore favoriva allora quei quattro core e teneva indietro gli altri venti (2860 MHz di media a pieno carico invece di 4458, package a 122 W invece di 160), mentre i core live tenevano i 4,6 GHz in entrambi i casi. _(Scelta dell'utente, 16 novembre 2026, sulle misure del sotto-passo P0.6c.)_
+17. **I P-core che non sono live hanno la frequenza fissa al massimo** (`preemptive_pcore_frequency=max` nel profilo). Lasciati al processore, facevano brevi raffiche di lavoro a circa 1,3 GHz, e in quel mentre un core live a riposo si risvegliava fino a 55 µs in ritardo; con la frequenza fissa al massimo, 8 µs. Abbassare solo il loro massimo non serve; gli E-core non hanno questo effetto e restano liberi. `dawos-tune` scrive il valore, lo rilegge e fallisce se non è stato accettato. _(Scelta dell'utente, 17 novembre 2026, sulle misure del sotto-passo P0.6d, punto aperto A-33.)_
 
 ## Alternative scartate
 
@@ -63,3 +64,4 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 - Se sul 285K compaiono errori hardware corretti che il sondaggio avrebbe segnalato.
 - Con la seconda macchina supportata: il modo di scegliere il profilo andrà rivisto se le macchine diventano molte.
 - Se una misura mostra che con la preferenza energetica comune i core live perdono qualcosa (frequenza tenuta, ritardo di risveglio): finora non è così.
+- **Frequenza dei P-core non live, 17 novembre 2026**: fissa al massimo (punto 17). Da verificare sul 285K dopo la modifica: consumo e temperatura a riposo, e che la capacità misurata in E-06 non cambi.
