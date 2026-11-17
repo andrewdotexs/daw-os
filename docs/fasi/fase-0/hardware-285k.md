@@ -121,6 +121,13 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Firmware 3402, stato al 16 novembre 2026** (sotto-passo P0.6c, parte 0): aggiornato dall'utente con _EZ Flash_, insieme all'Intel ME. Le chiavi di Secure Boot sono sopravvissute. Voci rimesse dopo l'aggiornamento: limiti di potenza a 160 W, _Enhanced C-states_ su _Disabled_, _HD Audio_, _Wi-Fi Controller_ e _Bluetooth Controller_ su _Disabled_; ventola del processore sul profilo _Standard_, pompa a piena velocità. _Intel Default Settings_ va tenuto su _Performance_ (era il valore con la 2301; _Extreme_ alza il limite di picco da 425 a 490). Rispetto alla 2301: frequenza massima dichiarata 5,5 GHz sui P-core (prima 5,6) e 4,7 GHz sugli E-core (prima 4,6); scala delle prestazioni HWP a 88 livelli da 62,5 MHz sui P-core (prima 64 da 87,5 MHz). I due stati sono in `docs/misure/fase-0/firmware-2301.txt` e `firmware-3402.txt`. Nessun SMI in quindici minuti. Rimisurato lo stesso giorno: i core live tengono esattamente 3,7, 4,0, 4,3, 4,6 e 4,9 GHz a pieno carico; a 160 W per dieci minuti 79,8 °C; a riposo il package assorbe 3,0 W (prima 4,2).
 
+**Processore e disco sotto carico, stato al 17 novembre 2026** (sotto-passo P0.6d):
+
+- Su codice DSP vettoriale un E-core vale tra 0,51 e 0,59 di un core live a 4,6 GHz; un P-core rende in proporzione alla frequenza.
+- Le frequenze vere sono lo 0,4 % sotto le nominali (4583 MHz dove il kernel dice 4600): il clock di base è 99,63 MHz.
+- **Un P-core a riposo si risveglia tardi (fino a 55 µs) se altri P-core stanno lavorando a frequenza bassa.** Non succede se quelli lavorano a frequenza alta, né con gli E-core. Per questo i P-core che non sono live hanno la frequenza fissa al massimo; il package a riposo passa da 3 a 6 W.
+- Il disco (Samsung 990 PRO da 1 TB) legge a 7,1 GB/s in sequenza e impiega circa 4,8 ms a svuotare la propria cache a ogni `fdatasync`.
+
 **Contenitore: resta quello attuale (D-22, chiusa dall'utente il 15 novembre 2026).** Sono state valutate e scartate due alternative da rack: un contenitore metallico 2U da modificare, con il radiatore sopra il coperchio (14 novembre), e un telaio aperto 3U stampato in ASA, con il radiatore sul retro del rack (15 novembre). Il secondo avrebbe tolto ogni schermatura a pochi centimetri dalla scheda audio.
 
 Conseguenza: la curva termica, il limite di potenza a 160 W e le misure di rumore di fondo dei passi P0.4b e P0.5f **restano valide** per i passi P0.6 e P0.7, e non vanno rifatte. Se in futuro il contenitore o il dissipatore cambiano, vanno rifatte prima di ogni misura di riferimento.

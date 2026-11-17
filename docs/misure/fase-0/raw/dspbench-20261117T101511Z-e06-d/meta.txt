@@ -1,0 +1,21 @@
+started_utc: 2026-11-17T10:15:11Z
+label: e06-d
+quiet: live:4 pcore:1 ecore:8
+domain_cpus: 0-3,8-15
+domain_pcores: 4
+domain_ecores: 8
+full_load_on: 16-23 and live 5 6 7
+tsc_khz: 3686400
+seconds_per_run: 2
+repeats: 5
+stages_per_cascade: 8
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #8 SMP PREEMPT_RT Tue Nov 17 09:23:39 CET 2026
+bios: 3402 09/18/2026
+image: 98184f3d6bad
+cpu_model: Intel(R) Core(TM) Ultra 9 285K
+temperature_at_start_c: 33
+layout_check_cpu: 4
+temperature_at_end_c: 39
+finished_utc: 2026-11-17T10:19:17Z

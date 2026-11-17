@@ -103,8 +103,18 @@ L'aspettativa del 13 novembre era: C1 a motore fermo e polling a motore armato, 
 - **Gli stati profondi (C6 e oltre) restano fuori portata** per tutti i core: il firmware non li dichiara. Con 3–4 W di package a macchina ferma non c'è urgenza; resta un punto aperto, non di questo ADR.
 - **Rischio K-04**: questa decisione non lo tocca. Un thread del motore che non cede mai il core resta il problema descritto nell'ADR 0018.
 
+## Aggiornamento del 17 novembre 2026: il risveglio dipende dagli altri P-core
+
+Il prezzo del risveglio da C1 su cui poggia questa decisione (0,1–0,25 µs in media, pochi microsecondi al massimo) vale con gli altri core fermi o a carico costante. Nel sotto-passo P0.6d (punto aperto A-33) si è visto un terzo caso: quando gli altri P-core fanno brevi raffiche di lavoro **a frequenza bassa**, un core live a riposo riceve l'interrupt del timer fino a 55 µs in ritardo. Un core live al lavoro, o tenuto sveglio, non ne risente.
+
+La decisione resta: C1, senza attesa attiva. Il rimedio scelto dall'utente il 17 novembre 2026 è un altro: i P-core che non sono live hanno la frequenza fissa al massimo (ADR 0018, punto 17), e con quella il ritardo misurato è 8 µs. L'attesa attiva, che sarebbe immune per costruzione, è stata misurata di nuovo: 43 W in più.
+
+Che cosa accada dentro il processore non è misurato. L'interpretazione che do: la tensione comune ai P-core segue quelli svegli, e un core che si risveglia mentre gli altri lavorano piano deve aspettare che risalga.
+
 ## Quando si riapre
 
 - Se la campagna P0.7 mostra un massimo che queste misure non hanno visto.
 - Con una seconda macchina supportata: i numeri sono del 285K, e un firmware che dichiara gli stati di riposo permette una scelta core per core.
 - Se un aggiornamento del firmware cambia nome o comportamento alla voce.
+
+Se la campagna P0.7, che carica i P-core non live anche a raffiche, mostra ancora risvegli lenti: allora l'attesa attiva torna in discussione.

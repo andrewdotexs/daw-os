@@ -23,7 +23,8 @@
 #      limit, a fixed frequency and the energy preference of the other
 #      CPUs; what the processor does on its own
 #      with a stopped CPU (C1E) is a firmware setting, which is compared
-#      with the profile;
+#      with the profile; the performance cores of the preemptive domain
+#      get a fixed frequency too, if the profile says so;
 #   7. the package power limit is lowered to the profile's value if the
 #      firmware handed over a higher one;
 #   8. the result is written to /run/dawos/topology.json.
@@ -478,6 +479,43 @@ fix_frequency() {
 	done
 }
 
+# --- Step 6c: frequency of the other performance cores ------------------------------
+# The performance cores that are not live, when the profile fixes their
+# frequency ("max": the highest the processor offers; or a number, in
+# kHz). Left to the processor, they do short bursts of work at a low
+# frequency, and while they do a live CPU at rest takes up to 55 us to
+# wake up instead of 5 (measured on the reference machine in step
+# P0.6d, open point A-33). Held at a high frequency they do not.
+fix_preemptive_frequency() {
+	wanted=$(profile_get preemptive_pcore_frequency)
+	preemptive_khz=null
+	[ -n "${wanted}" ] || return 0
+	for cpu in $(expand_list "${preemptive}"); do
+		expand_list "${performance_cores}" | grep -qx "${cpu}" || continue
+		dir=${CPU_DIR}/cpu${cpu}/cpufreq
+		if [ "${wanted}" = max ]; then
+			khz=$(read_file "${dir}/cpuinfo_max_freq")
+		else
+			khz=${wanted}
+		fi
+		if [ -z "${khz}" ]; then
+			problem "CPU ${cpu} reports no highest frequency (${dir}/cpuinfo_max_freq)"
+			continue
+		fi
+		write_file "${dir}/scaling_max_freq" "${khz}"
+		write_file "${dir}/scaling_min_freq" "${khz}"
+		write_file "${dir}/scaling_max_freq" "${khz}"
+		low=$(read_file "${dir}/scaling_min_freq")
+		high=$(read_file "${dir}/scaling_max_freq")
+		if [ -n "${low}" ] && [ "${low}" = "${high}" ] &&
+			[ $(((low > khz ? low - khz : khz - low) * 100)) -le "${khz}" ]; then
+			preemptive_khz=${low}
+		else
+			problem "could not fix CPU ${cpu} at ${khz} kHz (range now ${low:-?}-${high:-?})"
+		fi
+	done
+}
+
 # --- Step 7: package power limit -----------------------------------------------------
 # Two limits, long term and short term, in microwatts. They are only ever
 # lowered: a firmware that was reset comes back with its factory value,
@@ -558,7 +596,7 @@ write_report() {
 				echo "    \"machine_check_poll_s\": ${error_poll_s},"
 				echo "    \"fair_server_on_live\": $(json_string "${fair_server}"),"
 				echo "    \"idle\": {\"driver\": $(json_string "${idle_driver}"), \"limit\": $(json_string "${idle_limit}"), \"resume_latency_us\": ${idle_latency}, \"c1e_auto_promotion\": ${idle_c1e}},"
-				echo "    \"frequency\": {\"live_khz\": ${live_khz}, \"energy_preference\": ${live_preference}},"
+				echo "    \"frequency\": {\"live_khz\": ${live_khz}, \"energy_preference\": ${live_preference}, \"preemptive_pcore_khz\": ${preemptive_khz}},"
 				echo "    \"power_limit\": {\"profile_w\": ${power_limit_w:-null}, \"long_term_w\": ${power_long_w}, \"short_term_w\": ${power_short_w}, \"lowered\": ${power_lowered}}"
 				echo '  }'
 			else
@@ -633,6 +671,7 @@ else
 			idle_c1e=null
 			live_khz=null
 			live_preference=null
+			preemptive_khz=null
 			power_limit_w=$(profile_get power_limit_w)
 			power_long_w=null
 			power_short_w=null
@@ -640,6 +679,7 @@ else
 		else
 			limit_idle
 			fix_frequency
+			fix_preemptive_frequency
 			cap_power
 		fi
 		if [ -n "${problems}" ]; then status=degraded; else status=ok; fi

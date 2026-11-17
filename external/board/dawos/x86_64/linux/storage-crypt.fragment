@@ -1,0 +1,15 @@
+# Encrypted block devices.
+#
+# The homes of the users will be LUKS2 images (ADR 0004), and from
+# phase 6 the data partitions are encrypted too. Experiment E-05 (step
+# P0.6d) measures what that costs to audio streaming, so the pieces are
+# needed now: the device-mapper target, the cipher LUKS2 uses by default
+# (AES in XTS mode) and its implementation on the processor's own AES
+# instructions, without which the measure would be of software AES.
+CONFIG_DM_CRYPT=y
+CONFIG_CRYPTO_XTS=y
+CONFIG_CRYPTO_AES_NI_INTEL=y
+# cryptsetup asks the kernel for ciphers and hashes through this
+# interface (key slots, benchmark).
+CONFIG_CRYPTO_USER_API_HASH=y
+CONFIG_CRYPTO_USER_API_SKCIPHER=y

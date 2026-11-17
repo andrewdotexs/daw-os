@@ -1,0 +1,43 @@
+directory: /var/lib/dawos/measure/stream-20261117T103012Z-e05
+started_utc: 2026-11-17T10:30:12Z
+label: e05
+configs: s p pn l ln
+mode: full
+shared: /dev/nvme0n1p7 (300G)
+homes: /dev/nvme0n1p8 (590.3G)
+io_cpus: 20-23
+live_cpus: 4-7
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #8 SMP PREEMPT_RT Tue Nov 17 09:23:39 CET 2026
+bios: 3402 09/18/2026
+image: 98184f3d6bad
+fio: fio-3.41
+cryptsetup: cryptsetup 2.8.4
+uptime_at_start_s: 918
+finished_utc: 2026-11-17T11:36:18Z
+
+config  w1_gb_s  w2_p999_ms w2_max_ms  w3_p99_ms  w3_per_s  w2_read_mb_s  w2_write_mb_s w2_io_pct timerlat 
+s       7.15     0.27       4.7        5.931      206       400.0         6.00          2.2       4.86     
+p       7.13     0.52       4.6        4.817      203       400.0         6.00          2.3       57.75    
+pn      6.92     1.06       4.8        4.882      205       400.0         6.00          11.2      6.61     
+l       7.14     0.61       5.5        10.289     97        400.0         6.00          2.2       57.36    
+ln      5.65     3.29       6.8        10.420     97        400.0         6.00          2.2       6.42     
+w1_gb_s: sequential read; w2_p999_ms and w2_max_ms: completion latency of the streaming load, the worse of reads and writes; w3_p99_ms: fdatasync after a 4 KiB append; w2_io_pct: use of the io domain during w2; timerlat: longest wake-up delay of a user thread on the live CPUs during w2, in us
+
+use of each domain during w2, percent (io, then the others):
+  s: io 2.2 system 0.0 preemptive 0.1 live 0.1 
+  p: io 2.3 system 2.3 preemptive 3.6 live 0.1 
+  pn: io 11.2 system 0.0 preemptive 0.0 live 0.1 
+  l: io 2.2 system 2.7 preemptive 3.8 live 0.1 
+  ln: io 2.2 system 0.0 preemptive 1.4 live 0.1 
+
+limits s: PASS
+limits p: FAIL (timerlat 57.75 us, over 20)
+limits pn: PASS
+limits l: FAIL (w3 fdatasync 10.289 ms, over 10; timerlat 57.36 us, over 20)
+limits ln: FAIL (w3 fdatasync 10.420 ms, over 10)
+against p, l: FAIL (w3 fdatasync 2.1 times that of p)
+against pn, ln: FAIL (w2 99.9th percentile 3.1 times that of pn; w3 fdatasync 2.1 times that of pn)
+limits: w1 at least 1.2 GB/s; w2 99.9th percentile at most 20 ms, longest at most 200 ms, io domain at most 50 %; w3 fdatasync 99th percentile at most 10 ms; timerlat at most 20 us
+against the partition: w1 at least 70 %; w2 99.9th percentile and w3 fdatasync at most twice; timerlat at most 5 us worse

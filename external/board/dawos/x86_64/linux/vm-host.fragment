@@ -1,0 +1,34 @@
+# Hosting a virtual machine: the Linux guest in which applications other
+# than the DAW will run (ADR 033).
+#
+# Configuration only, for now: nothing in the image starts a virtual
+# machine. Everything here is a module, and none of them is loaded at
+# boot (see /etc/modprobe.d/dawos-vm.conf): a machine that hosts no
+# guest runs the same kernel code as before. dawos-vm-modules loads them
+# on request, to measure what their presence costs.
+
+# KVM, for the processor of the reference machine only.
+CONFIG_VIRTUALIZATION=y
+CONFIG_KVM=m
+CONFIG_KVM_INTEL=m
+# CONFIG_KVM_AMD is not set
+
+# In-kernel back ends of the guest's virtio devices: the network card
+# (vhost-net) and the socket between guest and host (vhost-vsock), which
+# needs the vsock address family.
+CONFIG_VHOST_MENU=y
+CONFIG_VHOST_NET=m
+CONFIG_VSOCKETS=m
+CONFIG_VHOST_VSOCK=m
+
+# The host end of the guest's network card.
+CONFIG_TUN=m
+
+# Address translation for the guest's traffic, in nftables: the nat
+# chain type and the masquerade statement. Connection tracking and NAT
+# themselves are already built into the kernel. Only the ip, ip6 and
+# inet families: no bridge, no netdev.
+CONFIG_NF_TABLES=m
+CONFIG_NF_TABLES_INET=y
+CONFIG_NFT_NAT=m
+CONFIG_NFT_MASQ=m

@@ -1,0 +1,28 @@
+directory: /var/lib/dawos/measure/hwnoise-20261117T130311Z-vm-senza
+started_utc: 2026-11-17T13:03:11Z
+duration: 10m
+label: vm-senza
+kernel: Linux 6.18.63-dawos #9 SMP PREEMPT_RT Tue Nov 17 13:53:23 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 126256 verity 1 PARTLABEL=dawos-root-0.0.1.20261117125354 PARTLABEL=dawos-verity-0.0.1.20261117125354 4096 4096 15782 1 sha256 507820a5a98367d0b7984d708e14a1e9bd1922082440ee912040e4ca62ab4854 c9fc6ace31d730c96ab40db069029ee6a53d48a22a7a1a3a5af20ab565daba3a 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261117125354,PARTLABEL=dawos-verity-0.0.1.20261117125354 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 3402 09/18/2026
+image: 057c7e49a8b3
+junction_limit_c: 105
+throttle_start: core=0 package=0
+rtla_exit_status: 0
+finished_utc: 2026-11-17T13:13:21Z
+throttle_end: core=0 package=0
+cpus_measured: 24
+max_single_noise_us: 0 (no gap of 1 us or more on any cpu)
+hardware_noise_events: 0
+nmi_events: 0
+smi_count: 0
+smi_samples: 53
+package_temperature_max_c: 65
+package_temperature_avg_c: 59.9
+samples_at_or_above_95_c: 0 of 52
+package_temperature_largest_step_c: +14 (from 40, sample 2 of 52, epoch 1794920605)
+busy_frequency_mhz: avg 4735 min 4700
+package_power_w: avg 92.5 max 119.0
+thermal_throttle_events: core 0 package 0
+verdict: PASS (max single noise <= 15 us, no SMI)
+thermal: ok (package stayed below 95 C)

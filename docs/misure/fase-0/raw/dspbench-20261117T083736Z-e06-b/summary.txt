@@ -1,0 +1,52 @@
+directory: /var/lib/dawos/measure/dspbench-20261117T083736Z-e06-b
+started_utc: 2026-11-17T08:37:36Z
+label: e06-b
+roles: live:4 pcore:1 ecore:8
+seconds_per_run: 3
+stages_per_cascade: 8
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #8 SMP PREEMPT_RT Tue Nov 17 09:23:39 CET 2026
+bios: 3402 09/18/2026
+image: 805b0960dc5c
+cpu_model: Intel(R) Core(TM) Ultra 9 285K
+finished_utc: 2026-11-17T08:39:24Z
+ns: nanoseconds per stereo frame of one instance, per filter stage
+condition role   cpu  mhz      block  streams  ns_min   ns_median
+quiet    live   4    4600     256    1        0.4172   0.4174   
+quiet    live   4    4600     256    4        0.2539   0.2542   
+quiet    live   4    4600     2048   1        0.4483   0.4484   
+quiet    live   4    4600     2048   4        0.1567   0.1569   
+quiet    pcore  1    5399     256    1        0.3555   0.3558   
+quiet    pcore  1    5400     256    4        0.1222   0.1224   
+quiet    pcore  1    5400     2048   1        0.3820   0.3823   
+quiet    pcore  1    5400     2048   4        0.1460   0.1462   
+quiet    ecore  8    4601     256    1        0.7487   0.7507   
+quiet    ecore  8    4601     256    4        0.2648   0.2651   
+quiet    ecore  8    4601     2048   1        0.7543   0.7572   
+quiet    ecore  8    4601     2048   4        0.2624   0.2632   
+loaded   live   4    4600     256    1        0.4173   0.4174   
+loaded   live   4    4600     256    4        0.1408   0.1411   
+loaded   live   4    4600     2048   1        0.4483   0.4484   
+loaded   live   4    4600     2048   4        0.1538   0.1541   
+loaded   pcore  1    5023     256    1        0.3692   0.3768   
+loaded   pcore  1    5000     256    4        0.1249   0.1279   
+loaded   pcore  1    4963     2048   1        0.3967   0.4048   
+loaded   pcore  1    4830     2048   4        0.1367   0.1386   
+loaded   ecore  8    4601     256    1        0.7482   0.7507   
+loaded   ecore  8    4601     256    4        0.3512   0.3524   
+loaded   ecore  8    4601     2048   1        0.7542   0.7576   
+loaded   ecore  8    4601     2048   4        0.2613   0.2646   
+
+condition block  streams  ecore/live     pcore/live     ecore/pcore    session_96k
+quiet    256    1        0.556          1.173          0.474          67 % of 9.1
+quiet    256    4        0.959          2.077          0.462          38 % of 16.0
+quiet    2048   1        0.592          1.173          0.505          64 % of 9.4
+quiet    2048   4        0.596          1.073          0.555          67 % of 9.1
+loaded   256    1        0.556          1.108          0.502          68 % of 8.9
+loaded   256    4        0.400          1.103          0.363          80 % of 7.6
+loaded   2048   1        0.592          1.108          0.534          66 % of 9.2
+loaded   2048   4        0.582          1.112          0.524          67 % of 9.1
+session_96k: use of the preemptive domain (4 performance and 8 efficiency cores) by the reference session of ADR 0011, 6.08 live cores of work; the limit is 60 %
+
+stages_for_the_classes_of_adr_0011 (live CPU, 0.4174 ns per stage): light 24 (10 ns) medium 96 (40 ns) heavy 359 (150 ns)

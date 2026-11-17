@@ -1,0 +1,14 @@
+in timer tick_nohz_handler 10 
+in irq local_timer 10 2495
+in thread rcuc/4 4 1236
+in thread rcuc/6 2 1312
+in irq call_function 16608 1585
+in irq call_function_single 8 3375
+in irq reschedule 4 18
+in thread cpuhp/4 1 5769
+in irq irq_work 5 52
+in thread cpuhp/5 1 6026
+in thread cpuhp/6 1 5711
+in thread rcuc/5 2 1422
+in thread cpuhp/7 1 6595
+in thread rcuc/7 2 1306

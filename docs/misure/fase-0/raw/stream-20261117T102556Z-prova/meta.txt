@@ -1,0 +1,17 @@
+started_utc: 2026-11-17T10:25:56Z
+label: prova
+configs: s l
+mode: quick
+shared: /dev/nvme0n1p7 (300G)
+homes: /dev/nvme0n1p8 (590.3G)
+io_cpus: 20-23
+live_cpus: 4-7
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #8 SMP PREEMPT_RT Tue Nov 17 09:23:39 CET 2026
+bios: 3402 09/18/2026
+image: 98184f3d6bad
+fio: fio-3.41
+cryptsetup: cryptsetup 2.8.4
+uptime_at_start_s: 663
+finished_utc: 2026-11-17T10:27:14Z

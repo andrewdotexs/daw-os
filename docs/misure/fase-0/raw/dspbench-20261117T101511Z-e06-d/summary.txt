@@ -1,0 +1,80 @@
+directory: /var/lib/dawos/measure/dspbench-20261117T101511Z-e06-d
+started_utc: 2026-11-17T10:15:11Z
+label: e06-d
+quiet: live:4 pcore:1 ecore:8
+domain_cpus: 0-3,8-15
+domain_pcores: 4
+domain_ecores: 8
+full_load_on: 16-23 and live 5 6 7
+tsc_khz: 3686400
+seconds_per_run: 2
+repeats: 5
+stages_per_cascade: 8
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #8 SMP PREEMPT_RT Tue Nov 17 09:23:39 CET 2026
+bios: 3402 09/18/2026
+image: 98184f3d6bad
+cpu_model: Intel(R) Core(TM) Ultra 9 285K
+temperature_at_start_c: 33
+layout_check_cpu: 4
+temperature_at_end_c: 39
+finished_utc: 2026-11-17T10:19:17Z
+ns: nanoseconds per stereo frame of one instance, per filter stage; median of the runs, with the lowest and the highest run
+condition role   cpus  mhz    block  streams  ns_low   ns_median  ns_high 
+quiet     live   1     4583   256    1        0.4174   0.4174     0.4174  
+quiet     pcore  1     5380   256    1        0.3558   0.3558     0.3558  
+quiet     ecore  1     4584   256    1        0.7498   0.7498     0.7498  
+quiet     live   1     4513   256    4        0.1383   0.1390     0.1397  
+quiet     pcore  1     5335   256    4        0.1178   0.1178     0.1181  
+quiet     ecore  1     4584   256    4        0.2703   0.2704     0.2713  
+quiet     live   1     4583   2048   1        0.4484   0.4484     0.4485  
+quiet     pcore  1     5380   2048   1        0.3822   0.3823     0.3823  
+quiet     ecore  1     4584   2048   1        0.7562   0.7563     0.7563  
+quiet     live   1     4562   2048   4        0.1442   0.1443     0.1445  
+quiet     pcore  1     5372   2048   4        0.1230   0.1231     0.1231  
+quiet     ecore  1     4584   2048   4        0.2677   0.2677     0.2678  
+domain    live   1     4583   256    1        0.4174   0.4174     0.4174  
+domain    pcore  4     5374   256    1        0.3556   0.3557     0.3558  
+domain    ecore  8     4584   256    1        0.7495   0.7495     0.7496  
+domain    live   1     4519   256    4        0.1381   0.1385     0.1400  
+domain    pcore  4     5225   256    4        0.1200   0.1205     0.1217  
+domain    ecore  8     4584   256    4        0.2706   0.2706     0.2717  
+domain    live   1     4583   2048   1        0.4484   0.4485     0.4485  
+domain    pcore  4     5374   2048   1        0.3820   0.3821     0.3823  
+domain    ecore  8     4584   2048   1        0.7559   0.7560     0.7561  
+domain    live   1     4569   2048   4        0.1443   0.1443     0.1445  
+domain    pcore  4     5163   2048   4        0.1252   0.1279     0.1305  
+domain    ecore  8     4584   2048   4        0.2678   0.2679     0.2687  
+full      live   1     4583   256    1        0.4174   0.4174     0.4174  
+full      pcore  4     5170   256    1        0.3567   0.3695     0.3765  
+full      ecore  8     4584   256    1        0.7495   0.7495     0.7496  
+full      live   1     4520   256    4        0.1383   0.1388     0.1401  
+full      pcore  4     4667   256    4        0.1321   0.1355     0.1400  
+full      ecore  8     4240   256    4        0.2921   0.2923     0.2938  
+full      live   1     4583   2048   1        0.4484   0.4484     0.4485  
+full      pcore  4     5124   2048   1        0.3970   0.4010     0.4094  
+full      ecore  8     4584   2048   1        0.7559   0.7560     0.7561  
+full      live   1     4566   2048   4        0.1443   0.1449     0.1521  
+full      pcore  4     4379   2048   4        0.1481   0.1553     0.1635  
+full      ecore  8     4009   2048   4        0.3026   0.3071     0.3091  
+
+condition block  streams  ecore/live  pcore/live  capacity  session_96k  pkg_w  temp_c
+quiet     256    1        0.557       1.173       9.15      66 %         -      -
+quiet     256    4        0.514       1.180       8.83      69 %         -      -
+quiet     2048   1        0.593       1.173       9.43      64 %         -      -
+quiet     2048   4        0.539       1.172       9.00      68 %         -      -
+domain    256    1        0.557       1.173       9.15      66 %         79.0   49
+domain    256    4        0.512       1.150       8.69      70 %         148.9  62
+domain    2048   1        0.593       1.174       9.44      64 %         88.4   52
+domain    2048   4        0.539       1.128       8.82      69 %         159.8  65
+full      256    1        0.557       1.130       8.98      68 %         159.6  83
+full      256    4        0.475       1.025       7.90      77 %         160.4  81
+full      2048   1        0.593       1.118       9.22      66 %         160.3  84
+full      2048   4        0.472       0.934       7.51      81 %         160.4  82
+capacity: what the preemptive domain (4 performance and 8 efficiency cores) can do, in live CPUs; for quiet, the sum of its cores taken one at a time
+session_96k: the 6.08 live CPUs of work of the reference session of ADR 0011 over that capacity; the limit is 60 %
+
+stages_for_the_classes_of_adr_0011 (live CPU, 0.4174 ns per stage): light 24 (10 ns) medium 96 (40 ns) heavy 359 (150 ns)
+layout_apart: 10 runs, lowest 0.1382, median 0.1397, highest 0.1402 ns
+layout_same: 10 runs, lowest 0.1423, median 0.1433, highest 0.1577 ns

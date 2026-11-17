@@ -1,6 +1,6 @@
 # ADR 0011 — R-04 con carico sintetico di riferimento
 
-- **Stato**: accettata; punto sul freeze confermato il 13 novembre 2026
+- **Stato**: accettata; punto sul freeze confermato il 13 novembre 2026; rapporto tra E-core e P-core misurato il 17 novembre 2026 (esperimento E-06); lo stesso giorno la soglia del dominio anticipativo è stata portata al 75 %, e con quella la sessione di riferimento a 96 kHz passa
 - **Data**: 13 novembre 2026
 - **Origine**: revisione del documento 0, modifica 2; chiude D-16 e aggiorna K-02
 
@@ -35,7 +35,7 @@ Costo medio della miscela: 0,6 × 10 + 0,3 × 40 + 0,1 × 150 = **33 ns per camp
 
 La sessione di riferimento passa se, per almeno 10 minuti di riproduzione con le 16 tracce live monitorate:
 
-1. l'**utilizzo di ogni dominio non supera il 60 %**, dove l'utilizzo è il tempo occupato dei core del dominio diviso per il tempo disponibile (numero di core × durata). Per il dominio live si prende il massimo sui singoli cicli; per il dominio anticipativo il massimo su finestre di un secondo;
+1. l'**utilizzo del dominio live non supera il 60 % e quello del dominio anticipativo non supera il 75 %**, dove l'utilizzo è il tempo occupato dei core del dominio diviso per il tempo disponibile (numero di core × durata). Per il dominio live si prende il massimo sui singoli cicli; per il dominio anticipativo il massimo su finestre di un secondo. La soglia del dominio anticipativo era il 60 % fino al 17 novembre 2026: vedi «Misura del 17 novembre 2026»;
 2. nessuno dei quattro contatori di difetto (M-06) si muove;
 3. nessun core live supera il 60 % nemmeno considerato da solo, contando la serializzazione dei segmenti esterni assegnati a quel core (documento 0, sezione 2.7 aggiornata).
 
@@ -62,6 +62,57 @@ A questo si sommano mixaggio, misuratori e gestione dello streaming, qualche pun
 
 **Variante stress a 192 kHz.** Il lavoro raddoppia: tra il 117 % e il 145 % della capacità del dominio anticipativo. **Non può passare senza freeze.**
 
+## Misura del 17 novembre 2026
+
+Esperimento E-06, sul 285K con il firmware 3402 e il profilo `285k` (misura `dspbench-20261117T091510Z-e06-c`; guida in [P0.6d](../fasi/fase-0/P0.6d-rapporto-tra-core-e-streaming-cifrato.md)). Il nucleo del carico sintetico, una cascata di filtri del secondo ordine in AVX2, eseguito su un core live a 4,6 GHz e sui dodici core del dominio anticipativo.
+
+Quanto vale un core, in core live:
+
+| Core | Frequenza | Vale |
+| --- | --- | --- |
+| P-core del dominio anticipativo | 5,4 GHz (non è fissata) | da 1,13 a 1,17 |
+| E-core | 4,6 GHz | da 0,51 a 0,59 |
+
+- Un E-core vale **poco più di mezzo core live alla stessa frequenza**: il fondo della forbice stimata (0,55–0,80), e sotto con il codice vettoriale più denso.
+- Un P-core rende in proporzione alla frequenza, e nient'altro lo distingue da un core live.
+- I dodici core al lavoro insieme rendono quanto la somma dei dodici presi uno alla volta: non si disturbano, finché il package resta sotto il limite di potenza.
+
+Capacità del dominio anticipativo e utilizzo della sessione di riferimento a 96 kHz (6,08 core live di lavoro). «Flussi» è il modo di caricare il core: con uno conta la durata di una singola operazione, con quattro conta quante operazioni vettoriali il core fa insieme; un plugin vero sta tra i due.
+
+| Blocco | Flussi | Capacità, dominio al lavoro | Utilizzo | Package | Utilizzo con tutta la macchina a 160 W |
+| --- | --- | --- | --- | --- | --- |
+| 256 | 1 | 9,15 core live | 66 % | 79 W | 68 % |
+| 256 | 4 | 8,71 | 70 % | 150 W | 77 % |
+| 2048 | 1 | 9,44 | 64 % | 89 W | 66 % |
+| 2048 | 4 | 8,83 | 69 % | 160 W | 77 % |
+
+**Esito: la sessione di riferimento a 96 kHz usa tra il 64 % e il 70 % del dominio anticipativo. La soglia del 60 % non è rispettata**, per 4–10 punti; per rispettarla servirebbero 10,1 core live di capacità e ce ne sono tra 8,7 e 9,4. A questo si sommano ancora mixaggio, misuratori e gestione dello streaming. La variante a 192 kHz chiede tra il 129 % e il 140 %: come previsto, non passa senza freeze.
+
+Due scelte dell'utente del 17 novembre 2026:
+
+- **Fa testo la condizione con il dominio al lavoro da solo** (terza e quarta colonna). L'ultima colonna, con tutti i 24 core a pieno carico e il package al limite, si riporta come caso peggiore: descrive una macchina più carica di quella che R-04 chiede, dove i core live stanno al 15 %.
+- **La leva: una soglia distinta per il dominio anticipativo, 75 %** (scelta alla chiusura del sotto-passo P0.6d, con i numeri di E-05). Con il dominio al lavoro da solo la sessione usa tra il 64 % e il 70 %: passa. Nel caso peggiore, con tutta la macchina a 160 W, tra il 66 % e l'81 %: non sempre. La soglia del dominio live resta il 60 %.
+
+Perché questa e non le altre: il dominio anticipativo lavora in anticipo su un buffer e assorbe i picchi, mentre il dominio live ha una scadenza a ogni ciclo; la soglia unica era prudenza, non una misura. Non aggiunge capacità, e va detto: sposta il criterio. Ma non consuma core che altri si contendono. Nel frattempo è arrivata la macchina virtuale per le applicazioni (ADR 033, non ancora nel repository), che avrà bisogno di core e di cui non si conosce il fabbisogno.
+
+Le leve che restano di riserva, per la Fase 2, quando si conosceranno il costo vero del motore e quel fabbisogno:
+
+| Leva | Effetto | Prezzo |
+| --- | --- | --- |
+| Due E-core in più al dominio anticipativo (4 P-core e 10 E-core), presi a `system` o a `io` | Utilizzo tra il 57 % e il 62 % | Meno core per interfaccia, servizi o I/O; cambia il profilo `285k`. |
+| Sessione di riferimento più piccola (7 plugin per traccia in media) | Utilizzo tra il 56 % e il 61 % | Cambia R-04. |
+
+E-05 ha misurato che il dominio di I/O è largo: 2 % in chiaro, 11 % quando cifra tutto lui. Due dei suoi E-core sono la riserva più a portata.
+
+La prima leva dell'elenco originale, ottimizzare il percorso anticipativo, non agisce su questo numero: qui è misurato il solo costo dei plugin, senza salti tra processi.
+
+Altre due cose che la misura ha mostrato e che servono al motore:
+
+- **Il codice vettoriale denso porta il package al limite con il solo dominio anticipativo**: con quattro flussi i dodici core chiedono 150–160 W, con uno 79–89 W. Il limite di potenza (160 W) è parte della capacità.
+- **La posizione dei buffer in memoria conta**: con i buffer di più istanze allo stesso scostamento dentro la pagina il costo sale del 3,5 %, e in una esecuzione su dieci del 16 %. L'allocatore del motore deve sfalsarli.
+
+Calibrazione indicativa delle classi sul core live: 24, 96 e 359 stadi per 10, 40 e 150 ns (0,4174 ns per stadio). Quella vera si fa con il nodo nativo, nella Fase 1.
+
 ## Conseguenze
 
 - K-02 scende da «non misurabile» a «misurabile e al limite sul dominio anticipativo».
@@ -83,4 +134,4 @@ A questo si sommano mixaggio, misuratori e gestione dello streaming, qualche pun
 
 ## Quando si riapre
 
-Alla prima misura del rapporto E-core / P-core, e alla chiusura della Fase 4 con la forma VST3 del carico.
+Nella Fase 2, con il motore vero: se l'utilizzo misurato supera il 75 %, o se la macchina virtuale delle applicazioni toglie core al dominio anticipativo. E alla chiusura della Fase 4 con la forma VST3 del carico.

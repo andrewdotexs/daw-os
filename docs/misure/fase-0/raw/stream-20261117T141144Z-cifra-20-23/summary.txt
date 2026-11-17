@@ -1,0 +1,33 @@
+directory: /var/lib/dawos/measure/stream-20261117T141144Z-cifra-20-23
+started_utc: 2026-11-17T14:11:44Z
+label: cifra-20-23
+configs: l
+mode: partial
+loads: w2
+w2_seconds: 150
+timerlat: yes
+crypt_cpus: 20-23
+shared: /dev/disk/by-partlabel/shared (300G)
+homes: /dev/nvme0n1p8 (590.3G)
+io_cpus: 20-23
+live_cpus: 4-7
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #9 SMP PREEMPT_RT Tue Nov 17 13:53:23 CET 2026
+bios: 3402 09/18/2026
+image: 057c7e49a8b3
+fio: fio-3.41
+cryptsetup: cryptsetup 2.8.4
+uptime_at_start_s: 4423
+finished_utc: 2026-11-17T14:14:22Z
+
+config  w1_gb_s  w2_p999_ms w2_max_ms  w3_p99_ms  w3_per_s  w2_read_mb_s  w2_write_mb_s w2_io_pct timerlat  w3b_p99_ms
+l       0.00     3.19       6.1        0.000      0         400.0         6.01          11.7      4.23      0.000     
+w1_gb_s: sequential read; w2_p999_ms and w2_max_ms: completion latency of the streaming load, the worse of reads and writes; w3_p99_ms: fdatasync after a 4 KiB append; w3b_p99_ms: the same over a file already written; a load left out shows 0; w2_io_pct: use of the io domain during w2; timerlat: longest wake-up delay of a user thread on the live CPUs during w2, in us
+
+use of each domain during w2, percent (io, then the others):
+  l: io 11.7 system 0.1 preemptive 0.3 live 0.1 
+CPUs busy for more than 1 % of w2:
+  l: cpu20 11.4  cpu21 11.5  cpu22 11.9  cpu23 11.8  
+
+partial run: loads, length or CPUs chosen by hand. Not compared with the thresholds.
