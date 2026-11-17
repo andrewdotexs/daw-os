@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d.
 
 ## La regola d'ordine
 
@@ -38,7 +38,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | A-06 | Con il _fair server_ acceso, in macchina virtuale, un processo interrotto dentro il kernel non è più ripartito e la macchina si è fermata | P0.6b, parte 2 | Cercare la correzione nelle versioni successive del kernel (va insieme ad A-05) e ripetere la prova estesa finché passa. Serve prima della Fase 1, ma dipende dalla versione del kernel: per questo sta qui. |
 | A-07 | `dawos-starve-test` esteso (terza variante, processo che non cede mai) non consegnato | P0.6b, parte 2 | Insieme ad A-06. |
 | A-08 | `dawos-hwnoise`: l'ultima lettura di potenza può essere falsata (219,6 W in una misura da 94 W di media) | P0.6b, parte 4c | Scartare l'ultima lettura, o leggere la potenza dai file del kernel come fanno gli altri strumenti. |
-| A-09 | Opzioni del kernel previste dal documento 0 e non ancora presenti: driver del TPM (`TCG_TPM`, `TCG_CRB`, `TCG_TIS`) | P0.3, tabella delle opzioni; visto in P0.5 | Aggiungerle, e controllare la tabella intera contro la configurazione vera. |
+| A-09 | Opzioni del kernel previste dal documento 0 e non ancora presenti: driver del TPM (`TCG_TPM`, `TCG_CRB`, `TCG_TIS`) | P0.3, tabella delle opzioni; visto in P0.5 | Aggiungerle, e controllare la tabella intera contro la configurazione vera. Della stessa riga mancava anche `DM_CRYPT`: aggiunto in P0.6d. |
 | A-10 | Tempo di avvio: 14 secondi di firmware e 5 di menu | P0.5f | Voci del firmware (_Fast Boot_, _POST Delay Time_, logo) e tempo di attesa del menu. Tocca il firmware: per questo prima della campagna. |
 | A-11 | Il ritorno automatico all'immagine precedente con un profilo fissato è verificato nei sorgenti del boot loader, non provato sul 285K | [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md) | Una prova: un aggiornamento che fallisce apposta, con il profilo `285k` fissato. |
 | A-12 | Quanti registri degli errori hardware del 285K non hanno il proprio interrupt (per quelli, spento il sondaggio, gli errori corretti non vengono più segnalati) | [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md) | Una lettura dal sistema. |

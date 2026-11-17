@@ -1,0 +1,12 @@
+config BR2_PACKAGE_DAWOS_DSPBENCH
+	bool "dawos-dspbench"
+	depends on BR2_x86_64
+	help
+	  A measurement tool, not product code: it times a cascade of
+	  second-order filters in AVX2, the kernel of the reference load
+	  of requirement R-04 (ADR 0011), on the CPU it is bound to.
+	  Experiment E-06 runs it on a performance core and on an
+	  efficiency core to measure the ratio between the two.
+
+	  Installs the program as /usr/libexec/dawos/dspbench; the
+	  script dawos-dspbench of the root file system overlay runs it.

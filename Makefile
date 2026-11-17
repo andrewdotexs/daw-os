@@ -67,17 +67,26 @@ config: | $(BR_DIR)/Makefile ## (Re)apply the defconfig, discarding local menuco
 	$(BR_MAKE) $(DEFCONFIG)
 
 # Buildroot does not rebuild a package whose options changed. systemd is
-# the one we reconfigure as the system grows (boot loader, updates, ...):
-# when its options differ from those of its last build it is cleaned
-# here, so that "make image" rebuilds it. See tools/package-options.sh.
+# the one we reconfigure as the system grows (boot loader, updates, ...),
+# and util-linux gains a tool now and then: when the options of one of
+# them differ from those of its last build it is cleaned here, so that
+# "make image" rebuilds it. See tools/package-options.sh.
+# Each entry reads "package:prefix of its options in .config".
+WATCHED_PACKAGES := systemd:BR2_PACKAGE_SYSTEMD util-linux:BR2_PACKAGE_UTIL_LINUX
+
 .PHONY: image
 image: $(O)/.config ## Build the whole image (output/images/disk.img); JOBS=N limits parallelism
-	@if tools/package-options.sh changed "$(O)" systemd BR2_PACKAGE_SYSTEMD; then \
-		echo "make image: the options of systemd changed since it was built: rebuilding it (several minutes)"; \
-		$(BR_MAKE) systemd-dirclean; \
-	fi
+	@for entry in $(WATCHED_PACKAGES); do \
+		package=$${entry%%:*}; prefix=$${entry#*:}; \
+		if tools/package-options.sh changed "$(O)" "$${package}" "$${prefix}"; then \
+			echo "make image: the options of $${package} changed since it was built: rebuilding it (several minutes)"; \
+			$(BR_MAKE) "$${package}-dirclean" || exit 1; \
+		fi; \
+	done
 	$(BR_MAKE) all
-	@tools/package-options.sh record "$(O)" systemd BR2_PACKAGE_SYSTEMD
+	@for entry in $(WATCHED_PACKAGES); do \
+		tools/package-options.sh record "$(O)" "$${entry%%:*}" "$${entry#*:}"; \
+	done
 
 .PHONY: menuconfig
 menuconfig: $(O)/.config ## Edit the Buildroot configuration

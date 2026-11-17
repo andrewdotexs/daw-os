@@ -1,0 +1,281 @@
+#!/bin/sh
+# dawos-dspbench — how fast an efficiency core is, next to a performance
+# core, on the kind of work an audio plug-in does (experiment E-06).
+#
+# The reference session of requirement R-04 puts most of its plug-ins on
+# the "preemptive" domain: four performance cores and eight efficiency
+# cores. Whether it fits depends on one number nobody publishes: how much
+# of a performance core an efficiency core is worth on vector DSP code
+# (ADR 0011). This tool measures it.
+#
+# The work is done by /usr/libexec/dawos/dspbench: a cascade of
+# second-order filters in AVX2, timed per stereo frame and per filter
+# stage. Here it is bound in turn to three CPUs:
+#
+#   live    a live CPU, at the frequency fixed by the profile: the unit
+#           in which ADR 0011 counts the cost of a plug-in;
+#   pcore   a performance core of the preemptive domain;
+#   ecore   an efficiency core of the preemptive domain;
+#
+# with blocks of 256 and of 2048 frames (the second does not fit in the
+# first-level cache), with one stream and with four independent streams
+# (see the comment in dspbench.c), and in two conditions:
+#
+#   quiet   nothing else runs: each core at the frequency it reaches
+#           alone;
+#   loaded  stress-ng computes on every other CPU that is not live: the
+#           frequencies of a full session, which are the ones that count.
+#
+# The frequency the measured CPU actually ran at is read while it works.
+#
+# Results go to /var/lib/dawos/measure/dspbench-<time>[-LABEL]; fetch them
+# with "make measure-fetch". "--summary DIR" needs only sh and awk.
+
+set -u
+
+PROG=dawos-dspbench
+BASE=/var/lib/dawos/measure
+CORE=/usr/libexec/dawos/dspbench
+CPU_DIR=/sys/devices/system/cpu
+# Seconds per run, filter stages per cascade.
+SECONDS_PER_RUN=3
+STAGES=8
+# ADR 0011: cost of the three classes of the reference load, in ns per
+# frame on a live CPU, and the work of the reference session at 96 kHz on
+# the preemptive domain, in performance cores kept busy all the time.
+CLASS_NS="light=10 medium=40 heavy=150"
+SESSION_WORK=6.08
+SESSION_PCORES=4
+SESSION_ECORES=8
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--seconds N] [LABEL]   run the measurement (about two minutes)
+  ${PROG} --status                show the last summary
+  ${PROG} --summary DIR           (re)compute the summary of a run
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# CPUs of a kernel list ("4-7", "0-3,8-15"), one per line, sorted.
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done | sort -n -u
+}
+
+# CPU numbers on standard input, back into a list.
+compress_list() {
+	sort -n -u | awk '
+		NR == 1 { start = prev = $1; next }
+		$1 == prev + 1 { prev = $1; next }
+		{ printf "%s%s", sep, (start == prev ? start : start "-" prev); sep = ","; start = prev = $1 }
+		END { if (NR) printf "%s%s", sep, (start == prev ? start : start "-" prev); print "" }'
+}
+
+# The first CPU of list $1 that is also in list $2 and is not CPU 0.
+first_common() {
+	for candidate in $(expand_list "$1"); do
+		[ "${candidate}" != 0 ] || continue
+		expand_list "$2" | grep -qx "${candidate}" && {
+			echo "${candidate}"
+			return 0
+		}
+	done
+	return 0
+}
+
+# Write summary.txt from results.txt of the directory $1. A line of
+# results.txt reads:
+#   condition role cpu khz block streams ns_min ns_median
+summarize() {
+	result=$1
+	{
+		echo "directory: ${result}"
+		cat "${result}/meta.txt"
+		echo "ns: nanoseconds per stereo frame of one instance, per filter stage"
+		printf '%-8s %-6s %-4s %-8s %-6s %-8s %-8s %-9s\n' condition role cpu mhz block streams ns_min ns_median
+		awk '{ printf "%-8s %-6s %-4s %-8d %-6s %-8s %-8.4f %-9.4f\n", $1, $2, $3, $4 / 1000, $5, $6, $7, $8 }' "${result}/results.txt"
+		echo
+		# Speed relative to the live CPU, from the medians; then what the
+		# preemptive domain is worth and how full the reference session
+		# of ADR 0011 would make it.
+		awk -v work="${SESSION_WORK}" -v pcores="${SESSION_PCORES}" -v ecores="${SESSION_ECORES}" '
+			{ ns[$1, $2, $5, $6] = $8; seen[$1 " " $5 " " $6] = 1; if (!(($1 " " $5 " " $6) in order)) { order[$1 " " $5 " " $6] = ++n; key[n] = $1 " " $5 " " $6 } }
+			END {
+				printf "%-8s %-6s %-8s %-14s %-14s %-14s %s\n", "condition", "block", "streams", "ecore/live", "pcore/live", "ecore/pcore", "session_96k"
+				for (i = 1; i <= n; i++) {
+					split(key[i], part, " ")
+					live = ns[part[1], "live", part[2], part[3]]
+					pcore = ns[part[1], "pcore", part[2], part[3]]
+					ecore = ns[part[1], "ecore", part[2], part[3]]
+					if (!live || !pcore || !ecore) continue
+					capacity = pcores * live / pcore + ecores * live / ecore
+					printf "%-8s %-6s %-8s %-14.3f %-14.3f %-14.3f %.0f %% of %.1f\n", part[1], part[2], part[3],
+						live / ecore, live / pcore, pcore / ecore, 100 * work / capacity, capacity
+				}
+			}' "${result}/results.txt"
+		echo "session_96k: use of the preemptive domain (${SESSION_PCORES} performance and ${SESSION_ECORES} efficiency cores) by the reference session of ADR 0011, ${SESSION_WORK} live cores of work; the limit is 60 %"
+		echo
+		# Filter stages that make the declared cost of each class, on the
+		# live CPU with one stream and blocks of 256 frames.
+		awk -v classes="${CLASS_NS}" '
+			$2 == "live" && $5 == 256 && $6 == 1 && !done { cost = $8; done = 1 }
+			END {
+				if (!cost) exit
+				printf "stages_for_the_classes_of_adr_0011 (live CPU, %.4f ns per stage):", cost
+				count = split(classes, class, " ")
+				for (i = 1; i <= count; i++) { split(class[i], pair, "="); printf " %s %d (%s ns)", pair[1], pair[2] / cost + 0.5, pair[2] }
+				printf "\n"
+			}' "${result}/results.txt"
+		grep -h '^note: ' "${result}/meta.txt" "${result}/notes.txt" 2> /dev/null
+	} > "${result}/summary.txt"
+	cat "${result}/summary.txt"
+}
+
+seconds=${SECONDS_PER_RUN}
+label=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--status)
+		latest=
+		for candidate in "${BASE}"/dspbench-*; do
+			[ -d "${candidate}" ] && latest=${candidate}
+		done
+		[ -n "${latest}" ] || die "no run yet"
+		if [ -r "${latest}/summary.txt" ]; then cat "${latest}/summary.txt"; else cat "${latest}/meta.txt"; fi
+		exit 0
+		;;
+	--summary)
+		[ -d "${2:-}" ] || die "--summary needs a result directory"
+		summarize "$2"
+		exit 0
+		;;
+	--seconds)
+		seconds=${2:-}
+		shift
+		;;
+	-*) die "unknown option '$1' (try --help)" ;;
+	*) label=$1 ;;
+	esac
+	shift
+done
+
+[ "$(id -u)" = 0 ] || die "must run as root"
+echo "${seconds}" | grep -Eq '^[0-9]{1,3}$' || die "bad duration '${seconds}': seconds"
+[ "${seconds}" -ge 1 ] || die "the shortest run is 1 second"
+if [ -n "${label}" ]; then
+	echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' || die "the label may only contain letters, digits, '-' and '_'"
+fi
+[ -x "${CORE}" ] || die "${CORE} not found: this needs the dev variant of the image"
+for tool in taskset stress-ng; do
+	command -v "${tool}" > /dev/null || die "'${tool}' not found: this needs the dev variant of the image"
+done
+grep -qw avx2 /proc/cpuinfo || die "this processor has no AVX2"
+grep -qw fma /proc/cpuinfo || die "this processor has no FMA"
+for other in dawos-osnoise dawos-hwnoise dawos-wakeup dawos-freq-sweep dawos-thermal-sweep; do
+	systemctl is-active --quiet "${other}" && die "'${other}' is running: wait for it, or stop it"
+done
+
+# Which CPU plays which part. Performance and efficiency cores are told
+# apart by the kernel (hybrid processors only); the domains come from
+# the report of dawos-tune.
+online=$(cat "${CPU_DIR}/online")
+live_list=$(grep -v null "${CPU_DIR}/isolated" 2> /dev/null)
+preemptive=$(sed -n 's/^    "preemptive": "\(.*\)".*/\1/p' /run/dawos/topology.json 2> /dev/null)
+pcores=$(cat /sys/devices/cpu_core/cpus 2> /dev/null)
+ecores=$(cat /sys/devices/cpu_atom/cpus 2> /dev/null)
+live_cpu=$(expand_list "${live_list}" | head -n 1)
+pcore_cpu=$(first_common "${preemptive:-${online}}" "${pcores}")
+ecore_cpu=$(first_common "${preemptive:-${online}}" "${ecores}")
+roles=
+[ -z "${live_cpu}" ] || roles="${roles} live:${live_cpu}"
+[ -z "${pcore_cpu}" ] || roles="${roles} pcore:${pcore_cpu}"
+[ -z "${ecore_cpu}" ] || roles="${roles} ecore:${ecore_cpu}"
+# Without a hybrid processor or a profile (a virtual machine): CPU 1,
+# so that the tool can at least be tried.
+[ -n "${roles}" ] || roles=" pcore:1"
+
+dir="${BASE}/dspbench-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}" || die "could not create ${dir}"
+{
+	date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "label: ${label:-none}"
+	echo "roles:${roles}"
+	echo "seconds_per_run: ${seconds}"
+	echo "stages_per_cascade: ${STAGES}"
+	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+	echo "tune: $(sed -n 's/^  "status": "\([a-z]*\)".*/\1/p' /run/dawos/topology.json 2> /dev/null)"
+	echo "kernel: $(uname -srv)"
+	echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
+	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+	echo "cpu_model: $(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -n 1)"
+	[ -n "${live_cpu}" ] || echo "note: no live CPU (no boot profile): the column ecore/live cannot be computed"
+} > "${dir}/meta.txt"
+: > "${dir}/results.txt"
+: > "${dir}/notes.txt"
+
+load_pid=
+trap '[ -z "${load_pid}" ] || kill "${load_pid}" 2> /dev/null' EXIT
+trap 'exit 1' INT TERM HUP
+
+for condition in quiet loaded; do
+	for role in ${roles}; do
+		name=${role%:*}
+		cpu=${role#*:}
+		if [ "${condition}" = loaded ]; then
+			# Every CPU that is neither live nor the one measured.
+			busy=$(for candidate in $(expand_list "${online}"); do
+				[ "${candidate}" = "${cpu}" ] && continue
+				expand_list "${live_list}" | grep -qx "${candidate}" || echo "${candidate}"
+			done | compress_list)
+			workers=$(expand_list "${busy}" | wc -l)
+			stress-ng --taskset "${busy}" --temp-path "${dir}" --cpu "${workers}" \
+				--cpu-method matrixprod --timeout 0 > "${dir}/load-${name}.txt" 2>&1 &
+			load_pid=$!
+			# Frequencies and temperature settle.
+			sleep 8
+		fi
+		for block in 256 2048; do
+			for streams in 1 4; do
+				taskset -c "${cpu}" "${CORE}" --block "${block}" --stages "${STAGES}" \
+					--streams "${streams}" --seconds "${seconds}" > "${dir}/run.txt" 2> "${dir}/run.err" &
+				run_pid=$!
+				# Halfway through, the frequency the CPU is running at.
+				sleep $(((seconds + 1) / 2))
+				khz=$(cat "${CPU_DIR}/cpu${cpu}/cpufreq/scaling_cur_freq" 2> /dev/null)
+				wait "${run_pid}" || echo "note: ${condition} ${name} block ${block} streams ${streams}: $(tr '\n' ' ' < "${dir}/run.err")" >> "${dir}/notes.txt"
+				line=$(cat "${dir}/run.txt")
+				ns_min=$(echo "${line}" | sed -n 's/.*ns_per_frame_stage_min=\([0-9.]*\).*/\1/p')
+				ns_median=$(echo "${line}" | sed -n 's/.*ns_per_frame_stage_median=\([0-9.]*\).*/\1/p')
+				[ -z "${ns_median}" ] ||
+					echo "${condition} ${name} ${cpu} ${khz:-0} ${block} ${streams} ${ns_min} ${ns_median}" >> "${dir}/results.txt"
+				# The program says where it started and where it ended.
+				echo "${line}" | grep -q "cpu=${cpu} cpu_at_end=${cpu} " ||
+					echo "note: ${condition} ${name}: the program did not stay on CPU ${cpu}: ${line}" >> "${dir}/notes.txt"
+				echo "${condition} ${name}: ${line}" >> "${dir}/runs.txt"
+			done
+		done
+		if [ -n "${load_pid}" ]; then
+			kill "${load_pid}" 2> /dev/null
+			wait "${load_pid}" 2> /dev/null
+			load_pid=
+			sleep 3
+		fi
+	done
+done
+rm -f "${dir}/run.txt" "${dir}/run.err"
+date -u '+finished_utc: %Y-%m-%dT%H:%M:%SZ' >> "${dir}/meta.txt"
+summarize "${dir}"

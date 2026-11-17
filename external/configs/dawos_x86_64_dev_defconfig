@@ -42,7 +42,7 @@ BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION=y
 BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE="6.18.63"
 BR2_LINUX_KERNEL_USE_ARCH_DEFAULT_CONFIG=y
-BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/base.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/storage.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/qemu.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/rt.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/hw-285k.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/trim.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/security.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/graphics.fragment"
+BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/base.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/storage.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/qemu.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/rt.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/hw-285k.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/trim.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/security.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/graphics.fragment $(BR2_EXTERNAL_DAWOS_PATH)/board/dawos/x86_64/linux/storage-crypt.fragment"
 BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
 BR2_LINUX_KERNEL_NEEDS_HOST_LIBELF=y
 
@@ -84,6 +84,10 @@ BR2_PACKAGE_BUSYBOX_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_DAWOS_PATH)/board/dawo
 # lsblk, to show what is on a disk before it is erased.
 BR2_PACKAGE_UTIL_LINUX=y
 BR2_PACKAGE_UTIL_LINUX_BINARIES=y
+# losetup that can ask for direct I/O on the backing file, as
+# systemd-homed does for the image of a home (experiment E-05). The one
+# of BusyBox cannot.
+BR2_PACKAGE_UTIL_LINUX_LOSETUP=y
 # lspci and lsusb, to record the hardware of the reference machine.
 BR2_PACKAGE_PCIUTILS=y
 BR2_PACKAGE_USBUTILS=y
@@ -99,6 +103,12 @@ BR2_PACKAGE_TURBOSTAT=y
 BR2_PACKAGE_RT_TESTS=y
 # Load generator for the measurement campaign.
 BR2_PACKAGE_STRESS_NG=y
+# --- Experiments of step P0.6d -------------------------------------------------
+# E-06: times a cascade of filters on one CPU (our package; ADR 0011).
+BR2_PACKAGE_DAWOS_DSPBENCH=y
+# E-05: fio drives the disk with the streaming loads of ADR 0004.
+BR2_PACKAGE_FIO=y
+
 # --- Graphics experiment (step P0.6c, experiment E-04) -----------------------
 # Firmware the GPU driver loads into the GPU (GuC, HuC, GSC) and into the
 # display engine (DMC). The driver xe takes the files of Arrow Lake from
