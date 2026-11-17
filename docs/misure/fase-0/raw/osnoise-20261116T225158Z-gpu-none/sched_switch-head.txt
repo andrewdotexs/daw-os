@@ -1,0 +1,28 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 16/16   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+       osnoise/4-1756    [004] d..21   481.691733: sched_switch: prev_comm=osnoise/4 prev_pid=1756 prev_prio=120 prev_state=R+ ==> next_comm=irq_work/4 next_pid=54 next_prio=98
+      irq_work/4-54      [004] d..2.   481.691739: sched_switch: prev_comm=irq_work/4 prev_pid=54 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1756 next_prio=120
+       osnoise/4-1756    [004] d..21   481.692543: sched_switch: prev_comm=osnoise/4 prev_pid=1756 prev_prio=120 prev_state=R+ ==> next_comm=rcuc/4 next_pid=56 next_prio=98
+          rcuc/4-56      [004] d..2.   481.692545: sched_switch: prev_comm=rcuc/4 prev_pid=56 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1756 next_prio=120
+       osnoise/5-1757    [005] d..21   481.692700: sched_switch: prev_comm=osnoise/5 prev_pid=1757 prev_prio=120 prev_state=R+ ==> next_comm=irq_work/5 next_pid=63 next_prio=98
+      irq_work/5-63      [005] d..2.   481.692705: sched_switch: prev_comm=irq_work/5 prev_pid=63 prev_prio=98 prev_state=S ==> next_comm=osnoise/5 next_pid=1757 next_prio=120
+       osnoise/5-1757    [005] d..21   481.693543: sched_switch: prev_comm=osnoise/5 prev_pid=1757 prev_prio=120 prev_state=R+ ==> next_comm=rcuc/5 next_pid=65 next_prio=98
+          rcuc/5-65      [005] d..2.   481.693545: sched_switch: prev_comm=rcuc/5 prev_pid=65 prev_prio=98 prev_state=S ==> next_comm=osnoise/5 next_pid=1757 next_prio=120
+       osnoise/6-1758    [006] d..21   481.693649: sched_switch: prev_comm=osnoise/6 prev_pid=1758 prev_prio=120 prev_state=R+ ==> next_comm=irq_work/6 next_pid=72 next_prio=98
+      irq_work/6-72      [006] d..2.   481.693654: sched_switch: prev_comm=irq_work/6 prev_pid=72 prev_prio=98 prev_state=S ==> next_comm=osnoise/6 next_pid=1758 next_prio=120
+       osnoise/6-1758    [006] d..21   481.694543: sched_switch: prev_comm=osnoise/6 prev_pid=1758 prev_prio=120 prev_state=R+ ==> next_comm=rcuc/6 next_pid=74 next_prio=98
+          rcuc/6-74      [006] d..2.   481.694544: sched_switch: prev_comm=rcuc/6 prev_pid=74 prev_prio=98 prev_state=S ==> next_comm=osnoise/6 next_pid=1758 next_prio=120
+       osnoise/4-1756    [004] d..21   482.691743: sched_switch: prev_comm=osnoise/4 prev_pid=1756 prev_prio=120 prev_state=R+ ==> next_comm=irq_work/4 next_pid=54 next_prio=98
+      irq_work/4-54      [004] d..2.   482.691746: sched_switch: prev_comm=irq_work/4 prev_pid=54 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1756 next_prio=120
+       osnoise/4-1756    [004] d..21   482.692547: sched_switch: prev_comm=osnoise/4 prev_pid=1756 prev_prio=120 prev_state=R+ ==> next_comm=rcuc/4 next_pid=56 next_prio=98
+          rcuc/4-56      [004] d..2.   482.692548: sched_switch: prev_comm=rcuc/4 prev_pid=56 prev_prio=98 prev_state=S ==> next_comm=osnoise/4 next_pid=1756 next_prio=120

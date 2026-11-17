@@ -1,0 +1,28 @@
+directory: /var/lib/dawos/measure/gpu-20261116T232104Z-xe
+date_utc: 2026-11-16T23:21:06Z
+label: xe
+kernel: Linux 6.18.63-dawos #7 SMP PREEMPT_RT Mon Nov 16 23:39:42 CET 2026
+image: ae8e38c3250f
+bios: 3402 09/18/2026
+profile: 285k
+gpu: 0000:00:02.0, device id 7d67
+driver_wanted: xe (force_probe=7d67)
+outcome: loaded
+driver_bound: xe
+console_before: none
+console_after: none
+kernel_tainted: 64
+output: DP-1 disconnected 
+output: DP-2 connected 1920x1080
+output: HDMI-A-1 disconnected 
+interrupt: 204 on CPUs 20-23; live CPUs among them: none
+firmware_loaded:
+  xe 0000:00:02.0: [drm] Finished loading DMC firmware i915/mtl_dmc.bin (v2.23)
+  xe 0000:00:02.0: [drm] Tile0: GT0: Using GuC firmware from i915/mtl_guc_70.bin version 70.49.4
+  xe 0000:00:02.0: [drm] Tile0: GT1: Using GuC firmware from i915/mtl_guc_70.bin version 70.49.4
+  xe 0000:00:02.0: [drm] Tile0: GT1: Using HuC firmware from i915/mtl_huc_gsc.bin version 8.5.4
+  xe 0000:00:02.0: [drm] Tile0: GT1: Using GSC firmware from i915/mtl_gsc_1.bin version 102.1.15.1926
+  xe 0000:00:02.0: [drm] Tile0: GT1: can't init GSC proxy due to missing mei component
+  xe 0000:00:02.0: [drm] Tile0: GT1: found GSC cv102.1.0
+problems_in_kernel_log: 0
+verdict: the driver 'xe' drives the GPU and a display is connected

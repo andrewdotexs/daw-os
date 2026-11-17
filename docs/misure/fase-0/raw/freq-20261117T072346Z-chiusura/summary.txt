@@ -1,0 +1,17 @@
+directory: /var/lib/dawos/measure/freq-20261117T072346Z-chiusura
+started_utc: 2026-11-17T07:23:46Z
+frequencies_mhz: 4600
+step_seconds: 150 (first 30 left out)
+label: chiusura
+live_cpus: 4-7
+live_khz_before: 4600000-4600000
+base_khz: 3700000
+power_limits_uw: long=160000000 short=160000000
+profile: 285k
+kernel: Linux 6.18.63-dawos #7 SMP PREEMPT_RT Mon Nov 16 23:39:42 CET 2026
+image: d98ac0c66bdb
+temperature_at_start_c: 33
+finished_utc: 2026-11-17T07:26:17Z
+live_khz_after: 4600000-4600000
+set_mhz  live_min_mhz  live_avg_mhz  others_avg_mhz  pkg_w_avg  pkg_w_max pkg_temp_max holds
+4600     4600          4600          4454            160.0      160.0     78          yes

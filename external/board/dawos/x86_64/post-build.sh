@@ -224,3 +224,13 @@ NETWORK
 else
 	echo "post-build: no ${net_conf}: DHCP on every wired interface"
 fi
+
+# --- Firmware of the GPU --------------------------------------------------------
+# The package installs the files of every Intel GPU generation (tens of
+# megabytes). The driver asks for those of the processor family only:
+# mtl_* covers Meteor Lake and Arrow Lake.
+gpu_firmware=${target_dir}/lib/firmware/i915
+if [[ -d ${gpu_firmware} ]]; then
+	find "${gpu_firmware}" \( -type f -o -type l \) ! -name 'mtl_*' -delete
+	echo "post-build: GPU firmware kept: $(find "${gpu_firmware}" \( -type f -o -type l \) -printf '%f\n' | sort | tr '\n' ' ')"
+fi

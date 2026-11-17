@@ -1,0 +1,14 @@
+started_utc: 2026-11-16T20:29:40Z
+frequencies_mhz: 3700 4000 4300 4600 4900 5200 5500
+step_seconds: 150 (first 30 left out)
+label: none
+live_cpus: 4-7
+live_khz_before: 4600000-4600000
+base_khz: 3700000
+power_limits_uw: long=160000000 short=160000000
+profile: 285k
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+image: 7bac3d908f6a
+temperature_at_start_c: 33
+finished_utc: 2026-11-16T20:47:13Z
+live_khz_after: 4600000-4600000

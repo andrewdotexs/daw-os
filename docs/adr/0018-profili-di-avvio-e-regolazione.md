@@ -29,6 +29,7 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 13. **Il _fair server_ è spento sui core live** (`live_fair_server=off` nel profilo). _(Scelta dell'utente, 16 novembre 2026, sulla misura del sotto-passo P0.6a; da confermare con l'esperimento E-02.)_
 14. **Il 285K ha un solo profilo, `285k`, con i core live 4–7.** _(Scelta dell'utente, 16 novembre 2026: a parità di rumore è risultato più fresco dell'alternativa 2–5.)_
 15. **Lo stato di riposo dei core live è verificato, non impostato.** Sul 285K il kernel non ha stati tra cui scegliere e il C1E è una voce del firmware: con `live_idle=c1` `dawos-tune` legge dal processore se il C1 viene trasformato in C1E e, se sì, dichiara il profilo `degraded`. _(Scelta dell'utente, 16 novembre 2026; i numeri sono nell'ADR 0009.)_
+16. **I core live hanno la stessa preferenza energetica degli altri core.** `dawos-tune` la legge da un core non live, la scrive sui core live e verifica. La prima versione dava loro `performance`, come chiedeva il documento 0: misurato sul 285K, il processore favoriva allora quei quattro core e teneva indietro gli altri venti (2860 MHz di media a pieno carico invece di 4458, package a 122 W invece di 160), mentre i core live tenevano i 4,6 GHz in entrambi i casi. _(Scelta dell'utente, 16 novembre 2026, sulle misure del sotto-passo P0.6c.)_
 
 ## Alternative scartate
 
@@ -61,3 +62,4 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 - **Stato di riposo, 16 novembre 2026**: deciso, C1 senza attesa attiva (ADR 0009, punto 15 qui sopra). **Frequenza dei core live, 16 novembre 2026**: misurata a pieno carico, tiene esattamente fino a 4,8 GHz e non oltre; l'utente ha scelto 4,6 GHz.
 - Se sul 285K compaiono errori hardware corretti che il sondaggio avrebbe segnalato.
 - Con la seconda macchina supportata: il modo di scegliere il profilo andrà rivisto se le macchine diventano molte.
+- Se una misura mostra che con la preferenza energetica comune i core live perdono qualcosa (frequenza tenuta, ritardo di risveglio): finora non è così.

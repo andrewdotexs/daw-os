@@ -11,7 +11,7 @@
 | Processore | Intel Core Ultra 9 285K | Schermata di Windows sul 285K |
 | RAM | 64 GB, in funzione a 4800 MT/s | Schermata di Windows |
 | Scheda madre | ASUS ROG STRIX Z890-I GAMING WIFI, Mini-ITX, chipset Z890 | Dichiarata; confermata dal kernel al primo avvio |
-| Firmware | Versione 2301 del 4 ottobre 2025 | Letta dal kernel al primo avvio |
+| Firmware | Versione **3402** del 18 settembre 2026, microcodice `0x122` (dal 16 novembre 2026; prima 2301 del 4 ottobre 2025, microcodice `0x11a`) | Letta dal kernel; aggiornamento nel sotto-passo P0.6c, parte 0 |
 | Processori visti dal kernel | 24, un solo package, nessun thread aggiuntivo per core | Registro di avvio del 13 novembre 2026 |
 | Schede grafiche | Intel Graphics integrata e NVIDIA GeForce RTX 5080 da 16 GB | Schermata di Windows |
 | Archiviazione | 932 GB visibili, 123 GB usati | Schermata di Windows |
@@ -43,7 +43,7 @@ Da `lspci -k`, `lsblk` e dal registro del primo avvio dal disco. Il numero di se
 | USB, controller del processore (Thunderbolt 4) | `00:0d.0` | `xhci_hcd` | Primo dei due controller USB. |
 | USB, controller del chipset | `80:14.0` | `xhci_hcd` | Secondo controller USB. |
 | Thunderbolt 4 NHI | `00:0d.2` | nessuno | Il sottosistema Thunderbolt non è nel kernel. |
-| Grafica integrata Arrow Lake-S | `00:02.0` | nessuno | La console usa il framebuffer del firmware. |
+| Grafica integrata Arrow Lake-S | `00:02.0` | nessuno all'avvio; `xe` a richiesta | La console usa il framebuffer del firmware. Dal sotto-passo P0.6c il driver `xe` è nell'immagine come modulo e si carica solo con `dawos-gpu-test --load` (identificativo `7d67`, da forzare: per Arrow Lake è sperimentale in Linux 6.18; `i915` non si compila su un kernel real-time). Provato il 16 novembre 2026: firmware DMC 2.23, GuC 70.49.4, HuC 8.5.4, GSC 102.1.15; la presa HDMI della scheda compare come `DP-2`; interrupt sui core 20–23. |
 | NVIDIA RTX 5080 | `01:00.0` | nessuno | Come voluto. |
 | Audio HDMI della RTX | `01:00.1` | `snd_hda_intel` | Nessun codec utile: errore all'avvio. |
 | Intel HD Audio del chipset | `80:1f.3` | `snd_hda_intel` | Sulla scheda non c'è codec: tre secondi di tentativi ed errori all'avvio. |
@@ -118,6 +118,8 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 **Secure Boot, stato al 15 novembre 2026**: attivo (_OS Type_: _Windows UEFI mode_; _Secure Boot Mode_: _Custom_; stato _User_). Fino a quel giorno il firmware era senza chiavi, in stato _Setup_. Ora contiene le chiavi di fabbrica (_PK_, _KEK_, _DBX_) e in _DB_ tredici firme: quelle di fabbrica più il certificato di sviluppo di dawOS. Procedura e verifica nella guida del sotto-passo P0.5f.
 
 **Stati di riposo, stato al 16 novembre 2026** (sotto-passo P0.6b, parte 4a): con la voce _CPU C-states_ su _Auto_ (gli altri valori possibili sono solo _Disabled_) il firmware non dichiara al sistema alcuno stato di riposo: nessuna tabella nomina `_CST`, e il driver resta `none` anche con `CONFIG_INTEL_IDLE`. Il processore è bloccato al limite `pc0` (`MSR_PKG_CST_CONFIG_CONTROL` = `0x00008000`). Con _Enhanced C-states_ su _Auto_ il C1E automatico è acceso (`MSR_IA32_POWER_CTL` = `0x00f8005f`): ogni core fermo scende a C1E, e non più giù. Stati profondi (C6 e oltre) non ce ne sono, per nessun core _(se un'altra voce del firmware li renda disponibili non è stato cercato)_. **Dal 16 novembre 2026 _Enhanced C-states_ è su _Disabled_** (ADR 0009): i core fermi restano in C1, `MSR_IA32_POWER_CTL` = `0x00f8005d`. È un'impostazione richiesta dal profilo `285k`: se torna al valore di fabbrica, `dawos-tune` fallisce all'avvio.
+
+**Firmware 3402, stato al 16 novembre 2026** (sotto-passo P0.6c, parte 0): aggiornato dall'utente con _EZ Flash_, insieme all'Intel ME. Le chiavi di Secure Boot sono sopravvissute. Voci rimesse dopo l'aggiornamento: limiti di potenza a 160 W, _Enhanced C-states_ su _Disabled_, _HD Audio_, _Wi-Fi Controller_ e _Bluetooth Controller_ su _Disabled_; ventola del processore sul profilo _Standard_, pompa a piena velocità. _Intel Default Settings_ va tenuto su _Performance_ (era il valore con la 2301; _Extreme_ alza il limite di picco da 425 a 490). Rispetto alla 2301: frequenza massima dichiarata 5,5 GHz sui P-core (prima 5,6) e 4,7 GHz sugli E-core (prima 4,6); scala delle prestazioni HWP a 88 livelli da 62,5 MHz sui P-core (prima 64 da 87,5 MHz). I due stati sono in `docs/misure/fase-0/firmware-2301.txt` e `firmware-3402.txt`. Nessun SMI in quindici minuti. Rimisurato lo stesso giorno: i core live tengono esattamente 3,7, 4,0, 4,3, 4,6 e 4,9 GHz a pieno carico; a 160 W per dieci minuti 79,8 °C; a riposo il package assorbe 3,0 W (prima 4,2).
 
 **Contenitore: resta quello attuale (D-22, chiusa dall'utente il 15 novembre 2026).** Sono state valutate e scartate due alternative da rack: un contenitore metallico 2U da modificare, con il radiatore sopra il coperchio (14 novembre), e un telaio aperto 3U stampato in ASA, con il radiatore sul retro del rack (15 novembre). Il secondo avrebbe tolto ogni schermatura a pochi centimetri dalla scheda audio.
 

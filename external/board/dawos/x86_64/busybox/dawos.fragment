@@ -1,0 +1,9 @@
+# Additions to Buildroot's default BusyBox configuration.
+
+# taskset: read and set the CPUs a process or a single thread may run on
+# (-p PID; with a list of CPUs, -c). The measurement tools need it to
+# place helpers on isolated CPUs, where the kernel does not spread
+# processes by itself, and to ask the kernel what it allows.
+CONFIG_TASKSET=y
+CONFIG_FEATURE_TASKSET_FANCY=y
+CONFIG_FEATURE_TASKSET_CPULIST=y

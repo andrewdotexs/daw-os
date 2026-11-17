@@ -1,0 +1,297 @@
+#!/bin/sh
+# dawos-gpu-test — load the driver of the integrated GPU on request, say
+# what it did, and keep the display busy (experiment E-04).
+#
+# dawOS boots on the firmware's framebuffer: the kernel driver of the GPU
+# is a module that nothing loads by itself. This tool loads it, so that
+# its effect on the live CPUs can be measured before anything depends on
+# it:
+#
+#   dawos-gpu-test --load     load the driver, wait for the display, and
+#                             write a report: driver, firmware, display,
+#                             where its interrupt goes;
+#   dawos-gpu-test --flip N   for N seconds show a new picture at every
+#                             frame (modetest: one page flip per vertical
+#                             blank, the picture drawn by a CPU);
+#   dawos-gpu-test --status   driver, running load, last report.
+#
+# The noise itself is measured by dawos-osnoise, run three times: before
+# --load, after it with the display still, and during --flip.
+#
+# On the reference machine the driver is xe. For its GPU (Arrow Lake) xe
+# is still experimental in Linux 6.18 and binds only when told to: the
+# module is loaded with force_probe=<PCI device id>. The older driver,
+# i915, cannot be built on a real-time kernel.
+#
+# Loading a graphics driver cannot be undone cleanly: to go back to the
+# firmware's framebuffer, reboot. If the machine stops answering after
+# --load, switch it off and on: the driver is not loaded at boot.
+#
+# Results go to /var/lib/dawos/measure/gpu-<time>[-LABEL].
+
+set -u
+
+PROG=dawos-gpu-test
+BASE=/var/lib/dawos/measure
+UNIT=dawos-gpu-flip
+DRIVER=xe
+SELF=$(readlink -f "$0")
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} --load [LABEL]          load the GPU driver and write a report
+  ${PROG} --flip SECONDS [LABEL]  change picture at every frame
+  ${PROG} --status                driver, running load, last report
+
+--driver NAME uses another kernel driver than ${DRIVER} (for tests).
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# CPUs of a kernel list ("4-7", "0-3,8-15"), one per line, sorted.
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done | sort -n -u
+}
+
+# Print "ADDRESS DEVICE_ID" of the first Intel display controller.
+find_gpu() {
+	for device in /sys/bus/pci/devices/*; do
+		[ -r "${device}/class" ] || continue
+		case "$(cat "${device}/class")" in
+		0x03*) ;;
+		*) continue ;;
+		esac
+		[ "$(cat "${device}/vendor")" = 0x8086 ] || continue
+		echo "${device##*/} $(sed 's/^0x//' "${device}/device")"
+		return 0
+	done
+	return 1
+}
+
+# Name of the kernel driver bound to the PCI device $1; nothing if none.
+bound_driver() {
+	[ -L "/sys/bus/pci/devices/$1/driver" ] || return 0
+	basename "$(readlink "/sys/bus/pci/devices/$1/driver")"
+}
+
+# One line per display output: name, state, first mode.
+outputs() {
+	for output in /sys/class/drm/card[0-9]*-*; do
+		[ -r "${output}/status" ] || continue
+		echo "${output##*/card[0-9]-} $(cat "${output}/status") $(head -n 1 "${output}/modes" 2> /dev/null)"
+	done
+}
+
+# "ID MODE": the first connected output as modetest numbers it, and its
+# first (preferred) mode. modetest lists, for each output, a line
+#   236  235  connected  HDMI-A-1  530x300  40  235
+# and then its modes, the first being
+#   #0 1920x1080 60.00 1920 2008 ...
+first_output() {
+	modetest -M "${DRIVER}" -c 2> /dev/null | awk '
+		$3 == "connected" && !id { id = $1; next }
+		id && $1 == "#0" { print id, $2; exit }'
+}
+
+label_ok() {
+	[ -z "$1" ] || echo "$1" | grep -Eq '^[A-Za-z0-9_-]+$' ||
+		die "the label may only contain letters, digits, '-' and '_'"
+}
+
+do_load() {
+	label=$1
+	gpu=$(find_gpu) || die "no Intel display controller on this machine"
+	address=${gpu% *}
+	device_id=${gpu#* }
+	before=$(bound_driver "${address}")
+
+	dir="${BASE}/gpu-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+	mkdir -p "${dir}" || die "could not create ${dir}"
+	dmesg > "${dir}/kernel-log-before.txt" 2> /dev/null
+	lines_before=$(wc -l < "${dir}/kernel-log-before.txt")
+
+	if [ -n "${before}" ]; then
+		echo "${PROG}: the GPU ${address} is already driven by '${before}': nothing loaded"
+		outcome="already bound"
+	else
+		# The parameter is ignored by a driver that does not know it.
+		if modprobe "${DRIVER}" "force_probe=${device_id}" 2> "${dir}/modprobe.txt"; then
+			outcome="loaded"
+		else
+			outcome="modprobe failed: $(tr '\n' ' ' < "${dir}/modprobe.txt")"
+		fi
+		# The driver binds, loads its firmware and lights the display.
+		waited=0
+		while [ "${waited}" -lt 30 ]; do
+			[ -n "$(bound_driver "${address}")" ] && outputs | grep -q ' connected ' && break
+			sleep 1
+			waited=$((waited + 1))
+		done
+		sleep 2
+	fi
+	dmesg 2> /dev/null | tail -n +$((lines_before + 1)) > "${dir}/kernel-log.txt"
+	rm -f "${dir}/kernel-log-before.txt"
+
+	after=$(bound_driver "${address}")
+	live=$(grep -v null /sys/devices/system/cpu/isolated 2> /dev/null)
+	{
+		echo "directory: ${dir}"
+		date -u '+date_utc: %Y-%m-%dT%H:%M:%SZ'
+		echo "label: ${label:-none}"
+		echo "kernel: $(uname -srv)"
+		echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+		echo "bios: $(cat /sys/class/dmi/id/bios_version 2> /dev/null) $(cat /sys/class/dmi/id/bios_date 2> /dev/null)"
+		echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+		echo "gpu: ${address}, device id ${device_id}"
+		echo "driver_wanted: ${DRIVER} (force_probe=${device_id})"
+		echo "outcome: ${outcome}"
+		echo "driver_bound: ${after:-none}"
+		# 64 is what the kernel sets when a module is given a parameter it
+		# calls unsafe: force_probe is one.
+		echo "kernel_tainted: $(cat /proc/sys/kernel/tainted)"
+		outputs | sed 's/^/output: /'
+		# Where the interrupt of the GPU is delivered: never on a live CPU.
+		grep -E "[ :]${DRIVER}\$|${address}" /proc/interrupts | while read -r number _; do
+			number=${number%:}
+			cpus=$(cat "/proc/irq/${number}/smp_affinity_list" 2> /dev/null)
+			on_live=none
+			for cpu in $(expand_list "${cpus}"); do
+				expand_list "${live}" | grep -qx "${cpu}" && on_live="${cpu} (WRONG)"
+			done
+			echo "interrupt: ${number} on CPUs ${cpus}; live CPUs among them: ${on_live}"
+		done
+		echo "firmware_loaded:"
+		grep -iE 'firmware|GuC|HuC|DMC|GSC' "${dir}/kernel-log.txt" | sed 's/^\[[ 0-9.]*\] //; s/^/  /' | head -n 12
+		echo "problems_in_kernel_log: $(grep -ciE 'error|fail|warn|timed out|BUG' "${dir}/kernel-log.txt")"
+		grep -iE 'error|fail|warn|timed out|BUG' "${dir}/kernel-log.txt" | sed 's/^\[[ 0-9.]*\] //; s/^/  /' | head -n 12
+		if [ -n "${after}" ] && outputs | grep -q ' connected '; then
+			echo "verdict: the driver '${after}' drives the GPU and a display is connected"
+		elif [ -n "${after}" ]; then
+			echo "verdict: the driver '${after}' drives the GPU, but no display is connected"
+		else
+			echo "verdict: no driver took the GPU"
+		fi
+	} > "${dir}/report.txt"
+	cat "${dir}/report.txt"
+	[ -n "${after}" ]
+}
+
+# The load; runs inside the transient unit. $1 = directory, $2 = seconds.
+run_flip() {
+	flip_dir=$1
+	target=$(first_output)
+	[ -n "${target}" ] || {
+		echo "no connected output found by modetest" > "${flip_dir}/flip.txt"
+		exit 1
+	}
+	echo "output_and_mode: ${target}" > "${flip_dir}/flip.txt"
+	# modetest runs until a key is pressed: its input ends when sleep does.
+	# With -v it prints the picture rate once a second.
+	sleep "$2" | modetest -M "${DRIVER}" -s "${target% *}:#0" -v >> "${flip_dir}/flip.txt" 2>&1
+	echo "modetest_exit_status: $?" >> "${flip_dir}/flip.txt"
+}
+
+do_flip() {
+	seconds=$1
+	label=$2
+	echo "${seconds}" | grep -Eq '^[0-9]{1,6}$' || die "bad duration '${seconds}': seconds"
+	[ "${seconds}" -ge 5 ] || die "the shortest load is 5 seconds"
+	command -v modetest > /dev/null || die "modetest not found: this needs the dev variant of the image"
+	systemctl is-active --quiet "${UNIT}" && die "a load is already running (see --status)"
+	[ -n "$(first_output)" ] || die "modetest finds no connected output of the driver '${DRIVER}': run --load first"
+	dir="${BASE}/gpu-$(date -u +%Y%m%dT%H%M%SZ)-flip${label:+-${label}}"
+	mkdir -p "${dir}" || die "could not create ${dir}"
+	systemd-run --quiet --unit="${UNIT}" --collect \
+		--description="dawOS display load (a new picture at every frame)" \
+		/bin/sh "${SELF}" --driver "${DRIVER}" --run-flip "${dir}" "${seconds}" ||
+		die "could not start the load"
+	echo "Display load started for ${seconds} s on $(first_output); log in ${dir}/flip.txt"
+}
+
+do_status() {
+	if gpu=$(find_gpu); then
+		echo "GPU ${gpu% *} (device id ${gpu#* }): driver $(bound_driver "${gpu% *}" | grep . || echo none)"
+	else
+		echo "No Intel display controller on this machine."
+	fi
+	outputs | sed 's/^/Output: /'
+	if systemctl is-active --quiet "${UNIT}"; then
+		echo "A display load is running since $(systemctl show -p ActiveEnterTimestamp --value "${UNIT}")"
+	else
+		echo "No display load is running."
+	fi
+	latest=
+	for candidate in "${BASE}"/gpu-*; do
+		[ -d "${candidate}" ] && latest=${candidate}
+	done
+	[ -n "${latest}" ] || return 0
+	echo "Latest result directory: ${latest}"
+	if [ -r "${latest}/flip.txt" ]; then
+		# "freq: 60.00Hz" once a second: how many seconds, and the rates.
+		awk '
+			/^freq: / { rate = $2 + 0; sum += rate; n++; if (!n1 || rate < low) low = rate; n1 = 1 }
+			/^output_and_mode|^modetest_exit/ { print }
+			END { if (n) printf "pictures_per_second: avg %.2f, lowest %.2f, over %d readings\n", sum / n, low, n; else print "pictures_per_second: no reading" }' "${latest}/flip.txt"
+	elif [ -r "${latest}/report.txt" ]; then
+		cat "${latest}/report.txt"
+	fi
+}
+
+action=
+argument=
+label=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--driver)
+		DRIVER=${2:-}
+		[ -n "${DRIVER}" ] || die "--driver needs a name"
+		shift
+		;;
+	--load | --status) action=${1#--} ;;
+	--flip)
+		action=flip
+		argument=${2:-}
+		shift
+		;;
+	--run-flip)
+		# Internal: called by the transient unit.
+		run_flip "$2" "$3"
+		exit 0
+		;;
+	-*) die "unknown option '$1' (try --help)" ;;
+	*) label=$1 ;;
+	esac
+	shift
+done
+
+case "${action}" in
+status) do_status ;;
+load)
+	[ "$(id -u)" = 0 ] || die "must run as root"
+	label_ok "${label}"
+	do_load "${label}"
+	;;
+flip)
+	[ "$(id -u)" = 0 ] || die "must run as root"
+	label_ok "${label}"
+	do_flip "${argument}" "${label}"
+	;;
+*)
+	usage
+	exit 0
+	;;
+esac

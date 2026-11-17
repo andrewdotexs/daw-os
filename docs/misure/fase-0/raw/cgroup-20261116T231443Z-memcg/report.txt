@@ -1,0 +1,29 @@
+directory: /var/lib/dawos/measure/cgroup-20261116T231443Z-memcg
+date_utc: 2026-11-16T23:14:47Z
+label: memcg
+kernel: Linux 6.18.63-dawos #7 SMP PREEMPT_RT Mon Nov 16 23:39:42 CET 2026
+profile: 285k
+image: ae8e38c3250f
+cpus_online: 0-23
+cpus_isolated_by_kernel: 4-7
+cpu_lent_to_the_partition: 15
+live_cpu_of_question_9: 4 (main thread on 1)
+controllers: cpuset cpu io memory hugetlb pids rdma misc
+domain_controllers: memory io hugetlb
+memory_controller: present
+threaded_partition: valid
+
+1  partition under a plain parent:              invalid -> as expected
+2  threaded group as partition root:            valid -> as expected
+3  threads of one process, two groups:          each its own CPUs -> as expected
+4a affinity from the partition outwards:        refused -> as expected
+4b affinity into the partition:                 refused -> as expected
+5a limit at the group of the process:           works -> as expected
+5b 'memory' at the group of the process:        works -> as expected
+5c 'memory' below the group of the process:     refused -> as expected
+6  thread of a second process, same partition:  refused -> as expected
+7  second partition on the same CPU:            invalid -> as expected
+8  thread of the second, by affinity:           refused -> as expected
+9  one service, live thread by affinity:        works -> as expected
+
+verdict: every answer is the one the design expects

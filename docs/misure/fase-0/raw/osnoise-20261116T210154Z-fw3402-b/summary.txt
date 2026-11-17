@@ -1,0 +1,37 @@
+directory: /var/lib/dawos/measure/osnoise-20261116T210154Z-fw3402-b
+started_utc: 2026-11-16T21:01:54Z
+duration: 10m
+label: fw3402-b
+cpus_measured: 4-7
+cpus_isolated_by_kernel: 4-7
+load_on_other_cpus: yes
+profile: 285k
+tune: ok
+kernel: Linux 6.18.63-dawos #6 SMP PREEMPT_RT Mon Nov 16 02:03:32 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 113096 verity 1 PARTLABEL=dawos-root-0.0.1.20261116201545 PARTLABEL=dawos-verity-0.0.1.20261116201545 4096 4096 14137 1 sha256 6bda5eb0bda0987e867ee8b2fe889a83dad8ba24d7bfc654c81b941c8bec50ab 4597cfeb9bf2cb54e20082388a0177ad057392ce9bb44aa4897e7b8a1a629781 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261116201545,PARTLABEL=dawos-verity-0.0.1.20261116201545 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 3402 09/18/2026
+image: 7bac3d908f6a
+uptime_at_start_s: 2290
+live_khz: 4600000-4600000
+window_start_utc: 2026-11-16T21:02:07Z
+window_start_uptime_s: 2303.17
+window_end_utc: 2026-11-16T21:11:47Z
+window_end_uptime_s: 2883.18
+rtla_exit_status: 0
+load_running_at_window_end: yes
+finished_utc: 2026-11-16T21:12:01Z
+cpus_with_data: 4
+max_single_noise_us: 6 (cpu 4)
+lowest_cpu_availability_percent: 99.99999
+noise_events: hardware 5 nmi 0 interrupt 5 softirq 0 thread 5
+interrupts_on_measured_cpus: LOC=2 IWI=2
+interrupts_from_the_tracer_itself: IWI=2
+unexpected_interrupts: none
+threads_on_measured_cpus: osnoise/4=2 osnoise/5=2 irq_work/4=1 irq_work/5=1 rcuc/4=1 rcuc/5=1
+unexpected_threads: none
+trace_events_lost: 0
+noise_sources_in_window: irq local_timer x2 (longest 1.0 us); thread rcuc/5 x1 (longest 0.4 us); thread rcuc/4 x1 (longest 0.7 us);
+noise_sources_in_the_margins: irq local_timer x3 (longest 1.5 us); thread rcuc/4 x1 (longest 1.2 us); thread rcuc/5 x1 (longest 1.6 us); thread rcuc/7 x1 (longest 1.7 us);
+package_temperature_c: avg 67.5 max 74
+package_power_w: avg 120.1 max 128.1
+verdict: PASS (max single noise <= 10 us, only the local timer, only bound kernel threads)

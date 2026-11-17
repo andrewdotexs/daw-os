@@ -1,0 +1,22 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 10/10   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+       osnoise/4-4352    [004] dNh31  2302.447020: irq_noise: local_timer:236 start 2302.447018012 duration 1508 ns
+       osnoise/5-4353    [005] dNh31  2302.447020: irq_noise: local_timer:236 start 2302.447018427 duration 1408 ns
+          rcuc/4-56      [004] d..3.  2302.447024: thread_noise:   rcuc/4:56 start 2302.447021999 duration 1204 ns
+          rcuc/5-65      [005] d..3.  2302.447024: thread_noise:   rcuc/5:65 start 2302.447022094 duration 1642 ns
+       osnoise/7-4355    [007] dNh31  2302.448020: irq_noise: local_timer:236 start 2302.448018339 duration 1466 ns
+          rcuc/7-84      [007] d..3.  2302.448023: thread_noise:   rcuc/7:84 start 2302.448021341 duration 1740 ns
+       osnoise/5-4353    [005] dNh11  2303.447025: irq_noise: local_timer:236 start 2303.447024442 duration 793 ns
+       osnoise/4-4352    [004] dNh11  2303.447025: irq_noise: local_timer:236 start 2303.447024329 duration 1018 ns
+          rcuc/5-65      [005] d..3.  2303.447027: thread_noise:   rcuc/5:65 start 2303.447026444 duration 382 ns
+          rcuc/4-56      [004] d..3.  2303.447027: thread_noise:   rcuc/4:56 start 2303.447026457 duration 674 ns

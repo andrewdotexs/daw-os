@@ -1,0 +1,26 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 14/14   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+       osnoise/6-4545    [006] d.h21  3150.829581: irq_noise: call_function:252 start 3150.829579752 duration 548 ns
+       osnoise/4-4543    [004] d.h11  3150.829581: irq_noise: call_function:252 start 3150.829579811 duration 535 ns
+       osnoise/7-4546    [007] d.h31  3150.829581: irq_noise: call_function:252 start 3150.829579923 duration 727 ns
+       osnoise/5-4544    [005] d.h31  3150.829581: irq_noise: call_function:252 start 3150.829579826 duration 725 ns
+       osnoise/4-4543    [004] d.h.1  3150.919770: hrtimer_expire_entry: hrtimer=000000009bcb0dde function=tick_nohz_handler now=3151007000986
+       osnoise/4-4543    [004] dNh11  3150.919772: irq_noise: local_timer:236 start 3150.919769948 duration 1794 ns
+          rcuc/4-56      [004] d..3.  3150.919775: thread_noise:   rcuc/4:56 start 3150.919772510 duration 1967 ns
+       osnoise/4-4543    [004] d.h21  3151.919776: hrtimer_expire_entry: hrtimer=000000009bcb0dde function=tick_nohz_handler now=3152007000609
+       osnoise/4-4543    [004] dNh31  3151.919777: irq_noise: local_timer:236 start 3151.919776394 duration 627 ns
+          rcuc/4-56      [004] d..3.  3151.919778: thread_noise:   rcuc/4:56 start 3151.919777524 duration 337 ns
+       osnoise/4-4543    [004] d.h31  3377.563093: irq_noise: call_function:252 start 3377.563092547 duration 367 ns
+       osnoise/6-4545    [006] d.h31  3377.563093: irq_noise: call_function:252 start 3377.563092943 duration 303 ns
+       osnoise/5-4544    [005] d.h11  3377.563094: irq_noise: call_function:252 start 3377.563092866 duration 394 ns
+       osnoise/7-4546    [007] d.h31  3377.563094: irq_noise: call_function:252 start 3377.563092876 duration 416 ns
