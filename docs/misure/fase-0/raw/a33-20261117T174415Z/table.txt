@@ -1,0 +1,8 @@
+case               cores_setting                        irq_max_us  usr_max_us  mhz_seen  busy_pct
+crypt-default      800-5500MHz,balance_performance      51.64       52.94       1300      11.2
+crypt-max-live     800-4600MHz,balance_performance      44.63       50.57       1300      10.6
+crypt-fixed-top    5500-5500MHz,balance_performance     4.00        7.70        5500      2.2
+crypt-fixed-live   4600-4600MHz,balance_performance     2.55        6.90        4628      2.4
+crypt-performance  800-5500MHz,performance              3.19        5.48        5400      2.1
+burst-default      800-5500MHz,balance_performance      0.94        4.28        5400      12
+steady-default     800-5500MHz,balance_performance      0.83        3.88        5400      100
