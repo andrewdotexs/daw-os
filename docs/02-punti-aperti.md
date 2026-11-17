@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunto A-35, aperto in anticipo nel sotto-passo P0.6e.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36.
 
 ## La regola d'ordine
 
@@ -46,7 +46,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | A-12 | Quanti registri degli errori hardware del 285K non hanno il proprio interrupt (per quelli, spento il sondaggio, gli errori corretti non vengono più segnalati) | [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md) | Una lettura dal sistema. |
 | A-13 | Risparmio energetico dei collegamenti PCIe (ASPM): gestito dal firmware, spento nelle sue voci, ma lo stato vero dei collegamenti non è stato letto | P0.4b | Una lettura con `lspci`. |
 | A-14 | Avviso di systemd-resolved sul passaggio a DNS non cifrato | P0.5 | Decidere l'impostazione e scriverla. |
-| A-35 | Opzioni del kernel per ospitare una macchina virtuale (KVM, vhost, `tun`, traduzione degli indirizzi in nftables), tutte come moduli che nulla carica all'avvio. **Verificato il 17 novembre 2026**: il rumore di fondo non cambia con i moduli caricati; il caricamento manda circa 4200 interrupt brevi a ogni core live (al più 9 µs il buco più lungo) | Richiesta dell'utente del 17 novembre 2026; [P0.6e, parte 1](fasi/fase-0/P0.6e-chiusura-dei-punti-aperti.md) | Portare l'ADR 033 nel repository. Decidere quando si carica KVM: non durante l'audio; all'avvio, se la macchina virtuale parte a richiesta. Chiarire la caduta del collegamento di rete vista 2,3 secondi dopo il caricamento. |
+| A-35 | Opzioni del kernel per ospitare una macchina virtuale (KVM, vhost, `tun`, traduzione degli indirizzi in nftables), tutte come moduli che nulla carica all'avvio. **Verificato il 17 novembre 2026**: il rumore di fondo non cambia con i moduli caricati; il caricamento manda circa 4200 interrupt brevi a ogni core live (al più 9 µs il buco più lungo) | Richiesta dell'utente del 17 novembre 2026; [P0.6e, parte 1](fasi/fase-0/P0.6e-chiusura-dei-punti-aperti.md) | Portare l'ADR 033 nel repository. Decidere quando si carica KVM: non durante l'audio; all'avvio, se la macchina virtuale parte a richiesta. |
 | A-15 | Gli interrupt di chiamata di funzione sui core live nei primi minuti dopo l'accensione (dieci per core): chi li manda non è noto | P0.6b, parte 3 | Una traccia nei primi cinque minuti. Oggi la regola è misurare dopo cinque minuti; per il motore bisogna sapere se è lavoro dell'avvio o di qualcosa che può tornare. |
 
 ## Affidati alla campagna P0.7
@@ -55,6 +55,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | --- | --- | --- | --- |
 | A-16 | Buchi «hardware» rari, da 1 a 6 µs, senza causa nota, anche su core non live | P0.6b, parti 3 e 4c | Su 24 ore se ne vede la frequenza e se hanno un periodo. La campagna parte con la traccia armata sopra soglia. |
 | A-30 | Con gli altri venti core a piena potenza (160 W) il ritardo massimo di risveglio sotto carico è salito da 4 a 7 µs, e a 11,6 µs con l'attesa attiva; due minuti per caso | P0.6c, chiusura | La campagna misura in questa condizione per 24 ore: dirà se è una coda stabile o un caso. |
+| A-36 | Il collegamento di rete è caduto per 3,5 secondi, 2,3 secondi dopo il primo caricamento dei moduli della macchina virtuale (a pieno carico); al secondo caricamento, a macchina ferma, no. Una sola caduta in 58 minuti | P0.6e, parte 1 | La campagna registra ogni caduta del collegamento. Prima, riprovare il caricamento nelle condizioni della prima volta (misura in corso, package a 160 W). |
 | A-17 | Regola per le misure di riferimento: cominciano almeno cinque minuti dopo l'accensione | P0.6b, parte 3 | Già negli strumenti come nota; la campagna la rispetta. |
 
 ## Prima della Fase 1
