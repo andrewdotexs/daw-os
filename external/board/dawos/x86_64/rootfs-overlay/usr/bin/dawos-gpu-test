@@ -84,13 +84,6 @@ bound_driver() {
 	basename "$(readlink "/sys/bus/pci/devices/$1/driver")"
 }
 
-# Which driver the text console draws through ("simpledrmdrmfb" is the
-# firmware's framebuffer); nothing if the kernel lists none. /proc/fb
-# reads "0 NAME".
-console_driver() {
-	sed -n '1s/^[0-9]* //p' /proc/fb 2> /dev/null
-}
-
 # One line per display output: name, state, first mode.
 outputs() {
 	for output in /sys/class/drm/card[0-9]*-*; do
@@ -121,7 +114,6 @@ do_load() {
 	address=${gpu% *}
 	device_id=${gpu#* }
 	before=$(bound_driver "${address}")
-	console_before=$(console_driver)
 
 	dir="${BASE}/gpu-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
 	mkdir -p "${dir}" || die "could not create ${dir}"
@@ -164,8 +156,6 @@ do_load() {
 		echo "driver_wanted: ${DRIVER} (force_probe=${device_id})"
 		echo "outcome: ${outcome}"
 		echo "driver_bound: ${after:-none}"
-		echo "console_before: ${console_before:-none}"
-		echo "console_after: $(console_driver | grep . || echo none)"
 		# 64 is what the kernel sets when a module is given a parameter it
 		# calls unsafe: force_probe is one.
 		echo "kernel_tainted: $(cat /proc/sys/kernel/tainted)"
@@ -234,7 +224,6 @@ do_status() {
 	else
 		echo "No Intel display controller on this machine."
 	fi
-	echo "Console: $(console_driver | grep . || echo none)"
 	outputs | sed 's/^/Output: /'
 	if systemctl is-active --quiet "${UNIT}"; then
 		echo "A display load is running since $(systemctl show -p ActiveEnterTimestamp --value "${UNIT}")"

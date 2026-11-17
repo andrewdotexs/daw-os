@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiuso A-02 e trovata la causa di A-03.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c.
 
 ## La regola d'ordine
 
@@ -22,7 +22,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-03 | Sotto il profilo `285k` i core non live giravano piano e il package restava lontano dai 160 W. Causa trovata: `dawos-tune` dava ai soli core live la preferenza energetica `performance`, e il processore teneva indietro gli altri | P0.6b; P0.6c | `dawos-tune` corretto (stessa preferenza degli altri core). Si chiude con le tre misure di chiusura di P0.6c: frequenza, rumore e risveglio con il resto della macchina a piena potenza. |
+| — | Nessuno: il sotto-passo P0.6c è superato. | — | — |
 
 ## Da chiudere in P0.6d
 
@@ -51,6 +51,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
 | A-16 | Buchi «hardware» rari, da 1 a 6 µs, senza causa nota, anche su core non live | P0.6b, parti 3 e 4c | Su 24 ore se ne vede la frequenza e se hanno un periodo. La campagna parte con la traccia armata sopra soglia. |
+| A-30 | Con gli altri venti core a piena potenza (160 W) il ritardo massimo di risveglio sotto carico è salito da 4 a 7 µs, e a 11,6 µs con l'attesa attiva; due minuti per caso | P0.6c, chiusura | La campagna misura in questa condizione per 24 ore: dirà se è una coda stabile o un caso. |
 | A-17 | Regola per le misure di riferimento: cominciano almeno cinque minuti dopo l'accensione | P0.6b, parte 3 | Già negli strumenti come nota; la campagna la rispetta. |
 
 ## Prima della Fase 1
@@ -77,6 +78,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Chiuso |
 | --- | --- | --- |
+| A-03 | Sotto il profilo `285k` i core non live giravano piano e il package restava lontano dai 160 W | 17 novembre 2026 (P0.6c): la causa era la preferenza energetica `performance` data da `dawos-tune` ai soli core live; ora hanno quella degli altri. A pieno carico gli altri core passano da 2860 a 4454 MHz, il package da 122 a 160 W; i core live tengono i 4600 MHz, senza rumore e con lo stesso ritardo medio di risveglio. Con la macchina a piena potenza il ritardo massimo sotto carico sale da 4 a 7–12 µs: da seguire nella campagna P0.7. |
 | A-02 | Driver grafico (esperimento E-04) | 17 novembre 2026 (P0.6c, parte 2): `xe`, l'unico che si compila su un kernel real-time; funziona sul 285K, zero rumore a schermo fermo. Il limite trovato con lo schermo che cambia è accettato dall'utente e passa ad A-23 e al rischio K-16. Il driver non si carica all'avvio. |
 | A-01 | Il kernel non aveva il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`) | 16 novembre 2026 (P0.6c, parte 2): aggiunto; la misura di rumore con il kernel nuovo passa e `dawos-cgroup-test` conferma il limite al gruppo del processo. |
 | A-28 | Con il firmware 3402 le misure di rumore contavano a tratti il tick dello scheduler seguito da `rcuc` sui core live | 16 novembre 2026 (P0.6c, parte 2): è un effetto del thread del tracciatore, che vive nel kernel. Con un ciclo in spazio utente al suo posto (`dawos-osnoise --user`), in dieci minuti il kernel non è mai entrato sui core live. Perché compaia più spesso con il firmware nuovo non è spiegato; non riguarda il motore. |

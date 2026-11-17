@@ -43,7 +43,7 @@ Da `lspci -k`, `lsblk` e dal registro del primo avvio dal disco. Il numero di se
 | USB, controller del processore (Thunderbolt 4) | `00:0d.0` | `xhci_hcd` | Primo dei due controller USB. |
 | USB, controller del chipset | `80:14.0` | `xhci_hcd` | Secondo controller USB. |
 | Thunderbolt 4 NHI | `00:0d.2` | nessuno | Il sottosistema Thunderbolt non è nel kernel. |
-| Grafica integrata Arrow Lake-S | `00:02.0` | nessuno | La console usa il framebuffer del firmware. |
+| Grafica integrata Arrow Lake-S | `00:02.0` | nessuno all'avvio; `xe` a richiesta | La console usa il framebuffer del firmware. Dal sotto-passo P0.6c il driver `xe` è nell'immagine come modulo e si carica solo con `dawos-gpu-test --load` (identificativo `7d67`, da forzare: per Arrow Lake è sperimentale in Linux 6.18; `i915` non si compila su un kernel real-time). Provato il 16 novembre 2026: firmware DMC 2.23, GuC 70.49.4, HuC 8.5.4, GSC 102.1.15; la presa HDMI della scheda compare come `DP-2`; interrupt sui core 20–23. |
 | NVIDIA RTX 5080 | `01:00.0` | nessuno | Come voluto. |
 | Audio HDMI della RTX | `01:00.1` | `snd_hda_intel` | Nessun codec utile: errore all'avvio. |
 | Intel HD Audio del chipset | `80:1f.3` | `snd_hda_intel` | Sulla scheda non c'è codec: tre secondi di tentativi ed errori all'avvio. |
