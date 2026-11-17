@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05.
 
 ## La regola d'ordine
 
@@ -28,6 +28,8 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
+| A-33 | Con dm-crypt nella forma normale (cifratura sulle code di lavoro del kernel, quindi sui domini `preemptive` e `system`) i core live restano senza interrupt fino a 57 µs, cinque o sei volte al secondo: oltre la soglia di fase e oltre il requisito. Non succede in chiaro né quando cifrano i core `io` | E-05, parte 2 di P0.6d | Trovare la causa (diagnosi consegnata: su quali core, hardware o kernel, a riposo o al lavoro). Se è un effetto del lavoro vettoriale a raffiche sugli altri core, riguarda il dominio anticipativo intero e non solo la cifratura. Va chiuso prima della campagna P0.7. |
+| A-34 | Su loop ogni `fdatasync` di un file che cresce costa il doppio (10,2 ms contro 4,8 ms; il disco da solo impiega 4,8 ms): la soglia di E-05 è superata del 3–4 % | E-05, parte 2 di P0.6d | Misurare il journal su un file già scritto (`w3b`); poi decidere tra il ripiego (partizione LUKS per utente), un journal che riusa i suoi segmenti, o una soglia rivista. Aggiornare l'ADR 0004. |
 | A-31 | La sessione di riferimento di R-04 a 96 kHz usa tra il 64 % e il 70 % del dominio anticipativo: fuori dalla soglia del 60 % | E-06; [ADR 0011](adr/0011-r04-carico-sintetico.md) | Scegliere la leva, alla chiusura di P0.6d, con l'utilizzo del dominio di I/O misurato da E-05: due E-core in più al dominio anticipativo, soglia distinta, o sessione più piccola. |
 
 ## Da chiudere in P0.6e, prima della campagna
