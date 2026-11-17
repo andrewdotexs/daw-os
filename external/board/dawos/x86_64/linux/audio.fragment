@@ -1,0 +1,18 @@
+# USB audio and MIDI.
+#
+# The audio interface of the reference machine is a USB class-compliant
+# device (document 0, M-12), and so will most others be: the one driver
+# serves them all. Built in, like everything the machine needs to do its
+# job: no module has to be found and loaded when an interface is plugged
+# in. With nothing plugged in the driver does nothing.
+#
+# MIDI 2.0 (and with it the Universal MIDI Packet layer) is part of the
+# same driver. The hardware-dependent interface (SND_HWDEP), raw MIDI and
+# PCM are selected by it; they are named here because other parts of
+# dawOS rely on them: the control protocol of the interface goes through
+# hwdep (ADR 0008).
+CONFIG_SND_USB_AUDIO=y
+CONFIG_SND_USB_AUDIO_MIDI_V2=y
+CONFIG_SND_UMP=y
+CONFIG_SND_HWDEP=y
+CONFIG_SND_RAWMIDI=y

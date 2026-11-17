@@ -1,5 +1,5 @@
 # dawOS kernel fragment: real-time behaviour and the tracers that measure it.
-# Option names and dependencies checked against the 6.18.63 sources.
+# Option names and dependencies checked against the 6.18.63 sources; built unchanged on 6.18.64.
 
 # --- Preemption model -------------------------------------------------------
 # PREEMPT_RT turns spinlocks into sleeping, priority-inheriting locks and

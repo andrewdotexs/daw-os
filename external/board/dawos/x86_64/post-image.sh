@@ -384,8 +384,9 @@ populate_esp() {
 	install -D -m 0644 "${uki}" "${dir}/EFI/Linux/${name}"
 	install -d -m 0755 "${dir}/loader"
 	cat > "${dir}/loader/loader.conf" <<LOADER
-# dawOS (${variant}): show the menu briefly so an entry can be picked by hand.
-timeout 5
+# dawOS (${variant}): no menu. The default entry starts at once; holding
+# a key (space, for one) while the machine starts shows the menu.
+timeout 0
 console-mode keep
 # Keys are enrolled by hand in the firmware, never by the boot loader.
 secure-boot-enroll off

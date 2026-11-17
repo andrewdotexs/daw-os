@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36; chiusi A-34 e A-31; scelto e verificato il rimedio per A-33, alla chiusura del sotto-passo P0.6d.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06, e A-33 e A-34, dall'esperimento E-05; aggiunti A-35, aperto in anticipo nel sotto-passo P0.6e, e A-36; chiusi A-34 e A-31; scelto e verificato il rimedio per A-33, alla chiusura del sotto-passo P0.6d; poi, con la parte 2 di P0.6e, spostati A-06 e A-07 prima della Fase 1 e aggiunto A-37.
 
 ## La regola d'ordine
 
@@ -34,18 +34,16 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-05 | Versione del kernel: restare su 6.18.63 o passare all'ultima 6.18.x prima di certificare | [ADR 0007](adr/0007-versioni-buildroot-e-kernel.md) | Guardare che cosa è uscito e decidere insieme. Se si cambia, tutte le prove automatiche e le misure brevi si rifanno. |
-| A-06 | Con il _fair server_ acceso, in macchina virtuale, un processo interrotto dentro il kernel non è più ripartito e la macchina si è fermata | P0.6b, parte 2 | Cercare la correzione nelle versioni successive del kernel (va insieme ad A-05) e ripetere la prova estesa finché passa. Serve prima della Fase 1, ma dipende dalla versione del kernel: per questo sta qui. |
-| A-07 | `dawos-starve-test` esteso (terza variante, processo che non cede mai) non consegnato | P0.6b, parte 2 | Insieme ad A-06. |
-| A-08 | `dawos-hwnoise`: l'ultima lettura di potenza può essere falsata (219,6 W in una misura da 94 W di media) | P0.6b, parte 4c | Scartare l'ultima lettura, o leggere la potenza dai file del kernel come fanno gli altri strumenti. |
-| A-09 | Opzioni del kernel previste dal documento 0 e non ancora presenti: driver del TPM (`TCG_TPM`, `TCG_CRB`, `TCG_TIS`) | P0.3, tabella delle opzioni; visto in P0.5 | Aggiungerle, e controllare la tabella intera contro la configurazione vera. Della stessa riga mancava anche `DM_CRYPT`: aggiunto in P0.6d. |
-| A-10 | Tempo di avvio: 14 secondi di firmware e 5 di menu | P0.5f | Voci del firmware (_Fast Boot_, _POST Delay Time_, logo) e tempo di attesa del menu. Tocca il firmware: per questo prima della campagna. |
+| A-05 | Versione del kernel | [ADR 0007](adr/0007-versioni-buildroot-e-kernel.md) | Deciso il 17 novembre 2026: 6.18.64, consegnata nella parte 2 di P0.6e. Da verificare sul 285K: rumore sui core live e caso di A-33 con il kernel nuovo. |
+| A-08 | `dawos-hwnoise`: l'ultima lettura di potenza può essere falsata (219,6 W, poi 181 W, in misure da 94 W di media) | P0.6b, parte 4c | Corretto nella parte 2 di P0.6e: l'ultima lettura è scartata. Da vedere in una misura vera (parte 3). |
+| A-09 | Opzioni del kernel previste dal documento 0 e assenti: i driver del TPM e, trovato controllando la tabella intera, **tutto l'audio USB** | P0.3, tabella delle opzioni | Aggiunti nella parte 2 di P0.6e, incorporati. Da verificare sul 285K che il TPM compaia; l'audio si prova quando si collega la Scarlett. |
+| A-10 | Tempo di avvio: 14 secondi di firmware e 5 di menu | P0.5f | Menu senza attesa (scelta dell'utente), consegnato; sulla macchina già installata si cambia con un comando. Le voci del firmware le regola l'utente. Da misurare prima e dopo. |
 | A-11 | Il ritorno automatico all'immagine precedente con un profilo fissato è verificato nei sorgenti del boot loader, non provato sul 285K | [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md) | Una prova: un aggiornamento che fallisce apposta, con il profilo `285k` fissato. |
-| A-12 | Quanti registri degli errori hardware del 285K non hanno il proprio interrupt (per quelli, spento il sondaggio, gli errori corretti non vengono più segnalati) | [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md) | Una lettura dal sistema. |
-| A-13 | Risparmio energetico dei collegamenti PCIe (ASPM): gestito dal firmware, spento nelle sue voci, ma lo stato vero dei collegamenti non è stato letto | P0.4b | Una lettura con `lspci`. |
-| A-14 | Avviso di systemd-resolved sul passaggio a DNS non cifrato | P0.5 | Decidere l'impostazione e scriverla. |
+| A-12 | Quanti registri degli errori hardware del 285K non hanno il proprio interrupt | [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md) | La lettura è in `dawos-topology` dalla parte 2 di P0.6e: da eseguire sul 285K. |
+| A-13 | Stato vero dei collegamenti PCIe (ASPM) | P0.4b | La lettura è in `dawos-topology` dalla parte 2 di P0.6e: da eseguire sul 285K. |
+| A-14 | Avviso di systemd-resolved sul passaggio a DNS non cifrato | P0.5 | Deciso il 17 novembre 2026: DNS normale, dichiarato (`DNSOverTLS=no`). Consegnato; da verificare che l'avviso non compaia più. |
 | A-35 | Opzioni del kernel per ospitare una macchina virtuale (KVM, vhost, `tun`, traduzione degli indirizzi in nftables), tutte come moduli che nulla carica all'avvio. **Verificato il 17 novembre 2026**: il rumore di fondo non cambia con i moduli caricati; il caricamento manda circa 4200 interrupt brevi a ogni core live (al più 9 µs il buco più lungo) | Richiesta dell'utente del 17 novembre 2026; [P0.6e, parte 1](fasi/fase-0/P0.6e-chiusura-dei-punti-aperti.md) | Portare l'ADR 033 nel repository. Decidere quando si carica KVM: non durante l'audio; all'avvio, se la macchina virtuale parte a richiesta. |
-| A-15 | Gli interrupt di chiamata di funzione sui core live nei primi minuti dopo l'accensione (dieci per core): chi li manda non è noto | P0.6b, parte 3 | Una traccia nei primi cinque minuti. Oggi la regola è misurare dopo cinque minuti; per il motore bisogna sapere se è lavoro dell'avvio o di qualcosa che può tornare. |
+| A-15 | Gli interrupt di chiamata di funzione sui core live nei primi minuti dopo l'accensione: chi li manda non è noto | P0.6b, parte 3 | `dawos-boot-trace`, consegnato nella parte 2 di P0.6e: si arma, si riavvia, traccia da solo per cinque minuti. Da eseguire sul 285K. |
 
 ## Affidati alla campagna P0.7
 
@@ -61,6 +59,8 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
+| A-06 | Con il _fair server_ acceso, in macchina virtuale, un processo interrotto dentro il kernel non è più ripartito e la macchina si è fermata. La 6.18.64 non ha correzioni in quell'area | P0.6b, parte 2 | Spostato qui da P0.6e per scelta dell'utente del 17 novembre 2026: va insieme ad A-18. Sui core live il _fair server_ è spento, e la configurazione certificata resta quella. |
+| A-07 | `dawos-starve-test` esteso (terza variante, processo che non cede mai) non consegnato | P0.6b, parte 2 | Insieme ad A-06 e ad A-18: è la prova con cui si progetta e si verifica quella protezione. |
 | A-18 | Protezione contro un thread real-time che non cede mai il core (rischio K-04) | P0.6b, parte 2; [ADR 0018](adr/0018-profili-di-avvio-e-regolazione.md) | Un progetto: ogni thread del motore cede a ogni ciclo, e un sorvegliante fuori dai core live interviene se non lo fa. Diventa un ADR. |
 | A-19 | Domande D-10…D-15 e D-17…D-21, rinviate | Registro delle modifiche, parte 4 | Le ripropongo con le raccomandazioni aggiornate. |
 | A-20 | D-23 (chiave delle immagini di rilascio), D-24 (blocco del kernel e vincolo sui moduli), D-25 (manutenzione periodica dei dischi) | Registro delle modifiche | Decisioni. D-24 tocca tre cose già fatte: lo spegnimento del _fair server_ (passa da `debugfs`), la lettura del registro del C1E, e i moduli del driver grafico. |
@@ -73,6 +73,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Quando |
 | --- | --- | --- | --- |
 | A-29 | Su un kernel real-time l'unico driver per la GPU integrata del 285K è `xe`, sperimentale per questo processore in Linux 6.18. L'interfaccia della Fase 3 ne dipende | P0.6c, parte 2 | Seguire lo stato di `xe` per Arrow Lake e di `i915` sul real-time nelle prossime versioni del kernel; rivalutare alla scelta della LTS successiva. Il rischio è nel registro delle modifiche come K-16. |
+| A-37 | La configurazione del boot loader (`loader.conf`, sulla partizione EFI) non segue gli aggiornamenti: un valore nuovo vale solo per le installazioni nuove | P0.6e, parte 2 | Decidere se e come gli aggiornamenti la riscrivono, quando si definisce il percorso di aggiornamento del prodotto. |
 | A-23 | Il carico grafico vero (disegno con la GPU) non è misurato. Con il solo cambio di pagina, ogni 227 secondi un interrupt di 0,3–0,7 µs raggiunge i core live (il kernel avvisa tutti i core quando libera memoria mappata); con un'interfaccia che disegna sarà più frequente | E-04; rischio K-16 | Fase 3, quando entra l'interfaccia: stessa misura con il carico vero; se serve, ridurre le mappature del driver o portare nel kernel il rinvio dell'avviso per i core isolati. |
 | A-24 | Profilo delle ventole: oggi quello del firmware | P0.4b | Con il contenitore definitivo e le misure di rumore acustico. |
 | A-25 | Revisione legale della licenza (GPLv3 con eccezione per i plugin) | [ADR 0010](adr/0010-licenza-gplv3-eccezione-plugin.md) | Prima di qualunque rilascio. |

@@ -14,5 +14,14 @@ CONFIG_SECURITY_YAMA=y
 CONFIG_DEFAULT_SECURITY_DAC=y
 CONFIG_LSM="landlock,yama"
 
+# The TPM of the machine, for later (disk keys sealed to the state of the
+# boot, phase 6): the driver core and the two ways a TPM 2.0 is reached
+# on a PC, the command/response buffer of a firmware TPM and the FIFO
+# interface of a discrete chip. Built in: the root is mounted without an
+# initrd, and nothing here may wait for a module.
+CONFIG_TCG_TPM=y
+CONFIG_TCG_CRB=y
+CONFIG_TCG_TIS=y
+
 # Kernel lockdown (CONFIG_SECURITY_LOCKDOWN_LSM) belongs with Secure Boot
 # and signed modules: step P0.5.

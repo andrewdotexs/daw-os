@@ -13,6 +13,7 @@ Una campagna di misura vale solo se si sa esattamente su cosa è stata fatta. Bu
 - **Buildroot 2026.02.x LTS** come sottomodulo git nella cartella `buildroot/`, fissato al tag `2026.02.3` (commit `679b9ead7620`, 16 giugno 2026), l'ultimo della serie alla data di questo ADR _(verificato)_.
 - **Kernel 6.18.63**, l'ultima 6.18.y alla data di questo ADR _(verificato su kernel.org)_, con impronta SHA-256 nel file `external/patches/linux/linux.hash` e controllo delle impronte obbligatorio (`BR2_DOWNLOAD_FORCE_CHECK_HASHES`).
 - Sottomodulo e kernel **si aggiornano solo alla chiusura di una fase**, con un commit dedicato, mai durante una campagna di misura.
+- **Aggiornamento del 17 novembre 2026**: il kernel passa alla **6.18.64**, uscita quel giorno, nel sotto-passo P0.6e, cioè prima della campagna P0.7 e non alla chiusura della fase. Scelta dell'utente: la campagna certifica così il kernel con cui comincia la Fase 1. Da qui alla chiusura della Fase 0 il kernel non cambia più.
 - La migrazione alla LTS successiva del kernel si valuta quando sarà designata e avrà almeno tre mesi di versioni correttive.
 
 ## Alternative scartate

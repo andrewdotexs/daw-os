@@ -174,7 +174,15 @@ summarize() {
 						fsum += f; fn++
 						if (!fmin || f < fmin) fmin = f
 					}
-					if ("PkgWatt" in col) { wsum += $col["PkgWatt"]; wn++; if ($col["PkgWatt"] + 0 > wmax) wmax = $col["PkgWatt"] + 0 }
+					# Power: every reading but the last. turbostat is
+					# stopped in the middle of an interval, and the
+					# reading of that shortened interval is wrong (181 W
+					# on a machine limited to 160).
+					if ("PkgWatt" in col) {
+						if (wheld) { wsum += wlast; wn++; if (wlast > wmax) wmax = wlast }
+						wlast = $col["PkgWatt"] + 0
+						wheld = 1
+					}
 				}
 				END {
 					if (tn) {

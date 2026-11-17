@@ -1,0 +1,254 @@
+#!/bin/sh
+# dawos-boot-trace — what reaches the live CPUs in the first minutes
+# after a boot, and who sends it (open point A-15).
+#
+# In the first minutes after the machine starts, each live CPU receives
+# about ten function-call interrupts; after that, none. A measurement
+# started by hand comes too late to see them. This tool is armed before
+# a reboot and traces the next boot by itself, from the moment /var is
+# there, for five minutes:
+#
+#   - on every CPU, the requests to interrupt a live CPU (the kernel
+#     events ipi_send_cpumask and ipi_send_cpu), each with the function
+#     that asked and the function to be run;
+#   - on the live CPUs, the interrupts that arrive from other CPUs and
+#     every change of the thread that runs.
+#
+# The trace costs the live CPUs nothing they would not pay anyway: the
+# events are recorded where they happen. It runs once; the next boot is
+# not traced unless it is armed again.
+#
+# Results go to /var/lib/dawos/measure/boottrace-<time>.
+
+set -u
+
+PROG=dawos-boot-trace
+BASE=/var/lib/dawos/measure
+ARMED=/var/lib/dawos/boot-trace-armed
+TRACING=/sys/kernel/tracing
+SEND=${TRACING}/instances/dawos-boot-send
+RECEIVE=${TRACING}/instances/dawos-boot-receive
+SECONDS_TRACED=300
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} --arm [SECONDS]   trace the next boot (default: ${SECONDS_TRACED} seconds)
+  ${PROG} --disarm          do not
+  ${PROG} --status          say whether it is armed, show the last summary
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# CPUs of a kernel list ("4-7"), one per line, sorted.
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done | sort -n -u
+}
+
+# The mask of a list of CPUs, in hexadecimal.
+list_mask() {
+	mask=0
+	for cpu in $(expand_list "$1"); do
+		mask=$((mask | (1 << cpu)))
+	done
+	printf '%x\n' "${mask}"
+}
+
+# The lines of /proc/interrupts that count interrupts between CPUs and
+# the local timer, with the header.
+interrupt_counts() {
+	awk 'NR == 1 || $1 == "CAL:" || $1 == "RES:" || $1 == "LOC:" || $1 == "IWI:" || $1 == "TLB:"' /proc/interrupts
+}
+
+# Stop the two trace instances and remove them.
+remove_instances() {
+	for instance in "${SEND}" "${RECEIVE}"; do
+		[ -d "${instance}" ] || continue
+		echo 0 > "${instance}/tracing_on" 2> /dev/null
+		echo > "${instance}/set_event" 2> /dev/null
+		rmdir "${instance}" 2> /dev/null
+	done
+}
+
+# The trace itself: what the unit runs.
+run_trace() {
+	[ -r "${ARMED}" ] || exit 0
+	read -r seconds < "${ARMED}"
+	rm -f "${ARMED}"
+	case "${seconds}" in
+	'' | *[!0-9]*) seconds=${SECONDS_TRACED} ;;
+	esac
+	live=$(grep -v null /sys/devices/system/cpu/isolated 2> /dev/null)
+	dir="${BASE}/boottrace-$(date -u +%Y%m%dT%H%M%SZ)"
+	mkdir -p "${dir}" || exit 0
+	read -r started _ < /proc/uptime
+	{
+		date -u '+started_utc: %Y-%m-%dT%H:%M:%SZ'
+		echo "started_at_uptime_s: ${started}"
+		echo "seconds: ${seconds}"
+		echo "live_cpus: ${live:-none}"
+		echo "kernel: $(uname -srv)"
+		echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
+		echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+	} > "${dir}/meta.txt"
+	if [ -z "${live}" ]; then
+		echo "note: no live CPU (no boot profile): nothing to trace" >> "${dir}/meta.txt"
+		exit 0
+	fi
+	if [ ! -d "${TRACING}/events/ipi" ]; then
+		echo "note: this kernel has no ipi trace events" >> "${dir}/meta.txt"
+		exit 0
+	fi
+	interrupt_counts > "${dir}/interrupts-boot.txt"
+
+	remove_instances
+	trap 'remove_instances' EXIT
+	trap 'exit 1' INT TERM HUP
+	if ! mkdir "${SEND}" "${RECEIVE}"; then
+		echo "note: could not create the trace instances" >> "${dir}/meta.txt"
+		exit 0
+	fi
+
+	# Switching a trace event on makes the kernel rewrite a few of its
+	# own instructions, and that interrupts every CPU, the live ones too.
+	# So the events of the live CPUs are switched on first, while nothing
+	# records yet; what is left of the tool's own doing shows in the
+	# summary under its name.
+	echo 2048 > "${RECEIVE}/buffer_size_kb"
+	list_mask "${live}" > "${RECEIVE}/tracing_cpumask"
+	for event in irq_vectors/call_function_entry irq_vectors/call_function_single_entry \
+		irq_vectors/reschedule_entry irq_vectors/irq_work_entry sched/sched_switch; do
+		[ -d "${RECEIVE}/events/${event}" ] && echo 1 > "${RECEIVE}/events/${event}/enable"
+	done
+
+	# Requests to interrupt a live CPU, wherever they are made.
+	echo 8192 > "${SEND}/buffer_size_kb"
+	echo "cpumask & CPUS{${live}}" > "${SEND}/events/ipi/ipi_send_cpumask/filter"
+	filter=
+	for cpu in $(expand_list "${live}"); do
+		filter="${filter:+${filter} || }cpu == ${cpu}"
+	done
+	echo "${filter}" > "${SEND}/events/ipi/ipi_send_cpu/filter"
+	echo 1 > "${SEND}/options/stacktrace"
+	echo 1 > "${SEND}/events/ipi/ipi_send_cpumask/enable"
+	echo 1 > "${SEND}/events/ipi/ipi_send_cpu/enable"
+	sleep 1
+
+	echo > "${SEND}/trace"
+	echo > "${RECEIVE}/trace"
+	echo 1 > "${SEND}/tracing_on"
+	echo 1 > "${RECEIVE}/tracing_on"
+	read -r recording _ < /proc/uptime
+	echo "recording_from_uptime_s: ${recording}" >> "${dir}/meta.txt"
+	interrupt_counts > "${dir}/interrupts-start.txt"
+	sleep "${seconds}"
+	echo 0 > "${SEND}/tracing_on"
+	echo 0 > "${RECEIVE}/tracing_on"
+
+	interrupt_counts > "${dir}/interrupts-end.txt"
+	cat "${SEND}/trace" > "${dir}/send.txt"
+	cat "${RECEIVE}/trace" > "${dir}/receive.txt"
+	read -r finished _ < /proc/uptime
+	echo "finished_at_uptime_s: ${finished}" >> "${dir}/meta.txt"
+	summarize "${dir}"
+}
+
+# Write summary.txt of the directory $1.
+summarize() {
+	result=$1
+	{
+		cat "${result}/meta.txt"
+		echo
+		echo "requests to interrupt a live CPU, by the task that asked, where in the kernel, and what was to be run (count, task, callsite, callback):"
+		grep -E 'ipi_send_cpu(mask)?:' "${result}/send.txt" 2> /dev/null |
+			sed -n 's/^ *\(.*\)-[0-9]* *\[[0-9]*\].*callsite=\([^ ]*\) callback=\([^ ]*\).*/\1 \2 \3/p' |
+			sed 's/^\([^ ]*[^0-9 ]\)[0-9:]* /\1 /' |
+			sort | uniq -c | sort -rn | head -n 25
+		echo
+		echo "the same, by second after the start of the kernel (second, count):"
+		grep -E 'ipi_send_cpu(mask)?:' "${result}/send.txt" 2> /dev/null |
+			awk '{ for (i = 1; i <= NF; i++) if ($i ~ /^[0-9]+\.[0-9]+:$/) { print int($i); break } }' |
+			sort -n | uniq -c | awk '{ printf "%s:%s ", $2, $1 }'
+		echo
+		echo
+		echo "on the live CPUs (count, event):"
+		grep -o -E '(call_function_entry|call_function_single_entry|reschedule_entry|irq_work_entry|sched_switch):' "${result}/receive.txt" 2> /dev/null |
+			sort | uniq -c | sort -rn
+		echo
+		echo "threads that ran on the live CPUs (count, name):"
+		grep 'sched_switch:' "${result}/receive.txt" 2> /dev/null |
+			sed -n 's/.*==> next_comm=\([^ ]*\) .*/\1/p' | sed 's/[0-9]*$//' | sort | uniq -c | sort -rn | head -n 15
+		echo
+		echo "interrupt counters of the live CPUs: when the tool started (boot), when it began to record (start), at the end:"
+		for file in interrupts-boot.txt interrupts-start.txt interrupts-end.txt; do
+			[ -r "${result}/${file}" ] || continue
+			echo "  ${file}:"
+			awk -v live="$(sed -n 's/^live_cpus: //p' "${result}/meta.txt")" '
+				BEGIN {
+					count = split(live, part, ",")
+					for (i = 1; i <= count; i++) {
+						n = split(part[i], edge, "-")
+						for (cpu = edge[1]; cpu <= edge[n]; cpu++) wanted[cpu] = 1
+					}
+				}
+				NR == 1 { next }
+				{
+					printf "    %s", $1
+					for (cpu = 0; cpu < NF - 1; cpu++) if (cpu in wanted) printf " cpu%d=%s", cpu, $(cpu + 2)
+					printf "\n"
+				}' "${result}/${file}" | cut -c 1-160
+		done
+		grep -h '^note: ' "${result}/meta.txt" 2> /dev/null
+	} > "${result}/summary.txt"
+}
+
+case "${1:-}" in
+-h | --help)
+	usage
+	;;
+--arm)
+	[ "$(id -u)" = 0 ] || die "must run as root"
+	seconds=${2:-${SECONDS_TRACED}}
+	echo "${seconds}" | grep -Eq '^[0-9]{1,4}$' || die "bad duration '${seconds}': seconds"
+	mkdir -p "${ARMED%/*}" || die "could not create ${ARMED%/*}"
+	echo "${seconds}" > "${ARMED}" || die "could not write ${ARMED}"
+	echo "${PROG}: the next boot will be traced for ${seconds} seconds"
+	;;
+--disarm)
+	rm -f "${ARMED}"
+	echo "${PROG}: not armed"
+	;;
+--status)
+	if [ -r "${ARMED}" ]; then echo "armed: yes"; else echo "armed: no"; fi
+	if systemctl is-active --quiet dawos-boot-trace; then echo "a trace is running"; fi
+	latest=
+	for candidate in "${BASE}"/boottrace-*; do
+		[ -d "${candidate}" ] && latest=${candidate}
+	done
+	if [ -n "${latest}" ]; then
+		echo "latest result directory: ${latest}"
+		if [ -r "${latest}/summary.txt" ]; then cat "${latest}/summary.txt"; else cat "${latest}/meta.txt"; fi
+	fi
+	;;
+--summary)
+	[ -d "${2:-}" ] || die "--summary needs a result directory"
+	summarize "$2"
+	cat "$2/summary.txt"
+	;;
+--run)
+	run_trace
+	;;
+*)
+	usage >&2
+	exit 1
+	;;
+esac
