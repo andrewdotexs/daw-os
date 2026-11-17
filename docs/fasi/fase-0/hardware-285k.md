@@ -130,6 +130,8 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 
 **Stato al 17 novembre 2026, sera** (sotto-passo P0.6e, parte 2): kernel 6.18.64. TPM 2.0 del firmware visibile al sistema. Avvio in 20 secondi, di cui 14 del firmware e 0,4 del menu. Registri degli errori hardware: 32 per core, 11 senza interrupt proprio. Collegamenti PCIe: risparmio energetico spento su disco e scheda di rete; acceso su due porte per periferiche esterne, vuote. Il riavvio nelle impostazioni del firmware da sistema non è supportato: ci si entra con Canc all'accensione.
 
+**Configurazione ferma per la campagna P0.7, dal 17 novembre 2026** (chiusura del sotto-passo P0.6e): immagine `0.0.1.20261117231225` dal commit `4cdf08c`, kernel 6.18.64, firmware 3402 con le voci di questa pagina, profilo `285k`, nessun modulo caricato. A riposo il package consuma 7–8 W.
+
 **Contenitore: resta quello attuale (D-22, chiusa dall'utente il 15 novembre 2026).** Sono state valutate e scartate due alternative da rack: un contenitore metallico 2U da modificare, con il radiatore sopra il coperchio (14 novembre), e un telaio aperto 3U stampato in ASA, con il radiatore sul retro del rack (15 novembre). Il secondo avrebbe tolto ogni schermatura a pochi centimetri dalla scheda audio.
 
 Conseguenza: la curva termica, il limite di potenza a 160 W e le misure di rumore di fondo dei passi P0.4b e P0.5f **restano valide** per i passi P0.6 e P0.7, e non vanno rifatte. Se in futuro il contenitore o il dissipatore cambiano, vanno rifatte prima di ogni misura di riferimento.
