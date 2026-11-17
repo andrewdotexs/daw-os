@@ -1,0 +1,24 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 12/12   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+          <idle>-0       [005] d.h1.     4.548748: call_function_entry: vector=252
+          <idle>-0       [006] d.h1.     4.548748: call_function_entry: vector=252
+          <idle>-0       [004] d.h1.     4.548748: call_function_entry: vector=252
+          <idle>-0       [007] d.h1.     4.548748: call_function_entry: vector=252
+          <idle>-0       [007] d.h1.     4.548764: call_function_entry: vector=252
+          <idle>-0       [004] d.h1.     4.548764: call_function_entry: vector=252
+          <idle>-0       [005] d.h1.     4.548764: call_function_entry: vector=252
+          <idle>-0       [006] d.h1.     4.548764: call_function_entry: vector=252
+          <idle>-0       [007] d.h1.     4.548776: call_function_entry: vector=252
+          <idle>-0       [005] d.h1.     4.548776: call_function_entry: vector=252
+          <idle>-0       [006] d.h1.     4.548776: call_function_entry: vector=252
+          <idle>-0       [004] d.h1.     4.548776: call_function_entry: vector=252
