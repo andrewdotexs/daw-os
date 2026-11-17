@@ -80,6 +80,8 @@ Proposte:
 2. confermare che la sessione a 96 kHz si misura senza tracce congelate e la variante a 192 kHz con il freeze ammesso (punto aperto dell'ADR 0011);
 3. se la misura conferma il superamento, agire nell'ordine: blocchi anticipativi più lunghi e meno salti tra processi; riassegnazione di core al dominio anticipativo; riduzione della sessione di riferimento.
 
+**Misura del 17 novembre 2026 (E-06).** Un E-core vale tra 0,51 e 0,59 core live, un P-core del dominio anticipativo tra 1,13 e 1,17; il dominio vale tra 8,7 e 9,4 core live e la sessione di riferimento a 96 kHz ne usa **tra il 64 % e il 70 %: fuori soglia** (tra il 66 % e il 77 % con tutta la macchina a pieno carico). A 192 kHz tra il 129 % e il 140 %. Il rischio non è più una stima. La leva si sceglie alla chiusura del sotto-passo P0.6d (punto aperto A-31); le candidate e i numeri sono nell'ADR 0011.
+
 Resta valida l'osservazione sulla memoria: 256 processi host possono occupare da 12 a 50 GB _(stima)_; con il carico sintetico la cifra sarà molto più bassa e non rappresentativa di plugin reali.
 
 ### M-02 — Funzioni non nominate nel perimetro dell'MVP

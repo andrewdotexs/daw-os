@@ -26,6 +26,9 @@
 #            the machine: the domain with the package at its power
 #            limit. The worst case.
 #
+# The frequency of each CPU is read from the processor's own counters
+# over the whole run, and the package power from its energy counter.
+#
 # Each measurement is repeated in a new process several times; the
 # figure is the median of the repetitions, and the lowest and the
 # highest are kept next to it: a figure that moves from one process to
@@ -120,6 +123,19 @@ package_temp() {
 # energy is 0 where the machine has no such counter.
 energy_and_time() {
 	echo "$(cat "${RAPL}/energy_uj" 2> /dev/null || echo 0) $(cut -d ' ' -f 1 /proc/uptime)"
+}
+
+# The two counters of CPU $1 from which its frequency comes: APERF
+# (register 0xe8) advances at the frequency the CPU runs at, MPERF (0xe7)
+# at the fixed frequency of the time stamp counter, both only while the
+# CPU works. Prints "aperf mperf", or nothing where they cannot be read
+# (a virtual machine). The file "scaling_cur_freq" of the kernel would
+# be simpler, but it is refreshed by the scheduler tick: on a CPU that
+# runs without tick it gives a value that no longer means anything.
+counters() {
+	for register in 232 231; do
+		dd if="/dev/cpu/$1/msr" bs=8 skip="${register}" count=1 iflag=skip_bytes 2> /dev/null | od -An -tu8
+	done | tr -s ' \n' ' '
 }
 
 # Write results.txt and summary.txt from samples.txt of the directory $1.
@@ -369,6 +385,10 @@ for candidate in $(expand_list "${live_list}"); do
 	[ "${candidate}" = "${live_cpu}" ] || other_live="${other_live} ${candidate}"
 done
 
+# The frequency of the time stamp counter, in kHz: the kernel calibrates
+# its delay loop on it, and shows the result as "bogomips".
+tsc_khz=$(awk '/^bogomips/ { print int($3 * 500); exit }' /proc/cpuinfo)
+
 dir="${BASE}/dspbench-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
 mkdir -p "${dir}/tmp" || die "could not create ${dir}"
 {
@@ -379,6 +399,7 @@ mkdir -p "${dir}/tmp" || die "could not create ${dir}"
 	echo "domain_pcores: $(expand_list "${performance}" | wc -l)"
 	echo "domain_ecores: $(for candidate in $(expand_list "${domain}"); do in_list "${candidate}" "${efficiency}" && echo "${candidate}"; done | wc -l)"
 	echo "full_load_on: ${other_cpus:-none}${other_live:+ and live${other_live}}"
+	echo "tsc_khz: ${tsc_khz:-0}"
 	echo "seconds_per_run: ${seconds}"
 	echo "repeats: ${repeats}"
 	echo "stages_per_cascade: ${STAGES}"
@@ -421,6 +442,9 @@ measure() {
 	shift 4
 	repeat=1
 	while [ "${repeat}" -le "${repeats}" ]; do
+		for member in "$@"; do
+			counters "${member#*:}" > "${dir}/tmp/before-${member#*:}.txt"
+		done
 		before=$(energy_and_time)
 		run_pids=
 		for member in "$@"; do
@@ -429,17 +453,16 @@ measure() {
 				--seconds "${seconds}" > "${dir}/tmp/run-${cpu}.txt" 2> "${dir}/tmp/run-${cpu}.err" &
 			run_pids="${run_pids} $!"
 		done
-		# Halfway through, the frequency each CPU is running at.
-		sleep $(((seconds + 1) / 2))
-		for member in "$@"; do
-			cpu=${member#*:}
-			cat "${CPU_DIR}/cpu${cpu}/cpufreq/scaling_cur_freq" > "${dir}/tmp/khz-${cpu}.txt" 2> /dev/null ||
-				echo 0 > "${dir}/tmp/khz-${cpu}.txt"
-		done
 		for pid in ${run_pids}; do
 			wait "${pid}"
 		done
 		after=$(energy_and_time)
+		# The frequency each CPU ran at, over the whole run.
+		for member in "$@"; do
+			cpu=${member#*:}
+			echo "$(cat "${dir}/tmp/before-${cpu}.txt") $(counters "${cpu}")" |
+				awk -v base="${tsc_khz}" '{ print (NF == 4 && $4 > $2 ? int(base * ($3 - $1) / ($4 - $2)) : 0) }' > "${dir}/tmp/khz-${cpu}.txt"
+		done
 		echo "${condition} ${group} ${block} ${streams} ${repeat} ${before} ${after} $(package_temp)" |
 			awk -v range="$(cat "${RAPL}/max_energy_range_uj" 2> /dev/null || echo 0)" '{
 				energy = $8 - $6

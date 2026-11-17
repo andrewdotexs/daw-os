@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiusi A-02 e A-03, alla chiusura del sotto-passo P0.6c, e avviato P0.6d; lo stesso giorno aggiunti A-31 e A-32, dall'esperimento E-06.
 
 ## La regola d'ordine
 
@@ -28,7 +28,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| — | Nessuno per ora: i due che c'erano (A-03 e A-04) si sono chiusi o si chiudono in P0.6c. | — | — |
+| A-31 | La sessione di riferimento di R-04 a 96 kHz usa tra il 64 % e il 70 % del dominio anticipativo: fuori dalla soglia del 60 % | E-06; [ADR 0011](adr/0011-r04-carico-sintetico.md) | Scegliere la leva, alla chiusura di P0.6d, con l'utilizzo del dominio di I/O misurato da E-05: due E-core in più al dominio anticipativo, soglia distinta, o sessione più piccola. |
 
 ## Da chiudere in P0.6e, prima della campagna
 
@@ -62,6 +62,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | A-19 | Domande D-10…D-15 e D-17…D-21, rinviate | Registro delle modifiche, parte 4 | Le ripropongo con le raccomandazioni aggiornate. |
 | A-20 | D-23 (chiave delle immagini di rilascio), D-24 (blocco del kernel e vincolo sui moduli), D-25 (manutenzione periodica dei dischi) | Registro delle modifiche | Decisioni. D-24 tocca tre cose già fatte: lo spegnimento del _fair server_ (passa da `debugfs`), la lettura del registro del C1E, e i moduli del driver grafico. |
 | A-21 | Sorveglianza del blocco del sistema (_watchdog_): il kernel non ha i rilevatori, e quello della scheda non è usato | P0.6a | Decidere se e quale. |
+| A-32 | Nella prima misura di E-06 tre prove con quattro flussi sono uscite più lente dal 12 % al 77 %, per tutta la loro durata. Con i buffer sfalsati dentro la pagina non è più successo (60 misure); con i buffer allo stesso scostamento il costo sale del 3,5 %, e in una prova su dieci del 16 %. Il +77 % non si è ripetuto e non è spiegato | E-06 | Il motore sfalsa i buffer delle istanze (requisito per l'allocatore, Fase 1). Alla calibrazione del nodo nativo, ripetere il confronto tra le due disposizioni su più esecuzioni. |
 | A-22 | Stati di riposo profondi assenti per tutti i core. Il manuale del firmware elenca per _CPU C-states_ anche il valore _Enabled_ (con _Package C State Limit_ a seguire), che sul firmware 2301 non compare | P0.6b, parte 4a; manuale della serie ROG STRIX Z890 (E25597) | Capire perché il valore manca (versione del firmware, o un'altra voce che lo nasconde). Nessuna urgenza: 3–4 W di package a macchina ferma. Va insieme alla scelta dei core che servono l'audio USB. |
 
 ## Più avanti
