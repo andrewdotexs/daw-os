@@ -67,6 +67,21 @@ kill -0 "${server_pid}" 2> /dev/null || {
 
 echo "remote-update: offering release ${version} to ${host}"
 # ExitOnForwardFailure: do not go on if the tunnel cannot be set up.
+log=$(mktemp)
+trap 'kill "${server_pid}" 2> /dev/null || true; rm -f "${log}"' EXIT
+status=0
 ssh -p "${ssh_port}" -o ConnectTimeout=10 -o ExitOnForwardFailure=yes \
 	-R "127.0.0.1:${port}:127.0.0.1:${port}" "root@${host}" \
-	"dawos-update --server http://127.0.0.1:${port}/ ${reboot}"
+	"dawos-update --server http://127.0.0.1:${port}/ ${reboot}" 2>&1 | tee "${log}" || status=$?
+
+# With --reboot the machine may go down before the session has closed in
+# good order: ssh then ends with status 255, although everything that
+# had to happen did. That is only accepted when the machine itself said
+# it was rebooting into the new image.
+if [[ ${status} -ne 0 ]]; then
+	if [[ ${status} -eq 255 && -n ${reboot} ]] && grep -q 'rebooting into the new image' "${log}"; then
+		echo "remote-update: the connection ended with the reboot of ${host}, as expected."
+	else
+		exit "${status}"
+	fi
+fi
