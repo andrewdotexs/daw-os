@@ -3,7 +3,7 @@
 - **Che cos'è**: l'elenco unico delle cose rimaste in sospeso lungo i passi. Ogni punto dice da dove viene, che cosa serve per chiuderlo e in quale passo si chiude.
 - **Chi lo aggiorna**: si aggiorna alla chiusura di ogni passo. Un punto chiuso passa nell'ultima tabella con la data e il modo; non si cancella.
 - **Che cosa non contiene**: le domande di progetto (D-xx) e i rischi (K-xx) hanno già il loro posto nel [registro delle modifiche](01-registro-modifiche-v1.md); qui compaiono solo quando c'è un lavoro da fare.
-- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28.
+- **Stato**: aggiornato il 16 novembre 2026, alla chiusura del sotto-passo P0.6b e all'avvio di P0.6c; lo stesso giorno aggiunti A-27, A-28 e A-29, chiusi A-01, A-04, A-27 e A-28; il 17 novembre chiuso A-02 e trovata la causa di A-03.
 
 ## La regola d'ordine
 
@@ -22,13 +22,13 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-02 | Driver grafico `xe`: funziona sul 285K e con lo schermo fermo non porta rumore; con lo schermo che cambia immagine, due volte in dieci minuti un interrupt di chiamata di funzione raggiunge tutti i core live | E-04; P0.6c, parte 2 | Sapere chi lo manda (diagnosi nella guida di P0.6c), poi decidere: toglierlo, o accettarlo per la Fase 0 e riprenderlo nella Fase 3 con il carico grafico vero. |
+| A-03 | Sotto il profilo `285k` i core non live giravano piano e il package restava lontano dai 160 W. Causa trovata: `dawos-tune` dava ai soli core live la preferenza energetica `performance`, e il processore teneva indietro gli altri | P0.6b; P0.6c | `dawos-tune` corretto (stessa preferenza degli altri core). Si chiude con le tre misure di chiusura di P0.6c: frequenza, rumore e risveglio con il resto della macchina a piena potenza. |
 
 ## Da chiudere in P0.6d
 
 | Sigla | Punto | Da dove viene | Che cosa serve |
 | --- | --- | --- | --- |
-| A-03 | Sotto il profilo `285k` i core non live girano piano e il package resta lontano dai 160 W (121 W con il firmware 3402); senza profilo, a parità di watt, i core girano circa il 20 % più veloci | P0.6b, parti 3 e 4; P0.6c | Scartati: _Extreme_; il fissare la frequenza dei core live (lasciati liberi salgono a 5,3 GHz e gli altri scendono ancora). Ipotesi attuale: `dawos-tune` dà ai core live la preferenza energetica `performance`, e il processore favorisce quei core. Prova: stessa preferenza degli altri, nella guida di P0.6c. Se è così il rimedio è togliere quella riga da `dawos-tune`, dopo aver verificato che i core live tengano la frequenza lo stesso. |
+| — | Nessuno per ora: i due che c'erano (A-03 e A-04) si sono chiusi o si chiudono in P0.6c. | — | — |
 
 ## Da chiudere in P0.6e, prima della campagna
 
@@ -68,7 +68,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 | Sigla | Punto | Da dove viene | Quando |
 | --- | --- | --- | --- |
 | A-29 | Su un kernel real-time l'unico driver per la GPU integrata del 285K è `xe`, sperimentale per questo processore in Linux 6.18. L'interfaccia della Fase 3 ne dipende | P0.6c, parte 2 | Seguire lo stato di `xe` per Arrow Lake e di `i915` sul real-time nelle prossime versioni del kernel; rivalutare alla scelta della LTS successiva. Il rischio è nel registro delle modifiche come K-16. |
-| A-23 | Il carico grafico vero (disegno con la GPU) non è misurato: in P0.6c si misura solo lo schermo attivo | E-04 | Fase 3, quando entra l'interfaccia. |
+| A-23 | Il carico grafico vero (disegno con la GPU) non è misurato. Con il solo cambio di pagina, ogni 227 secondi un interrupt di 0,3–0,7 µs raggiunge i core live (il kernel avvisa tutti i core quando libera memoria mappata); con un'interfaccia che disegna sarà più frequente | E-04; rischio K-16 | Fase 3, quando entra l'interfaccia: stessa misura con il carico vero; se serve, ridurre le mappature del driver o portare nel kernel il rinvio dell'avviso per i core isolati. |
 | A-24 | Profilo delle ventole: oggi quello del firmware | P0.4b | Con il contenitore definitivo e le misure di rumore acustico. |
 | A-25 | Revisione legale della licenza (GPLv3 con eccezione per i plugin) | [ADR 0010](adr/0010-licenza-gplv3-eccezione-plugin.md) | Prima di qualunque rilascio. |
 | A-26 | Con una seconda macchina supportata: come si sceglie il profilo, e i numeri del riposo dei core | ADR 0018, [ADR 0009](adr/0009-riposo-dei-core-live.md) | Quando c'è la seconda macchina. |
@@ -77,6 +77,7 @@ Per questo, dal 16 novembre 2026, il passo P0.6 ha un quinto sotto-passo _(scelt
 
 | Sigla | Punto | Chiuso |
 | --- | --- | --- |
+| A-02 | Driver grafico (esperimento E-04) | 17 novembre 2026 (P0.6c, parte 2): `xe`, l'unico che si compila su un kernel real-time; funziona sul 285K, zero rumore a schermo fermo. Il limite trovato con lo schermo che cambia è accettato dall'utente e passa ad A-23 e al rischio K-16. Il driver non si carica all'avvio. |
 | A-01 | Il kernel non aveva il controllo della memoria per gruppo di processi (`CONFIG_MEMCG`) | 16 novembre 2026 (P0.6c, parte 2): aggiunto; la misura di rumore con il kernel nuovo passa e `dawos-cgroup-test` conferma il limite al gruppo del processo. |
 | A-28 | Con il firmware 3402 le misure di rumore contavano a tratti il tick dello scheduler seguito da `rcuc` sui core live | 16 novembre 2026 (P0.6c, parte 2): è un effetto del thread del tracciatore, che vive nel kernel. Con un ciclo in spazio utente al suo posto (`dawos-osnoise --user`), in dieci minuti il kernel non è mai entrato sui core live. Perché compaia più spesso con il firmware nuovo non è spiegato; non riguarda il motore. |
 | A-27 | Firmware del 285K dalla 2301 alla 3402, con l'Intel ME | 16 novembre 2026 (P0.6c, parte 0): aggiornato; nessun SMI; frequenza, risveglio e limite di potenza rimisurati; 4,6 GHz confermati. Ha lasciato A-28 e ha aggravato A-03. |
