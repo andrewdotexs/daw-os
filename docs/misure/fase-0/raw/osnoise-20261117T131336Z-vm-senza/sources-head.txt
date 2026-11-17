@@ -1,0 +1,18 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 6/6   #P:24
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+       osnoise/7-1889    [007] d.h.1   941.792051: hrtimer_expire_entry: hrtimer=00000000d336d00f function=tick_nohz_handler now=941783000874
+       osnoise/7-1889    [007] dNh11   941.792054: irq_noise: local_timer:236 start 941.792050761 duration 2394 ns
+          rcuc/7-84      [007] d..3.   941.792056: thread_noise:   rcuc/7:84 start 941.792054353 duration 774 ns
+       osnoise/7-1889    [007] d.h.1   942.792061: hrtimer_expire_entry: hrtimer=00000000d336d00f function=tick_nohz_handler now=942783000646
+       osnoise/7-1889    [007] dNh11   942.792062: irq_noise: local_timer:236 start 942.792060908 duration 997 ns
+          rcuc/7-84      [007] d..3.   942.792063: thread_noise:   rcuc/7:84 start 942.792062586 duration 484 ns
