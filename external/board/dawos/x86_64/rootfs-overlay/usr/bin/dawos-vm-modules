@@ -40,6 +40,12 @@ is_loaded() {
 	[ -d "/sys/module/$1" ]
 }
 
+# The lines of file $2 that are not in file $1, which may be empty (a
+# pattern file for grep may not).
+added() {
+	awk -v first="$1" 'FILENAME == first { seen[$0] = 1; next } !($0 in seen)' "$1" "$2"
+}
+
 # Names of the kernel threads, one per line. The workers of the work
 # queues come and go by themselves and are left out.
 kernel_threads() {
@@ -126,8 +132,8 @@ lsmod | awk 'NR > 1 { print $1 }' | sort > "${dir}/modules-after.txt"
 	echo "image: $(sed -n 's/^BUILD_ID=//p' /etc/os-release)"
 	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
 	echo "processor_has_vmx: $(if grep -qw vmx /proc/cpuinfo; then echo yes; else echo no; fi)"
-	echo "modules_added: $(grep -vxF -f "${dir}/modules-before.txt" "${dir}/modules-after.txt" | tr '\n' ' ')"
-	echo "kernel_threads_added: $(grep -vxF -f "${dir}/threads-before.txt" "${dir}/threads-after.txt" | sort | uniq -c | awk '{ printf "%s (%d) ", $2, $1 }')"
+	echo "modules_added: $(added "${dir}/modules-before.txt" "${dir}/modules-after.txt" | tr '\n' ' ')"
+	echo "kernel_threads_added: $(added "${dir}/threads-before.txt" "${dir}/threads-after.txt" | sort | uniq -c | awk '{ printf "%s (%d) ", $2, $1 }')"
 	echo "kvm_enables_virtualization_at_load: $(cat /sys/module/kvm/parameters/enable_virt_at_load 2> /dev/null || echo unknown)"
 	echo "kernel_tainted: $(cat /proc/sys/kernel/tainted)"
 	status
