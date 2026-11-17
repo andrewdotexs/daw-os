@@ -158,8 +158,9 @@ measure-fetch: ## Copy measurement results from a machine: make measure-fetch HO
 	@tools/fetch-measure.sh $(HOST)
 
 .PHONY: lint
-lint: ## Run shellcheck and markdownlint
+lint: ## Run shellcheck and markdownlint, and look for addresses that must not be committed
 	shellcheck $(SHELL_SOURCES)
+	tools/check-private.sh
 	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION)
 
 # Pass any other target straight to Buildroot, e.g. "make br-linux-rebuild".

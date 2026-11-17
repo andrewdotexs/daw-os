@@ -30,3 +30,8 @@ fi
 
 echo "Results copied to ${dest}:"
 find "${dest}" -mindepth 1 -maxdepth 1 -type d -printf '  %f\n' | sort
+
+# A measurement must not bring the address of the machine or of its
+# network into the repository: stop here if one did, before it is
+# committed.
+"${repo_dir}/tools/check-private.sh" "${dest}"

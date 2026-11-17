@@ -128,6 +128,8 @@ Il controller del processore è libero: è il posto naturale per la Scarlett, da
 - **Un P-core a riposo si risveglia tardi (fino a 55 µs) se altri P-core stanno lavorando a frequenza bassa.** Non succede se quelli lavorano a frequenza alta, né con gli E-core. Per questo i P-core che non sono live hanno la frequenza fissa al massimo; il package a riposo passa da 3 a 6 W.
 - Il disco (Samsung 990 PRO da 1 TB) legge a 7,1 GB/s in sequenza e impiega circa 4,8 ms a svuotare la propria cache a ogni `fdatasync`.
 
+**Stato al 17 novembre 2026, sera** (sotto-passo P0.6e, parte 2): kernel 6.18.64. TPM 2.0 del firmware visibile al sistema. Avvio in 20 secondi, di cui 14 del firmware e 0,4 del menu. Registri degli errori hardware: 32 per core, 11 senza interrupt proprio. Collegamenti PCIe: risparmio energetico spento su disco e scheda di rete; acceso su due porte per periferiche esterne, vuote. Il riavvio nelle impostazioni del firmware da sistema non è supportato: ci si entra con Canc all'accensione.
+
 **Contenitore: resta quello attuale (D-22, chiusa dall'utente il 15 novembre 2026).** Sono state valutate e scartate due alternative da rack: un contenitore metallico 2U da modificare, con il radiatore sopra il coperchio (14 novembre), e un telaio aperto 3U stampato in ASA, con il radiatore sul retro del rack (15 novembre). Il secondo avrebbe tolto ogni schermatura a pochi centimetri dalla scheda audio.
 
 Conseguenza: la curva termica, il limite di potenza a 160 W e le misure di rumore di fondo dei passi P0.4b e P0.5f **restano valide** per i passi P0.6 e P0.7, e non vanno rifatte. Se in futuro il contenitore o il dissipatore cambiano, vanno rifatte prima di ogni misura di riferimento.
