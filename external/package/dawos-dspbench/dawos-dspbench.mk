@@ -4,8 +4,10 @@
 #
 ################################################################################
 
-# One C file kept in this repository, next to this makefile.
-DAWOS_DSPBENCH_VERSION = 1
+# One C file kept in this repository, next to this makefile. Buildroot
+# copies it once and does not look at it again: raise the version at
+# every change of the source, so that it is built anew.
+DAWOS_DSPBENCH_VERSION = 2
 DAWOS_DSPBENCH_SITE = $(BR2_EXTERNAL_DAWOS_PATH)/package/dawos-dspbench/src
 DAWOS_DSPBENCH_SITE_METHOD = local
 DAWOS_DSPBENCH_LICENSE = GPL-3.0-or-later
