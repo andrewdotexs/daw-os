@@ -11,21 +11,25 @@
 # a plan, a list of steps run one after the other:
 #
 #   timerlat:SECONDS    "rtla timerlat hist" with threads in user space;
-#                       above the threshold a trace is saved and the
-#                       measurement goes on;
+#                       above the figure aimed at a trace is saved and
+#                       the measurement goes on;
 #   cyclictest:SECONDS  the same question asked to a second, independent
 #                       tool.
 #
 # A step runs only if the one before it passed: delay within the
-# threshold, no system management interrupt, no thermal throttling, no
+# limit, no system management interrupt, no thermal throttling, no
 # device interrupt on a live CPU.
 #
 # The load never touches the live CPUs and comes in cycles of phases,
 # because the worst delays hide in the changes, not in the steady state:
 #
-#   full      stress-ng on every CPU of the preemptive and system
-#             domains (the package at its power limit), fio on the CPUs
-#             of the io domain;
+#   full      the load of document 0: stress-ng (computation, memory,
+#             context switches, timers) on every CPU of the preemptive
+#             and system domains, fio on the CPUs of the io domain. On
+#             the 285K the package settles at 120 W;
+#   power     computation alone on all the CPUs that are not live, no
+#             fio: the package at its power limit, 160 W on the 285K
+#             (open point A-30);
 #   burst-a   short bursts on the P-cores that are not live: busy 1 ms
 #             every 5 (open point A-33), fio as above;
 #   burst-b   the same, busy 5 ms every 17;
@@ -72,21 +76,25 @@ BUCKETS=400
 # Reference measurements start at least five minutes after power-on
 # (open point A-17).
 MIN_UPTIME_S=300
-# Traces kept when the threshold is exceeded, and how much of each: the
-# cause is in the last lines.
-MAX_TRACES=10
-TRACE_LINES=4000
+# A trace of the kernel is saved for every delay above the figure aimed
+# at: it shows what ran on the live CPU at that moment. Each one costs a
+# few seconds in which rtla does not measure, so after the first
+# MAX_TRACES the bar goes up to the limit. Of each trace the last lines
+# are kept: the cause is there.
+TRACE_US=${TARGET_US}
+MAX_TRACES=20
+TRACE_LINES=1500
 PAUSE_S=30
 
 PLAN_SHORT="timerlat:600 timerlat:3600 cyclictest:3600"
 PLAN_LONG="timerlat:86400"
 # Five minutes to see that every piece works on the machine at hand.
-PLAN_TRIAL="timerlat:150 cyclictest:60"
-CYCLE_TRIAL="full:45 burst-a:20 burst-b:20 burst-c:20 rest:30"
+PLAN_TRIAL="timerlat:200 cyclictest:60"
+CYCLE_TRIAL="full:45 power:45 burst-a:20 burst-b:20 burst-c:20 rest:30"
 # Cycles of ten minutes up to a few hours, of half an hour beyond: long
 # enough at full power for the temperature to settle.
 CYCLE_SHORT="full:420 burst-a:40 burst-b:40 burst-c:40 rest:60"
-CYCLE_LONG="full:1380 burst-a:100 burst-b:100 burst-c:100 rest:120"
+CYCLE_LONG="full:780 power:600 burst-a:100 burst-b:100 burst-c:100 rest:120"
 CYCLE_LONG_FROM_S=21600
 
 usage() {
@@ -111,6 +119,7 @@ Options of --start:
   --shared-dev DEV    where the file goes (default: the partition "shared")
   --cycle "PHASES"    phases of a cycle, as name:seconds
   --vm-bytes SIZE     memory of each of the four stress-ng vm workers (default 2G)
+  --trace-us N        save a trace above N us (default ${TRACE_US}; the first ${MAX_TRACES})
   --threshold-us N    for trials only: the limit, instead of ${THRESHOLD_US} us
   --any-uptime        do not wait for the fifth minute after power-on
 USAGE
@@ -447,6 +456,12 @@ run_phase() {
 			--timeout "${length}s" > "${RUN}/stress.txt" 2>&1 &
 		stress_pid=$!
 		;;
+	power)
+		stress-ng --taskset "${quiet_cpus}" --temp-path "${RUN}" \
+			--cpu "${power_workers}" --cpu-method matrixprod \
+			--timeout "${length}s" > "${RUN}/stress.txt" 2>&1 &
+		stress_pid=$!
+		;;
 	burst-a | burst-b)
 		busy=20
 		slice=1
@@ -529,16 +544,26 @@ snapshot() {
 	network_counts "${interface}" > "$1/network-$2.txt"
 }
 
-# Called by rtla each time the threshold is exceeded: $1 directory of
-# the step. Counts the event and keeps the end of the first traces.
+# Called by rtla each time a delay is above the bar of the trace: $1
+# directory of the step. Counts the event and keeps the end of the
+# trace; after MAX_TRACES it raises the bar to the limit of the
+# campaign, so that a frequent event cannot blind the measurement.
 record_hit() {
 	hits=0
-	[ -r "$1/threshold-count" ] && read -r hits < "$1/threshold-count"
+	[ -r "$1/trace-count" ] && read -r hits < "$1/trace-count"
 	hits=$((hits + 1))
-	echo "${hits}" > "$1/threshold-count"
-	echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $(uptime_now) ${hits}" >> "$1/threshold.txt"
+	echo "${hits}" > "$1/trace-count"
+	echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $(uptime_now) ${hits}" >> "$1/traces.txt"
 	if [ "${hits}" -le "${MAX_TRACES}" ] && [ -r "${RUN}/trace.txt" ]; then
 		tail -n "${TRACE_LINES}" "${RUN}/trace.txt" > "$1/trace-${hits}.txt"
+	fi
+	if [ "${hits}" -eq "${MAX_TRACES}" ]; then
+		limit=$(field "$1/../meta.txt" threshold_us)
+		if [ -n "${limit}" ] && echo "${limit}" > "${TRACING}/osnoise/stop_tracing_total_us"; then
+			echo "note: ${MAX_TRACES} traces saved: from $(date -u +%Y-%m-%dT%H:%M:%SZ) a trace is saved only above ${limit} us" >> "$1/notes.txt"
+		else
+			echo "note: could not raise the bar of the trace after ${MAX_TRACES} traces" >> "$1/notes.txt"
+		fi
 	fi
 	return 0
 }
@@ -567,7 +592,7 @@ run_step() {
 		rtla timerlat hist -u -c "${live_cpus}" -H "${system_cpus}" \
 			-P "f:${PRIORITY}" -p "${PERIOD_US}" -d "${duration}s" \
 			-n -b "${BUCKET_NS}" -E "${BUCKETS}" --no-aa --warm-up 5 \
-			-T "${threshold_us}" \
+			-T "${trace_us}" \
 			--on-threshold "trace,file=${RUN}/trace.txt" \
 			--on-threshold "shell,command=/bin/sh ${SELF} --hit ${step_dir}" \
 			--on-threshold continue \
@@ -620,8 +645,8 @@ judge() {
 			cyclictest_fields "${result_dir}/cyclictest.txt"
 		fi
 		hits=0
-		[ -r "${result_dir}/threshold-count" ] && read -r hits < "${result_dir}/threshold-count"
-		echo "above_threshold: ${hits}"
+		[ -r "${result_dir}/trace-count" ] && read -r hits < "${result_dir}/trace-count"
+		echo "traces: ${hits}"
 
 		# System management interrupts: the counter of every CPU, read
 		# before and after; and what turbostat saw meanwhile.
@@ -745,6 +770,7 @@ run_campaign() {
 	shared_dev=$(field "${dir}/meta.txt" shared_dev)
 	vm_bytes=$(field "${dir}/meta.txt" vm_bytes)
 	threshold_us=$(field "${dir}/meta.txt" threshold_us)
+	trace_us=$(field "${dir}/meta.txt" trace_us)
 	live_cpus=$(field "${dir}/meta.txt" live_cpus)
 	system_cpus=$(field "${dir}/meta.txt" system_cpus)
 	io_cpus=$(field "${dir}/meta.txt" io_cpus)
@@ -755,6 +781,7 @@ run_campaign() {
 	cpu_workers=$(($(expand_list "${other_cpus}" | wc -l) - 4))
 	[ "${cpu_workers}" -ge 1 ] || cpu_workers=1
 	burst_workers=$(expand_list "${burst_cpus}" | wc -l)
+	power_workers=$(expand_list "${quiet_cpus}" | wc -l)
 	load_file=
 	mounted_here=no
 	monitors=
@@ -801,7 +828,7 @@ summarize() {
 		echo
 		echo "steps (delays in microseconds, of the threads in user space on the live CPUs):"
 		printf '%-22s %11s %7s %9s %7s %7s %5s %4s %8s %7s %5s %6s %6s %4s  %s\n' \
-			step samples avg p99.999 max irq_max above smi throttle dev_irq link watt watt_max 'C' verdict
+			step samples avg p99.999 max irq_max traces smi throttle dev_irq link watt watt_max 'C' verdict
 		for step in "${result}"/[0-9]*-*/; do
 			[ -r "${step}result.txt" ] || continue
 			name=${step%/}
@@ -812,7 +839,7 @@ summarize() {
 				"$(field "${step}result.txt" usr_p99999_us)" \
 				"$(field "${step}result.txt" usr_max_us)" \
 				"$(field "${step}result.txt" irq_max_us)" \
-				"$(field "${step}result.txt" above_threshold)" \
+				"$(field "${step}result.txt" traces)" \
 				"$(field "${step}result.txt" smi)" \
 				"$(field "${step}result.txt" throttle)" \
 				"$(field "${step}result.txt" device_interrupts_live)" \
@@ -902,7 +929,7 @@ case "${1:-}" in
 			if [ -r "${step}phases.txt" ] && [ ! -r "${step}result.txt" ]; then
 				echo "last phases of the step (cycle, phase, from, to, largest delay in us):"
 				tail -n 5 "${step}phases.txt" | sed 's/^/  /'
-				[ -r "${step}threshold-count" ] && echo "above the threshold so far: $(cat "${step}threshold-count")"
+				[ -r "${step}trace-count" ] && echo "traces saved so far: $(cat "${step}trace-count")"
 			fi
 		done
 	elif [ -n "${last}" ]; then
@@ -1013,6 +1040,7 @@ shared_dev=/dev/disk/by-partlabel/shared
 cycle=default
 vm_bytes=2G
 threshold_us=${THRESHOLD_US}
+trace_us=${TRACE_US}
 any_uptime=no
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -1048,6 +1076,10 @@ while [ $# -gt 0 ]; do
 		threshold_us=${2:-}
 		shift 2
 		;;
+	--trace-us)
+		trace_us=${2:-}
+		shift 2
+		;;
 	--any-uptime)
 		any_uptime=yes
 		shift
@@ -1068,12 +1100,14 @@ fi
 echo "${write_mbps}" | grep -Eq '^[0-9]+$' || die "bad --write-mbps '${write_mbps}'"
 echo "${file_mb}" | grep -Eq '^[0-9]+$' || die "bad --file-mb '${file_mb}'"
 echo "${threshold_us}" | grep -Eq '^[0-9]+$' || die "bad --threshold-us '${threshold_us}'"
+echo "${trace_us}" | grep -Eq '^[0-9]+$' || die "bad --trace-us '${trace_us}'"
+[ "${trace_us}" -le "${threshold_us}" ] || trace_us=${threshold_us}
 echo "${vm_bytes}" | grep -Eq '^[0-9]+[MG]$' || die "bad --vm-bytes '${vm_bytes}' (examples: 512M, 2G)"
 [ "${preset}" = trial ] && [ "${cycle}" = default ] && cycle=${CYCLE_TRIAL}
 if [ "${cycle}" != default ]; then
 	for item in ${cycle}; do
-		echo "${item}" | grep -Eq '^(full|burst-a|burst-b|burst-c|rest):[0-9]+$' ||
-			die "bad phase '${item}': full, burst-a, burst-b, burst-c or rest, then :SECONDS"
+		echo "${item}" | grep -Eq '^(full|power|burst-a|burst-b|burst-c|rest):[0-9]+$' ||
+			die "bad phase '${item}': full, power, burst-a, burst-b, burst-c or rest, then :SECONDS"
 	done
 fi
 for tool in rtla cyclictest stress-ng turbostat taskset systemd-run journalctl; do
@@ -1141,6 +1175,7 @@ mkdir -p "${dir}" || die "could not create ${dir}"
 	echo "cycle: ${cycle}"
 	echo "script_sha256: $(sha256sum < "${SELF}" | cut -d ' ' -f 1)"
 	echo "threshold_us: ${threshold_us}"
+	echo "trace_us: ${trace_us}"
 	echo "timerlat_period_us: ${PERIOD_US}"
 	echo "cyclictest_period_us: ${CYCLICTEST_PERIOD_US}"
 	echo "priority: fifo ${PRIORITY}"
