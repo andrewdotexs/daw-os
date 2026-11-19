@@ -13,7 +13,7 @@
 | Scheda madre | ASUS ROG STRIX Z890-I GAMING WIFI, Mini-ITX, chipset Z890 | Dichiarata; confermata dal kernel al primo avvio |
 | Firmware | Versione **3402** del 18 settembre 2026, microcodice `0x122` (dal 16 novembre 2026; prima 2301 del 4 ottobre 2025, microcodice `0x11a`) | Letta dal kernel; aggiornamento nel sotto-passo P0.6c, parte 0 |
 | Processori visti dal kernel | 24, un solo package, nessun thread aggiuntivo per core | Registro di avvio del 13 novembre 2026 |
-| Schede grafiche | Intel Graphics integrata e NVIDIA GeForce RTX 5080 da 16 GB | Schermata di Windows |
+| Schede grafiche | Intel Graphics integrata e NVIDIA GeForce RTX 5080 da 16 GB. **La RTX è stata tolta dalla macchina il 14 novembre 2026** (passo P0.4b, rischio K-14) | Schermata di Windows; topologia del 15, 17 e 19 novembre |
 | Archiviazione | 932 GB visibili, 123 GB usati | Schermata di Windows |
 | Sistema attuale | Windows 11, nome `ANDREW-PC` | Schermata di Windows |
 | Rete | Cablata, indirizzo IPv4 impostato a mano in Windows | Schermata di Windows |
@@ -27,7 +27,7 @@ Dalla scheda tecnica del produttore _(verificato sulla pagina ASUS, non sulla ma
 | Audio | Nessun codec sulla scheda: tutto passa dal modulo esterno ROG Strix Hive II, collegato via USB | Non lo usiamo; va tenuto scollegato o su un controller USB diverso da quello della Scarlett. |
 | Thunderbolt | Due porte Thunderbolt 4 sul pannello posteriore | Sono un controller USB distinto da quello del chipset: è il candidato per isolare la Scarlett (rischio K-07). |
 | M.2 | Due alloggiamenti PCIe 5.0; il secondo toglie corsie allo slot della scheda grafica | Spazio per un secondo NVMe, se servisse. |
-| Slot | Un solo PCIe x16 | Occupato dalla RTX 5080. |
+| Slot | Un solo PCIe x16 | Occupato dalla RTX 5080 fino al 14 novembre 2026; da allora libero. |
 
 Non ho trovato nella scheda tecnica: la presenza di un connettore seriale e i dettagli del TPM. Su una Mini-ITX di questa serie un connettore seriale è improbabile _(da verificare sul manuale)_; il TPM sarà quello integrato nel processore (Intel PTT) _(da verificare)_.
 
@@ -44,8 +44,8 @@ Da `lspci -k`, `lsblk` e dal registro del primo avvio dal disco. Il numero di se
 | USB, controller del chipset | `80:14.0` | `xhci_hcd` | Secondo controller USB. |
 | Thunderbolt 4 NHI | `00:0d.2` | nessuno | Il sottosistema Thunderbolt non è nel kernel. |
 | Grafica integrata Arrow Lake-S | `00:02.0` | nessuno all'avvio; `xe` a richiesta | La console usa il framebuffer del firmware. Dal sotto-passo P0.6c il driver `xe` è nell'immagine come modulo e si carica solo con `dawos-gpu-test --load` (identificativo `7d67`, da forzare: per Arrow Lake è sperimentale in Linux 6.18; `i915` non si compila su un kernel real-time). Provato il 16 novembre 2026: firmware DMC 2.23, GuC 70.49.4, HuC 8.5.4, GSC 102.1.15; la presa HDMI della scheda compare come `DP-2`; interrupt sui core 20–23. |
-| NVIDIA RTX 5080 | `01:00.0` | nessuno | Come voluto. |
-| Audio HDMI della RTX | `01:00.1` | `snd_hda_intel` | Nessun codec utile: errore all'avvio. |
+| NVIDIA RTX 5080 | `01:00.0` | nessuno | Come voluto. Dal 14 novembre 2026 la scheda non è più nella macchina: il dispositivo non compare. |
+| Audio HDMI della RTX | `01:00.1` | `snd_hda_intel` | Nessun codec utile: errore all'avvio. Dal passo P0.4b il driver non è più nel kernel, e la scheda non è più nella macchina. |
 | Intel HD Audio del chipset | `80:1f.3` | `snd_hda_intel` | Sulla scheda non c'è codec: tre secondi di tentativi ed errori all'avvio. |
 | Intel Management Engine (HECI) | `80:16.0` | `mei_me` | Non serve. |
 | SATA | `80:17.0` | `ahci` | Nessun disco collegato. |
