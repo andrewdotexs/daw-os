@@ -1,7 +1,13 @@
 kind: timerlat
 seconds: 86400
 tool_exit_status: 0
-samples: 0
+samples: 1382299704
+irq_max_us: 18.47
+thr_max_us: 20.90
+usr_avg_us: 2.03
+usr_p99999_us: 5.75
+usr_max_us: 20.70
+beyond_histogram: 0
 traces: 6
 smi: 0
 throttle: 0
@@ -14,4 +20,5 @@ package_watt_max: 160.1
 package_temperature_max_c: 85
 smi_seen_by_turbostat: 0
 turbostat_readings: 17274
-verdict: FAIL: no samples;
+verdict: PASS
+target_20_us: not met

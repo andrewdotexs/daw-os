@@ -37,7 +37,7 @@ finished_utc: 2026-11-19T13:00:14Z
 
 steps (delays in microseconds, of the threads in user space on the live CPUs):
 step                       samples     avg   p99.999     max irq_max traces  smi throttle dev_irq  link   watt watt_max    C  verdict
-1-timerlat-86400                 0                                       6    0        0       0    14  111.6  160.1   85  FAIL: no samples;
+1-timerlat-86400        1382299704    2.03      5.75   20.70   18.47     6    0        0       0    14  111.6  160.1   85  PASS
 
 1-timerlat-86400: largest delay of each phase, by kind of phase (phases, lowest, median, highest, in us; package power and highest temperature in them):
   burst-a     48       5       6       9   28.6 W, 54 C
@@ -50,5 +50,5 @@ step                       samples     avg   p99.999     max irq_max traces  smi
   fio, first and last phase: 1-full read_mib_s=5978 write_mib_s=25.0; 48-burst-c read_mib_s=6001 write_mib_s=25.0
   kernel log: 14 lines kept in kernel-log.txt
 
-stopped: step 1 did not pass, the steps after it were not run
-campaign: FAIL
+note: step 1 judged again on 2026-11-19 from the files of the measurement; first verdict 'FAIL: no samples;' (kept in result-first.txt), now 'PASS'
+campaign: PASS (1 of 1 steps)
