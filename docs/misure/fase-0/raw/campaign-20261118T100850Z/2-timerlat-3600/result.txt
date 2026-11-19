@@ -1,0 +1,24 @@
+kind: timerlat
+seconds: 3600
+tool_exit_status: 0
+samples: 57599992
+irq_max_us: 11.07
+thr_max_us: 19.93
+usr_avg_us: 2.10
+usr_p99999_us: 6.75
+usr_max_us: 20.66
+beyond_histogram: 0
+above_threshold: 0
+smi: 0
+throttle: 0
+device_interrupts_live: 0
+link_changes: 0
+network_received_mib: 72181
+network_sent_mib: 72449
+package_watt_avg: 92.0
+package_watt_max: 138.9
+package_temperature_max_c: 79
+smi_seen_by_turbostat: 0
+turbostat_readings: 722
+verdict: PASS
+target_20_us: not met

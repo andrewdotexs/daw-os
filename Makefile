@@ -157,6 +157,17 @@ measure-prepare: ## After every boot of a machine: copy the tools, keep results 
 measure-fetch: ## Copy measurement results from a machine: make measure-fetch HOST=<address>
 	@tools/fetch-measure.sh $(HOST)
 
+# The script is copied at every call: the image under test is frozen, so
+# the campaign lives in tools/ and not in the image.
+.PHONY: campaign
+campaign: ## Step P0.7 on a real machine: make campaign HOST=<address> DO="--start trial" (or "--start short", "--start long", --stop, --cleanup; nothing: --status)
+	@ssh -o ConnectTimeout=10 root@$(HOST) 'mkdir -p /var/lib/dawos && cat > /var/lib/dawos/campaign.sh.new && mv /var/lib/dawos/campaign.sh.new /var/lib/dawos/campaign.sh' < tools/campaign.sh
+	@ssh -o ConnectTimeout=10 root@$(HOST) sh /var/lib/dawos/campaign.sh $(or $(DO),--status)
+
+.PHONY: campaign-net
+campaign-net: ## Network traffic for the campaign, from this PC, until the campaign ends: make campaign-net HOST=<address>
+	@tools/campaign-net.sh $(HOST)
+
 .PHONY: lint
 lint: ## Run shellcheck and markdownlint, and look for addresses that must not be committed
 	shellcheck $(SHELL_SOURCES)
