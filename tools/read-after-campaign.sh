@@ -87,9 +87,26 @@ echo "transparent_hugepage: $(cat /sys/kernel/mm/transparent_hugepage/enabled 2>
 echo "compact_unevictable_allowed: $(cat /proc/sys/vm/compact_unevictable_allowed 2> /dev/null)"
 echo "stat_interval: $(cat /proc/sys/vm/stat_interval 2> /dev/null)"
 
-section "bus locks seen by the kernel (kernel log)"
-journalctl -k -b --no-pager -o cat 2> /dev/null | grep -i -E 'split.?lock|bus.?lock' | head -n 20
-echo "lines: $(journalctl -k -b --no-pager -o cat 2> /dev/null | grep -i -c -E 'split.?lock|bus.?lock')"
+# The machine was restarted after the campaign: what the kernel said
+# during it is in the log of an earlier boot. Every boot the journal
+# still holds is searched; the line each boot prints about how split
+# locks are treated is shown once and left out of the count.
+section "bus locks seen by the kernel, in every boot the journal holds"
+journalctl -k --no-pager -o cat 2> /dev/null | grep -i -m 1 'split lock detection: #AC: crashing'
+journalctl -k --no-pager -o short-iso 2> /dev/null | grep -i -E 'split.?lock|bus.?lock' | grep -v -i 'crashing the kernel on kernel split_locks' | head -n 20
+echo "lines: $(journalctl -k --no-pager -o cat 2> /dev/null | grep -i -E 'split.?lock|bus.?lock' | grep -v -i -c 'crashing the kernel on kernel split_locks')"
+
+section "boots the journal holds"
+journalctl --list-boots --no-pager 2> /dev/null | tail -n 6
+
+# How the boot before this one ended: the user reports that "poweroff"
+# leaves the machine on. Lines of the system manager and of the kernel
+# only, with any address masked.
+section "the last lines of the previous boot"
+journalctl -b -1 --no-pager -o short-iso 2> /dev/null |
+	grep -E ' (systemd|systemd-shutdown|systemd-logind|kernel)(\[[0-9]+\])?: ' |
+	sed -E 's/([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}/[address]/g; s/[0-9]{1,3}(\.[0-9]{1,3}){3}/[address]/g' |
+	tail -n 25
 
 section "USB: which controller each bus belongs to"
 for bus in /sys/bus/usb/devices/usb*; do

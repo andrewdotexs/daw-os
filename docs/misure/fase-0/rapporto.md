@@ -239,7 +239,7 @@ Sulla configurazione ferma, senza installare né modificare nulla.
 
 ### 10.1 Il rumore hardware a macchina calda (A-40)
 
-`dawos-hwnoise`, dieci minuti, il 19 novembre alle 13:30 UTC, mezz'ora dopo la fine delle 24 ore. Dati in `docs/misure/fase-0/raw/hwnoise-20261119T133014Z-dopo-campagna`.
+`dawos-hwnoise`, dieci minuti, il 19 novembre alle 13:30 UTC, mezz'ora dopo la fine delle 24 ore e **meno di un minuto dopo un avvio**: l'utente aveva appena spento e riacceso la macchina. La regola dei cinque minuti dall'accensione non è quindi rispettata, per una mia svista nel preparare i comandi; il risultato vale come osservazione, non come misura di riferimento. Dati in `docs/misure/fase-0/raw/hwnoise-20261119T133014Z-dopo-campagna`.
 
 | Grandezza | Questa misura | Accettazione di P0.6e (17 novembre) | Misure precedenti |
 | --- | --- | --- | --- |
@@ -249,7 +249,9 @@ Sulla configurazione ferma, senza installare né modificare nulla.
 | Letture in dieci minuti | 56 | 120 | 52–55, nelle due misure da dieci minuti del 17 novembre |
 | Occupazione dei core live | 61 % | 75 % | 60–68 % |
 
-**La norma è 65–66 °C**; la misura dell'accettazione di P0.6e è l'eccezione, in tutte e tre le grandezze insieme. **La spiegazione che avevo proposto, il kernel 6.18.64, è smentita**: questa misura è fatta con lo stesso kernel. Di diverso, quella del 17 novembre aveva l'essere stata fatta cinque minuti dopo un avvio. Si ricontrolla alla prossima immagine (A-44).
+**La norma è 65–66 °C**; la misura dell'accettazione di P0.6e è l'eccezione, in tutte e tre le grandezze insieme. **Le due spiegazioni che avevo proposto sono smentite entrambe**: non è il kernel 6.18.64, perché questa misura è fatta con lo stesso kernel; non è la vicinanza all'avvio, perché anche questa è partita subito dopo un avvio. Resta una differenza che non ho misurato: la misura del 17 novembre seguiva un riavvio a caldo, questa un'accensione dopo uno spegnimento. È un'ipotesi, la terza; si prova con la prossima immagine (A-44).
+
+**Un fatto nuovo, riferito dall'utente**: il comando `poweroff` non spegne la macchina. Lo schermo si spegne, le ventole del processore continuano a girare. Il kernel ha il supporto per lo spegnimento via ACPI _(verificato nella configurazione)_; la causa non è nota (punto aperto A-51).
 
 ### 10.2 Le decisioni dell'utente e i numeri assegnati
 
@@ -323,7 +325,8 @@ L'elenco completo, con l'origine di ogni punto, è il [registro dei punti aperti
 | A-18, A-06, A-07 | La protezione contro un thread real-time che non cede mai il core, e la prova che la verifica |
 | A-41 | La misura con la scheda audio USB che suona e registra |
 | A-36 | Le cadute del collegamento di rete: dentro o fuori dalla macchina |
-| A-40 | La misura a 51 °C fatta cinque minuti dopo un avvio: un fatto dei primi minuti, o una misura isolata |
+| A-40 | La misura a 51 °C del 17 novembre: effetto di un riavvio a caldo, o misura isolata |
+| A-51 | `poweroff` non spegne la macchina |
 | A-19, A-20 | Le decisioni rinviate: D-10…D-15, D-17…D-21, D-23, D-24, D-25 |
 | A-21 | La sorveglianza del blocco del sistema |
 | A-22 | Gli stati di riposo profondi, assenti per tutti i core |
