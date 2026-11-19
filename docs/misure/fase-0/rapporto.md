@@ -3,7 +3,7 @@
 - **Che cos'è**: il rapporto di chiusura della Fase 0, chiesto dal documento 0 al passo P0.8. Dice che cosa è stato misurato, su quale configurazione, con quale esito, e che cosa resta aperto per la Fase 1.
 - **Macchina**: il 285K (ASUS ROG STRIX Z890-I, Intel Core Ultra 9 285K, 64 GB); la scheda completa è in [hardware-285k.md](../../fasi/fase-0/hardware-285k.md).
 - **Date**: la fase è andata dal 13 al 19 novembre 2026; la campagna di misura dal 18 al 19.
-- **Stato**: completo, redatto il 19 novembre 2026; definitivo con la chiusura del passo P0.8 e l'etichetta `fase-0`.
+- **Stato**: definitivo. Redatto il 19 novembre 2026; la fase è chiusa con l'etichetta `fase-0` sul commit `c9de63b` di `main`.
 
 Le etichette sono quelle del documento 0: _(verificato)_ per ciò che è misurato o letto nei dati, _(stima)_ per ciò che è calcolato da altri numeri, _(da verificare)_ per ciò che è supposto.
 
