@@ -3,7 +3,7 @@
 - **Che cos'è**: il rapporto di chiusura della Fase 0, chiesto dal documento 0 al passo P0.8. Dice che cosa è stato misurato, su quale configurazione, con quale esito, e che cosa resta aperto per la Fase 1.
 - **Macchina**: il 285K (ASUS ROG STRIX Z890-I, Intel Core Ultra 9 285K, 64 GB); la scheda completa è in [hardware-285k.md](../../fasi/fase-0/hardware-285k.md).
 - **Date**: la fase è andata dal 13 al 19 novembre 2026; la campagna di misura dal 18 al 19.
-- **Stato**: **in completamento**. Mancano le due letture della sezione 10 e l'aggiornamento degli ADR; il rapporto diventa definitivo alla chiusura del passo P0.8.
+- **Stato**: **in completamento**. Mancano le letture e i conteggi della sezione 10.4 e l'aggiornamento degli ADR; il rapporto diventa definitivo alla chiusura del passo P0.8.
 
 Le etichette sono quelle del documento 0: _(verificato)_ per ciò che è misurato o letto nei dati, _(stima)_ per ciò che è calcolato da altri numeri, _(da verificare)_ per ciò che è supposto.
 
@@ -233,14 +233,82 @@ Dall'accettazione del sotto-passo P0.6e, sull'immagine misurata, dieci minuti pe
 - **Il verdetto delle 24 ore è stato riscritto una volta.** Alla fine della corsa lo strumento della campagna non ha saputo leggere l'istogramma, completo, e ha scritto «nessun campione»: `rtla`, con conteggi a nove cifre, scrive la riga dei conteggi in una forma che lo strumento non riconosceva. Lo strumento è stato corretto e il verdetto rifatto dagli stessi file, senza rimisurare; il primo verdetto è conservato in `result-first.txt`.
 - **Il periodo di misura è 250 µs**, quello del documento 0; con 1 ms il 99,999-esimo percentile potrebbe essere più alto (sezione 6).
 
-## 10. Due letture dopo la campagna
+## 10. Dopo la campagna: letture e decisioni del 19 novembre 2026
 
-Da fare in apertura di P0.8, sulla configurazione ferma; non cambiano nulla sulla macchina.
+Sulla configurazione ferma, senza installare né modificare nulla.
 
-| Lettura | A che cosa serve | Esito |
+### 10.1 Il rumore hardware a macchina calda (A-40)
+
+`dawos-hwnoise`, dieci minuti, il 19 novembre alle 13:30 UTC, mezz'ora dopo la fine delle 24 ore. Dati in `docs/misure/fase-0/raw/hwnoise-20261119T133014Z-dopo-campagna`.
+
+| Grandezza | Questa misura | Accettazione di P0.6e (17 novembre) | Misure precedenti |
+| --- | --- | --- | --- |
+| Buchi di almeno 1 µs, SMI | Nessuno, 0 | Nessuno, 0 | Nessuno, 0 |
+| Potenza media del package | 93,1 W | 94,6 W | 92–97 W |
+| Temperatura massima | 66 °C | 51 °C | 65–66 °C |
+| Letture in dieci minuti | 56 | 120 | 52–55, nelle due misure da dieci minuti del 17 novembre |
+| Occupazione dei core live | 61 % | 75 % | 60–68 % |
+
+**La norma è 65–66 °C**; la misura dell'accettazione di P0.6e è l'eccezione, in tutte e tre le grandezze insieme. **La spiegazione che avevo proposto, il kernel 6.18.64, è smentita**: questa misura è fatta con lo stesso kernel. Di diverso, quella del 17 novembre aveva l'essere stata fatta cinque minuti dopo un avvio. Si ricontrolla alla prossima immagine (A-44).
+
+### 10.2 Le decisioni dell'utente e i numeri assegnati
+
+L'utente ha valutato se riscrivere firmware, kernel e driver; la risposta è no per tutti e tre, con un principio comune al loro posto. Nel repository:
+
+| Repository | Documento di progetto | Che cosa |
 | --- | --- | --- |
-| `dawos-hwnoise` per dieci minuti, a macchina calda | A-40: vedere se a 95 W il package sta a 51 °C o a 65 °C | Da fare |
-| Ricerca nel registro del kernel di avvisi di blocco del bus della memoria | A-43: uno dei due candidati per le pause di 18 µs | Da fare |
+| [ADR 0021](../../adr/0021-core-live-senza-kernel.md) | ADR-038 | Core live senza kernel: nella fase di calcolo i thread del motore non entrano nel kernel e non vengono interrotti |
+| A-48 | Q-12 | Verifica del firmware all'avvio, al posto di un port di coreboot |
+| A-49 | Q-13 | Prova di una serie di patch che rinvia gli interrupt tra core |
+| A-50 | Q-14 | Un driver audio proprio solo se la misura lo richiede |
+
+La tabella di corrispondenza tra le due numerazioni è in [docs/adr/README.md](../../adr/README.md).
+
+**Obiezioni all'ADR 0021**: nessuna al principio. Tre integrazioni, proposte prima di scriverlo e accolte dall'utente:
+
+1. **Una terza misura**: il tempo perso nel calcolo senza ingresso nel kernel. Le pause di 18 µs della sezione 5 non sono né syscall né interrupt, e le due misure previste non le vedrebbero.
+2. **Le fasi valgono per ogni thread**, e dentro il calcolo nessun thread ne sveglia un altro: il modo più ovvio di coordinare quattro core live è proprio una syscall nel calcolo.
+3. **Un bilancio di calcolo**: l'attesa cede il core ai thread del kernel solo se il motore dorme davvero. In sforamento non dorme; il motore smette quindi di calcolare a un margine fisso prima della fine del periodo, e il sorvegliante esterno resta come seconda linea.
+
+Per contare e attribuire le syscall nel calcolo l'ADR propone, oltre al contatore per thread, il meccanismo _Syscall User Dispatch_ del kernel, che dice quale plugin ha chiamato il kernel senza costare nulla finché nessuno lo fa _(da verificare sul 285K, Fase 1)_.
+
+### 10.3 Come si comporta `snd-usb-audio` con il puntatore dell'applicazione
+
+Letto nel sorgente del kernel 6.18.64 (`sound/usb/pcm.c`, `endpoint.c`, `card.c`; `sound/core/pcm_native.c`) _(verificato nel sorgente; non provato sulla macchina)_.
+
+- **L'opzione `lowlatency` del driver è attiva di fabbrica.** Quando è attiva, **ogni** flusso di riproduzione dichiara al nucleo ALSA che il puntatore dell'applicazione va sincronizzato in modo esplicito (`SNDRV_PCM_INFO_SYNC_APPLPTR`), e il nucleo rifiuta allora di mappare in memoria la pagina di controllo. L'applicazione non può scrivere `appl_ptr` in memoria: deve passare dall'ioctl `SYNC_PTR`, **una syscall per ciclo**. La pagina di stato, con `hw_ptr`, resta leggibile in memoria. La registrazione non è toccata: lì entrambe le pagine sono in memoria.
+- **In modalità a bassa latenza** il driver riempie gli URB in uscita solo con i dati fino a `appl_ptr`. Finché ci sono URB in volo li riempie al completamento del precedente, dal gestore dell'interrupt USB. Quando non ce ne sono più, è la notifica dell'applicazione a riempirli e a spedirli (`snd_usb_pcm_playback_ack`): **l'invio USB avviene allora dentro la syscall dell'applicazione, cioè sul core live**.
+- **Senza notifica, in modalità a bassa latenza, il driver non riempie nulla.** Non c'è un ripiego automatico alla coda di URB: quello è il comportamento della modalità classica.
+- **La modalità classica** vale in tre casi: con `lowlatency=0`; per un dispositivo con feedback implicito; per un flusso che non si ferma mai sugli errori (`stop_threshold` oltre il buffer). Gli URB si riempiono al completamento dei precedenti, dall'interrupt, con ciò che c'è nel buffer, e la latenza è quella della coda di URB.
+- **Solo con `lowlatency=0` il puntatore si scrive in memoria**, senza syscall. Un dispositivo con feedback implicito lavora in modalità classica ma, con l'opzione attiva, paga comunque la syscall.
+
+La risposta al dubbio della nota è quindi sì, con una precisazione: i casi da misurare nella Fase 1 sono **tre**, non due.
+
+| Configurazione | Syscall per il puntatore | Dove si riempiono gli URB | Latenza |
+| --- | --- | --- | --- |
+| `lowlatency` attiva, bassa latenza | Una per ciclo | Interrupt USB; a coda vuota nella syscall, sul core live | La più bassa |
+| `lowlatency` attiva, feedback implicito | Una per ciclo | Interrupt USB | Coda di URB |
+| `lowlatency=0` | Nessuna | Interrupt USB | Coda di URB |
+
+Se la Scarlett di quarta generazione sia trattata con feedback implicito non risulta dal sorgente: per Focusrite non c'è una regola dedicata al feedback, e il riconoscimento generico dipende dai descrittori che il dispositivo presenta _(da verificare con la scheda collegata: `/proc/asound/card*/stream0`)_.
+
+### 10.4 I dati in sola lettura chiesti per A-49 e A-50
+
+Ciò che il repository sapeva già _(verificato)_:
+
+| Domanda | Risposta | Da dove |
+| --- | --- | --- |
+| Il kernel ha l'isolamento delle tabelle delle pagine? | Sì, compilato (`MITIGATION_PAGE_TABLE_ISOLATION`); `pti=on` si può provare senza ricostruire il kernel | Configurazione del kernel |
+| Pulizie della TLB sui core live sotto carico | 4 in 24 ore, sui quattro core insieme | Campagna |
+| Chiamate di funzione sui core live sotto carico | Circa una al minuto per core, oltre a quelle dello strumento di misura; mittente non noto | Campagna, A-47 |
+| Moduli NVIDIA o `nouveau` | Nessun modulo caricato, di nessun tipo; `nouveau` non è nel kernel | Campagna, configurazione |
+| Driver della RTX 5080 | Nessuno. La sua funzione audio HDMI è però presa da `snd_hda_intel`, che è nel kernel | [hardware-285k.md](../../fasi/fase-0/hardware-285k.md) |
+| Controller USB | Due: quello del processore (Thunderbolt 4, `00:0d.0`), oggi vuoto, e quello del chipset (`80:14.0`), con tastiera e ricevitori | Topologia del 17 novembre |
+| Dove è collegata la Scarlett | Non era collegata il 17 novembre: nessuna scheda audio vista dal kernel | Topologia del 17 novembre |
+
+Ciò che si legge ora, con `tools/read-after-campaign.sh`, in `docs/misure/fase-0/letture-dopo-campagna.txt`: stato di Meltdown e delle altre vulnerabilità; i registri del processore che descrivono il firmware (riferimento per A-48); controller, interrupt e affinità dell'USB; la scheda audio, se collegata; avvisi di blocco del bus e frequenza della parte comune del processore (A-43). **In attesa della lettura.**
+
+Ciò che si conta ora, con il piano `ipi` della campagna, tre ore: gli interrupt arrivati a ciascun core live in un'ora a macchina ferma, in un'ora con il solo monitoraggio della campagna, in un'ora sotto carico, senza alcuno strumento di tracciamento. Risponde alla domanda di A-49 e separa, per A-47, ciò che manda lo script da ciò che manda il carico. **In attesa della misura.**
 
 ## 11. Che cosa resta aperto per la Fase 1
 
@@ -251,10 +319,11 @@ L'elenco completo, con l'origine di ogni punto, è il [registro dei punti aperti
 | Punto | Che cosa |
 | --- | --- |
 | A-44 | Caricare i moduli KVM e vhost all'avvio, e rifare le misure brevi sull'immagine nuova ([ADR 0019](../../adr/0019-apertura-del-sistema-utilita-native-e-vm-linux.md)) |
+| A-48 | La verifica del firmware a ogni avvio, nello stesso sotto-passo ([ADR 0021](../../adr/0021-core-live-senza-kernel.md)) |
 | A-18, A-06, A-07 | La protezione contro un thread real-time che non cede mai il core, e la prova che la verifica |
 | A-41 | La misura con la scheda audio USB che suona e registra |
 | A-36 | Le cadute del collegamento di rete: dentro o fuori dalla macchina |
-| A-40 | La temperatura a 95 W: 51 °C o 65 °C |
+| A-40 | La misura a 51 °C fatta cinque minuti dopo un avvio: un fatto dei primi minuti, o una misura isolata |
 | A-19, A-20 | Le decisioni rinviate: D-10…D-15, D-17…D-21, D-23, D-24, D-25 |
 | A-21 | La sorveglianza del blocco del sistema |
 | A-22 | Gli stati di riposo profondi, assenti per tutti i core |
@@ -266,6 +335,8 @@ L'elenco completo, con l'origine di ogni punto, è il [registro dei punti aperti
 | --- | --- |
 | A-43 | L'obiettivo dei 20 µs: la causa delle pause di 18 µs; strumento o periodo nel confronto tra `timerlat` e `cyclictest` |
 | A-47 | Chi manda una chiamata di funzione al minuto a ogni core live durante la campagna |
+| A-49 | La prova della serie di patch che rinvia gli interrupt tra core, con un piano da confermare prima di scrivere codice |
+| A-50 | La misura che decide se serve un driver audio proprio: latenza di andata e ritorno, syscall per ciclo, tre configurazioni di `snd-usb-audio` |
 
 **Più avanti**:
 

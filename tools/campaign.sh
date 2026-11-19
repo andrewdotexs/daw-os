@@ -14,7 +14,15 @@
 #                       above the figure aimed at a trace is saved and
 #                       the measurement goes on;
 #   cyclictest:SECONDS  the same question asked to a second, independent
-#                       tool.
+#                       tool;
+#   idle:SECONDS        nothing at all, not even the monitoring: only the
+#                       interrupt counters before and after;
+#   quiet:SECONDS       the monitoring alone, no load, no measuring tool;
+#   load:SECONDS        the monitoring and the load, no measuring tool.
+#
+# The last three count what reaches the live CPUs (function calls from
+# other CPUs, TLB flushes) when no tracer runs, and tell the campaign's
+# own doing from the load's.
 #
 # A step runs only if the one before it passed: delay within the
 # limit, no system management interrupt, no thermal throttling, no
@@ -90,6 +98,9 @@ PLAN_SHORT="timerlat:600 timerlat:3600 cyclictest:3600"
 PLAN_LONG="timerlat:86400"
 # Five minutes to see that every piece works on the machine at hand.
 PLAN_TRIAL="timerlat:200 cyclictest:60"
+# Three hours of counting what reaches the live CPUs: at rest, with the
+# monitoring of the campaign, with its load.
+PLAN_IPI="idle:3600 quiet:3600 load:3600"
 CYCLE_TRIAL="full:45 power:45 burst-a:20 burst-b:20 burst-c:20 rest:30"
 # Cycles of ten minutes up to a few hours, of half an hour beyond: long
 # enough at full power for the temperature to settle.
@@ -110,8 +121,10 @@ Usage:
 
 PLAN is "short" (${PLAN_SHORT}),
 "long" (${PLAN_LONG}), "trial" (${PLAN_TRIAL},
-with short phases: it only shows that every piece works) or a list of
-steps of its own: "timerlat:60 cyclictest:60".
+with short phases: it only shows that every piece works), "ipi"
+(${PLAN_IPI}: counts the interrupts
+of the live CPUs, measures no delay) or a list of steps of its own:
+"timerlat:60 cyclictest:60".
 
 Options of --start:
   --label NAME        added to the name of the result directory
@@ -543,8 +556,12 @@ sample_loop() {
 # The state of the counters at one end of a step: $1 directory, $2
 # "start" or "end".
 snapshot() {
+	# Reading the SMI counter of a CPU interrupts it once: it is read
+	# before the first copy of the interrupt counters and after the
+	# last, so that it does not count itself.
+	[ "$2" = start ] && smi_counts > "$1/smi-$2.txt"
 	cat /proc/interrupts > "$1/interrupts-$2.txt"
-	smi_counts > "$1/smi-$2.txt"
+	[ "$2" = start ] || smi_counts > "$1/smi-$2.txt"
 	throttle_counts > "$1/throttle-$2.txt"
 	network_counts "${interface}" > "$1/network-$2.txt"
 }
@@ -583,13 +600,16 @@ run_step() {
 	started=$(date +%s)
 	snapshot "${step_dir}" start
 
-	turbostat --quiet --Summary --cpu "${quiet_cpus}" --interval 5 \
-		--show Time_Of_Day_Seconds,SMI,Busy%,Bzy_MHz,PkgTmp,PkgWatt \
-		--out "${step_dir}/turbostat.txt" 2> "${step_dir}/turbostat.err" &
-	turbostat_pid=$!
-	sample_loop "${step_dir}" &
-	sampler_pid=$!
-	monitors="${turbostat_pid} ${sampler_pid}"
+	monitors=
+	if [ "${kind}" != idle ]; then
+		turbostat --quiet --Summary --cpu "${quiet_cpus}" --interval 5 \
+			--show Time_Of_Day_Seconds,SMI,Busy%,Bzy_MHz,PkgTmp,PkgWatt \
+			--out "${step_dir}/turbostat.txt" 2> "${step_dir}/turbostat.err" &
+		turbostat_pid=$!
+		sample_loop "${step_dir}" &
+		sampler_pid=$!
+		monitors="${turbostat_pid} ${sampler_pid}"
+	fi
 	sleep 3
 
 	case "${kind}" in
@@ -603,6 +623,10 @@ run_step() {
 			--on-threshold continue \
 			> "${step_dir}/timerlat.txt" 2>&1 &
 		;;
+	idle | quiet | load)
+		# No measuring tool: the step is its duration.
+		sleep "${duration}" &
+		;;
 	*)
 		threads=$(expand_list "${live_cpus}" | wc -l)
 		# --default-system: cyclictest would otherwise forbid every
@@ -614,17 +638,27 @@ run_step() {
 	esac
 	tool_pid=$!
 	sleep 7
-	run_phases "${step_dir}" $(($(uptime_s) + duration - 2))
+	case "${kind}" in
+	idle) ;;
+	quiet)
+		step_cycle=${cycle}
+		cycle="rest:${duration}"
+		run_phases "${step_dir}" $(($(uptime_s) + duration - 9))
+		cycle=${step_cycle}
+		;;
+	*) run_phases "${step_dir}" $(($(uptime_s) + duration - 2)) ;;
+	esac
 	wait "${tool_pid}"
 	tool_status=$?
 	tool_pid=
 	# Beyond its histogram cyclictest lists every cycle, one by one.
-	[ "${kind}" = timerlat ] || grep -v '^# Thread [0-9]*:' "${RUN}/cyclictest.txt" > "${step_dir}/cyclictest.txt"
+	[ "${kind}" != cyclictest ] || grep -v '^# Thread [0-9]*:' "${RUN}/cyclictest.txt" > "${step_dir}/cyclictest.txt"
 
-	# shellcheck disable=SC2086 # two process numbers
-	kill ${monitors} 2> /dev/null
+	# shellcheck disable=SC2086 # two process numbers, or none
+	[ -z "${monitors}" ] || kill ${monitors} 2> /dev/null
 	# shellcheck disable=SC2086
-	wait ${monitors} 2> /dev/null
+	[ -z "${monitors}" ] || wait ${monitors} 2> /dev/null
+	monitors=
 	snapshot "${step_dir}" end
 
 	# What the kernel said meanwhile. Addresses, should a driver print
@@ -644,11 +678,11 @@ judge() {
 		echo "kind: $2"
 		echo "seconds: $3"
 		echo "tool_exit_status: $4"
-		if [ "$2" = timerlat ]; then
-			timerlat_fields "${result_dir}/timerlat.txt"
-		else
-			cyclictest_fields "${result_dir}/cyclictest.txt"
-		fi
+		case "$2" in
+		timerlat) timerlat_fields "${result_dir}/timerlat.txt" ;;
+		cyclictest) cyclictest_fields "${result_dir}/cyclictest.txt" ;;
+		*) echo "samples: -" ;;
+		esac
 		hits=0
 		[ -r "${result_dir}/trace-count" ] && read -r hits < "${result_dir}/trace-count"
 		echo "traces: ${hits}"
@@ -673,6 +707,10 @@ judge() {
 		fi
 		interrupts_grown "${result_dir}/interrupts-start.txt" "${result_dir}/interrupts-end.txt" "${live_cpus}" > "${result_dir}/interrupts-live.txt"
 		echo "device_interrupts_live: $(awk '$1 ~ /^[0-9]+$/ { sum += $2 } END { print sum + 0 }' "${result_dir}/interrupts-live.txt")"
+		# The same, one live CPU at a time.
+		for cpu in $(expand_list "${live_cpus}"); do
+			echo "cpu ${cpu}: $(interrupts_grown "${result_dir}/interrupts-start.txt" "${result_dir}/interrupts-end.txt" "${cpu}" | awk '{ printf "%s=%s ", $1, $2 }')"
+		done > "${result_dir}/interrupts-live-per-cpu.txt"
 		read -r changes_before received_before sent_before < "${result_dir}/network-start.txt"
 		read -r changes_after received_after sent_after < "${result_dir}/network-end.txt"
 		if [ "${changes_before}" != - ]; then
@@ -697,7 +735,7 @@ judge() {
 	awk -v limit="${threshold_us}" -v target="${TARGET_US}" -F ': ' '
 		{ value[$1] = $2 }
 		END {
-			if (value["samples"] + 0 == 0) reason = reason " no samples;"
+			if (value["samples"] != "-" && value["samples"] + 0 == 0) reason = reason " no samples;"
 			if (value["tool_exit_status"] + 0 != 0) reason = reason " the tool ended with status " value["tool_exit_status"] ";"
 			if (value["usr_max_us"] + 0 > limit) reason = reason " delay " value["usr_max_us"] " us above " limit " us;"
 			if (value["smi"] != "unknown" && value["smi"] + 0 != 0) reason = reason " " value["smi"] " system management interrupts;"
@@ -708,7 +746,7 @@ judge() {
 			if (value["throttle"] == "unknown") unknown = unknown " throttle"
 			if (reason == "") printf "verdict: PASS%s\n", unknown == "" ? "" : " (not reported by this machine:" unknown ")"
 			else printf "verdict: FAIL:%s\n", reason
-			if (value["samples"] + 0 > 0) printf "target_%d_us: %s\n", target, (value["usr_max_us"] + 0 <= target) ? "met" : "not met"
+			if (value["samples"] != "-" && value["samples"] + 0 > 0) printf "target_%d_us: %s\n", target, (value["usr_max_us"] + 0 <= target) ? "met" : "not met"
 		}' "${result_dir}/result.txt" > "${RUN}/verdict.txt"
 	cat "${RUN}/verdict.txt" >> "${result_dir}/result.txt"
 }
@@ -853,6 +891,14 @@ summarize() {
 				"$(field "${step}result.txt" package_watt_max)" \
 				"$(field "${step}result.txt" package_temperature_max_c)" \
 				"$(field "${step}result.txt" verdict)"
+		done
+		for step in "${result}"/[0-9]*-*/; do
+			[ -r "${step}timerlat.txt" ] && continue
+			[ -s "${step}interrupts-live-per-cpu.txt" ] || continue
+			name=${step%/}
+			echo
+			echo "${name##*/}: interrupts that reached each live CPU in the step (name=count):"
+			sed 's/^/  /' "${step}interrupts-live-per-cpu.txt"
 		done
 		for step in "${result}"/[0-9]*-*/; do
 			[ -r "${step}phases.txt" ] || continue
@@ -1074,9 +1120,11 @@ case "${plan}" in
 short) plan=${PLAN_SHORT} ;;
 long) plan=${PLAN_LONG} ;;
 trial) plan=${PLAN_TRIAL} ;;
+ipi) plan=${PLAN_IPI} ;;
 esac
 for item in ${plan}; do
-	echo "${item}" | grep -Eq '^(timerlat|cyclictest):[0-9]+$' || die "bad step '${item}': timerlat:SECONDS or cyclictest:SECONDS"
+	echo "${item}" | grep -Eq '^(timerlat|cyclictest|idle|quiet|load):[0-9]+$' ||
+		die "bad step '${item}': timerlat, cyclictest, idle, quiet or load, then :SECONDS"
 	[ "${item#*:}" -ge 30 ] || die "a step lasts at least 30 seconds"
 done
 

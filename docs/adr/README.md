@@ -24,10 +24,11 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0018](0018-profili-di-avvio-e-regolazione.md) | Profili di avvio e regolazione all'avvio | C-03, P0.6 | Accettata per `dev`; frequenza, riposo e _fair server_ da confermare in P0.6b |
 | [0019](0019-apertura-del-sistema-utilita-native-e-vm-linux.md) | Apertura del sistema: utilità native e VM Linux | Documento di progetto, ADR-033 | Accettata il 18 novembre 2026; nell'immagine solo la predisposizione del kernel |
 | [0020](0020-plugin-linux-di-terze-parti.md) | Plugin Linux di terze parti | Documento di progetto, ADR-034 | Accettata il 18 novembre 2026; nulla ancora nell'immagine |
+| [0021](0021-core-live-senza-kernel.md) | Core live senza kernel | Documento di progetto, ADR-038 | Accettata il 19 novembre 2026, con tre integrazioni; principio per la Fase 1 |
 
 ## Corrispondenza con il documento di progetto
 
-Il documento di progetto numera i propri ADR da ADR-001 ad ADR-037, con una numerazione diversa da questa. Una decisione del documento di progetto entra nel repository con il **primo numero libero di qui** e porta nell'intestazione il rimando al numero di là: così non esistono due «0033» con significati diversi. Nel testo, «ADR 0019» (quattro cifre, senza trattino) è sempre un ADR del repository; «ADR-033» (tre cifre, con il trattino) è sempre un ADR del documento di progetto.
+Il documento di progetto numera i propri ADR da ADR-001 in su (a oggi fino ad ADR-038), con una numerazione diversa da questa. Una decisione del documento di progetto entra nel repository con il **primo numero libero di qui** e porta nell'intestazione il rimando al numero di là: così non esistono due «0033» con significati diversi. Nel testo, «ADR 0019» (quattro cifre, senza trattino) è sempre un ADR del repository; «ADR-033» (tre cifre, con il trattino) è sempre un ADR del documento di progetto.
 
 Questa tabella si aggiorna ogni volta che ne entra uno.
 
@@ -35,6 +36,15 @@ Questa tabella si aggiorna ogni volta che ne entra uno.
 | --- | --- | --- | --- |
 | [0019](0019-apertura-del-sistema-utilita-native-e-vm-linux.md) | ADR-033 | Apertura del sistema: utilità native e VM Linux | 18 novembre 2026 |
 | [0020](0020-plugin-linux-di-terze-parti.md) | ADR-034 | Plugin Linux di terze parti | 18 novembre 2026 |
+| [0021](0021-core-live-senza-kernel.md) | ADR-038 | Core live senza kernel | 19 novembre 2026 |
+
+Anche le questioni aperte del documento di progetto (Q-xx) entrano con il primo numero libero del [registro dei punti aperti](../02-punti-aperti.md):
+
+| Repository | Documento di progetto | Che cosa | Entrato il |
+| --- | --- | --- | --- |
+| A-48 | Q-12 | Verifica del firmware all'avvio | 19 novembre 2026 |
+| A-49 | Q-13 | Patch del kernel: prova del rinvio degli interrupt tra core | 19 novembre 2026 |
+| A-50 | Q-14 | Driver audio: un driver proprio solo dopo la misura | 19 novembre 2026 |
 
 Gli ADR da 0001 a 0018 sono nati nel repository, dalla revisione del documento 0 e dai passi della Fase 0. Se qualcuno di loro ha un corrispondente nel documento di progetto, qui non è registrato: quel documento non è nel repository.
 
