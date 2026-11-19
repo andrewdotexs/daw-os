@@ -101,6 +101,11 @@ PLAN_TRIAL="timerlat:200 cyclictest:60"
 # Three hours of counting what reaches the live CPUs: at rest, with the
 # monitoring of the campaign, with its load.
 PLAN_IPI="idle:3600 quiet:3600 load:3600"
+# A quarter of an hour that starts the mixed load again and again: the
+# pauses of open point A-43 fall in its first minute. Traces from 12 us.
+PLAN_PAUSE="timerlat:900"
+CYCLE_PAUSE="rest:30 full:90"
+TRACE_PAUSE_US=12
 CYCLE_TRIAL="full:45 power:45 burst-a:20 burst-b:20 burst-c:20 rest:30"
 # Cycles of ten minutes up to a few hours, of half an hour beyond: long
 # enough at full power for the temperature to settle.
@@ -123,7 +128,9 @@ PLAN is "short" (${PLAN_SHORT}),
 "long" (${PLAN_LONG}), "trial" (${PLAN_TRIAL},
 with short phases: it only shows that every piece works), "ipi"
 (${PLAN_IPI}: counts the interrupts
-of the live CPUs, measures no delay) or a list of steps of its own:
+of the live CPUs, measures no delay), "pause" (${PLAN_PAUSE} with
+the cycle "${CYCLE_PAUSE}": the mixed load started ten times, to
+compare two settings of the machine) or a list of steps of its own:
 "timerlat:60 cyclictest:60".
 
 Options of --start:
@@ -328,6 +335,9 @@ timerlat_fields() {
 			printf "usr_avg_us: %s\n", show(weighted["Usr"] / total["Usr"])
 			printf "usr_p99999_us: %s\n", percentile("Usr")
 			printf "usr_max_us: %s\n", show(high["Usr"])
+			late = over["Usr"]
+			for (i = 1; i <= rows; i++) if (row[i] >= 10000) late += hist["Usr", row[i]]
+			printf "usr_10_us_or_more: %d\n", late
 			printf "beyond_histogram: %d\n", over["Usr"]
 		}' "$1"
 }
@@ -927,6 +937,8 @@ summarize() {
 				# shellcheck disable=SC2086 # four figures
 				printf '  %-8s %5s %7s %7s %7s   %s\n' "${phase}" ${figures} "${power}"
 			done
+			late=$(field "${step}result.txt" usr_10_us_or_more)
+			[ -n "${late}" ] && echo "  wake-ups of 10 us or more: ${late}; traces saved: $(field "${step}result.txt" traces)"
 			if [ -s "${step}interrupts-live.txt" ]; then
 				echo "  interrupts on the live CPUs in the step (name, count): $(awk '{ printf "%s=%s ", $1, $2 }' "${step}interrupts-live.txt")"
 			fi
@@ -1121,6 +1133,7 @@ short) plan=${PLAN_SHORT} ;;
 long) plan=${PLAN_LONG} ;;
 trial) plan=${PLAN_TRIAL} ;;
 ipi) plan=${PLAN_IPI} ;;
+pause) plan=${PLAN_PAUSE} ;;
 esac
 for item in ${plan}; do
 	echo "${item}" | grep -Eq '^(timerlat|cyclictest|idle|quiet|load):[0-9]+$' ||
@@ -1137,6 +1150,7 @@ cycle=default
 vm_bytes=2G
 threshold_us=${THRESHOLD_US}
 trace_us=${TRACE_US}
+[ "${preset}" = pause ] && trace_us=${TRACE_PAUSE_US}
 any_uptime=no
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -1200,6 +1214,7 @@ echo "${trace_us}" | grep -Eq '^[0-9]+$' || die "bad --trace-us '${trace_us}'"
 [ "${trace_us}" -le "${threshold_us}" ] || trace_us=${threshold_us}
 echo "${vm_bytes}" | grep -Eq '^[0-9]+[MG]$' || die "bad --vm-bytes '${vm_bytes}' (examples: 512M, 2G)"
 [ "${preset}" = trial ] && [ "${cycle}" = default ] && cycle=${CYCLE_TRIAL}
+[ "${preset}" = pause ] && [ "${cycle}" = default ] && cycle=${CYCLE_PAUSE}
 if [ "${cycle}" != default ]; then
 	for item in ${cycle}; do
 		echo "${item}" | grep -Eq '^(full|power|burst-a|burst-b|burst-c|rest):[0-9]+$' ||
