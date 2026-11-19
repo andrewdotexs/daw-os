@@ -104,6 +104,8 @@ Usage:
   ${PROG} --status                 what is running, or the last summary
   ${PROG} --stop                   stop the campaign that is running
   ${PROG} --summary DIR            rewrite and show the summary of DIR
+  ${PROG} --judge [DIR]            judge again the steps of DIR (default: the
+                                   last campaign) from the files they left
   ${PROG} --cleanup                remove the load file from "shared"
 
 PLAN is "short" (${PLAN_SHORT}),
@@ -275,6 +277,9 @@ timerlat_fields() {
 		function show(value) { return sprintf("%.2f", value / 1000) }
 		/^ALL:/ { done = 1 }
 		done { next }
+		# With nine digits rtla leaves no space after the label:
+		# "count:345574889". Changing the line splits it again.
+		/^[a-z]+:[0-9-]/ { sub(/:/, ": ") }
 		$1 == "Index" {
 			for (i = 2; i <= NF; i++) kind[i] = substr($i, 1, 3)
 			columns = NF
@@ -304,7 +309,7 @@ timerlat_fields() {
 		}
 		END {
 			if (!total["Usr"]) { print "samples: 0"; exit }
-			printf "samples: %d\n", total["Usr"]
+			printf "samples: %.0f\n", total["Usr"]
 			printf "irq_max_us: %s\n", show(high["IRQ"])
 			printf "thr_max_us: %s\n", show(high["Thr"])
 			printf "usr_avg_us: %s\n", show(weighted["Usr"] / total["Usr"])
@@ -332,7 +337,7 @@ cyclictest_fields() {
 			total = over
 			for (i = 1; i <= rows; i++) total += hist[row[i]]
 			if (!total) { print "samples: 0"; exit }
-			printf "samples: %d\n", total
+			printf "samples: %.0f\n", total
 			target = total * 0.99999
 			found = ""
 			for (i = 1; i <= rows; i++) {
@@ -979,6 +984,49 @@ case "${1:-}" in
 	mkdir -p "${RUN}"
 	summarize "$2"
 	cat "$2/summary.txt"
+	exit 0
+	;;
+--judge)
+	# The verdict again, from what the measurement left on disk: for a
+	# campaign whose figures a defect of this script could not read.
+	# Nothing is measured, and the first verdict is kept beside the new.
+	systemctl is-active --quiet "${UNIT}" 2> /dev/null && die "a campaign is running"
+	dir=${2:-$(latest_dir)}
+	if [ ! -d "${dir}" ] || [ ! -r "${dir}/meta.txt" ]; then
+		die "--judge needs the directory of a campaign"
+	fi
+	threshold_us=$(field "${dir}/meta.txt" threshold_us)
+	live_cpus=$(field "${dir}/meta.txt" live_cpus)
+	if [ -z "${threshold_us}" ] || [ -z "${live_cpus}" ]; then
+		die "${dir}/meta.txt does not say the limit or the live CPUs"
+	fi
+	mkdir -p "${RUN}" 2> /dev/null || RUN=$(mktemp -d)
+	for step in "${dir}"/[0-9]*-*/; do
+		step=${step%/}
+		[ -r "${step}/result.txt" ] || continue
+		[ -r "${step}/result-first.txt" ] || cp "${step}/result.txt" "${step}/result-first.txt"
+		judge "${step}" "$(field "${step}/result-first.txt" kind)" \
+			"$(field "${step}/result-first.txt" seconds)" \
+			"$(field "${step}/result-first.txt" tool_exit_status)"
+		first=$(field "${step}/result-first.txt" verdict)
+		again=$(field "${step}/result.txt" verdict)
+		if [ "${first}" != "${again}" ]; then
+			number=${step##*/}
+			number=${number%%-*}
+			echo "note: step ${number} judged again on $(date -u +%Y-%m-%d) from the files of the measurement; first verdict '${first}' (kept in result-first.txt), now '${again}'" >> "${step}/notes.txt"
+			case "${again}" in
+			PASS*)
+				# The plan stopped here for the first verdict alone.
+				if grep -q "^stopped: step ${number} did not pass" "${dir}/steps.txt" 2> /dev/null; then
+					sed "s/^stopped: step ${number} did not pass.*/after step ${number} the plan ended on its first verdict, corrected later/" \
+						"${dir}/steps.txt" > "${RUN}/steps.txt" && cat "${RUN}/steps.txt" > "${dir}/steps.txt"
+				fi
+				;;
+			esac
+		fi
+	done
+	summarize "${dir}"
+	cat "${dir}/summary.txt"
 	exit 0
 	;;
 --cleanup)
