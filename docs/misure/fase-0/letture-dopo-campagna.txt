@@ -1,0 +1,158 @@
+
+== when and what ==
+read_utc: 2026-11-19T17:06:36Z
+uptime_s: 1321
+image_version: 0.0.1.20261117231225
+kernel: Linux 6.18.64-dawos #1 SMP PREEMPT_RT Tue Nov 17 22:49:31 CET 2026
+bios: 3402 09/18/2026
+microcode: 0x122 
+profile: 285k
+modules_loaded: 0
+
+== registers of the processor, read on cpu 16 ==
+0xE2  package C-state limit and lock (MSR_PKG_CST_CONFIG_CONTROL): 0000000000008000
+0x1FC power control, bit 1 is C1E (MSR_POWER_CTL): 0000000000f8005d
+0x610 package power limits and lock (MSR_PKG_POWER_LIMIT): 0042850000df8500
+0x34  SMI count since power-on (MSR_SMI_COUNT): 000000000000019a
+0x620 limits of the uncore frequency ratio (MSR_UNCORE_RATIO_LIMIT): 0000000000000826
+0x621 current uncore frequency ratio, reading 1: 0000000024090025
+0x621 current uncore frequency ratio, reading 2: 000000001eab0023
+0x621 current uncore frequency ratio, reading 3: 000000001eab0023
+0x621 current uncore frequency ratio, reading 4: 000000001eab0023
+0x621 current uncore frequency ratio, reading 5: 000000001eab0023
+
+== idle states the kernel offers ==
+driver: none
+
+== what the firmware leaves to the kernel (kernel log) ==
+ACPI FADT declares the system doesn't support PCIe ASPM, so disable it
+acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
+acpi PNP0A08:00: _OSC: OS now controls [PME PCIeCapability LTR]
+acpi PNP0A08:00: FADT indicates ASPM is unsupported, using BIOS configuration
+acpi PNP0A08:01: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
+acpi PNP0A08:01: _OSC: OS now controls [PME PCIeCapability LTR]
+acpi PNP0A08:01: FADT indicates ASPM is unsupported, using BIOS configuration
+igc 0000:83:00.0: can't disable ASPM; OS doesn't have ASPM control
+
+== vulnerabilities and page-table isolation ==
+gather_data_sampling: Not affected
+ghostwrite: Not affected
+indirect_target_selection: Not affected
+itlb_multihit: Not affected
+l1tf: Not affected
+mds: Not affected
+meltdown: Not affected
+mmio_stale_data: Not affected
+old_microcode: Not affected
+reg_file_data_sampling: Not affected
+retbleed: Not affected
+spec_rstack_overflow: Not affected
+spec_store_bypass: Mitigation: Speculative Store Bypass disabled via prctl
+spectre_v1: Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+spectre_v2: Mitigation: Enhanced / Automatic IBRS; IBPB: conditional; PBRSB-eIBRS: Not affected; BHI: BHI_DIS_S
+srbds: Not affected
+tsa: Not affected
+tsx_async_abort: Not affected
+vmscape: Mitigation: IBPB before exit to userspace
+pti flag of the processor: absent
+
+== kernel configuration, the options that matter here ==
+CONFIG_NO_HZ_FULL=y
+CONFIG_CONTEXT_TRACKING_USER=y
+# CONFIG_X86_CPU_RESCTRL is not set
+CONFIG_X86_MSR=y
+CONFIG_HZ=1000
+CONFIG_X86_BUS_LOCK_DETECT=y
+CONFIG_MITIGATION_PAGE_TABLE_ISOLATION=y
+CONFIG_GENERIC_SYSCALL=y
+CONFIG_COMPACTION=y
+CONFIG_SND_USB_AUDIO=y
+# CONFIG_INTEL_UNCORE_FREQ_CONTROL is not set
+
+== memory settings ==
+transparent_hugepage: not in this kernel
+compact_unevictable_allowed: 0
+stat_interval: 120
+
+== bus locks seen by the kernel, in every boot the journal holds ==
+x86/split lock detection: #AC: crashing the kernel on kernel split_locks and warning on user-space split_locks
+lines: 0
+
+== boots the journal holds ==
+ -5 408ca2acd14541bca86bf3deb179ea16 Tue 2026-11-17 23:10:08 UTC Tue 2026-11-17 23:10:09 UTC
+ -4 e67b7210795e4242854b1fae83ebf257 Tue 2026-11-17 23:10:25 UTC Tue 2026-11-17 23:11:37 UTC
+ -3 83989535d5044df8a4db36ae57eac579 Tue 2026-11-17 23:11:52 UTC Tue 2026-11-17 23:12:38 UTC
+ -2 c10ef8c631414d4ca9d50a58a9bbec7c Tue 2026-11-17 23:12:54 UTC Thu 2026-11-19 13:26:32 UTC
+ -1 b5dffb246aaa4c25aed6f3f3989b2357 Thu 2026-11-19 13:29:25 UTC Thu 2026-11-19 13:51:42 UTC
+  0 91db4f731b1f4e17bd87c7ca27b9489c Thu 2026-11-19 16:44:36 UTC Thu 2026-11-19 17:06:36 UTC
+
+== the last lines of the previous boot ==
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped Dispatch Password Requests to Console Directory Watch.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: systemd-ask-password-wall.path: Deactivated successfully.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped Forward Password Requests to Wall Directory Watch.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped target Image Downloads.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped target Local Integrity Protected Volumes.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped target Local Verity Protected Volumes.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: systemd-importd.socket: Deactivated successfully.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Closed Disk Image Download Service Socket.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: systemd-boot-random-seed.service: Deactivated successfully.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped Update Boot Loader Random Seed.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopping Network Name Resolution...
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopping Network Time Synchronization...
+2026-11-19T13:51:42+00:00 dawos systemd[1]: systemd-tmpfiles-setup.service: Deactivated successfully.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped Create System Files and Directories.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped target Local File Systems.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: boot.automount: Deactivated successfully.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Unset automount EFI System Partition Automount.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Unmounting /etc/machine-id...
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Unmounting Temporary Directory /tmp...
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopping Flush Journal to Persistent Storage...
+2026-11-19T13:51:42+00:00 dawos systemd[1]: systemd-networkd-persistent-storage.service: Deactivated successfully.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped Enable Persistent Storage in systemd-networkd.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopping Network Configuration...
+2026-11-19T13:51:42+00:00 dawos systemd[1]: systemd-resolved.service: Deactivated successfully.
+2026-11-19T13:51:42+00:00 dawos systemd[1]: Stopped Network Name Resolution.
+
+== USB: which controller each bus belongs to ==
+usb1: 0000:00:0d.0, 480 Mbit/s
+usb2: 0000:00:0d.0, 20000 Mbit/s
+usb3: 0000:80:14.0, 480 Mbit/s
+usb4: 0000:80:14.0, 20000 Mbit/s
+
+== USB: the tree ==
+/:  Bus 001.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/1p, 480M
+/:  Bus 002.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/2p, 20000M/x2
+/:  Bus 003.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/14p, 480M
+    |__ Port 002: Dev 002, If 0, Class=Vendor Specific Class, Driver=[none], 12M
+    |__ Port 002: Dev 002, If 2, Class=Human Interface Device, Driver=usbhid, 12M
+    |__ Port 004: Dev 003, If 0, Class=Hub, Driver=hub/4p, 480M
+/:  Bus 004.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/8p, 20000M/x2
+
+== USB: the devices (no serial numbers) ==
+3-2: 0b05:19af AsusTek Computer Inc. / AURA LED Controller, 12 Mbit/s
+3-4: 05e3:0608  / USB2.0 Hub, 480 Mbit/s
+
+== USB controllers: interrupts and the CPUs they may reach ==
+irq 188: xhci_hcd, total 0, allowed on 20-23, effective 23; counted on: none
+irq 196: xhci_hcd, total 73, allowed on 20-23, effective 21; counted on: cpu21=73 
+
+== sound cards ==
+--- no soundcards ---
+
+== graphics cards and their drivers ==
+00:02.0 VGA compatible controller [0300]: Intel Corporation Arrow Lake-S [Intel Graphics] [8086:7d67] (rev 06)
+	DeviceName: Onboard IGD
+	Kernel modules: xe
+modules named nvidia or nouveau: 0
+
+== interrupt counters of the live CPUs since boot ==
+live_cpus: 4-7
+NMI: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+IWI: cpu4=7 cpu5=5 cpu6=8 cpu7=7
+RES: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+CAL: cpu4=220 cpu5=223 cpu6=217 cpu7=218
+TLB: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+TRM: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+THR: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+MCE: cpu4=0 cpu5=0 cpu6=0 cpu7=0
+MCP: cpu4=3 cpu5=3 cpu6=3 cpu7=3
