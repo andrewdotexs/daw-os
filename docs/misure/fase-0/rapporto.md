@@ -3,7 +3,7 @@
 - **Che cos'è**: il rapporto di chiusura della Fase 0, chiesto dal documento 0 al passo P0.8. Dice che cosa è stato misurato, su quale configurazione, con quale esito, e che cosa resta aperto per la Fase 1.
 - **Macchina**: il 285K (ASUS ROG STRIX Z890-I, Intel Core Ultra 9 285K, 64 GB); la scheda completa è in [hardware-285k.md](../../fasi/fase-0/hardware-285k.md).
 - **Date**: la fase è andata dal 13 al 19 novembre 2026; la campagna di misura dal 18 al 19.
-- **Stato**: **in completamento**. Mancano le letture e i conteggi della sezione 10.4 e l'aggiornamento degli ADR; il rapporto diventa definitivo alla chiusura del passo P0.8.
+- **Stato**: completo, redatto il 19 novembre 2026; definitivo con la chiusura del passo P0.8 e l'etichetta `fase-0`.
 
 Le etichette sono quelle del documento 0: _(verificato)_ per ciò che è misurato o letto nei dati, _(stima)_ per ciò che è calcolato da altri numeri, _(da verificare)_ per ciò che è supposto.
 
@@ -176,6 +176,8 @@ Ogni risveglio sopra i 20 µs ha lasciato una traccia del kernel. Sono sei, e ha
 
 **Che cosa sono, come ipotesi**: pause di circa 18 µs che vengono da sotto il sistema operativo e toccano più core insieme, provocate da qualcosa che la miscela di carico fa nel suo primo minuto. Non sono SMI (contatore fermo), né limitazioni termiche (contatori fermi), né effetto del limite di potenza (a 160 W il massimo è 6 µs). Dalla coda dell'istogramma le pause sarebbero dell'ordine del migliaio in 24 ore _(stima)_: quasi sempre cadono tra un risveglio e l'altro e non si vedono. La causa non è nota; trovarla è il punto aperto A-43.
 
+Le letture fatte dopo la campagna (sezione 10.4) restringono il campo. **Non è un programma che blocca il bus della memoria**: il kernel segnala quei blocchi, e in 38 ore non ne ha segnalato nessuno. **Resta in piedi la frequenza della parte comune del processore** (anello e cache L3): il firmware la lascia libera tra 0,8 e 3,8 GHz, e si muove anche a macchina ferma. Che sia lei a fermare i core per 18 µs non è provato.
+
 ## 6. Le misure brevi e la controprova
 
 Il 18 novembre 2026, prima delle 24 ore, con la sola miscela del documento 0 e cicli di dieci minuti. Dati in `docs/misure/fase-0/raw/campaign-20261118T100850Z`.
@@ -294,23 +296,72 @@ La risposta al dubbio della nota è quindi sì, con una precisazione: i casi da 
 
 Se la Scarlett di quarta generazione sia trattata con feedback implicito non risulta dal sorgente: per Focusrite non c'è una regola dedicata al feedback, e il riconoscimento generico dipende dai descrittori che il dispositivo presenta _(da verificare con la scheda collegata: `/proc/asound/card*/stream0`)_.
 
-### 10.4 I dati in sola lettura chiesti per A-49 e A-50
+### 10.4 Le letture in sola lettura
 
-Ciò che il repository sapeva già _(verificato)_:
+Fatte il 19 novembre 2026 alle 17:06 UTC con `tools/read-after-campaign.sh`; il file completo è `docs/misure/fase-0/letture-dopo-campagna.txt`. Tra la campagna e queste letture l'utente ha spento e riacceso la macchina due volte; l'immagine, il profilo e l'esito del controllo di avvio sono gli stessi _(verificato con `make remote-test`)_.
 
-| Domanda | Risposta | Da dove |
+**Lo stato del firmware, come lo riporta il processore.** È il riferimento per la verifica a ogni avvio (A-48). La lettura dei campi è mia, e va ricontrollata sul manuale del processore quando la verifica si scrive.
+
+| Che cosa | Letto | Che cosa vuol dire |
 | --- | --- | --- |
-| Il kernel ha l'isolamento delle tabelle delle pagine? | Sì, compilato (`MITIGATION_PAGE_TABLE_ISOLATION`); `pti=on` si può provare senza ricostruire il kernel | Configurazione del kernel |
-| Pulizie della TLB sui core live sotto carico | 4 in 24 ore, sui quattro core insieme | Campagna |
-| Chiamate di funzione sui core live sotto carico | Circa una al minuto per core, oltre a quelle dello strumento di misura; mittente non noto | Campagna, A-47 |
-| Moduli NVIDIA o `nouveau` | Nessun modulo caricato, di nessun tipo; `nouveau` non è nel kernel | Campagna, configurazione |
-| Driver della RTX 5080 | Nessuno. La sua funzione audio HDMI è però presa da `snd_hda_intel`, che è nel kernel | [hardware-285k.md](../../fasi/fase-0/hardware-285k.md) |
-| Controller USB | Due: quello del processore (Thunderbolt 4, `00:0d.0`), oggi vuoto, e quello del chipset (`80:14.0`), con tastiera e ricevitori | Topologia del 17 novembre |
-| Dove è collegata la Scarlett | Non era collegata il 17 novembre: nessuna scheda audio vista dal kernel | Topologia del 17 novembre |
+| BIOS | 3402 del 18 settembre 2026 | — |
+| Microcodice | `0x122`, uguale su tutti i core | — |
+| Registro `0xE2` | `0x8000` | Nessuno stato di riposo del package; configurazione bloccata dal firmware |
+| Registro `0x1FC` | `0xf8005d` | C1E spento (bit 1 a zero) |
+| Registro `0x610` | `0x0042850000df8500` | PL1 e PL2 a 160 W, entrambi attivi; il registro non è bloccato |
+| Registro `0x34` | 410 | SMI dall'accensione, letti a 22 minuti dall'avvio: sono dell'avvio. In ogni misura della fase il contatore è rimasto fermo |
+| Stati di riposo esposti | Nessun driver `cpuidle` | Il kernel usa il solo riposo di base del processore, come già noto (A-22) |
+| Ciò che il firmware lascia al kernel | PME, capacità PCIe, LTR | Non la segnalazione degli errori PCIe (AER), che resta al firmware; ASPM è dichiarato non supportato |
 
-Ciò che si legge ora, con `tools/read-after-campaign.sh`, in `docs/misure/fase-0/letture-dopo-campagna.txt`: stato di Meltdown e delle altre vulnerabilità; i registri del processore che descrivono il firmware (riferimento per A-48); controller, interrupt e affinità dell'USB; la scheda audio, se collegata; avvisi di blocco del bus e frequenza della parte comune del processore (A-43). **In attesa della lettura.**
+**Per il rinvio degli interrupt tra core (A-49).**
 
-Ciò che si conta ora, con il piano `ipi` della campagna, tre ore: gli interrupt arrivati a ciascun core live in un'ora a macchina ferma, in un'ora con il solo monitoraggio della campagna, in un'ora sotto carico, senza alcuno strumento di tracciamento. Risponde alla domanda di A-49 e separa, per A-47, ciò che manda lo script da ciò che manda il carico. **In attesa della misura.**
+| Domanda | Risposta |
+| --- | --- |
+| `/sys/devices/system/cpu/vulnerabilities/meltdown` | `Not affected`; il processore non ha il flag `pti` |
+| `MITIGATION_PAGE_TABLE_ISOLATION` nel kernel | Sì: `pti=on` si può provare senza ricostruire il kernel |
+| `NO_HZ_FULL`, `CONTEXT_TRACKING_USER` | Sì, entrambi |
+
+Accendere l'isolamento delle tabelle delle pagine sarebbe quindi un costo senza una ragione di sicurezza: lo giustificherebbe solo il guadagno sui core live, che è ciò che il piano di A-49 deve misurare.
+
+**Per il driver audio e gli altri driver (A-50).**
+
+| Domanda | Risposta |
+| --- | --- |
+| Controller USB | Due. Quello del processore (Thunderbolt 4, `00:0d.0`, bus 1 e 2) è vuoto. Quello del chipset (`80:14.0`, bus 3 e 4) ha solo due dispositivi della scheda madre: il controller dei LED e un hub |
+| Interrupt dei controller | Due (188 e 196), ammessi solo sui core 20–23; contati finora solo sul core 21 |
+| La Scarlett | Non collegata: il kernel non vede schede audio. A quale controller andrà, e se il kernel la tratta con feedback implicito, si legge quando viene collegata |
+| Moduli NVIDIA o `nouveau` | Nessuno; nessun modulo di alcun tipo è caricato |
+| La RTX 5080 | **Non è nella macchina dal 14 novembre 2026**: è stata tolta nel passo P0.4b, perché senza driver consumava 27 W a riposo (rischio K-14). Sul bus PCI non c'è alcun dispositivo NVIDIA. La riga «NVIDIA» della tabella dei driver, nella nota, va letta così |
+| `snd_hda_intel` | Non è nel kernel dal passo P0.4b |
+
+**Per le pause di 18 µs (A-43).**
+
+| Candidato | Letto | Esito |
+| --- | --- | --- |
+| Un programma che blocca il bus della memoria | Il kernel era nel modo che segnala questi blocchi; zero segnalazioni in tutti gli avvii conservati, compreso quello della campagna, durato 38 ore | **Cade** |
+| Un cambio di frequenza della parte comune del processore | Limiti tra 8 e 38, cioè 0,8 e 3,8 GHz (registro `0x620` = `0x826`); il valore corrente è passato da 37 a 35 tra due letture a un secondo l'una dall'altra, a macchina ferma (registro `0x621`) | **Resta**: la frequenza è libera e si muove. Non è provato che sia la causa |
+
+La prova che decide è della Fase 1: fissare quella frequenza, minimo uguale al massimo, e ripetere la fase `full` con la traccia.
+
+**Per lo spegnimento (A-51).** Il registro dell'avvio precedente finisce alle 13:51:42 UTC nel mezzo dell'arresto ordinato dei servizi, quando si ferma anche il servizio che scrive il registro. Lo spegnimento è quindi arrivato alla sua ultima parte; che cosa succeda dopo, fino alla richiesta al firmware, non resta scritto.
+
+### 10.5 Gli interrupt sui core live, tre ore senza strumenti di tracciamento
+
+Il piano `ipi` della campagna, il 19 novembre 2026 dalle 17:08 alle 20:09 UTC. Dati in `docs/misure/fase-0/raw/campaign-20261119T170830Z`. Per ogni core live, in un'ora:
+
+| Ora | Che cosa gira | Chiamate di funzione | Pulizie della TLB | Interrupt di dispositivo | SMI |
+| --- | --- | --- | --- | --- | --- |
+| `idle` | Niente, nemmeno il monitoraggio | 4 | 0 | 0 | 0 |
+| `quiet` | Il solo monitoraggio della campagna | 2 | 1 | 0 | 0 |
+| `load` | Monitoraggio e carico a cicli di dieci minuti | 37 | 1 | 0 | 0 |
+
+- **I quattro core live hanno sempre lo stesso conteggio**: sono chiamate mandate a tutti i core insieme.
+- **Non è il campionatore dello script** a mandarle, come avevo sospettato (A-47): con il solo monitoraggio sono 2 in un'ora.
+- **È il carico**: 37 in un'ora, una ogni cento secondi circa. Nella campagna, con lo strumento di misura acceso, erano 52–66.
+- **Che cosa sono, come ipotesi**: il carico avvia e ferma processi a ogni fase, e il kernel, liberando la memoria delle loro pile, ripulisce le proprie tabelle delle pagine su tutti i core. I contatori non distinguono queste pulizie dalla riscrittura del codice del kernel: sono entrambe chiamate di funzione. È il tipo di interrupt che la serie di patch di A-49 rinvia; quale sia davvero lo dice una traccia, nella Fase 1.
+- **Quanto pesa oggi**: un interrupt di uno o due microsecondi ogni cento secondi per core _(stima della durata)_. Poco nel totale; ma l'ADR 0021 chiede zero nella fase di calcolo, e queste sono le eccezioni da rinviare o da documentare.
+
+**Il collegamento di rete è caduto altre due volte**, una nell'ora ferma e una in quella con il solo monitoraggio: non dipende dal carico. Le nove cadute dei due giorni stanno tutte tra le 14:18 e le 19:16 ora locale; nessuna di notte, nessuna al mattino. Fa pensare a qualcosa fuori dalla macchina _(ipotesi; A-36)_.
 
 ## 11. Che cosa resta aperto per la Fase 1
 
@@ -336,9 +387,8 @@ L'elenco completo, con l'origine di ogni punto, è il [registro dei punti aperti
 
 | Punto | Che cosa |
 | --- | --- |
-| A-43 | L'obiettivo dei 20 µs: la causa delle pause di 18 µs; strumento o periodo nel confronto tra `timerlat` e `cyclictest` |
-| A-47 | Chi manda una chiamata di funzione al minuto a ogni core live durante la campagna |
-| A-49 | La prova della serie di patch che rinvia gli interrupt tra core, con un piano da confermare prima di scrivere codice |
+| A-43 | L'obiettivo dei 20 µs: la prova con la frequenza della parte comune del processore fissata; strumento o periodo nel confronto tra `timerlat` e `cyclictest` |
+| A-49 | La prova della serie di patch che rinvia gli interrupt tra core, con un piano da confermare prima di scrivere codice; prima ancora, una traccia che dica che cosa sono le 37 chiamate di funzione all'ora sotto carico |
 | A-50 | La misura che decide se serve un driver audio proprio: latenza di andata e ritorno, syscall per ciclo, tre configurazioni di `snd-usb-audio` |
 
 **Più avanti**:
@@ -358,6 +408,9 @@ L'elenco completo, con l'origine di ogni punto, è il [registro dei punti aperti
 | Le 24 ore | `docs/misure/fase-0/raw/campaign-20261118T130002Z` |
 | 10 minuti, 1 ora, controprova | `docs/misure/fase-0/raw/campaign-20261118T100850Z` |
 | Le due prove di cinque minuti | `docs/misure/fase-0/raw/campaign-20261118T095643Z`, `campaign-20261118T124501Z` |
+| Le letture dopo la campagna | `docs/misure/fase-0/letture-dopo-campagna.txt` |
+| I conteggi degli interrupt, tre ore | `docs/misure/fase-0/raw/campaign-20261119T170830Z` |
+| Il rumore hardware dopo la campagna | `docs/misure/fase-0/raw/hwnoise-20261119T133014Z-dopo-campagna` |
 | L'accettazione della configurazione ferma | `docs/misure/fase-0/raw/`, cartelle `hwnoise-`, `osnoise-` e `wakeup-` che finiscono in `-ferma` |
 | Topologia e flag del processore | `docs/misure/fase-0/topologia-285k.txt` |
 | Le guide dei passi, con scelte e risultati | `docs/fasi/fase-0/` |

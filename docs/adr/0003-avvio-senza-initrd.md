@@ -1,6 +1,6 @@
 # ADR 0003 — Avvio senza initrd, con prova a tempo
 
-- **Stato**: accettata. Confermata in QEMU nel sotto-passo P0.5b (15 novembre 2026); restano da vedere il 285K e il ritorno allo slot B
+- **Stato**: accettata. Confermata in QEMU nel sotto-passo P0.5b (15 novembre 2026); sul 285K dall'installazione finale (P0.5f, 15 novembre 2026), con un avvio di 20 secondi di cui 14 del firmware; il ritorno all'immagine precedente è provato sul 285K nel sotto-passo P0.6e (17 novembre 2026)
 - **Data**: 13 novembre 2026
 - **Origine**: D-03 del documento 0
 

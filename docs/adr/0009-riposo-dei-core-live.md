@@ -1,6 +1,6 @@
 # ADR 0009 — Stato di riposo dei core live
 
-- **Stato**: accettata il 16 novembre 2026 per il 285K, sui numeri del sotto-passo P0.6b (esperimento E-01), e confermata lo stesso giorno da una misura di mezz'ora per caso
+- **Stato**: accettata il 16 novembre 2026 per il 285K, sui numeri del sotto-passo P0.6b (esperimento E-01), e confermata lo stesso giorno da una misura di mezz'ora per caso; confermata dalla campagna P0.7 il 19 novembre 2026: con i core live a riposo in C1 tra un risveglio e l'altro, 24 ore sotto carico danno un ritardo medio di 2,03 µs e massimo di circa 21 µs, e le raffiche brevi sui P-core vicini non lo peggiorano (punto A-33, chiuso). Il riposo in C1 è la fase di attesa dell'[ADR 0021](0021-core-live-senza-kernel.md)
 - **Data**: 13 novembre 2026
 - **Origine**: D-09 e K-04 del documento 0
 

@@ -1,6 +1,6 @@
 # ADR 0007 — Buildroot LTS come sottomodulo e kernel fissato
 
-- **Stato**: accettata
+- **Stato**: accettata; kernel 6.18.64 dal 17 novembre 2026; regola per le patch fuori albero aggiunta il 19 novembre 2026
 - **Data**: 13 novembre 2026
 - **Origine**: D-07 del documento 0
 
@@ -28,6 +28,8 @@ Una campagna di misura vale solo se si sa esattamente su cosa è stata fatta. Bu
 - Le versioni dei pacchetti derivano dal tag: systemd 258.7 _(verificato)_.
 - L'impronta del kernel protegge dallo scaricamento di un archivio alterato; cambia insieme al numero di versione.
 - Le correzioni di sicurezza del kernel arrivano con ritardo, fino alla chiusura della fase in corso. Per una macchina di sviluppo senza servizi esposti è accettabile; per `prod` la regola andrà rivista.
+- **Patch fuori albero** (decisione dell'utente del 19 novembre 2026, [ADR 0021](0021-core-live-senza-kernel.md)): il kernel di dawOS è quello a monte, e non si riscrive. È ammesso un insieme piccolo di patch, a tre condizioni per ciascuna: arriva con la misura che la giustifica; viene proposta a monte quando possibile; ha un responsabile del riporto a ogni nuova LTS. Oggi le patch sono zero. La prima candidata è la serie che rinvia gli interrupt tra core (punto aperto A-49), che entra solo se il guadagno sui core live supera il costo dell'isolamento delle tabelle delle pagine sul resto del sistema.
+- **Solo come direzione**, non per la Fase 1: uno scheduler in BPF (`sched_ext`) per il dominio anticipativo, che conosca le dipendenze del grafo.
 
 ## Quando si riapre
 

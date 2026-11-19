@@ -1,6 +1,6 @@
 # ADR 0002 — Isolamento statico dei core al boot
 
-- **Stato**: accettata; confermata il 16 novembre 2026 dall'esperimento E-03 (sotto-passo P0.6c), che ne corregge le motivazioni
+- **Stato**: accettata; confermata il 16 novembre 2026 dall'esperimento E-03 (sotto-passo P0.6c), che ne corregge le motivazioni; confermata dalla campagna P0.7 il 19 novembre 2026: in 24 ore sotto carico nessun interrupt di dispositivo ha raggiunto un core live
 - **Data**: 13 novembre 2026
 - **Origine**: D-02 e C-02 del documento 0
 - **Modifica una decisione vincolante**: «partizione ibrida» del master prompt, sezione Kernel

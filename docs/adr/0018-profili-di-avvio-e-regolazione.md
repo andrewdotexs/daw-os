@@ -1,6 +1,6 @@
 # ADR 0018 — Profili di avvio e regolazione all'avvio
 
-- **Stato**: accettata con il sotto-passo P0.6a per la variante `dev`, superato il 16 novembre 2026; frequenza, stato di riposo e _fair server_ dei core live decisi sulle misure del sotto-passo P0.6b
+- **Stato**: accettata con il sotto-passo P0.6a per la variante `dev`, superato il 16 novembre 2026; frequenza, stato di riposo e _fair server_ dei core live decisi sulle misure del sotto-passo P0.6b; il profilo `285k` così regolato è la configurazione certificata dalla campagna P0.7 (19 novembre 2026), compresa la frequenza fissa dei P-core non live del punto 17. Dopo la chiusura della Fase 0 `dawos-tune` prende anche la verifica del firmware a ogni avvio (punto aperto A-48, [ADR 0021](0021-core-live-senza-kernel.md))
 - **Data**: 15 novembre 2026
 - **Origine**: documento 0, contraddizione C-03 e passo P0.6; ADR 0002 (isolamento statico dei core); ADR 0015, punto 5 (le varianti della riga di comando sono profili dell'immagine firmata)
 
