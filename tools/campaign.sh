@@ -141,6 +141,7 @@ Options of --start:
   --shared-dev DEV    where the file goes (default: the partition "shared")
   --cycle "PHASES"    phases of a cycle, as name:seconds
   --vm-bytes SIZE     memory of each of the four stress-ng vm workers (default 2G)
+  --no-vm             no stress-ng vm workers at all
   --trace-us N        save a trace above N us (default ${TRACE_US}; the first ${MAX_TRACES})
   --threshold-us N    for trials only: the limit, instead of ${THRESHOLD_US} us
   --any-uptime        do not wait for the fifth minute after power-on
@@ -483,10 +484,19 @@ run_phase() {
 	case "${phase}" in
 	full)
 		start_fio "${length}" "${phase_dir}/fio.txt" "$4-${phase}"
-		stress-ng --taskset "${other_cpus}" --temp-path "${RUN}" \
-			--cpu "${cpu_workers}" --cpu-method matrixprod \
-			--vm 4 --vm-bytes "${vm_bytes}" --switch 8 --timer 4 \
-			--timeout "${length}s" > "${RUN}/stress.txt" 2>&1 &
+		if [ "${vm_bytes}" = none ]; then
+			# --no-vm: the same mix without the workers that fill and
+			# read memory, to tell their part from the rest.
+			stress-ng --taskset "${other_cpus}" --temp-path "${RUN}" \
+				--cpu "${cpu_workers}" --cpu-method matrixprod \
+				--switch 8 --timer 4 \
+				--timeout "${length}s" > "${RUN}/stress.txt" 2>&1 &
+		else
+			stress-ng --taskset "${other_cpus}" --temp-path "${RUN}" \
+				--cpu "${cpu_workers}" --cpu-method matrixprod \
+				--vm 4 --vm-bytes "${vm_bytes}" --switch 8 --timer 4 \
+				--timeout "${length}s" > "${RUN}/stress.txt" 2>&1 &
+		fi
 		stress_pid=$!
 		;;
 	power)
@@ -1187,6 +1197,10 @@ while [ $# -gt 0 ]; do
 		vm_bytes=${2:-}
 		shift 2
 		;;
+	--no-vm)
+		vm_bytes=none
+		shift
+		;;
 	--threshold-us)
 		threshold_us=${2:-}
 		shift 2
@@ -1217,7 +1231,7 @@ echo "${file_mb}" | grep -Eq '^[0-9]+$' || die "bad --file-mb '${file_mb}'"
 echo "${threshold_us}" | grep -Eq '^[0-9]+$' || die "bad --threshold-us '${threshold_us}'"
 echo "${trace_us}" | grep -Eq '^[0-9]+$' || die "bad --trace-us '${trace_us}'"
 [ "${trace_us}" -le "${threshold_us}" ] || trace_us=${threshold_us}
-echo "${vm_bytes}" | grep -Eq '^[0-9]+[MG]$' || die "bad --vm-bytes '${vm_bytes}' (examples: 512M, 2G)"
+[ "${vm_bytes}" = none ] || echo "${vm_bytes}" | grep -Eq '^[0-9]+[MG]$' || die "bad --vm-bytes '${vm_bytes}' (examples: 512M, 2G)"
 [ "${preset}" = trial ] && [ "${cycle}" = default ] && cycle=${CYCLE_TRIAL}
 [ "${preset}" = pause ] && [ "${cycle}" = default ] && cycle=${CYCLE_PAUSE}
 if [ "${cycle}" != default ]; then
