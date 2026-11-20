@@ -19,6 +19,7 @@ Il 20 novembre 2026, nella parte 1 di P1.0, la causa pratica è stata isolata _(
 | Lo stesso, senza il disco | 12,02 µs | 3 |
 | Lo stesso, senza il lavoro sulla memoria | 6,69 µs | 0 |
 | Schermo acceso dal firmware, **driver `xe` caricato**, miscela intera | 7,16 µs | 0 |
+| Lo stesso, sull'immagine che carica il driver all'avvio (aggiunto dopo la verifica della parte 2 di P1.0) | 6,54 µs | 0 |
 
 Con uno schermo che il firmware ha acceso e che nessun driver prende in carico, sotto un carico che muove molta memoria i core live perdono 10–20 µs alla volta. Con il driver caricato non succede.
 
