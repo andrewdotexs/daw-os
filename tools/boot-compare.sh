@@ -10,6 +10,7 @@
 #   ssh "root@${H}" sh -s -- log BOOT      < tools/boot-compare.sh > FILE
 #   ssh "root@${H}" sh -s -- when BOOT     < tools/boot-compare.sh > FILE
 #   ssh "root@${H}" sh -s -- registers     < tools/boot-compare.sh > FILE
+#   ssh "root@${H}" sh -s -- graphics      < tools/boot-compare.sh > FILE
 #
 # Why: the whole campaign of step P0.7 ran on one boot, and on that boot
 # the machine behaved differently from every boot measured since (open
@@ -24,6 +25,11 @@
 # power counter of the graphics processor, the touch screen on USB).
 # "when" prints, with their times, the few events of one boot that say
 # when a device came or went.
+#
+# "graphics" prints what the graphics driver, once loaded, says about
+# the screen and about the changes of memory frequency under load (SAGV):
+# the pauses of the campaign are there only while no driver holds the
+# screen the firmware lit (measurements of 20 November 2026).
 #
 # BOOT is what "journalctl -b" takes: an offset (0 is the current boot,
 # -1 the one before) or the identifier printed by "boots". Messages come
@@ -171,8 +177,49 @@ registers)
 	echo "clocksource: $(cat /sys/devices/system/clocksource/clocksource0/current_clocksource 2> /dev/null)"
 	journalctl -k -b --no-pager -o cat 2> /dev/null | grep -i -E 'tsc:|clocksource:|microcode|intel_pstate|thermal|x86/cpu' | head -n 30
 	;;
+graphics)
+	echo "== when and what =="
+	date -u '+read_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "uptime_s: $(cut -d. -f1 /proc/uptime)"
+	echo "boot_id: $(tr -d '-' < /proc/sys/kernel/random/boot_id)"
+	driver=$(readlink /sys/bus/pci/devices/0000:00:02.0/driver 2> /dev/null)
+	echo "driver_bound: ${driver##*/}"
+	echo "frame_buffer: $(cat /sys/class/graphics/fb0/name 2> /dev/null)"
+	echo
+	echo "== parameters of the driver =="
+	for file in /sys/module/xe/parameters/*; do
+		[ -f "${file}" ] && echo "${file##*/}: $(cat "${file}" 2> /dev/null)"
+	done
+	echo
+	echo "== what the driver says (debugfs) =="
+	if [ ! -d /sys/kernel/debug/dri ]; then
+		# Nothing is written by mounting it; it stays mounted until the
+		# next boot.
+		mount -t debugfs none /sys/kernel/debug 2> /dev/null && echo "(debugfs was not mounted: mounted now)"
+	fi
+	found=no
+	for directory in /sys/kernel/debug/dri/*; do
+		[ -f "${directory}/i915_sagv_status" ] || continue
+		found=yes
+		echo "directory: ${directory}"
+		for name in i915_sagv_status i915_ipc_status i915_pri_wm_latency i915_dmc_info i915_fbc_status; do
+			[ -f "${directory}/${name}" ] || continue
+			echo "-- ${name}"
+			head -n 40 "${directory}/${name}" 2> /dev/null
+		done
+		echo "-- files in the directory"
+		find "${directory}" -maxdepth 1 -type f | sed 's|.*/||' | sort | tr '\n' ' '
+		echo
+		break
+	done
+	[ "${found}" = yes ] || echo "no display driver with a SAGV report: is the driver loaded?"
+	echo
+	echo "== kernel log: the driver, memory frequency points, screen =="
+	journalctl -k -b --no-pager -o cat 2> /dev/null |
+		grep -E 'SAGV|QGV|PSF GV|xe 0000|simpledrm|frame buffer|vgaarb' | mask | head -n 80
+	;;
 *)
-	echo "usage: ${PROG} boots | signatures | log BOOT | when BOOT | registers" >&2
+	echo "usage: ${PROG} boots | signatures | log BOOT | when BOOT | registers | graphics" >&2
 	exit 1
 	;;
 esac
