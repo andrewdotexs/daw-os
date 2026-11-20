@@ -1,0 +1,114 @@
+== when and what ==
+read_utc: 2026-11-20T17:39:41Z
+uptime_s: 1644
+boot_id: d53f498bdbda466db65f95745582dfe5
+driver_bound: xe
+frame_buffer: 
+
+== parameters of the driver ==
+disable_display: N
+disable_power_well: -1
+dmc_firmware_path: (null)
+edp_vswing: 0
+enable_dc: -1
+enable_dmc_wl: -1
+enable_dp_mst: Y
+enable_dpcd_backlight: -1
+enable_dpt: Y
+enable_dsb: Y
+enable_fbc: -1
+enable_flipq: N
+enable_ips: Y
+enable_panel_replay: -1
+enable_psr: -1
+enable_psr2_sel_fetch: Y
+enable_sagv: Y
+force_execlist: N
+force_probe: 7d67
+force_reset_modeset_test: N
+gsc_firmware_path: (null)
+guc_firmware_path: (null)
+guc_log_level: 1
+huc_firmware_path: (null)
+invert_brightness: 0
+load_detect_test: N
+lvds_channel_mode: 0
+nuclear_pageflip: N
+panel_use_ssc: -1
+probe_display: Y
+psr_safest_params: N
+svm_notifier_size: 512
+vbt_firmware: (null)
+vbt_sdvo_panel_type: -1
+verbose_state_checks: Y
+vram_bar_size: 0
+wedged_mode: 1
+
+== what the driver says (debugfs) ==
+directory: /sys/kernel/debug/dri/0
+-- i915_sagv_status
+SAGV available: no
+SAGV modparam: enabled
+SAGV status: not controlled
+SAGV block time: 0 usec
+-- i915_ipc_status
+Isochronous Priority Control: yes
+-- i915_pri_wm_latency
+WM0 6 (6.0 usec)
+WM1 51 (51.0 usec)
+WM2 70 (70.0 usec)
+WM3 96 (96.0 usec)
+WM4 97 (97.0 usec)
+WM5 144 (144.0 usec)
+-- i915_dmc_info
+DMC initialized: yes
+fw loaded: yes
+path: i915/mtl_dmc.bin
+Pipe A fw needed: yes
+Pipe A fw loaded: yes
+Pipe B fw needed: yes
+Pipe B fw loaded: yes
+version: 2.23
+DC3CO count: 0
+DC3 -> DC5 count: 0
+DC5 -> DC6 allowed count: 0
+program base: 0x0e004040
+ssp base: 0x00086fc0
+htp: 0x042c0408
+-- i915_fbc_status
+FBC enabled
+Compressing: yes
+* [PLANE:33:plane 1A]: FBC possible
+-- files in the directory
+
+
+== kernel log: the driver, memory frequency points, screen ==
+pci 0000:00:02.0: vgaarb: setting as boot VGA device
+pci 0000:00:02.0: vgaarb: bridge control possible
+pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+vgaarb: loaded
+[drm] Initialized simpledrm 1.0.0 for simple-framebuffer.0 on minor 0
+Console: switching to colour frame buffer device 128x48
+simple-framebuffer simple-framebuffer.0: [drm] fb0: simpledrmdrmfb frame buffer device
+xe 0000:00:02.0: vgaarb: deactivate vga console
+xe 0000:00:02.0: [drm] Found meteorlake (device ID 7d67) integrated display version 14.00 stepping D0
+xe 0000:00:02.0: vgaarb: VGA decodes changed: olddecodes=io+mem,decodes=none:owns=io+mem
+xe 0000:00:02.0: [drm] Finished loading DMC firmware i915/mtl_dmc.bin (v2.23)
+xe 0000:00:02.0: [drm] Tile0: GT0: Using GuC firmware from i915/mtl_guc_70.bin version 70.49.4
+xe 0000:00:02.0: [drm] Tile0: GT1: Using GuC firmware from i915/mtl_guc_70.bin version 70.49.4
+xe 0000:00:02.0: [drm] Tile0: GT1: Using HuC firmware from i915/mtl_huc_gsc.bin version 8.5.4
+xe 0000:00:02.0: [drm] Tile0: GT1: Using GSC firmware from i915/mtl_gsc_1.bin version 102.1.15.1926
+xe 0000:00:02.0: [drm] Tile0: GT1: can't init GSC proxy due to missing mei component
+xe 0000:00:02.0: [drm] Tile0: GT1: vcs1 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vcs3 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vcs4 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vcs5 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vcs6 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vcs7 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vecs1 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vecs2 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: vecs3 fused off
+xe 0000:00:02.0: [drm] Tile0: GT1: found GSC cv102.1.0
+xe 0000:00:02.0: [drm] Allocated fbdev into stolen
+Console: switching to colour frame buffer device 240x67
+xe 0000:00:02.0: [drm] fb0: xedrmfb frame buffer device
