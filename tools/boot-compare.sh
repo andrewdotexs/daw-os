@@ -66,10 +66,12 @@ signatures)
 	#            the graphics processor, 2 without
 	#   vga      what the graphics device owned at boot
 	#   efi_k    memory the firmware services gave back, in KiB
+	#   map      entries in the memory map of the firmware before the
+	#            first range the kernel removes (how fragmented it is)
 	#   touch    USB touch screens seen; unplug: USB disconnections;
 	#   link     network link drops; lines: length of the kernel log
-	printf '%-4s %-32s %-20s %-20s %-14s %-5s %-10s %-8s %-4s %-7s %-7s %-5s %-6s %-4s %s\n' \
-		idx boot first_utc last_utc kernel bios screen console rapl vga efi_k touch unplug link lines
+	printf '%-4s %-32s %-20s %-20s %-14s %-5s %-16s %-8s %-4s %-7s %-7s %-4s %-5s %-6s %-4s %s\n' \
+		idx boot first_utc last_utc kernel bios screen console rapl vga efi_k map touch unplug link lines
 	journalctl --list-boots --no-pager 2> /dev/null | while read -r idx id _ date1 time1 _ _ date2 time2 _; do
 		case "${idx}" in
 		IDX | "") continue ;;
@@ -85,14 +87,16 @@ signatures)
 			/^RAPL PMU: API unit/ { for (i = 1; i < NF; i++) if ($(i + 1) == "fixed") rapl = $i }
 			/vgaarb: VGA device added/ { vga = $0; sub(/.*owns=/, "", vga); sub(/,.*/, "", vga) }
 			/Freeing EFI boot services memory/ { efi = $NF; sub(/K$/, "", efi) }
+			/^efi: Remove mem[0-9]+: MMIO/ { if (map == "") { map = $3; sub(/^mem/, "", map); sub(/:$/, "", map) } }
 			/Product: TouchScreen/ { touch++ }
 			/USB disconnect/ { unplug++ }
 			/NIC Link is Down/ { link++ }
 			END {
-				printf "%-4s %-32s %-20s %-20s %-14s %-5s %-10s %-8s %-4s %-7s %-7s %-5d %-6d %-4d %d\n",
+				printf "%-4s %-32s %-20s %-20s %-14s %-5s %-16s %-8s %-4s %-7s %-7s %-4s %-5d %-6d %-4d %d\n",
 					idx, id, first, last, (kernel == "" ? "-" : kernel), (bios == "" ? "-" : bios),
 					(screen == "" ? "none" : screen), (console == "" ? "-" : console),
 					(rapl == "" ? "-" : rapl), (vga == "" ? "-" : vga), (efi == "" ? "-" : efi),
+					(map == "" ? "-" : map),
 					touch, unplug, link, NR
 			}'
 	done
