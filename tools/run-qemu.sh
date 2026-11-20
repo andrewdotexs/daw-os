@@ -551,6 +551,14 @@ if [[ ${installer} == yes ]]; then
 	)
 fi
 
+# Devices for one-off trials, such as an emulated USB sound card to try
+# tools/audio-load.sh: DAWOS_QEMU_EXTRA holds more arguments for QEMU,
+# separated by spaces.
+if [[ -n ${DAWOS_QEMU_EXTRA:-} ]]; then
+	read -r -a extra_args <<< "${DAWOS_QEMU_EXTRA}"
+	qemu_args+=("${extra_args[@]}")
+fi
+
 if [[ ${mode} == interactive ]]; then
 	echo "run-qemu: booting ${image} (accel=${accel}); leave with Ctrl-A then X" >&2
 	exec qemu-system-x86_64 "${qemu_args[@]}" -nographic
