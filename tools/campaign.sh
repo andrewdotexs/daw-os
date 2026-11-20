@@ -336,8 +336,13 @@ timerlat_fields() {
 			printf "usr_p99999_us: %s\n", percentile("Usr")
 			printf "usr_max_us: %s\n", show(high["Usr"])
 			late = over["Usr"]
-			for (i = 1; i <= rows; i++) if (row[i] >= 10000) late += hist["Usr", row[i]]
-			printf "usr_10_us_or_more: %d\n", late
+			later = over["Usr"]
+			for (i = 1; i <= rows; i++) {
+				if (row[i] >= 6000) late += hist["Usr", row[i]]
+				if (row[i] >= 10000) later += hist["Usr", row[i]]
+			}
+			printf "usr_6_us_or_more: %d\n", late
+			printf "usr_10_us_or_more: %d\n", later
 			printf "beyond_histogram: %d\n", over["Usr"]
 		}' "$1"
 }
@@ -938,7 +943,7 @@ summarize() {
 				printf '  %-8s %5s %7s %7s %7s   %s\n' "${phase}" ${figures} "${power}"
 			done
 			late=$(field "${step}result.txt" usr_10_us_or_more)
-			[ -n "${late}" ] && echo "  wake-ups of 10 us or more: ${late}; traces saved: $(field "${step}result.txt" traces)"
+			[ -n "${late}" ] && echo "  wake-ups of 6 us or more: $(field "${step}result.txt" usr_6_us_or_more), of 10 us or more: ${late}; traces saved: $(field "${step}result.txt" traces)"
 			if [ -s "${step}interrupts-live.txt" ]; then
 				echo "  interrupts on the live CPUs in the step (name, count): $(awk '{ printf "%s=%s ", $1, $2 }' "${step}interrupts-live.txt")"
 			fi
