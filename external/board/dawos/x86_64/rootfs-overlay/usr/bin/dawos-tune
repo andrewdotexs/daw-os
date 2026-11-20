@@ -15,6 +15,11 @@
 #      the CPUs whose tick it can stop must be the ones the profile names.
 #      If 1 or 2 fail, nothing is touched: the profile does not describe
 #      this machine, and applying half of it would only hide that;
+#   2a. the firmware is compared with the reference of the profile
+#      (dawos-firmware): a difference is reported, nothing more;
+#   2b. the graphics driver the profile names is loaded, and must take
+#      the GPU: a screen the firmware lit and no driver holds costs the
+#      live CPUs pauses of 10 to 20 us (measured in step P1.0);
 #   3. every interrupt that can be moved goes to the "io" CPUs;
 #   4. kernel work queues not bound to a CPU are kept off the live CPUs;
 #   5. the periodic refresh of memory statistics is slowed down, and the
@@ -39,8 +44,9 @@
 # one.
 #
 # For tests the directories it reads and writes can be redirected with
-# DAWOS_SYS, DAWOS_PROC, DAWOS_DEV, DAWOS_RUN and DAWOS_PROFILES, and the
-# virtual machine check overridden with DAWOS_VIRTUAL=0|1.
+# DAWOS_SYS, DAWOS_PROC, DAWOS_DEV, DAWOS_RUN and DAWOS_PROFILES, the
+# commands it calls replaced with DAWOS_MODPROBE and DAWOS_FIRMWARE, and
+# the virtual machine check overridden with DAWOS_VIRTUAL=0|1.
 
 set -u
 
@@ -51,6 +57,11 @@ DEV=${DAWOS_DEV:-/dev}
 RUN_DIR=${DAWOS_RUN:-/run/dawos}
 PROFILES=${DAWOS_PROFILES:-/usr/share/dawos/profiles}
 REPORT=${RUN_DIR}/topology.json
+MODPROBE=${DAWOS_MODPROBE:-modprobe}
+FIRMWARE_TOOL=${DAWOS_FIRMWARE:-dawos-firmware}
+# Seconds to wait for the graphics driver to take the GPU after it is
+# loaded. On the reference machine it takes less than one.
+GRAPHICS_WAIT=10
 CPU_DIR=${SYS}/devices/system/cpu
 # Seconds between two refreshes of the per-CPU memory statistics (the
 # kernel default is 1).
@@ -227,6 +238,106 @@ check_profile() {
 		problem "the kernel isolated CPUs '${isolated}', the profile's live CPUs are '${live}'"
 	[ "$(canonical "${nohz_full}")" = "$(canonical "${tickless}")" ] ||
 		problem "the kernel can stop the tick on CPUs '${nohz_full}', the profile says '${tickless}'"
+}
+
+# --- Step 2a: the firmware against its reference ---------------------------------------
+# dawos-firmware reads version, microcode and configuration registers
+# and compares them with the reference of the profile. Whatever it finds
+# is a note, never a problem: the boot is not marked bad for it (open
+# point A-48). It runs here, before the power limit is touched below,
+# because that limit is one of the registers it reads.
+check_firmware() {
+	firmware_status=none
+	firmware_reference=none
+	firmware_differences=
+	if ! "${FIRMWARE_TOOL}" --check > /dev/null 2>&1; then
+		: # the result file says why
+	fi
+	result=${RUN_DIR}/firmware.txt
+	if [ ! -r "${result}" ]; then
+		note "firmware: the check did not run (${FIRMWARE_TOOL})"
+		return 0
+	fi
+	firmware_status=$(sed -n 's/^status=//p' "${result}" | head -n 1)
+	firmware_status=${firmware_status:-none}
+	firmware_reference=$(sed -n 's/^reference=//p' "${result}" | head -n 1)
+	firmware_reference=${firmware_reference:-none}
+	firmware_differences=$(sed -n 's/^difference=//p' "${result}")
+	case "${firmware_status}" in
+	same | skipped) ;;
+	changed)
+		note "firmware: differs from the reference (${firmware_reference}); if the change is wanted, measure again and run 'dawos-firmware --accept'"
+		# One note per difference: split on line ends only.
+		old_ifs=${IFS}
+		IFS='
+'
+		for line in ${firmware_differences}; do
+			note "firmware: ${line}"
+		done
+		IFS=${old_ifs}
+		;;
+	*) note "firmware: not compared (${firmware_status})" ;;
+	esac
+}
+
+# --- Step 2b: graphics driver -----------------------------------------------------------
+# The profile names the driver of the integrated GPU ("graphics_driver").
+# Without it the screen stays as the firmware left it, and that state
+# costs the live CPUs: with a load that moves much memory, pauses of 10
+# to 20 us that come from below the kernel (measured on the reference
+# machine in step P1.0: 19 us without the driver, 7 us with it, same
+# boot and same load). The driver is a module nothing loads by itself
+# (/etc/modprobe.d/dawos-graphics.conf); it is loaded here, first of all,
+# so that its interrupt exists when the interrupts are moved below.
+#
+# For Arrow Lake the driver xe of Linux 6.18 binds only when told the
+# PCI device id (force_probe), which is read from the device itself: the
+# profile already applies to no other machine than the one it describes.
+
+# Print "ADDRESS DEVICE_ID" of the first Intel display controller.
+find_gpu() {
+	for device in "${SYS}"/bus/pci/devices/*; do
+		[ -r "${device}/class" ] || continue
+		case "$(read_file "${device}/class")" in
+		0x03*) ;;
+		*) continue ;;
+		esac
+		[ "$(read_file "${device}/vendor")" = 0x8086 ] || continue
+		echo "${device##*/} $(sed 's/^0x//' "${device}/device")"
+		return 0
+	done
+	return 1
+}
+
+# Name of the kernel driver bound to the PCI device $1; nothing if none.
+bound_driver() {
+	[ -L "${SYS}/bus/pci/devices/$1/driver" ] || return 0
+	basename "$(readlink "${SYS}/bus/pci/devices/$1/driver")"
+}
+
+load_graphics() {
+	graphics_wanted=$(profile_get graphics_driver)
+	graphics_bound=
+	graphics_device=
+	[ -n "${graphics_wanted}" ] || return 0
+	if ! gpu=$(find_gpu); then
+		problem "the profile asks for the graphics driver '${graphics_wanted}', and there is no Intel display controller"
+		return 0
+	fi
+	graphics_device=${gpu% *}
+	graphics_bound=$(bound_driver "${graphics_device}")
+	if [ -z "${graphics_bound}" ]; then
+		"${MODPROBE}" "${graphics_wanted}" "force_probe=${gpu#* }" > /dev/null 2>&1
+		waited=0
+		while [ "${waited}" -lt "${GRAPHICS_WAIT}" ]; do
+			graphics_bound=$(bound_driver "${graphics_device}")
+			[ -z "${graphics_bound}" ] || break
+			sleep 1
+			waited=$((waited + 1))
+		done
+	fi
+	[ "${graphics_bound}" = "${graphics_wanted}" ] ||
+		problem "the graphics driver '${graphics_wanted}' did not take the GPU ${graphics_device} (driver now: ${graphics_bound:-none})"
 }
 
 # --- Step 3: interrupts ---------------------------------------------------------
@@ -567,6 +678,7 @@ write_report() {
 		echo "  \"status\": \"${status}\","
 		echo "  \"problems\": $(json_lines "${problems}"),"
 		echo "  \"notes\": $(json_lines "${notes}"),"
+		echo "  \"firmware\": {\"check\": $(json_string "${firmware_status}"), \"reference\": $(json_string "${firmware_reference}"), \"differences\": $(json_lines "${firmware_differences}")},"
 		echo '  "machine": {'
 		echo "    \"cpu_model\": $(json_string "${cpu_model}"),"
 		echo "    \"virtual\": ${virtual},"
@@ -590,6 +702,7 @@ write_report() {
 			if [ "${applied}" = yes ]; then
 				echo '  },'
 				echo '  "tuning": {'
+				echo "    \"graphics\": {\"wanted\": $(json_string "${graphics_wanted}"), \"device\": $(json_string "${graphics_device}"), \"driver\": $(json_string "${graphics_bound}")},"
 				echo "    \"interrupts\": {\"moved\": ${irq_moved}, \"fixed\": ${irq_fixed}, \"fixed_on_live\": $(json_string "${irq_fixed_on_live}")},"
 				echo "    \"workqueue_cpumask\": $(json_string "${workqueue_mask}"),"
 				echo "    \"vm_stat_interval_s\": ${STAT_INTERVAL},"
@@ -646,6 +759,12 @@ esac
 gather_facts
 profile_file=${PROFILES}/${profile}.conf
 applied=no
+firmware_status=none
+firmware_reference=none
+firmware_differences=
+graphics_wanted=
+graphics_device=
+graphics_bound=
 
 if [ "${profile}" = generic ]; then
 	status=off
@@ -658,6 +777,14 @@ else
 		status=degraded
 	elif [ "${mode}" = apply ]; then
 		applied=yes
+		check_firmware
+		if [ "${virtual}" = true ]; then
+			graphics_wanted=$(profile_get graphics_driver)
+			[ -z "${graphics_wanted}" ] ||
+				note "virtual machine: graphics driver not loaded"
+		else
+			load_graphics
+		fi
 		move_interrupts
 		limit_workqueues
 		slow_statistics

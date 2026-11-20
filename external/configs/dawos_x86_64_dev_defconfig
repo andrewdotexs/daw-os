@@ -121,6 +121,16 @@ BR2_PACKAGE_LINUX_FIRMWARE_I915=y
 BR2_PACKAGE_LIBDRM=y
 BR2_PACKAGE_LIBDRM_INSTALL_TESTS=y
 
+# --- Audio interface (step P1.0, open point A-41) ------------------------------
+# The ALSA tools, to list the cards, play and record from the command
+# line and read the mixer: what is needed to see a USB audio interface
+# work before the engine exists. alsamixer comes with the package by
+# default, and with it the terminal library it needs.
+BR2_PACKAGE_ALSA_UTILS=y
+BR2_PACKAGE_ALSA_UTILS_APLAY=y
+BR2_PACKAGE_ALSA_UTILS_AMIXER=y
+BR2_PACKAGE_ALSA_UTILS_SPEAKER_TEST=y
+
 # Records and reads kernel traces when a latency threshold is exceeded.
 BR2_PACKAGE_TRACE_CMD=y
 # Full ps and top: scheduling class, real-time priority and CPU of every

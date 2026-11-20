@@ -234,3 +234,51 @@ if [[ -d ${gpu_firmware} ]]; then
 	find "${gpu_firmware}" \( -type f -o -type l \) ! -name 'mtl_*' -delete
 	echo "post-build: GPU firmware kept: $(find "${gpu_firmware}" \( -type f -o -type l \) -printf '%f\n' | sort | tr '\n' ' ')"
 fi
+
+# --- Files the overlay no longer has ---------------------------------------------
+# Buildroot copies the overlay over the target tree and never removes
+# from it: a file taken out of the repository would stay in every image
+# built from the same output directory. Each file retired from the
+# overlay is named here.
+#   dawos-vm-modules, dawos-vm.conf: KVM is built into the kernel since
+#   step P1.0, there are no modules to load or to keep from loading.
+rm -f "${target_dir}/usr/bin/dawos-vm-modules" "${target_dir}/etc/modprobe.d/dawos-vm.conf"
+
+# --- Kernel modules: only those of the kernel just built ---------------------------
+# For the same reason the modules of an earlier kernel version, and the
+# modules of this one that have since become part of the kernel itself,
+# stay in the target tree. A module file whose code is already in the
+# kernel is loaded by udev at boot and fails. Keep what the last kernel
+# build lists (modules.order), drop the rest, and index again.
+: "${BUILD_DIR:?BUILD_DIR is not set (post-build.sh is run by Buildroot)}"
+: "${BR2_CONFIG:?BR2_CONFIG is not set (post-build.sh is run by Buildroot)}"
+kernel_version=$(sed -n 's/^BR2_LINUX_KERNEL_VERSION="\(.*\)"$/\1/p' "${BR2_CONFIG}")
+kernel_build=${BUILD_DIR}/linux-${kernel_version}
+if [[ -n ${kernel_version} && -r ${kernel_build}/include/config/kernel.release ]]; then
+	kernel_release=$(< "${kernel_build}/include/config/kernel.release")
+	modules_root=${target_dir}/lib/modules
+	if [[ -d ${modules_root} ]]; then
+		while IFS= read -r other; do
+			echo "post-build: removing the modules of another kernel: ${other##*/}"
+			rm -rf "${other}"
+		done < <(find "${modules_root}" -mindepth 1 -maxdepth 1 -type d ! -name "${kernel_release}")
+	fi
+	modules_dir=${modules_root}/${kernel_release}
+	if [[ -d ${modules_dir}/kernel ]]; then
+		wanted=$(sed 's/\.o$//' "${kernel_build}/modules.order" 2> /dev/null || true)
+		removed=0
+		while IFS= read -r module; do
+			name=${module#"${modules_dir}/kernel/"}
+			name=${name%%.ko*}
+			if ! grep -qxF "${name}" <<< "${wanted}"; then
+				rm -f "${module}"
+				removed=$((removed + 1))
+			fi
+		done < <(find "${modules_dir}/kernel" -type f -name '*.ko*')
+		find "${modules_dir}/kernel" -depth -type d -empty -delete
+		if ((removed > 0)); then
+			echo "post-build: removed ${removed} module files that the kernel build no longer produces"
+			"${HOST_DIR:?HOST_DIR is not set}/sbin/depmod" -a -b "${target_dir}" "${kernel_release}"
+		fi
+	fi
+fi

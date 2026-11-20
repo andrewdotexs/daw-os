@@ -22,9 +22,10 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0016](0016-valutazione-dell-avvio.md) | Valutazione dell'avvio e ritorno all'immagine precedente | P0.5 | Accettata |
 | [0017](0017-aggiornamenti.md) | Aggiornamenti: meccanismo, firma, trasporto, versioni | Modifica 5 dell'utente | Accettata per `dev` |
 | [0018](0018-profili-di-avvio-e-regolazione.md) | Profili di avvio e regolazione all'avvio | C-03, P0.6 | Accettata per `dev`; il profilo `285k` è la configurazione certificata dalla campagna P0.7 |
-| [0019](0019-apertura-del-sistema-utilita-native-e-vm-linux.md) | Apertura del sistema: utilità native e VM Linux | Documento di progetto, ADR-033 | Accettata il 18 novembre 2026; nell'immagine solo la predisposizione del kernel |
+| [0019](0019-apertura-del-sistema-utilita-native-e-vm-linux.md) | Apertura del sistema: utilità native e VM Linux | Documento di progetto, ADR-033 | Accettata il 18 novembre 2026; nell'immagine solo la predisposizione del kernel, dentro il kernel da P1.0 |
 | [0020](0020-plugin-linux-di-terze-parti.md) | Plugin Linux di terze parti | Documento di progetto, ADR-034 | Accettata il 18 novembre 2026; nulla ancora nell'immagine |
 | [0021](0021-core-live-senza-kernel.md) | Core live senza kernel | Documento di progetto, ADR-038 | Accettata il 19 novembre 2026, con tre integrazioni; principio per la Fase 1 |
+| [0022](0022-driver-grafico-all-avvio.md) | Driver grafico caricato a ogni avvio | P1.0, A-43 | Accettata il 20 novembre 2026 per il profilo `285k`; cambia la decisione di A-02; misura lunga da fare |
 
 ## Corrispondenza con il documento di progetto
 

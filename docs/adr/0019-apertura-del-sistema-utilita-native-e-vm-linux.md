@@ -1,6 +1,6 @@
 # ADR 0019 — Apertura del sistema: utilità native e VM Linux
 
-- **Stato**: accettata dall'utente il 18 novembre 2026. Nell'immagine c'è solo la predisposizione del kernel (sotto-passo P0.6e); il caricamento dei moduli all'avvio e il dominio `vm` entrano dopo la chiusura di P0.8, tutto il resto quando la macchina virtuale entra nel prodotto
+- **Stato**: accettata dall'utente il 18 novembre 2026. Nell'immagine c'è solo la predisposizione del kernel: dal sotto-passo P1.0 (20 novembre 2026) KVM, vhost, `tun` e nftables sono dentro il kernel, non più moduli (punto 3); il dominio `vm` e tutto il resto entrano quando la macchina virtuale entra nel prodotto
 - **Data**: 18 novembre 2026
 - **Origine**: documento di progetto, **ADR-033** (nel repository la numerazione è un'altra: vedi la [tabella di corrispondenza](README.md)); nota dell'utente del 18 novembre 2026, punti 1, 2 e 3; misure del sotto-passo [P0.6e](../fasi/fase-0/P0.6e-chiusura-dei-punti-aperti.md), parte 1
 
@@ -39,9 +39,9 @@ Moduli come gli altri, nell'immagine.
 
 ### 3. Avvio
 
-- **I moduli KVM e vhost si caricano all'avvio del sistema, prima del motore** (nota dell'utente, punto 2). Caricarli dopo manderebbe 4200 interrupt a ogni core live mentre il motore è già attivo.
+- **KVM e vhost sono pronti dall'avvio del sistema, prima del motore** (nota dell'utente, punto 2). Caricarli quando la macchina virtuale parte manderebbe 4200 interrupt a ogni core live mentre il motore è già attivo.
 - **La macchina virtuale parte dopo l'accesso dell'utente**, in background, quando la DAW è pronta e l'autoverifica di avvio è finita. Nel profilo Live non parte.
-- **Come ordinare il caricamento** rispetto a `dawos-tune` e a qualunque lavoro real-time sui core live lo si sceglie nel sotto-passo che lo realizza, dopo la chiusura di P0.8, e si scrive qui. Oggi `kvm_intel` è escluso dal caricamento automatico (`/etc/modprobe.d/dawos-vm.conf`) e nessuno dei sei moduli è caricato: è la configurazione che la campagna P0.7 certifica.
+- **Come: dentro il kernel** (scelta dell'utente del 19 novembre 2026, realizzata nel sotto-passo [P1.0](../fasi/fase-1/P1.0-raccordo.md)). KVM per Intel, `vhost-net`, `vhost-vsock`, `tun`, nftables con `nat` e `masquerade` non sono più moduli: non c'è nulla da caricare né da ordinare rispetto a `dawos-tune`, e `/dev/kvm` esiste dal primo istante. L'esclusione di `kvm_intel` dal caricamento automatico e lo strumento `dawos-vm-modules` sono stati tolti. Il rapporto di avvio ha il campo `kvm=1` quando il dispositivo c'è.
 
 ### 4. Modalità di lavoro
 
@@ -88,11 +88,11 @@ Il confronto completo sta nel documento di progetto. Qui le alternative su cui i
 
 ## Conseguenze
 
-- **Che cosa c'è già** _(verificato sulla configurazione del kernel 6.18.64)_: KVM per Intel, `vhost-net`, `vhost-vsock`, `tun`, nftables con `nat` e `masquerade`, come moduli; le pagine grandi (`HUGETLBFS`); i gruppi di controllo con `cpuset`. Il processore dichiara `vmx`, `ept` e le pagine da 1 GiB _(verificato in `docs/misure/fase-0/topologia-285k.txt`)_.
+- **Che cosa c'è già** _(verificato sulla configurazione del kernel 6.18.64)_: KVM per Intel, `vhost-net`, `vhost-vsock`, `tun`, nftables con `nat` e `masquerade`, come moduli (dal sotto-passo P1.0: dentro il kernel); le pagine grandi (`HUGETLBFS`); i gruppi di controllo con `cpuset`. Il processore dichiara `vmx`, `ept` e le pagine da 1 GiB _(verificato in `docs/misure/fase-0/topologia-285k.txt`)_.
 - **Che cosa manca nell'immagine**: QEMU, `virtiofsd`, il programma `nft`, usbredir, l'immagine dell'ospite, l'agente, il ponte audio, il compositor. Nel kernel manca `NFT_CT` (un filtro che guarda lo stato della connessione; il NAT non ne ha bisogno) e manca l'interfaccia per la _Cache Allocation_ (`X86_CPU_RESCTRL`).
 - **_Cache Allocation_: la risposta c'è già, ed è probabilmente no.** Tra i flag del processore registrati per il 285K c'è `rdt_a` ma non ci sono né `cat_l3` né `cat_l2` _(verificato nello stesso file; il kernel mostra quei flag anche senza `X86_CPU_RESCTRL`, verificato nei sorgenti)_. I flag sono quelli del core di avvio, un P-core: resta da confermare con l'interfaccia vera, quando il kernel la avrà.
 - **Il dominio `system` si dimezza**: da quattro E-core a due, per i servizi del sistema, `sshd`, il registro e, domani, `dawosd`. Nessuna misura dice oggi se bastano _(da verificare quando il profilo cambia)_.
-- **I moduli all'avvio cambiano la configurazione misurata.** La campagna P0.7 certifica la macchina senza moduli. Dopo la chiusura di P0.8, sull'immagine con i moduli caricati all'avvio, si rifanno `dawos-hwnoise` e `dawos-osnoise` per dieci minuti e il piano `short` della campagna (10 minuti e 1 ora di `timerlat`, 1 ora di `cyclictest`), da confrontare con la parte 1 di [P0.7](../fasi/fase-0/P0.7-campagna-di-misura.md). Nello stesso sotto-passo si ricontrolla la caduta del collegamento di rete vista una volta dopo un caricamento (punto aperto A-36).
+- **I moduli all'avvio cambiano la configurazione misurata** (dal sotto-passo P1.0 non sono più moduli: vale lo stesso per il codice dentro il kernel). La campagna P0.7 certifica la macchina senza moduli. Dopo la chiusura di P0.8, sull'immagine con i moduli caricati all'avvio, si rifanno `dawos-hwnoise` e `dawos-osnoise` per dieci minuti e il piano `short` della campagna (10 minuti e 1 ora di `timerlat`, 1 ora di `cyclictest`), da confrontare con la parte 1 di [P0.7](../fasi/fase-0/P0.7-campagna-di-misura.md). Nello stesso sotto-passo si ricontrolla la caduta del collegamento di rete vista una volta dopo un caricamento (punto aperto A-36).
 - **Il congelamento in registrazione** ferma l'ospite senza avvisarlo: al risveglio il suo orologio salta e una connessione di rete aperta può essere scaduta _(da verificare)_. È il prezzo scelto perché in registrazione l'ospite non consumi nulla.
 
 Punti che la decisione lascia da precisare, e che ho segnato nel [registro dei punti aperti](../02-punti-aperti.md) (A-45):

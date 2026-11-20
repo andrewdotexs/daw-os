@@ -3,33 +3,35 @@
 # the project document).
 #
 # Configuration only, for now: nothing in the image starts a virtual
-# machine. Everything here is a module, and none of them is loaded at
-# boot (see /etc/modprobe.d/dawos-vm.conf): a machine that hosts no
-# guest runs the same kernel code as before. dawos-vm-modules loads them
-# on request, to measure what their presence costs.
+# machine. Everything here is built into the kernel (choice of the user,
+# 19 November 2026; step P1.0). As modules they had to be loaded when the
+# guest starts, and loading a module rewrites kernel code: measured in
+# step P0.6e, about 4200 function-call interrupts on every live CPU each
+# time. Built in, that work is done once, while the kernel boots, and
+# /dev/kvm is there from the start.
 
 # KVM, for the processor of the reference machine only.
 CONFIG_VIRTUALIZATION=y
-CONFIG_KVM=m
-CONFIG_KVM_INTEL=m
+CONFIG_KVM=y
+CONFIG_KVM_INTEL=y
 # CONFIG_KVM_AMD is not set
 
 # In-kernel back ends of the guest's virtio devices: the network card
 # (vhost-net) and the socket between guest and host (vhost-vsock), which
 # needs the vsock address family.
 CONFIG_VHOST_MENU=y
-CONFIG_VHOST_NET=m
-CONFIG_VSOCKETS=m
-CONFIG_VHOST_VSOCK=m
+CONFIG_VHOST_NET=y
+CONFIG_VSOCKETS=y
+CONFIG_VHOST_VSOCK=y
 
 # The host end of the guest's network card.
-CONFIG_TUN=m
+CONFIG_TUN=y
 
 # Address translation for the guest's traffic, in nftables: the nat
 # chain type and the masquerade statement. Connection tracking and NAT
 # themselves are already built into the kernel. Only the ip, ip6 and
 # inet families: no bridge, no netdev.
-CONFIG_NF_TABLES=m
+CONFIG_NF_TABLES=y
 CONFIG_NF_TABLES_INET=y
-CONFIG_NFT_NAT=m
-CONFIG_NFT_MASQ=m
+CONFIG_NFT_NAT=y
+CONFIG_NFT_MASQ=y

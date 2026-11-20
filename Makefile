@@ -140,10 +140,10 @@ qemu-target-test: ## Boot the disk installed by the rehearsal and check the boot
 	@tools/run-qemu.sh --target --test --expect secureboot=1 --expect verity=1 --expect profile=generic --expect tune=off --expect timers=none --expect var=state
 
 .PHONY: remote-test
-remote-test: ## Check a real machine over SSH: make remote-test HOST=<address> [PROFILE=<boot profile it must be running>] [SECUREBOOT=0]
+remote-test: ## Check a real machine over SSH: make remote-test HOST=<address> [PROFILE=<boot profile it must be running>] [SECUREBOOT=0] [EXPECT="key=value ..."]
 	@tools/remote-check.sh $(HOST) --expect secureboot=$(or $(SECUREBOOT),1) --expect verity=1 \
 		--expect profile=$(or $(PROFILE),generic) --expect tune=$(if $(filter-out generic,$(PROFILE)),ok,off) \
-		--expect timers=none --expect var=state
+		--expect timers=none --expect var=state $(foreach expected,$(EXPECT),--expect $(expected))
 
 .PHONY: remote-update
 remote-update: ## Send the last build to a real machine, which installs it in its free slot: make remote-update HOST=<address> [REBOOT=1]
