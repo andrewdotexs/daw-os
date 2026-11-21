@@ -1,6 +1,6 @@
 # Fase 1 — Audio minimo senza interfaccia: piano dei passi
 
-- **Stato**: proposta del 21 novembre 2026, da confermare con l'utente. È la «Parte 3» del documento 0 per la Fase 1.
+- **Stato**: proposta del 21 novembre 2026; le decisioni che il passo P1.1 chiedeva sono prese (vedi [le domande](01-domande-da-d10-a-d21.md)); l'ordine dei passi è da confermare con l'utente. È la «Parte 3» del documento 0 per la Fase 1.
 - **Origine**: prompt della Fase 1 consegnato dall'utente il 21 novembre 2026; schede «Strato 4 — Audio e MIDI» e «Strato 5 — Motore audio» del documento di progetto, che non sono nel repository; [ADR 0021](../../adr/0021-core-live-senza-kernel.md) e [ADR 0022](../../adr/0022-driver-grafico-all-avvio.md); sotto-passo [P1.0](P1.0-raccordo.md).
 - **Documenti che lo accompagnano**: [le domande da D-10 a D-21](01-domande-da-d10-a-d21.md); [il progetto del ciclo a due fasi e della protezione di K-04](P1.1-progetto-ciclo-e-k04.md).
 

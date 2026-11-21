@@ -1,8 +1,23 @@
 # Fase 1 — Le domande da D-10 a D-21, e tre nuove
 
-- **Stato**: proposta del 21 novembre 2026. Ogni domanda ha le alternative, i compromessi e la mia raccomandazione aggiornata. Le decisioni sono dell'utente.
+- **Stato**: le sette domande che servivano subito sono **decise dall'utente il 21 novembre 2026** (tabella qui sotto); le altre restano proposte, da riprendere all'apertura della fase che le usa.
 - **Origine**: documento 0, sezione 4.2 («Da decidere prima della Fase 1»); punto aperto A-19; prompt della Fase 1. Il testo originale di ogni domanda resta nel documento 0: qui c'è ciò che è cambiato da allora.
 - **Che cosa è cambiato da quando furono scritte**: l'[ADR 0021](../../adr/0021-core-live-senza-kernel.md) (core live senza kernel), l'[ADR 0020](../../adr/0020-plugin-linux-di-terze-parti.md) (plugin Linux di terze parti), le misure della Fase 0 e di [P1.0](P1.0-raccordo.md).
+
+## Le decisioni del 21 novembre 2026
+
+| Domanda | Decisione | Dove è scritta |
+| --- | --- | --- |
+| D-11 | Regola per fase: nessuna syscall nel calcolo; nell'attesa la chiamata bloccante e la notifica del puntatore; `futex` solo fuori dal ciclo | [ADR 0021](../../adr/0021-core-live-senza-kernel.md), precisazioni |
+| D-14 | Si decide dopo la misura di P1.5, che comprende 44,1 kHz; il quanto è un parametro del motore | Qui |
+| D-17 | Tre backend: `null` in P1.2, `alsa` in P1.4, `file` in P1.7 | Qui |
+| D-18 | Le regole del documento 0, con le quattro integrazioni | Qui |
+| D-26 | Tutti i thread live aspettano la scheda | [ADR 0021](../../adr/0021-core-live-senza-kernel.md), precisazioni |
+| D-27 | alsa-lib per cominciare; decisione definitiva in P1.8 con il conto delle syscall | Qui |
+| D-28 | Sviluppo sulla 18i20 di seconda generazione, accettazione sulla quarta | Qui |
+| Protezione di K-04 | Il progetto e i tempi proposti | [ADR 0023](../../adr/0023-protezione-dal-thread-che-non-cede.md) |
+
+In tutti i casi l'utente ha scelto l'alternativa raccomandata.
 
 ## Quali servono adesso
 
