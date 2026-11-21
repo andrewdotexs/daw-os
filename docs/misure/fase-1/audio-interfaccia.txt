@@ -1,0 +1,131 @@
+== when and what ==
+read_utc: 2026-11-21T19:35:14Z
+uptime_s: 173
+kernel: 6.18.64-dawos
+live_cpus: 4-7
+io_cpus: 20-23
+
+== sound cards ==
+ 0 [USB            ]: USB-Audio - Scarlett 18i20 USB
+                      Focusrite Scarlett 18i20 USB at usb-0000:80:14.0-11, high speed
+
+== card 0 ==
+usb_id: 1235:8201
+playback: S32_LE 20
+capture: S32_LE 18
+usb_controller: 0000:80:14.0
+usb_port: 3-11
+usb_speed_mbps: 480
+usb_version: 2.00
+usb_power_ma: 0mA
+controller_driver: xhci_hcd
+controller_irq: 196 on CPUs 21 (allowed: 20-23), count 298, on the live CPUs 0
+other_devices_on_the_controller: Scarlett 18i20 USB;USB2.0 Hub;AURA LED Controller;xHCI Host Controller;TouchScreen;xHCI Host Controller;
+
+== driver ==
+lowlatency: Y 
+implicit_fb: N,N,N,N,N,N,N,N 
+
+== streams as the driver describes them ==
+Focusrite Scarlett 18i20 USB at usb-0000:80:14.0-11, high speed : USB Audio
+
+Playback:
+  Status: Stop
+  Interface 1
+    Altset 1
+    Format: S32_LE
+    Channels: 20
+    Endpoint: 0x01 (1 OUT) (ASYNC)
+    Rates: 44100, 48000
+    Data packet interval: 125 us
+    Bits: 24
+    Sync Endpoint: 0x81 (1 IN)
+    Sync EP Interface: 1
+    Sync EP Altset: 1
+    Implicit Feedback Mode: No
+  Interface 1
+    Altset 2
+    Format: S32_LE
+    Channels: 16
+    Endpoint: 0x01 (1 OUT) (ASYNC)
+    Rates: 44100, 48000, 88200, 96000
+    Data packet interval: 125 us
+    Bits: 24
+    Sync Endpoint: 0x81 (1 IN)
+    Sync EP Interface: 1
+    Sync EP Altset: 2
+    Implicit Feedback Mode: No
+  Interface 1
+    Altset 3
+    Format: S32_LE
+    Channels: 10
+    Endpoint: 0x01 (1 OUT) (ASYNC)
+    Rates: 44100, 48000, 88200, 96000, 176400, 192000
+    Data packet interval: 125 us
+    Bits: 24
+    Channel map: FL FR FC LFE RL RR FLC FRC RC SL
+    Sync Endpoint: 0x81 (1 IN)
+    Sync EP Interface: 1
+    Sync EP Altset: 3
+    Implicit Feedback Mode: No
+
+Capture:
+  Status: Stop
+  Interface 2
+    Altset 1
+    Format: S32_LE
+    Channels: 18
+    Endpoint: 0x82 (2 IN) (ASYNC)
+    Rates: 44100, 48000
+    Data packet interval: 125 us
+    Bits: 24
+  Interface 2
+    Altset 2
+    Format: S32_LE
+    Channels: 14
+    Endpoint: 0x82 (2 IN) (ASYNC)
+    Rates: 44100, 48000, 88200, 96000
+    Data packet interval: 125 us
+    Bits: 24
+    Channel map: FL FR FC LFE RL RR FLC FRC RC SL SR TC TFL TFC
+  Interface 2
+    Altset 3
+    Format: S32_LE
+    Channels: 10
+    Endpoint: 0x82 (2 IN) (ASYNC)
+    Rates: 44100, 48000, 88200, 96000, 176400, 192000
+    Data packet interval: 125 us
+    Bits: 24
+    Channel map: FL FR FC LFE RL RR FLC FRC RC SL
+
+== what playback accepts (aplay --dump-hw-params) ==
+Playing raw data '/dev/zero' : Signed 32 bit Little Endian, Rate 48000 Hz, Channels 20
+HW Params of device "hw:0,0":
+--------------------
+ACCESS:  MMAP_INTERLEAVED RW_INTERLEAVED
+FORMAT:  S32_LE
+SUBFORMAT:  STD MSBITS_MAX
+SAMPLE_BITS: 32
+FRAME_BITS: [320 640]
+CHANNELS: [10 20]
+RATE: [44100 192000]
+PERIOD_TIME: [125 1000000]
+PERIOD_SIZE: [6 192000]
+PERIOD_BYTES: [240 15360000]
+PERIODS: [2 1024]
+BUFFER_TIME: (62 2000000]
+BUFFER_SIZE: [12 384000]
+BUFFER_BYTES: [480 30720000]
+TICK_TIME: ALL
+--------------------
+HW Params of device "hw:0,0":
+--------------------
+ACCESS:  RW_INTERLEAVED
+FORMAT:  S32_LE
+SUBFORMAT:  STD
+SAMPLE_BITS: 32
+FRAME_BITS: 640
+CHANNELS: 20
+RATE: 48000
+PERIOD_TIME: 125000
+PERIOD_SIZE: 6000
