@@ -1,15 +1,19 @@
 //! `dawos-engine`: the audio engine of dawOS.
 //!
-//! Phase 1, step P1.2: the skeleton. One command, `run`, drives a cycle
-//! from the back end `null` on one CPU and reports how late each wake-up
-//! was. No sound, no graph: what it proves is that the engine builds on
-//! the development PC and into the image, takes a live CPU with a
-//! real-time priority, and keeps a period.
+//! Phase 1, step P1.3: the cycle and its protection. One command, `run`,
+//! starts one thread per live CPU, each with the two-phase cycle of
+//! ADR 0021 on the back end `null`; a watchdog outside the live CPUs and
+//! one spare thread per live CPU (ADR 0023); and, on request, a fault to
+//! prove that the protection works. No sound and no graph yet.
 
 #![forbid(unsafe_code)]
 
 mod cli;
+mod live;
+mod notify;
+mod plan;
 mod run;
+mod watchdog;
 
 use std::process::ExitCode;
 

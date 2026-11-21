@@ -58,6 +58,42 @@ pub fn set_fifo_priority(priority: u8) -> io::Result<()> {
     sys::set_fifo_priority(priority)
 }
 
+/// The kernel's number for the calling thread: what another thread needs
+/// to change its priority or its CPUs.
+#[must_use]
+pub fn thread_id() -> i32 {
+    sys::thread_id()
+}
+
+/// How the kernel schedules a thread.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Policy {
+    /// Real time, first in first out, at a priority from 1 to 99.
+    Fifo(u8),
+    /// The normal policy.
+    Other,
+    /// Runs only when nothing else wants the CPU.
+    Idle,
+}
+
+/// Give thread `tid` a scheduling policy. Meant to be called from another
+/// thread (the watchdog): the kernel interrupts the CPU of `tid` to apply
+/// it.
+pub fn set_policy(tid: i32, policy: Policy) -> io::Result<()> {
+    let raw = match policy {
+        Policy::Fifo(priority) => sys::RawPolicy::Fifo(priority),
+        Policy::Other => sys::RawPolicy::Other,
+        Policy::Idle => sys::RawPolicy::Idle,
+    };
+    sys::set_policy(tid, &raw)
+}
+
+/// Bind thread `tid` to the CPUs of `cpus`; `tid` 0 is the calling
+/// thread.
+pub fn set_affinity(tid: i32, cpus: &[usize]) -> io::Result<()> {
+    sys::set_affinity(tid, cpus)
+}
+
 /// Keep every page of the process in memory, now and in the future.
 pub fn lock_memory() -> io::Result<()> {
     sys::lock_memory()

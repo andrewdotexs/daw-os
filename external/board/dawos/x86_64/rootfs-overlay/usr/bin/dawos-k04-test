@@ -1,0 +1,260 @@
+#!/bin/sh
+# dawos-k04-test — the shock test of the protection against a live
+# thread that does not yield (ADR 0023, risk K-04, step P1.3).
+#
+# On the live CPUs the fair server of the kernel is off: a real-time
+# thread that never sleeps keeps the kernel threads of its CPU from
+# running. The engine protects itself in three lines: a compute budget,
+# a watchdog with spare threads, and systemd. This runs five cases of
+# "dawos-engine run", ten to twenty seconds each, and says whether each
+# line did its part:
+#
+#   healthy       60 % of load on every live CPU: nothing must happen
+#   overload      120 % of load: the budget cuts every cycle short, the
+#                 threads still wait once per cycle, the watchdog stays
+#                 quiet
+#   stuck-node    a node never returns: the watchdog moves the thread off
+#                 its CPU and a spare thread takes over
+#   stuck-thread  the same, outside any node
+#   watchdog-off  the watchdog stops, then a node never returns: systemd,
+#                 which no longer hears from the engine, ends it
+#
+# In every case the engine also times a piece of kernel work on every
+# CPU, again and again (--kernel-probe): the proof that the kernel
+# threads of the live CPUs get to run. And the number of times the
+# kernel threads bound to the struck CPU ran is read before and after.
+#
+# Results go to /var/lib/dawos/measure/k04-<time>[-LABEL].
+#
+# Not for a virtual machine as a verdict: the limits are those of the
+# reference machine. There it only proves that the cases run.
+
+set -u
+
+PROG=dawos-k04-test
+BASE=/var/lib/dawos/measure
+ENGINE=${DAWOS_ENGINE:-dawos-engine}
+TOPOLOGY=/run/dawos/topology.json
+UNIT=dawos-k04-watchdog
+# Seconds systemd waits for a sign of life before it ends the engine.
+WATCHDOG_S=2
+
+usage() {
+	cat <<USAGE
+Usage:
+  ${PROG} [--thread N] [--margin-us N] [LABEL]
+
+  --thread N     the live thread the faults strike, from 0 (default 1)
+  --margin-us N  compute budget of the engine (default: the engine's own)
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# CPU list of a domain of the boot profile.
+domain() {
+	sed -n "s/^ *\"$1\": \"\\([0-9,-]*\\)\".*/\\1/p" "${TOPOLOGY}" 2> /dev/null | head -n 1
+}
+
+# The CPUs of a list ("4-7"), one per line.
+expand_list() {
+	echo "$1" | tr ',' '\n' | while IFS=- read -r first last; do
+		case "${first}" in
+		'' | *[!0-9]*) continue ;;
+		esac
+		seq "${first}" "${last:-${first}}"
+	done
+}
+
+# How many times the kernel threads bound to CPU $1 have run since boot:
+# the sum of the third number of /proc/PID/schedstat over the threads
+# without a command line whose name ends in "/CPU" or is "kworker/CPU:…".
+kernel_thread_runs() {
+	total=0
+	for directory in /proc/[0-9]*; do
+		[ -r "${directory}/comm" ] || continue
+		name=$(cat "${directory}/comm" 2> /dev/null)
+		case "${name}" in
+		*/"$1" | kworker/"$1":*) ;;
+		*) continue ;;
+		esac
+		# A kernel thread has an empty command line.
+		[ -z "$(tr -d '\0' < "${directory}/cmdline" 2> /dev/null)" ] || continue
+		runs=$(awk '{ print $3 }' "${directory}/schedstat" 2> /dev/null)
+		total=$((total + ${runs:-0}))
+	done
+	echo "${total}"
+}
+
+# Sum of a column of the thread table in an output of the engine;
+# column 5 is "missed", 6 "incomplete", 7 "overruns".
+table_sum() {
+	awk -v column="$2" '
+		/^slot +kind/ { inside = 1; next }
+		inside && NF == 0 { inside = 0 }
+		inside && $3 != "never" { sum += $column }
+		END { print sum + 0 }' "$1"
+}
+
+# Value of a "name: value" line of an output of the engine.
+field() {
+	sed -n "s/^$2: //p" "$1" | head -n 1
+}
+
+# Run one case: $1 name, the rest are options of "dawos-engine run".
+# Leaves the output in ${dir}/NAME.txt and sets runs_delta and status.
+run_case() {
+	name=$1
+	shift
+	before=$(kernel_thread_runs "${struck_cpu}")
+	# shellcheck disable=SC2086  # margin_option is zero or two words
+	"${ENGINE}" run --require-rt --kernel-probe ${margin_option} "$@" > "${dir}/${name}.txt" 2> "${dir}/${name}.err"
+	status=$?
+	after=$(kernel_thread_runs "${struck_cpu}")
+	runs_delta=$((after - before))
+}
+
+thread=1
+margin_option=
+label=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--thread)
+		thread=${2:-}
+		shift 2
+		;;
+	--margin-us)
+		margin_option="--margin-us ${2:-}"
+		shift 2
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-*)
+		usage >&2
+		exit 1
+		;;
+	*)
+		label=$1
+		shift
+		;;
+	esac
+done
+case "${thread}" in
+'' | *[!0-9]*) die "--thread needs a number" ;;
+esac
+[ -z "${label}" ] || echo "${label}" | grep -Eq '^[A-Za-z0-9_-]+$' ||
+	die "the label may only contain letters, digits, '-' and '_'"
+[ "$(id -u)" = 0 ] || die "must run as root"
+command -v "${ENGINE}" > /dev/null || die "${ENGINE} is not in this image"
+
+live=$(domain live)
+[ -n "${live}" ] || die "no live domain in ${TOPOLOGY}: is a boot profile with CPU domains in use?"
+struck_cpu=$(expand_list "${live}" | sed -n "$((thread + 1))p")
+[ -n "${struck_cpu}" ] || die "there is no live thread ${thread}: the live CPUs are ${live}"
+
+dir="${BASE}/k04-$(date -u +%Y%m%dT%H%M%SZ)${label:+-${label}}"
+mkdir -p "${dir}" || die "could not create ${dir}"
+{
+	echo "started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+	echo "label: ${label:-none}"
+	echo "kernel: $(uname -sr) $(uname -v)"
+	# shellcheck source=/dev/null
+	echo "image: $(. /etc/os-release && echo "${IMAGE_VERSION:-unknown}")"
+	echo "profile: $(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' /proc/cmdline)"
+	echo "tune: $(sed -n 's/^  "status": "\([a-z]*\)".*/\1/p' "${TOPOLOGY}")"
+	echo "virtual: $(systemd-detect-virt --vm 2> /dev/null || true)"
+	echo "engine: $("${ENGINE}" --version)"
+	echo "live_cpus: ${live}"
+	echo "struck_thread: ${thread} (CPU ${struck_cpu})"
+	echo "fair_server_runtime_ns_on_cpu_${struck_cpu}: $(cat "/sys/kernel/debug/sched/fair_server/cpu${struck_cpu}/runtime" 2> /dev/null || echo unknown)"
+	echo "uptime_s: $(cut -d. -f1 /proc/uptime)"
+} > "${dir}/meta.txt"
+
+summary=${dir}/summary.txt
+printf '%-13s %-5s %s\n' case result figures > "${summary}"
+failed=0
+
+note_case() {
+	printf '%-13s %-5s %s\n' "$1" "$2" "$3" >> "${summary}"
+	[ "$2" = PASS ] || failed=$((failed + 1))
+}
+
+# ---- healthy
+run_case healthy --seconds 10 --load 60
+out=${dir}/healthy.txt
+figures="missed $(table_sum "${out}" 5), incomplete $(table_sum "${out}" 6), overruns $(table_sum "${out}" 7), kernel work $(field "${out}" kernel_work_ms), kernel threads of CPU ${struck_cpu} ran ${runs_delta} times"
+if [ "${status}" = 0 ] && ! grep -q '^watchdog events' "${out}" &&
+	[ "$(table_sum "${out}" 5)" = 0 ] && [ "$(table_sum "${out}" 6)" = 0 ] && [ "$(table_sum "${out}" 7)" = 0 ]; then
+	note_case healthy PASS "${figures}"
+else
+	note_case healthy FAIL "${figures}"
+fi
+
+# ---- overload
+run_case overload --seconds 10 --load 120
+out=${dir}/overload.txt
+figures="incomplete $(table_sum "${out}" 6), missed $(table_sum "${out}" 5), overruns $(table_sum "${out}" 7), kernel work $(field "${out}" kernel_work_ms), kernel threads of CPU ${struck_cpu} ran ${runs_delta} times"
+longest=$(field "${out}" kernel_work_ms | sed -n 's/.*longest \([0-9]*\).*/\1/p')
+if [ "${status}" = 0 ] && ! grep -q '^watchdog events' "${out}" &&
+	[ "$(table_sum "${out}" 6)" -gt 0 ] && [ "${longest:-999}" -lt 20 ] && [ "${runs_delta}" -gt 0 ]; then
+	note_case overload PASS "${figures}"
+else
+	note_case overload FAIL "${figures}"
+fi
+
+# ---- stuck-node, stuck-thread
+for fault in stuck-node stuck-thread; do
+	run_case "${fault}" --seconds 12 --load 60 --fault "${fault}" --fault-after 4 --fault-thread "${thread}"
+	out=${dir}/${fault}.txt
+	event=$(sed -n '/^watchdog events/{n;p;}' "${out}" | sed 's/^slot [0-9]* cycle [0-9]* //')
+	figures="${event:-no watchdog event}; kernel work $(field "${out}" kernel_work_ms); kernel threads of CPU ${struck_cpu} ran ${runs_delta} times"
+	if [ "${status}" = 0 ] && grep -q '^k04: PASS' "${out}" && [ "${runs_delta}" -gt 0 ]; then
+		note_case "${fault}" PASS "${figures}"
+	else
+		note_case "${fault}" FAIL "${figures}"
+	fi
+done
+
+# ---- watchdog-off: the engine as a unit that systemd watches. Its
+# watchdog stops after 4 seconds and a node gets stuck; systemd hears
+# nothing more and ends the process WATCHDOG_S seconds later.
+out=${dir}/watchdog-off.txt
+before=$(kernel_thread_runs "${struck_cpu}")
+start=$(cut -d. -f1 /proc/uptime)
+# shellcheck disable=SC2086  # margin_option is zero or two words
+systemd-run --unit="${UNIT}" --collect --wait \
+	-p Type=notify -p WatchdogSec="${WATCHDOG_S}" -p Restart=no -p LimitCORE=0 \
+	"${ENGINE}" run --require-rt ${margin_option} --seconds 30 --load 60 \
+	--fault watchdog-off --fault-after 4 --fault-thread "${thread}" > "${out}" 2>&1
+took=$(($(cut -d. -f1 /proc/uptime) - start))
+journalctl -b -u "${UNIT}" --no-pager -o cat 2> /dev/null | tail -n 40 > "${dir}/watchdog-off-journal.txt"
+sleep 1
+after=$(kernel_thread_runs "${struck_cpu}")
+runs_delta=$((after - before))
+result=$(sed -n 's/.*[Ff]inished with result: *//p' "${out}" | head -n 1)
+left=$(pgrep -x "$(basename "${ENGINE}")" | wc -l)
+figures="systemd result '${result:-unknown}' after ${took} s, engine processes left ${left}, kernel threads of CPU ${struck_cpu} ran ${runs_delta} times"
+if [ "${result}" = watchdog ] && [ "${left}" = 0 ] && [ "${took}" -lt 15 ]; then
+	note_case watchdog-off PASS "${figures}"
+else
+	note_case watchdog-off FAIL "${figures}"
+fi
+
+{
+	echo
+	if [ "${failed}" = 0 ]; then
+		echo "verdict: PASS (5 of 5 cases)"
+	else
+		echo "verdict: FAIL (${failed} of 5 cases)"
+	fi
+	echo "finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} >> "${summary}"
+
+echo "directory: ${dir}"
+cat "${summary}"
+[ "${failed}" = 0 ]

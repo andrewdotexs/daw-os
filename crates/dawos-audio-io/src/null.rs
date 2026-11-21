@@ -23,6 +23,33 @@ impl NullBackend {
         }
     }
 
+    /// A back end whose periods are counted from `start`: several
+    /// threads, each with one of its own, then wake up for the same
+    /// periods (question D-26: every live thread makes its own wait).
+    #[must_use]
+    pub const fn with_start(format: Format, start: Instant) -> Self {
+        Self {
+            format,
+            start: Some(start),
+            next: 0,
+        }
+    }
+
+    /// Like `with_start`, for a thread that joins while the periods are
+    /// already running: the periods gone by before now are not reported
+    /// as missed.
+    #[must_use]
+    pub fn joining(format: Format, start: Instant) -> Self {
+        let elapsed = clock::now().saturating_sub(start);
+        let next = u128::from(elapsed) * u128::from(format.rate)
+            / (u128::from(format.frames) * 1_000_000_000);
+        Self {
+            format,
+            start: Some(start),
+            next: next as u64,
+        }
+    }
+
     fn due(&self, start: Instant, index: u64) -> Instant {
         clock::period_start(start, index, self.format.frames, self.format.rate)
     }
@@ -105,6 +132,30 @@ mod tests {
         assert_eq!(second.missed, 3);
         assert_eq!(second.index, 4);
         assert_eq!(second.due, first.due + 4_000_000);
+    }
+
+    #[test]
+    fn two_back_ends_with_one_start_share_their_periods() {
+        let start = clock::now();
+        let mut first = NullBackend::with_start(FAST, start);
+        let mut second = NullBackend::with_start(FAST, start);
+        let a = first.wait();
+        let b = second.wait();
+        // The second call comes after the first period is over: it gets
+        // the next one, on the same grid.
+        assert_eq!(a.due, start + 1_000_000);
+        assert_eq!((b.due - start) % 1_000_000, 0);
+    }
+
+    #[test]
+    fn a_late_joiner_has_missed_nothing() {
+        let start = clock::now();
+        clock::sleep_until(start + 5_500_000);
+        let mut backend = NullBackend::joining(FAST, start);
+        let wake = backend.wait();
+        assert_eq!(wake.missed, 0);
+        assert_eq!(wake.index, 5);
+        assert_eq!(wake.due, start + 6_000_000);
     }
 
     #[test]
