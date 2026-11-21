@@ -1,0 +1,4669 @@
+== when and what ==
+read_utc: 2026-11-21T23:06:27Z
+uptime_s: 2715
+kernel: 6.18.64-dawos
+alsa_utils: aplay: version 1.2.15.2 by Jaroslav Kysela <perex@perex.cz>
+alsa_lib: libasound.so.2.0.0 
+card: 0 (USB, usb_id 1235:8201)
+trials_on_cpus: 16-19 (real-time priority 60)
+
+== mixer controls, with their values (amixer contents) ==
+numid=3,iface=CARD,name='ADAT Validity'
+  ; type=BOOLEAN,access=r-------,values=1
+  : values=on
+numid=5,iface=CARD,name='Firmware Version'
+  ; type=INTEGER,access=r-------,values=1,min=0,max=0,step=0
+  : values=1653
+numid=1,iface=CARD,name='Internal Validity'
+  ; type=BOOLEAN,access=r-------,values=1
+  : values=on
+numid=6,iface=CARD,name='Minimum Firmware Version'
+  ; type=INTEGER,access=r-------,values=1,min=0,max=0,step=0
+  : values=0
+numid=2,iface=CARD,name='S/PDIF Validity'
+  ; type=BOOLEAN,access=r-------,values=1
+  : values=on
+numid=7,iface=MIXER,name='Master HW Playback Volume'
+  ; type=INTEGER,access=r----R--,values=1,min=0,max=127,step=1
+  : values=0
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=78,iface=MIXER,name='PCM 01 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=1
+numid=79,iface=MIXER,name='PCM 02 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=2
+numid=80,iface=MIXER,name='PCM 03 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=3
+numid=81,iface=MIXER,name='PCM 04 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=4
+numid=82,iface=MIXER,name='PCM 05 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=5
+numid=83,iface=MIXER,name='PCM 06 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=6
+numid=84,iface=MIXER,name='PCM 07 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=7
+numid=85,iface=MIXER,name='PCM 08 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=8
+numid=86,iface=MIXER,name='PCM 09 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=9
+numid=87,iface=MIXER,name='PCM 10 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=10
+numid=88,iface=MIXER,name='PCM 11 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=11
+numid=89,iface=MIXER,name='PCM 12 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=12
+numid=90,iface=MIXER,name='PCM 13 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=13
+numid=91,iface=MIXER,name='PCM 14 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=14
+numid=92,iface=MIXER,name='PCM 15 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=15
+numid=93,iface=MIXER,name='PCM 16 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=16
+numid=94,iface=MIXER,name='PCM 17 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=17
+numid=95,iface=MIXER,name='PCM 18 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=18
+numid=8,iface=MIXER,name='Line 01 (Monitor L) Playback Volume'
+  ; type=INTEGER,access=r----R--,values=1,min=0,max=127,step=1
+  : values=0
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=9,iface=MIXER,name='Line 01 Mute Playback Switch'
+  ; type=BOOLEAN,access=r-------,values=1
+  : values=off
+numid=11,iface=MIXER,name='Line 02 (Monitor R) Playback Volume'
+  ; type=INTEGER,access=r----R--,values=1,min=0,max=127,step=1
+  : values=0
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=12,iface=MIXER,name='Line 02 Mute Playback Switch'
+  ; type=BOOLEAN,access=r-------,values=1
+  : values=off
+numid=15,iface=MIXER,name='Line 03 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=14,iface=MIXER,name='Line 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=18,iface=MIXER,name='Line 04 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=17,iface=MIXER,name='Line 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=21,iface=MIXER,name='Line 05 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=20,iface=MIXER,name='Line 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=24,iface=MIXER,name='Line 06 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=23,iface=MIXER,name='Line 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=26,iface=MIXER,name='Line 07 (Headphones 1 L) Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=27,iface=MIXER,name='Line 07 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=29,iface=MIXER,name='Line 08 (Headphones 1 R) Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=30,iface=MIXER,name='Line 08 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=32,iface=MIXER,name='Line 09 (Headphones 2 L) Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=33,iface=MIXER,name='Line 09 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=35,iface=MIXER,name='Line 10 (Headphones 2 R) Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=127,step=1
+  : values=127
+  | dBminmax-min=-127.00dB,max=0.00dB
+numid=36,iface=MIXER,name='Line 10 Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=10,iface=MIXER,name='Line Out 01 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=1
+numid=13,iface=MIXER,name='Line Out 02 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=1
+numid=16,iface=MIXER,name='Line Out 03 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=19,iface=MIXER,name='Line Out 04 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=22,iface=MIXER,name='Line Out 05 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=25,iface=MIXER,name='Line Out 06 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=28,iface=MIXER,name='Line Out 07 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=31,iface=MIXER,name='Line Out 08 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=34,iface=MIXER,name='Line Out 09 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=37,iface=MIXER,name='Line Out 10 Volume Control Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=2
+  ; Item #0 'SW'
+  ; Item #1 'HW'
+  : values=0
+numid=52,iface=MIXER,name='ADAT Output 1 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=41
+numid=53,iface=MIXER,name='ADAT Output 2 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=42
+numid=54,iface=MIXER,name='ADAT Output 3 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=43
+numid=55,iface=MIXER,name='ADAT Output 4 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=44
+numid=56,iface=MIXER,name='ADAT Output 5 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=45
+numid=57,iface=MIXER,name='ADAT Output 6 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=46
+numid=58,iface=MIXER,name='ADAT Output 7 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=47
+numid=59,iface=MIXER,name='ADAT Output 8 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=48
+numid=40,iface=MIXER,name='Analogue Output 01 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=29
+numid=41,iface=MIXER,name='Analogue Output 02 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=30
+numid=42,iface=MIXER,name='Analogue Output 03 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=31
+numid=43,iface=MIXER,name='Analogue Output 04 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=32
+numid=44,iface=MIXER,name='Analogue Output 05 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=19
+numid=45,iface=MIXER,name='Analogue Output 06 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=20
+numid=46,iface=MIXER,name='Analogue Output 07 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=19
+numid=47,iface=MIXER,name='Analogue Output 08 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=20
+numid=48,iface=MIXER,name='Analogue Output 09 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=19
+numid=49,iface=MIXER,name='Analogue Output 10 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=20
+numid=4,iface=MIXER,name='Clock Source Clock Source'
+  ; type=ENUMERATED,access=rw------,values=1,items=3
+  ; Item #0 'Internal'
+  ; Item #1 'S/PDIF'
+  ; Item #2 'ADAT'
+  : values=0
+numid=39,iface=MIXER,name='Dim Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=96,iface=MIXER,name='Mix A Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=97,iface=MIXER,name='Mix A Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=98,iface=MIXER,name='Mix A Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=99,iface=MIXER,name='Mix A Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=100,iface=MIXER,name='Mix A Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=101,iface=MIXER,name='Mix A Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=102,iface=MIXER,name='Mix A Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=103,iface=MIXER,name='Mix A Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=104,iface=MIXER,name='Mix A Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=105,iface=MIXER,name='Mix A Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=106,iface=MIXER,name='Mix A Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=107,iface=MIXER,name='Mix A Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=108,iface=MIXER,name='Mix A Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=109,iface=MIXER,name='Mix A Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=110,iface=MIXER,name='Mix A Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=111,iface=MIXER,name='Mix A Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=112,iface=MIXER,name='Mix A Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=160
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=113,iface=MIXER,name='Mix A Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=114,iface=MIXER,name='Mix B Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=115,iface=MIXER,name='Mix B Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=116,iface=MIXER,name='Mix B Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=117,iface=MIXER,name='Mix B Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=118,iface=MIXER,name='Mix B Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=119,iface=MIXER,name='Mix B Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=120,iface=MIXER,name='Mix B Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=121,iface=MIXER,name='Mix B Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=122,iface=MIXER,name='Mix B Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=123,iface=MIXER,name='Mix B Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=124,iface=MIXER,name='Mix B Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=125,iface=MIXER,name='Mix B Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=126,iface=MIXER,name='Mix B Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=127,iface=MIXER,name='Mix B Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=128,iface=MIXER,name='Mix B Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=129,iface=MIXER,name='Mix B Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=130,iface=MIXER,name='Mix B Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=131,iface=MIXER,name='Mix B Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=160
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=132,iface=MIXER,name='Mix C Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=133,iface=MIXER,name='Mix C Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=134,iface=MIXER,name='Mix C Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=135,iface=MIXER,name='Mix C Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=136,iface=MIXER,name='Mix C Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=137,iface=MIXER,name='Mix C Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=138,iface=MIXER,name='Mix C Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=139,iface=MIXER,name='Mix C Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=140,iface=MIXER,name='Mix C Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=141,iface=MIXER,name='Mix C Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=142,iface=MIXER,name='Mix C Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=143,iface=MIXER,name='Mix C Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=144,iface=MIXER,name='Mix C Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=145,iface=MIXER,name='Mix C Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=146,iface=MIXER,name='Mix C Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=147,iface=MIXER,name='Mix C Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=148,iface=MIXER,name='Mix C Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=160
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=149,iface=MIXER,name='Mix C Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=150,iface=MIXER,name='Mix D Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=151,iface=MIXER,name='Mix D Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=152,iface=MIXER,name='Mix D Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=153,iface=MIXER,name='Mix D Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=154,iface=MIXER,name='Mix D Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=155,iface=MIXER,name='Mix D Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=156,iface=MIXER,name='Mix D Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=157,iface=MIXER,name='Mix D Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=158,iface=MIXER,name='Mix D Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=159,iface=MIXER,name='Mix D Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=160,iface=MIXER,name='Mix D Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=161,iface=MIXER,name='Mix D Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=162,iface=MIXER,name='Mix D Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=163,iface=MIXER,name='Mix D Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=164,iface=MIXER,name='Mix D Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=165,iface=MIXER,name='Mix D Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=166,iface=MIXER,name='Mix D Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=167,iface=MIXER,name='Mix D Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=160
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=168,iface=MIXER,name='Mix E Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=169,iface=MIXER,name='Mix E Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=170,iface=MIXER,name='Mix E Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=171,iface=MIXER,name='Mix E Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=172,iface=MIXER,name='Mix E Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=173,iface=MIXER,name='Mix E Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=174,iface=MIXER,name='Mix E Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=175,iface=MIXER,name='Mix E Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=176,iface=MIXER,name='Mix E Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=177,iface=MIXER,name='Mix E Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=178,iface=MIXER,name='Mix E Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=179,iface=MIXER,name='Mix E Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=180,iface=MIXER,name='Mix E Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=181,iface=MIXER,name='Mix E Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=182,iface=MIXER,name='Mix E Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=183,iface=MIXER,name='Mix E Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=184,iface=MIXER,name='Mix E Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=160
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=185,iface=MIXER,name='Mix E Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=186,iface=MIXER,name='Mix F Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=187,iface=MIXER,name='Mix F Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=154
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=188,iface=MIXER,name='Mix F Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=189,iface=MIXER,name='Mix F Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=190,iface=MIXER,name='Mix F Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=191,iface=MIXER,name='Mix F Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=192,iface=MIXER,name='Mix F Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=193,iface=MIXER,name='Mix F Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=194,iface=MIXER,name='Mix F Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=195,iface=MIXER,name='Mix F Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=196,iface=MIXER,name='Mix F Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=197,iface=MIXER,name='Mix F Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=198,iface=MIXER,name='Mix F Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=199,iface=MIXER,name='Mix F Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=200,iface=MIXER,name='Mix F Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=201,iface=MIXER,name='Mix F Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=202,iface=MIXER,name='Mix F Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=203,iface=MIXER,name='Mix F Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=160
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=204,iface=MIXER,name='Mix G Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=205,iface=MIXER,name='Mix G Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=206,iface=MIXER,name='Mix G Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=207,iface=MIXER,name='Mix G Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=208,iface=MIXER,name='Mix G Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=209,iface=MIXER,name='Mix G Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=210,iface=MIXER,name='Mix G Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=211,iface=MIXER,name='Mix G Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=212,iface=MIXER,name='Mix G Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=213,iface=MIXER,name='Mix G Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=214,iface=MIXER,name='Mix G Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=215,iface=MIXER,name='Mix G Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=216,iface=MIXER,name='Mix G Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=217,iface=MIXER,name='Mix G Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=218,iface=MIXER,name='Mix G Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=219,iface=MIXER,name='Mix G Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=220,iface=MIXER,name='Mix G Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=221,iface=MIXER,name='Mix G Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=222,iface=MIXER,name='Mix H Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=223,iface=MIXER,name='Mix H Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=224,iface=MIXER,name='Mix H Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=225,iface=MIXER,name='Mix H Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=226,iface=MIXER,name='Mix H Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=227,iface=MIXER,name='Mix H Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=228,iface=MIXER,name='Mix H Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=229,iface=MIXER,name='Mix H Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=230,iface=MIXER,name='Mix H Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=231,iface=MIXER,name='Mix H Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=232,iface=MIXER,name='Mix H Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=233,iface=MIXER,name='Mix H Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=234,iface=MIXER,name='Mix H Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=235,iface=MIXER,name='Mix H Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=236,iface=MIXER,name='Mix H Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=237,iface=MIXER,name='Mix H Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=238,iface=MIXER,name='Mix H Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=239,iface=MIXER,name='Mix H Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=240,iface=MIXER,name='Mix I Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=241,iface=MIXER,name='Mix I Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=242,iface=MIXER,name='Mix I Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=243,iface=MIXER,name='Mix I Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=244,iface=MIXER,name='Mix I Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=245,iface=MIXER,name='Mix I Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=246,iface=MIXER,name='Mix I Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=247,iface=MIXER,name='Mix I Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=248,iface=MIXER,name='Mix I Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=249,iface=MIXER,name='Mix I Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=250,iface=MIXER,name='Mix I Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=251,iface=MIXER,name='Mix I Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=252,iface=MIXER,name='Mix I Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=253,iface=MIXER,name='Mix I Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=254,iface=MIXER,name='Mix I Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=255,iface=MIXER,name='Mix I Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=256,iface=MIXER,name='Mix I Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=257,iface=MIXER,name='Mix I Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=258,iface=MIXER,name='Mix J Input 01 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=259,iface=MIXER,name='Mix J Input 02 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=260,iface=MIXER,name='Mix J Input 03 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=261,iface=MIXER,name='Mix J Input 04 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=262,iface=MIXER,name='Mix J Input 05 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=263,iface=MIXER,name='Mix J Input 06 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=264,iface=MIXER,name='Mix J Input 07 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=265,iface=MIXER,name='Mix J Input 08 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=266,iface=MIXER,name='Mix J Input 09 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=267,iface=MIXER,name='Mix J Input 10 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=268,iface=MIXER,name='Mix J Input 11 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=269,iface=MIXER,name='Mix J Input 12 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=270,iface=MIXER,name='Mix J Input 13 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=271,iface=MIXER,name='Mix J Input 14 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=272,iface=MIXER,name='Mix J Input 15 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=273,iface=MIXER,name='Mix J Input 16 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=274,iface=MIXER,name='Mix J Input 17 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=275,iface=MIXER,name='Mix J Input 18 Playback Volume'
+  ; type=INTEGER,access=rw---R--,values=1,min=0,max=184,step=1
+  : values=0
+  | dBminmax-min=-80.00dB,max=12.00dB
+numid=60,iface=MIXER,name='Mixer Input 01 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=1
+numid=61,iface=MIXER,name='Mixer Input 02 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=2
+numid=62,iface=MIXER,name='Mixer Input 03 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=3
+numid=63,iface=MIXER,name='Mixer Input 04 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=4
+numid=64,iface=MIXER,name='Mixer Input 05 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=5
+numid=65,iface=MIXER,name='Mixer Input 06 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=6
+numid=66,iface=MIXER,name='Mixer Input 07 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=7
+numid=67,iface=MIXER,name='Mixer Input 08 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=8
+numid=68,iface=MIXER,name='Mixer Input 09 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=11
+numid=69,iface=MIXER,name='Mixer Input 10 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=12
+numid=70,iface=MIXER,name='Mixer Input 11 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=13
+numid=71,iface=MIXER,name='Mixer Input 12 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=14
+numid=72,iface=MIXER,name='Mixer Input 13 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=15
+numid=73,iface=MIXER,name='Mixer Input 14 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=16
+numid=74,iface=MIXER,name='Mixer Input 15 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=17
+numid=75,iface=MIXER,name='Mixer Input 16 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=18
+numid=76,iface=MIXER,name='Mixer Input 17 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=29
+numid=77,iface=MIXER,name='Mixer Input 18 Capture Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=30
+numid=38,iface=MIXER,name='Mute Playback Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=off
+numid=50,iface=MIXER,name='S/PDIF Output 1 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=39
+numid=51,iface=MIXER,name='S/PDIF Output 2 Playback Enum'
+  ; type=ENUMERATED,access=rw------,values=1,items=49
+  ; Item #0 'Off'
+  ; Item #1 'Analogue 1'
+  ; Item #2 'Analogue 2'
+  ; Item #3 'Analogue 3'
+  ; Item #4 'Analogue 4'
+  ; Item #5 'Analogue 5'
+  ; Item #6 'Analogue 6'
+  ; Item #7 'Analogue 7'
+  ; Item #8 'Analogue 8'
+  ; Item #9 'S/PDIF 1'
+  ; Item #10 'S/PDIF 2'
+  ; Item #11 'ADAT 1'
+  ; Item #12 'ADAT 2'
+  ; Item #13 'ADAT 3'
+  ; Item #14 'ADAT 4'
+  ; Item #15 'ADAT 5'
+  ; Item #16 'ADAT 6'
+  ; Item #17 'ADAT 7'
+  ; Item #18 'ADAT 8'
+  ; Item #19 'Mix A'
+  ; Item #20 'Mix B'
+  ; Item #21 'Mix C'
+  ; Item #22 'Mix D'
+  ; Item #23 'Mix E'
+  ; Item #24 'Mix F'
+  ; Item #25 'Mix G'
+  ; Item #26 'Mix H'
+  ; Item #27 'Mix I'
+  ; Item #28 'Mix J'
+  ; Item #29 'PCM 1'
+  ; Item #30 'PCM 2'
+  ; Item #31 'PCM 3'
+  ; Item #32 'PCM 4'
+  ; Item #33 'PCM 5'
+  ; Item #34 'PCM 6'
+  ; Item #35 'PCM 7'
+  ; Item #36 'PCM 8'
+  ; Item #37 'PCM 9'
+  ; Item #38 'PCM 10'
+  ; Item #39 'PCM 11'
+  ; Item #40 'PCM 12'
+  ; Item #41 'PCM 13'
+  ; Item #42 'PCM 14'
+  ; Item #43 'PCM 15'
+  ; Item #44 'PCM 16'
+  ; Item #45 'PCM 17'
+  ; Item #46 'PCM 18'
+  ; Item #47 'PCM 19'
+  ; Item #48 'PCM 20'
+  : values=40
+numid=278,iface=MIXER,name='Standalone Switch'
+  ; type=BOOLEAN,access=rw------,values=1
+  : values=on
+numid=277,iface=MIXER,name='Sync Status'
+  ; type=ENUMERATED,access=r-------,values=1,items=2
+  ; Item #0 'Unlocked'
+  ; Item #1 'Locked'
+  : values=1
+numid=276,iface=PCM,name='Level Meter'
+  ; type=INTEGER,access=r--v----,values=56,min=0,max=4095,step=1
+  : values=0,0,0,0,2898,2898,2898,2898,2898,2898,0,0,0,0,0,0,0,0,0,0,11,15,11,4095,11,11,11,12,0,0,0,0,0,0,0,0,0,0,11,15,11,4095,11,11,11,12,0,0,0,0,0,0,0,0,0,0
+
+== trials: two periods of one quantum, mmap access, four seconds each ==
+
+-- rate 44100, quantum 128, buffer 256: playback 20 channels, capture 18 channels --
+while running, as the kernel reports it:
+  pcm0p hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 20 rate: 44100 (44100/1) period_size: 128 buffer_size: 256 
+  pcm0p sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 128 start_threshold: 256 stop_threshold: 256 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  pcm0c hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 18 rate: 44100 (44100/1) period_size: 128 buffer_size: 256 
+  pcm0c sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 128 start_threshold: 1 stop_threshold: 256 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  Playback:  Status: Running
+  Playback:    Interface = 1
+  Playback:    Altset = 1
+  Playback:    Packet Size = 560
+  Playback:    Momentary freq = 44100 Hz (0x5.8330)
+  Playback:    Feedback Format = 16.16
+  Capture:  Status: Running
+  Capture:    Interface = 2
+  Capture:    Altset = 1
+  Capture:    Packet Size = 504
+  Capture:    Momentary freq = 44100 Hz (0x5.8333)
+playback: exit status 0, underruns reported 0
+capture: exit status 0, overruns reported 2
+playback, as aplay reports it:
+  Playing raw data '/dev/zero' : Signed 32 bit Little Endian, Rate 44100 Hz, Channels 20
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : PLAYBACK
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 20
+    rate         : 44100
+    exact rate   : 44100 (44100/1)
+    msbits       : 32
+    buffer_size  : 256
+    period_size  : 128
+    period_time  : 2902
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 128
+    period_event : 0
+    start_threshold  : 256
+    stop_threshold   : 256
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7fc4e6a8f000,0,640 (32)
+  mmap_area[1] = 0x7fc4e6a8f000,32,640 (32)
+  mmap_area[2] = 0x7fc4e6a8f000,64,640 (32)
+  mmap_area[3] = 0x7fc4e6a8f000,96,640 (32)
+  mmap_area[4] = 0x7fc4e6a8f000,128,640 (32)
+  mmap_area[5] = 0x7fc4e6a8f000,160,640 (32)
+  mmap_area[6] = 0x7fc4e6a8f000,192,640 (32)
+  mmap_area[7] = 0x7fc4e6a8f000,224,640 (32)
+  mmap_area[8] = 0x7fc4e6a8f000,256,640 (32)
+  mmap_area[9] = 0x7fc4e6a8f000,288,640 (32)
+  mmap_area[10] = 0x7fc4e6a8f000,320,640 (32)
+  mmap_area[11] = 0x7fc4e6a8f000,352,640 (32)
+  mmap_area[12] = 0x7fc4e6a8f000,384,640 (32)
+  mmap_area[13] = 0x7fc4e6a8f000,416,640 (32)
+  mmap_area[14] = 0x7fc4e6a8f000,448,640 (32)
+  mmap_area[15] = 0x7fc4e6a8f000,480,640 (32)
+  mmap_area[16] = 0x7fc4e6a8f000,512,640 (32)
+  mmap_area[17] = 0x7fc4e6a8f000,544,640 (32)
+  mmap_area[18] = 0x7fc4e6a8f000,576,640 (32)
+  mmap_area[19] = 0x7fc4e6a8f000,608,640 (32)
+capture, as arecord reports it:
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : CAPTURE
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 18
+    rate         : 44100
+    exact rate   : 44100 (44100/1)
+    msbits       : 32
+    buffer_size  : 256
+    period_size  : 128
+    period_time  : 2902
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 128
+    period_event : 0
+    start_threshold  : 1
+    stop_threshold   : 256
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7f67d3195000,0,576 (32)
+  mmap_area[1] = 0x7f67d3195000,32,576 (32)
+  mmap_area[2] = 0x7f67d3195000,64,576 (32)
+  mmap_area[3] = 0x7f67d3195000,96,576 (32)
+  mmap_area[4] = 0x7f67d3195000,128,576 (32)
+  mmap_area[5] = 0x7f67d3195000,160,576 (32)
+  mmap_area[6] = 0x7f67d3195000,192,576 (32)
+  mmap_area[7] = 0x7f67d3195000,224,576 (32)
+  mmap_area[8] = 0x7f67d3195000,256,576 (32)
+  mmap_area[9] = 0x7f67d3195000,288,576 (32)
+  mmap_area[10] = 0x7f67d3195000,320,576 (32)
+  mmap_area[11] = 0x7f67d3195000,352,576 (32)
+  mmap_area[12] = 0x7f67d3195000,384,576 (32)
+  mmap_area[13] = 0x7f67d3195000,416,576 (32)
+  mmap_area[14] = 0x7f67d3195000,448,576 (32)
+  mmap_area[15] = 0x7f67d3195000,480,576 (32)
+  mmap_area[16] = 0x7f67d3195000,512,576 (32)
+  mmap_area[17] = 0x7f67d3195000,544,576 (32)
+  Recording raw data '/dev/null' : Signed 32 bit Little Endian, Rate 44100 Hz, Channels 18
+  overrun!!! (at least 0.014 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2715.557631
+    tstamp      : 2715.557643
+    delay       : 0
+    avail       : 256
+    avail_max   : 256
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2717.760620
+    tstamp      : 2717.760630
+    delay       : 0
+    avail       : 257
+    avail_max   : 257
+
+-- rate 48000, quantum 128, buffer 256: playback 20 channels, capture 18 channels --
+while running, as the kernel reports it:
+  pcm0p hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 20 rate: 48000 (48000/1) period_size: 128 buffer_size: 256 
+  pcm0p sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 128 start_threshold: 256 stop_threshold: 256 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  pcm0c hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 18 rate: 48000 (48000/1) period_size: 128 buffer_size: 256 
+  pcm0c sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 128 start_threshold: 1 stop_threshold: 256 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  Playback:  Status: Running
+  Playback:    Interface = 1
+  Playback:    Altset = 1
+  Playback:    Packet Size = 560
+  Playback:    Momentary freq = 48000 Hz (0x6.0000)
+  Playback:    Feedback Format = 16.16
+  Capture:  Status: Running
+  Capture:    Interface = 2
+  Capture:    Altset = 1
+  Capture:    Packet Size = 504
+  Capture:    Momentary freq = 48000 Hz (0x6.0000)
+playback: exit status 0, underruns reported 0
+capture: exit status 0, overruns reported 2
+playback, as aplay reports it:
+  Playing raw data '/dev/zero' : Signed 32 bit Little Endian, Rate 48000 Hz, Channels 20
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : PLAYBACK
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 20
+    rate         : 48000
+    exact rate   : 48000 (48000/1)
+    msbits       : 32
+    buffer_size  : 256
+    period_size  : 128
+    period_time  : 2666
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 128
+    period_event : 0
+    start_threshold  : 256
+    stop_threshold   : 256
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7fcfd6b03000,0,640 (32)
+  mmap_area[1] = 0x7fcfd6b03000,32,640 (32)
+  mmap_area[2] = 0x7fcfd6b03000,64,640 (32)
+  mmap_area[3] = 0x7fcfd6b03000,96,640 (32)
+  mmap_area[4] = 0x7fcfd6b03000,128,640 (32)
+  mmap_area[5] = 0x7fcfd6b03000,160,640 (32)
+  mmap_area[6] = 0x7fcfd6b03000,192,640 (32)
+  mmap_area[7] = 0x7fcfd6b03000,224,640 (32)
+  mmap_area[8] = 0x7fcfd6b03000,256,640 (32)
+  mmap_area[9] = 0x7fcfd6b03000,288,640 (32)
+  mmap_area[10] = 0x7fcfd6b03000,320,640 (32)
+  mmap_area[11] = 0x7fcfd6b03000,352,640 (32)
+  mmap_area[12] = 0x7fcfd6b03000,384,640 (32)
+  mmap_area[13] = 0x7fcfd6b03000,416,640 (32)
+  mmap_area[14] = 0x7fcfd6b03000,448,640 (32)
+  mmap_area[15] = 0x7fcfd6b03000,480,640 (32)
+  mmap_area[16] = 0x7fcfd6b03000,512,640 (32)
+  mmap_area[17] = 0x7fcfd6b03000,544,640 (32)
+  mmap_area[18] = 0x7fcfd6b03000,576,640 (32)
+  mmap_area[19] = 0x7fcfd6b03000,608,640 (32)
+capture, as arecord reports it:
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : CAPTURE
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 18
+    rate         : 48000
+    exact rate   : 48000 (48000/1)
+    msbits       : 32
+    buffer_size  : 256
+    period_size  : 128
+    period_time  : 2666
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 128
+    period_event : 0
+    start_threshold  : 1
+    stop_threshold   : 256
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7f00eec4c000,0,576 (32)
+  mmap_area[1] = 0x7f00eec4c000,32,576 (32)
+  mmap_area[2] = 0x7f00eec4c000,64,576 (32)
+  mmap_area[3] = 0x7f00eec4c000,96,576 (32)
+  mmap_area[4] = 0x7f00eec4c000,128,576 (32)
+  mmap_area[5] = 0x7f00eec4c000,160,576 (32)
+  mmap_area[6] = 0x7f00eec4c000,192,576 (32)
+  mmap_area[7] = 0x7f00eec4c000,224,576 (32)
+  mmap_area[8] = 0x7f00eec4c000,256,576 (32)
+  mmap_area[9] = 0x7f00eec4c000,288,576 (32)
+  mmap_area[10] = 0x7f00eec4c000,320,576 (32)
+  mmap_area[11] = 0x7f00eec4c000,352,576 (32)
+  mmap_area[12] = 0x7f00eec4c000,384,576 (32)
+  mmap_area[13] = 0x7f00eec4c000,416,576 (32)
+  mmap_area[14] = 0x7f00eec4c000,448,576 (32)
+  mmap_area[15] = 0x7f00eec4c000,480,576 (32)
+  mmap_area[16] = 0x7f00eec4c000,512,576 (32)
+  mmap_area[17] = 0x7f00eec4c000,544,576 (32)
+  Recording raw data '/dev/null' : Signed 32 bit Little Endian, Rate 48000 Hz, Channels 18
+  overrun!!! (at least 0.013 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2720.998600
+    tstamp      : 2720.998612
+    delay       : 0
+    avail       : 271
+    avail_max   : 271
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2721.008596
+    tstamp      : 2721.008605
+    delay       : 0
+    avail       : 269
+    avail_max   : 269
+
+-- rate 88200, quantum 256, buffer 512: playback 16 channels, capture 14 channels --
+while running, as the kernel reports it:
+  pcm0p hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 16 rate: 88200 (88200/1) period_size: 256 buffer_size: 512 
+  pcm0p sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 256 start_threshold: 512 stop_threshold: 512 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  pcm0c hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 14 rate: 88200 (88200/1) period_size: 256 buffer_size: 512 
+  pcm0c sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 256 start_threshold: 1 stop_threshold: 512 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  Playback:  Status: Running
+  Playback:    Interface = 1
+  Playback:    Altset = 2
+  Playback:    Packet Size = 832
+  Playback:    Momentary freq = 88199 Hz (0xb.0660)
+  Playback:    Feedback Format = 16.16
+  Capture:  Status: Running
+  Capture:    Interface = 2
+  Capture:    Altset = 2
+  Capture:    Packet Size = 728
+  Capture:    Momentary freq = 88200 Hz (0xb.0666)
+playback: exit status 0, underruns reported 0
+capture: exit status 0, overruns reported 3
+playback, as aplay reports it:
+  Playing raw data '/dev/zero' : Signed 32 bit Little Endian, Rate 88200 Hz, Channels 16
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : PLAYBACK
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 16
+    rate         : 88200
+    exact rate   : 88200 (88200/1)
+    msbits       : 32
+    buffer_size  : 512
+    period_size  : 256
+    period_time  : 2902
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 256
+    period_event : 0
+    start_threshold  : 512
+    stop_threshold   : 512
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7f18f2c92000,0,512 (32)
+  mmap_area[1] = 0x7f18f2c92000,32,512 (32)
+  mmap_area[2] = 0x7f18f2c92000,64,512 (32)
+  mmap_area[3] = 0x7f18f2c92000,96,512 (32)
+  mmap_area[4] = 0x7f18f2c92000,128,512 (32)
+  mmap_area[5] = 0x7f18f2c92000,160,512 (32)
+  mmap_area[6] = 0x7f18f2c92000,192,512 (32)
+  mmap_area[7] = 0x7f18f2c92000,224,512 (32)
+  mmap_area[8] = 0x7f18f2c92000,256,512 (32)
+  mmap_area[9] = 0x7f18f2c92000,288,512 (32)
+  mmap_area[10] = 0x7f18f2c92000,320,512 (32)
+  mmap_area[11] = 0x7f18f2c92000,352,512 (32)
+  mmap_area[12] = 0x7f18f2c92000,384,512 (32)
+  mmap_area[13] = 0x7f18f2c92000,416,512 (32)
+  mmap_area[14] = 0x7f18f2c92000,448,512 (32)
+  mmap_area[15] = 0x7f18f2c92000,480,512 (32)
+capture, as arecord reports it:
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : CAPTURE
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 14
+    rate         : 88200
+    exact rate   : 88200 (88200/1)
+    msbits       : 32
+    buffer_size  : 512
+    period_size  : 256
+    period_time  : 2902
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 256
+    period_event : 0
+    start_threshold  : 1
+    stop_threshold   : 512
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7f243b1ff000,0,448 (32)
+  mmap_area[1] = 0x7f243b1ff000,32,448 (32)
+  mmap_area[2] = 0x7f243b1ff000,64,448 (32)
+  mmap_area[3] = 0x7f243b1ff000,96,448 (32)
+  mmap_area[4] = 0x7f243b1ff000,128,448 (32)
+  mmap_area[5] = 0x7f243b1ff000,160,448 (32)
+  mmap_area[6] = 0x7f243b1ff000,192,448 (32)
+  mmap_area[7] = 0x7f243b1ff000,224,448 (32)
+  mmap_area[8] = 0x7f243b1ff000,256,448 (32)
+  mmap_area[9] = 0x7f243b1ff000,288,448 (32)
+  mmap_area[10] = 0x7f243b1ff000,320,448 (32)
+  mmap_area[11] = 0x7f243b1ff000,352,448 (32)
+  mmap_area[12] = 0x7f243b1ff000,384,448 (32)
+  mmap_area[13] = 0x7f243b1ff000,416,448 (32)
+  Recording raw data '/dev/null' : Signed 32 bit Little Endian, Rate 88200 Hz, Channels 14
+  overrun!!! (at least 0.013 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2726.396570
+    tstamp      : 2726.396582
+    delay       : 0
+    avail       : 517
+    avail_max   : 517
+  overrun!!! (at least 0.013 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2726.438569
+    tstamp      : 2726.438581
+    delay       : 0
+    avail       : 517
+    avail_max   : 517
+  overrun!!! (at least 0.012 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2727.830560
+    tstamp      : 2727.830571
+    delay       : 0
+    avail       : 528
+    avail_max   : 528
+
+-- rate 96000, quantum 256, buffer 512: playback 16 channels, capture 14 channels --
+while running, as the kernel reports it:
+  pcm0p hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 16 rate: 96000 (96000/1) period_size: 256 buffer_size: 512 
+  pcm0p sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 256 start_threshold: 512 stop_threshold: 512 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  pcm0c hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 14 rate: 96000 (96000/1) period_size: 256 buffer_size: 512 
+  pcm0c sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 256 start_threshold: 1 stop_threshold: 512 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  Playback:  Status: Running
+  Playback:    Interface = 1
+  Playback:    Altset = 2
+  Playback:    Packet Size = 832
+  Playback:    Momentary freq = 95999 Hz (0xb.fff8)
+  Playback:    Feedback Format = 16.16
+  Capture:  Status: Running
+  Capture:    Interface = 2
+  Capture:    Altset = 2
+  Capture:    Packet Size = 728
+  Capture:    Momentary freq = 96000 Hz (0xc.0000)
+playback: exit status 0, underruns reported 0
+capture: exit status 0, overruns reported 1
+playback, as aplay reports it:
+  Playing raw data '/dev/zero' : Signed 32 bit Little Endian, Rate 96000 Hz, Channels 16
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : PLAYBACK
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 16
+    rate         : 96000
+    exact rate   : 96000 (96000/1)
+    msbits       : 32
+    buffer_size  : 512
+    period_size  : 256
+    period_time  : 2666
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 256
+    period_event : 0
+    start_threshold  : 512
+    stop_threshold   : 512
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7f055e4a1000,0,512 (32)
+  mmap_area[1] = 0x7f055e4a1000,32,512 (32)
+  mmap_area[2] = 0x7f055e4a1000,64,512 (32)
+  mmap_area[3] = 0x7f055e4a1000,96,512 (32)
+  mmap_area[4] = 0x7f055e4a1000,128,512 (32)
+  mmap_area[5] = 0x7f055e4a1000,160,512 (32)
+  mmap_area[6] = 0x7f055e4a1000,192,512 (32)
+  mmap_area[7] = 0x7f055e4a1000,224,512 (32)
+  mmap_area[8] = 0x7f055e4a1000,256,512 (32)
+  mmap_area[9] = 0x7f055e4a1000,288,512 (32)
+  mmap_area[10] = 0x7f055e4a1000,320,512 (32)
+  mmap_area[11] = 0x7f055e4a1000,352,512 (32)
+  mmap_area[12] = 0x7f055e4a1000,384,512 (32)
+  mmap_area[13] = 0x7f055e4a1000,416,512 (32)
+  mmap_area[14] = 0x7f055e4a1000,448,512 (32)
+  mmap_area[15] = 0x7f055e4a1000,480,512 (32)
+capture, as arecord reports it:
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : CAPTURE
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 14
+    rate         : 96000
+    exact rate   : 96000 (96000/1)
+    msbits       : 32
+    buffer_size  : 512
+    period_size  : 256
+    period_time  : 2666
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 256
+    period_event : 0
+    start_threshold  : 1
+    stop_threshold   : 512
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7fa57df19000,0,448 (32)
+  mmap_area[1] = 0x7fa57df19000,32,448 (32)
+  mmap_area[2] = 0x7fa57df19000,64,448 (32)
+  mmap_area[3] = 0x7fa57df19000,96,448 (32)
+  mmap_area[4] = 0x7fa57df19000,128,448 (32)
+  mmap_area[5] = 0x7fa57df19000,160,448 (32)
+  mmap_area[6] = 0x7fa57df19000,192,448 (32)
+  mmap_area[7] = 0x7fa57df19000,224,448 (32)
+  mmap_area[8] = 0x7fa57df19000,256,448 (32)
+  mmap_area[9] = 0x7fa57df19000,288,448 (32)
+  mmap_area[10] = 0x7fa57df19000,320,448 (32)
+  mmap_area[11] = 0x7fa57df19000,352,448 (32)
+  mmap_area[12] = 0x7fa57df19000,384,448 (32)
+  mmap_area[13] = 0x7fa57df19000,416,448 (32)
+  Recording raw data '/dev/null' : Signed 32 bit Little Endian, Rate 96000 Hz, Channels 14
+  overrun!!! (at least 0.004 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2732.065533
+    tstamp      : 2732.065537
+    delay       : 0
+    avail       : 564
+    avail_max   : 564
+
+-- rate 176400, quantum 512, buffer 1024: playback 10 channels, capture 10 channels --
+while running, as the kernel reports it:
+  pcm0p hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 10 rate: 176400 (176400/1) period_size: 512 buffer_size: 1024 
+  pcm0p sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 512 start_threshold: 1024 stop_threshold: 1024 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  pcm0c hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 10 rate: 176400 (176400/1) period_size: 512 buffer_size: 1024 
+  pcm0c sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 512 start_threshold: 1 stop_threshold: 1024 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  Playback:  Status: Running
+  Playback:    Interface = 1
+  Playback:    Altset = 3
+  Playback:    Packet Size = 1000
+  Playback:    Momentary freq = 176398 Hz (0x16.0cc0)
+  Playback:    Feedback Format = 16.16
+  Capture:  Status: Running
+  Capture:    Interface = 2
+  Capture:    Altset = 3
+  Capture:    Packet Size = 1000
+  Capture:    Momentary freq = 176400 Hz (0x16.0ccd)
+playback: exit status 0, underruns reported 0
+capture: exit status 0, overruns reported 16
+playback, as aplay reports it:
+  Playing raw data '/dev/zero' : Signed 32 bit Little Endian, Rate 176400 Hz, Channels 10
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : PLAYBACK
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 10
+    rate         : 176400
+    exact rate   : 176400 (176400/1)
+    msbits       : 32
+    buffer_size  : 1024
+    period_size  : 512
+    period_time  : 2902
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 512
+    period_event : 0
+    start_threshold  : 1024
+    stop_threshold   : 1024
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7ff570e9a000,0,320 (32)
+  mmap_area[1] = 0x7ff570e9a000,32,320 (32)
+  mmap_area[2] = 0x7ff570e9a000,64,320 (32)
+  mmap_area[3] = 0x7ff570e9a000,96,320 (32)
+  mmap_area[4] = 0x7ff570e9a000,128,320 (32)
+  mmap_area[5] = 0x7ff570e9a000,160,320 (32)
+  mmap_area[6] = 0x7ff570e9a000,192,320 (32)
+  mmap_area[7] = 0x7ff570e9a000,224,320 (32)
+  mmap_area[8] = 0x7ff570e9a000,256,320 (32)
+  mmap_area[9] = 0x7ff570e9a000,288,320 (32)
+capture, as arecord reports it:
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : CAPTURE
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 10
+    rate         : 176400
+    exact rate   : 176400 (176400/1)
+    msbits       : 32
+    buffer_size  : 1024
+    period_size  : 512
+    period_time  : 2902
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 512
+    period_event : 0
+    start_threshold  : 1
+    stop_threshold   : 1024
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7fa37ba44000,0,320 (32)
+  mmap_area[1] = 0x7fa37ba44000,32,320 (32)
+  mmap_area[2] = 0x7fa37ba44000,64,320 (32)
+  mmap_area[3] = 0x7fa37ba44000,96,320 (32)
+  mmap_area[4] = 0x7fa37ba44000,128,320 (32)
+  mmap_area[5] = 0x7fa37ba44000,160,320 (32)
+  mmap_area[6] = 0x7fa37ba44000,192,320 (32)
+  mmap_area[7] = 0x7fa37ba44000,224,320 (32)
+  mmap_area[8] = 0x7fa37ba44000,256,320 (32)
+  mmap_area[9] = 0x7fa37ba44000,288,320 (32)
+  Recording raw data '/dev/null' : Signed 32 bit Little Endian, Rate 176400 Hz, Channels 10
+  overrun!!! (at least 0.013 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.109510
+    tstamp      : 2739.109522
+    delay       : 0
+    avail       : 1061
+    avail_max   : 1061
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.178507
+    tstamp      : 2739.178516
+    delay       : 0
+    avail       : 1041
+    avail_max   : 1041
+  overrun!!! (at least 0.012 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.227509
+    tstamp      : 2739.227519
+    delay       : 0
+    avail       : 1040
+    avail_max   : 1040
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.274497
+    tstamp      : 2739.274507
+    delay       : 0
+    avail       : 1042
+    avail_max   : 1042
+  overrun!!! (at least 0.014 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.323498
+    tstamp      : 2739.323511
+    delay       : 0
+    avail       : 1041
+    avail_max   : 1041
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.370512
+    tstamp      : 2739.370521
+    delay       : 0
+    avail       : 1041
+    avail_max   : 1041
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.417496
+    tstamp      : 2739.417506
+    delay       : 0
+    avail       : 1041
+    avail_max   : 1041
+  overrun!!! (at least 0.012 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.466504
+    tstamp      : 2739.466515
+    delay       : 0
+    avail       : 1040
+    avail_max   : 1040
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.513511
+    tstamp      : 2739.513520
+    delay       : 0
+    avail       : 1040
+    avail_max   : 1040
+  overrun!!! (at least 0.009 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.582495
+    tstamp      : 2739.582503
+    delay       : 0
+    avail       : 1040
+    avail_max   : 1040
+  overrun!!! (at least 0.015 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.631495
+    tstamp      : 2739.631509
+    delay       : 0
+    avail       : 1040
+    avail_max   : 1040
+  overrun!!! (at least 0.011 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.700504
+    tstamp      : 2739.700514
+    delay       : 0
+    avail       : 1057
+    avail_max   : 1057
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.749503
+    tstamp      : 2739.749512
+    delay       : 0
+    avail       : 1058
+    avail_max   : 1058
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.798492
+    tstamp      : 2739.798502
+    delay       : 0
+    avail       : 1040
+    avail_max   : 1040
+  overrun!!! (at least 0.009 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.847491
+    tstamp      : 2739.847500
+    delay       : 0
+    avail       : 1040
+    avail_max   : 1040
+  overrun!!! (at least 0.011 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2739.892503
+    tstamp      : 2739.892513
+    delay       : 0
+    avail       : 1024
+    avail_max   : 1024
+
+-- rate 192000, quantum 512, buffer 1024: playback 10 channels, capture 10 channels --
+while running, as the kernel reports it:
+  pcm0p hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 10 rate: 192000 (192000/1) period_size: 512 buffer_size: 1024 
+  pcm0p sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 512 start_threshold: 1024 stop_threshold: 1024 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  pcm0c hw_params: access: MMAP_INTERLEAVED format: S32_LE subformat: STD channels: 10 rate: 192000 (192000/1) period_size: 512 buffer_size: 1024 
+  pcm0c sw_params: tstamp_mode: ENABLE period_step: 1 avail_min: 512 start_threshold: 1 stop_threshold: 1024 silence_threshold: 0 silence_size: 0 boundary: 4611686018427387904 
+  Playback:  Status: Running
+  Playback:    Interface = 1
+  Playback:    Altset = 3
+  Playback:    Packet Size = 1000
+  Playback:    Momentary freq = 191998 Hz (0x17.fff0)
+  Playback:    Feedback Format = 16.16
+  Capture:  Status: Running
+  Capture:    Interface = 2
+  Capture:    Altset = 3
+  Capture:    Packet Size = 1000
+  Capture:    Momentary freq = 192000 Hz (0x18.0000)
+playback: exit status 0, underruns reported 0
+capture: exit status 0, overruns reported 6
+playback, as aplay reports it:
+  Playing raw data '/dev/zero' : Signed 32 bit Little Endian, Rate 192000 Hz, Channels 10
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : PLAYBACK
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 10
+    rate         : 192000
+    exact rate   : 192000 (192000/1)
+    msbits       : 32
+    buffer_size  : 1024
+    period_size  : 512
+    period_time  : 2666
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 512
+    period_event : 0
+    start_threshold  : 1024
+    stop_threshold   : 1024
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7f31630f4000,0,320 (32)
+  mmap_area[1] = 0x7f31630f4000,32,320 (32)
+  mmap_area[2] = 0x7f31630f4000,64,320 (32)
+  mmap_area[3] = 0x7f31630f4000,96,320 (32)
+  mmap_area[4] = 0x7f31630f4000,128,320 (32)
+  mmap_area[5] = 0x7f31630f4000,160,320 (32)
+  mmap_area[6] = 0x7f31630f4000,192,320 (32)
+  mmap_area[7] = 0x7f31630f4000,224,320 (32)
+  mmap_area[8] = 0x7f31630f4000,256,320 (32)
+  mmap_area[9] = 0x7f31630f4000,288,320 (32)
+capture, as arecord reports it:
+  Hardware PCM card 0 'Scarlett 18i20 USB' device 0 subdevice 0
+  Its setup is:
+    stream       : CAPTURE
+    access       : MMAP_INTERLEAVED
+    format       : S32_LE
+    subformat    : STD
+    channels     : 10
+    rate         : 192000
+    exact rate   : 192000 (192000/1)
+    msbits       : 32
+    buffer_size  : 1024
+    period_size  : 512
+    period_time  : 2666
+    tstamp_mode  : ENABLE
+    tstamp_type  : MONOTONIC
+    period_step  : 1
+    avail_min    : 512
+    period_event : 0
+    start_threshold  : 1
+    stop_threshold   : 1024
+    silence_threshold: 0
+    silence_size : 0
+    boundary     : 4611686018427387904
+    appl_ptr     : 0
+    hw_ptr       : 0
+  mmap_area[0] = 0x7efe5dc09000,0,320 (32)
+  mmap_area[1] = 0x7efe5dc09000,32,320 (32)
+  mmap_area[2] = 0x7efe5dc09000,64,320 (32)
+  mmap_area[3] = 0x7efe5dc09000,96,320 (32)
+  mmap_area[4] = 0x7efe5dc09000,128,320 (32)
+  mmap_area[5] = 0x7efe5dc09000,160,320 (32)
+  mmap_area[6] = 0x7efe5dc09000,192,320 (32)
+  mmap_area[7] = 0x7efe5dc09000,224,320 (32)
+  mmap_area[8] = 0x7efe5dc09000,256,320 (32)
+  mmap_area[9] = 0x7efe5dc09000,288,320 (32)
+  Recording raw data '/dev/null' : Signed 32 bit Little Endian, Rate 192000 Hz, Channels 10
+  overrun!!! (at least 0.014 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2745.128466
+    tstamp      : 2745.128479
+    delay       : 0
+    avail       : 1080
+    avail_max   : 1080
+  overrun!!! (at least 0.013 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2745.266480
+    tstamp      : 2745.266492
+    delay       : 0
+    avail       : 1080
+    avail_max   : 1080
+  overrun!!! (at least 0.013 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2745.406482
+    tstamp      : 2745.406493
+    delay       : 0
+    avail       : 1080
+    avail_max   : 1080
+  overrun!!! (at least 0.011 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2745.546463
+    tstamp      : 2745.546473
+    delay       : 0
+    avail       : 1079
+    avail_max   : 1079
+  overrun!!! (at least 0.012 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2745.686481
+    tstamp      : 2745.686491
+    delay       : 0
+    avail       : 1080
+    avail_max   : 1080
+  overrun!!! (at least 0.010 ms long)
+  Status:
+    state       : XRUN
+    trigger_time: 2745.826481
+    tstamp      : 2745.826490
+    delay       : 0
+    avail       : 1080
+    avail_max   : 1080
+
+== kernel messages about sound and USB in the last minute ==
+(none)
