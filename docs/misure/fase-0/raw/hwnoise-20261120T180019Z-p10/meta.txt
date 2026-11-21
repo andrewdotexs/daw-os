@@ -1,0 +1,12 @@
+started_utc: 2026-11-20T18:00:19Z
+duration: 10m
+label: p10
+kernel: Linux 6.18.64-dawos #2 SMP PREEMPT_RT Fri Nov 20 18:08:40 CET 2026
+cmdline: dm-mod.create="dawos-root,,,ro,0 127680 verity 1 PARTLABEL=dawos-root-0.0.1.20261120170929 PARTLABEL=dawos-verity-0.0.1.20261120170929 4096 4096 15960 1 sha256 25376622aa174de26cafaae3fc510560395bb985c1f45316a01cf678d2cbc5fc 6e8513187f54cae24b483877b27642161690d46ab61ed7fe495ec49ccca26d51 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261120170929,PARTLABEL=dawos-verity-0.0.1.20261120170929 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+bios: 3402 09/18/2026
+image: fe649345d597
+junction_limit_c: 105
+throttle_start: core=0 package=0
+rtla_exit_status: 0
+finished_utc: 2026-11-20T18:10:28Z
+throttle_end: core=0 package=0

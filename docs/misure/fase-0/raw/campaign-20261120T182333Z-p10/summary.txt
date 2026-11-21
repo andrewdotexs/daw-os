@@ -1,0 +1,54 @@
+started_utc: 2026-11-20T18:23:33Z
+label: p10
+plan: timerlat:86400
+cycle: default
+script_sha256: b72916271a87f66857c45fce10323367adc83e7eb47a3283d99f4acfc691aa96
+threshold_us: 50
+trace_us: 12
+timerlat_period_us: 250
+cyclictest_period_us: 1000
+priority: fifo 95
+live_cpus: 4-7
+system_cpus: 16-19
+io_cpus: 20-23
+load_cpus: 0-3,8-15,16-19
+burst_cpus: 0,1,2,3
+monitored_cpus: 0-3,8-15,16-19,20-23
+disk_load: yes
+shared_dev: /dev/disk/by-partlabel/shared
+write_mib_s: 25
+file_mib: 65536
+vm_bytes: 2G
+uptime_at_start_s: 4276
+image_version: 0.0.1.20261120170929
+image_build: fe649345d597
+kernel: Linux 6.18.64-dawos #2 SMP PREEMPT_RT Fri Nov 20 18:08:40 CET 2026
+kernel_config_sha256: 81893acfaeb67e4d0c938407af2e0ed1d1e38f79d536c3e8c5c898e20f26139c
+cmdline: dm-mod.create="dawos-root,,,ro,0 127680 verity 1 PARTLABEL=dawos-root-0.0.1.20261120170929 PARTLABEL=dawos-verity-0.0.1.20261120170929 4096 4096 15960 1 sha256 25376622aa174de26cafaae3fc510560395bb985c1f45316a01cf678d2cbc5fc 6e8513187f54cae24b483877b27642161690d46ab61ed7fe495ec49ccca26d51 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261120170929,PARTLABEL=dawos-verity-0.0.1.20261120170929 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+cmdline_sha256: 861fa33737af87f7c1a099cbcc8c29b6b22e3c62e38ab642982fe8485153aa1e
+bios: 3402 09/18/2026
+microcode: 0x122
+profile: 285k
+tune: ok
+modules_loaded: 11
+tools: rtla 6.18.63; stress-ng, version 0.20.00 (gcc 14.3.0, x86_64 Linux 6.18.64-dawos); fio-3.41; cyclictest V 2.80
+throttle_since_boot: core=0 package=0
+finished_utc: 2026-11-21T18:23:45Z
+
+steps (delays in microseconds, of the threads in user space on the live CPUs):
+step                       samples     avg   p99.999     max irq_max traces  smi throttle dev_irq  link   watt watt_max    C  verdict
+1-timerlat-86400        1382399623    2.03      3.00    6.71    3.81     0    0        0       0     6  110.4  160.2   86  PASS
+
+1-timerlat-86400: largest delay of each phase, by kind of phase (phases, lowest, median, highest, in us; package power and highest temperature in them):
+  burst-a     48       2       3       4   26.3 W, 53 C
+  burst-b     48       2       3       3   30.9 W, 56 C
+  burst-c     48       2       2       3   17.0 W, 43 C
+  full        48       3       5       6   121.1 W, 83 C
+  power       48       3       3       4   160.0 W, 86 C
+  rest        48       3       3       4   7.0 W, 39 C
+  wake-ups of 6 us or more: 7, of 10 us or more: 0; traces saved: 0
+  interrupts on the live CPUs in the step (name, count): LOC=1382495499 IWI=2928 CAL=7792 TLB=4 
+  fio, first and last phase: 1-full read_mib_s=4792 write_mib_s=25.0; 48-burst-c read_mib_s=4942 write_mib_s=25.0
+  kernel log: 6 lines kept in kernel-log.txt
+
+campaign: PASS (1 of 1 steps)
