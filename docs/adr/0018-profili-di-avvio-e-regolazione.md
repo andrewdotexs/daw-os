@@ -65,3 +65,7 @@ L'isolamento dei core si chiede al kernel sulla riga di comando (`isolcpus=`, `n
 - Con la seconda macchina supportata: il modo di scegliere il profilo andrà rivisto se le macchine diventano molte.
 - Se una misura mostra che con la preferenza energetica comune i core live perdono qualcosa (frequenza tenuta, ritardo di risveglio): finora non è così.
 - **Frequenza dei P-core non live, 17 novembre 2026**: fissa al massimo (punto 17). Verificato sul 285K lo stesso giorno: nel caso che aveva fatto scoprire il problema il ritardo di risveglio passa da 43–57 µs a 6 µs; il package a riposo da 3,0 a 6,0 W; rumore sui core live zero a 160 W; capacità del dominio anticipativo invariata. Si riapre se la campagna P0.7 mostra risvegli lenti sotto un altro carico a raffiche.
+
+## Nota del 21 novembre 2026
+
+Il _fair server_ resta spento sui core live anche con il motore. Al suo posto, contro un thread real-time che non cede, c'è la protezione dell'[ADR 0023](0023-protezione-dal-thread-che-non-cede.md): bilancio di calcolo, sorvegliante fuori dai core live, riavvio del motore da parte di systemd come seconda linea.

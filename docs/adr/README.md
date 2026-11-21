@@ -24,8 +24,9 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0018](0018-profili-di-avvio-e-regolazione.md) | Profili di avvio e regolazione all'avvio | C-03, P0.6 | Accettata per `dev`; il profilo `285k` è la configurazione certificata dalla campagna P0.7 |
 | [0019](0019-apertura-del-sistema-utilita-native-e-vm-linux.md) | Apertura del sistema: utilità native e VM Linux | Documento di progetto, ADR-033 | Accettata il 18 novembre 2026; nell'immagine solo la predisposizione del kernel, dentro il kernel da P1.0 |
 | [0020](0020-plugin-linux-di-terze-parti.md) | Plugin Linux di terze parti | Documento di progetto, ADR-034 | Accettata il 18 novembre 2026; nulla ancora nell'immagine |
-| [0021](0021-core-live-senza-kernel.md) | Core live senza kernel | Documento di progetto, ADR-038 | Accettata il 19 novembre 2026, con tre integrazioni; principio per la Fase 1 |
+| [0021](0021-core-live-senza-kernel.md) | Core live senza kernel | Documento di progetto, ADR-038 | Accettata il 19 novembre 2026, con tre integrazioni; precisata il 21 novembre (risveglio dalla scheda, regola sulle syscall per fase) |
 | [0022](0022-driver-grafico-all-avvio.md) | Driver grafico caricato a ogni avvio | P1.0, A-43 | Accettata il 20 novembre 2026 per il profilo `285k`; cambia la decisione di A-02; misura lunga da fare |
+| [0023](0023-protezione-dal-thread-che-non-cede.md) | Protezione dal thread live che non cede | K-04, A-18, prompt della Fase 1 | Accettata il 21 novembre 2026 come progetto; codice e prova d'urto nel passo P1.3 |
 
 ## Corrispondenza con il documento di progetto
 

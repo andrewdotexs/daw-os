@@ -1,6 +1,6 @@
 # ADR 0021 — Core live senza kernel
 
-- **Stato**: accettata dall'utente il 19 novembre 2026, con tre integrazioni proposte dall'architetto e accolte lo stesso giorno (punti 3, 4 e 6). È un principio di progetto per la Fase 1: nell'immagine non c'è ancora nulla che lo realizzi
+- **Stato**: accettata dall'utente il 19 novembre 2026, con tre integrazioni proposte dall'architetto e accolte lo stesso giorno (punti 3, 4 e 6). È un principio di progetto per la Fase 1: nell'immagine non c'è ancora nulla che lo realizzi. Precisata il 21 novembre 2026 all'apertura della Fase 1: chi sveglia i thread e la regola sulle chiamate di sistema (in fondo)
 - **Data**: 19 novembre 2026
 - **Origine**: documento di progetto, **ADR-038** (nel repository la numerazione è un'altra: vedi la [tabella di corrispondenza](README.md)), scheda «Strato 1 — Kernel», sezione «Riscrivere o no: firmware, kernel e driver»; nota dell'utente del 19 novembre 2026; risultati della campagna [P0.7](../fasi/fase-0/P0.7-campagna-di-misura.md)
 
@@ -104,3 +104,21 @@ Il confronto completo sta nel documento di progetto. Qui ciò che la nota del 19
 - Se il rinvio degli interrupt tra core (A-49) non si adotta e nel calcolo restano interrupt che non si riescono a spostare con la configurazione.
 - Se nessuna configurazione del driver audio rispetta insieme la latenza richiesta e questo principio, e il driver proprio (A-50) non si scrive.
 - Se i plugin che chiamano il kernel durante `process()` risultano troppi per trattarli come eccezioni.
+
+## Precisazioni del 21 novembre 2026
+
+Decise dall'utente all'apertura della Fase 1, sul [progetto P1.1](../fasi/fase-1/P1.1-progetto-ciclo-e-k04.md). Chiudono la scelta che le conseguenze qui sopra lasciavano aperta («chi sveglia il motore») e sostituiscono la domanda D-11 del documento 0.
+
+**Chi sveglia i thread live (D-26).** La scheda audio, per tutti: ogni thread live fa la propria attesa sul dispositivo, e il kernel li sveglia tutti quando il periodo è pronto. Nessun thread ne sveglia un altro, e non c'è un secondo orologio. Se la dispersione dei risvegli tra i thread, misurata nel passo P1.6, risulta troppa, il ripiego è un timer proprio per i worker, con attesa attiva fino all'inizio del ciclo. Scartato: il primo thread che sveglia gli altri, perché è una syscall nel calcolo.
+
+**La regola sulle chiamate di sistema (D-11).**
+
+| Fase | Chiamate ammesse su un thread live |
+| --- | --- |
+| Calcolo | Nessuna |
+| Attesa | La chiamata bloccante; sul primo thread, in più, la notifica del puntatore di uscita |
+| Fuori dal ciclo (avvio, cambio di grafo che aggiunge o toglie un worker, arresto) | `futex`, per parcheggiare e riprendere un worker |
+
+La fa rispettare il meccanismo _Syscall User Dispatch_ del punto 6, acceso nel calcolo e spento nell'attesa; il filtro seccomp proposto in origine non distingue le fasi e non si usa.
+
+**Il bilancio di calcolo** (punto 4) parte da un margine di 150 µs, da sostituire con il valore misurato. La protezione per il thread che non ritorna affatto è nell'[ADR 0023](0023-protezione-dal-thread-che-non-cede.md).
