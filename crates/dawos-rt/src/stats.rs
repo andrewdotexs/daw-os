@@ -106,8 +106,10 @@ impl Durations {
         for (index, bucket) in self.buckets.iter().enumerate() {
             seen += bucket;
             if seen >= rank {
-                // The upper edge of the bucket.
-                return Some((index as u64 + 1) * BUCKET_NS);
+                // The upper edge of the bucket, but never more than the
+                // highest value seen: a quantile above the maximum
+                // would only confuse.
+                return Some(((index as u64 + 1) * BUCKET_NS).min(self.max_ns));
             }
         }
         Some(self.max_ns)
@@ -151,7 +153,8 @@ mod tests {
         // 2 000 ns falls in the bucket from 2 000 to 2 250.
         assert_eq!(durations.quantile_ns(50_000), Some(2_250));
         assert_eq!(durations.quantile_ns(99_999), Some(2_250));
-        assert_eq!(durations.quantile_ns(100_000), Some(20_250));
+        // Never above the highest value seen.
+        assert_eq!(durations.quantile_ns(100_000), Some(20_000));
     }
 
     #[test]
