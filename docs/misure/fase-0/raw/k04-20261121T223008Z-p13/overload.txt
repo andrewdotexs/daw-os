@@ -1,0 +1,24 @@
+dawos-engine 0.1.0
+backend: null
+rate_hz: 48000
+quantum_frames: 128
+period_us: 2666.666
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 10
+load_percent: 120
+margin_us: 150
+fault: none
+watchdog_rounds: 3754
+systemd_listening: no
+kernel_work_ms: 1877 rounds, mean 0.27, longest 2.52
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      3754       0       3754        0      1.98      6.03     2561.69     2562.22        98.83
+1      first  stopped      3754       0       3754        0      1.90      6.39     2561.69     2561.87        98.41
+2      first  stopped      3754       0       3754        0      2.08      7.37     2561.72     2562.28        97.57
+3      first  stopped      3754       0       3754        0      2.08      7.09     2561.73     2562.25        97.81

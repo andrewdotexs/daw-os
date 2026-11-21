@@ -1,0 +1,29 @@
+dawos-engine 0.1.0
+backend: null
+rate_hz: 48000
+quantum_frames: 128
+period_us: 2666.666
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 12
+load_percent: 60
+margin_us: 150
+fault: stuck-thread on thread 1 after 4 s
+watchdog_rounds: 4504
+systemd_listening: no
+kernel_work_ms: 2247 rounds, mean 0.29, longest 6.68
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      4504       0          0        0      2.21      6.20     1602.19     1602.35      1058.27
+1      spare  stopped      3000       0          0        0      1.87      2.64     1602.17     1602.28      1061.88
+2      first  stopped      4504       0          0        0      2.45      7.22     1602.24     1602.87      1057.27
+3      first  stopped      4504       0          0        0      2.41      7.21     1602.21     1602.89      1056.78
+1      first  never came back: stuck, moved off its CPU by the watchdog
+
+watchdog events (milliseconds from the start of the compute phase the thread never left):
+slot 1 cycle 1500 outside any node thread 5470: noticed after 8.00, live CPU free after 8.03, spare thread at work after 10.67
+k04: PASS (limits: noticed within 11.2 ms, live CPU free within 15 ms, spare thread at work within 50 ms, kernel work on every CPU within 20 ms)
