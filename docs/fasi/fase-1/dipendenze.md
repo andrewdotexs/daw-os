@@ -27,5 +27,5 @@ I sorgenti non stanno nel repository: `make engine-vendor` li scarica una volta 
 
 | Passo | Bisogno | Candidato |
 | --- | --- | --- |
-| P1.4 | Parlare con alsa-lib (decisione D-27) | Da proporre con nome e versione dopo la verifica |
+| P1.4, parte 2 | Parlare con alsa-lib (decisione D-27) | **Approvato dall'utente il 21 novembre 2026**: `alsa` 0.12.1 (Apache-2.0 oppure MIT), involucro sottile e sicuro di alsa-lib. Porta con sé `alsa-sys` 0.6.1, `bitflags` 2.13.2 e `cfg-if` 1.0.5; solo per costruire, `pkg-config` 0.3.34, `cc` 1.11.3, `shlex` 2.0.1 e `find-msvc-tools` 0.1.15. Si compila con Rust 1.88.0 _(verificato)_. Chiede gli header di alsa-lib sul PC di sviluppo (`libasound2-dev`) |
 | P1.7 | Leggere il file che descrive il grafo | Da proporre; oppure un formato abbastanza semplice da leggere a mano |
