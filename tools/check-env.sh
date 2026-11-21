@@ -90,6 +90,16 @@ else
 	warn "npx not found: 'make lint' cannot run markdownlint (package 'npm')"
 fi
 
+# The audio engine is written in Rust. rustup installs by itself the
+# compiler named in crates/rust-toolchain.toml the first time cargo is
+# run there; the image build uses a compiler of its own, of the same
+# version.
+if command -v rustup > /dev/null 2>&1 && command -v cargo > /dev/null 2>&1; then
+	ok "rustup and cargo found (the engine: 'make engine-test', 'make lint')"
+else
+	fail "rustup or cargo not found: install them with: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none; then open a new shell"
+fi
+
 # Headers needed to build kernel host tools and the menuconfig interface.
 for header in ncurses.h openssl/ssl.h libelf.h; do
 	if [[ -f /usr/include/${header} ]] || compgen -G "/usr/include/*/${header}" > /dev/null; then

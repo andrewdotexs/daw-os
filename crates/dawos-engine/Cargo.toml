@@ -1,0 +1,19 @@
+[package]
+name = "dawos-engine"
+description = "dawOS audio engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "dawos-engine"
+path = "src/main.rs"
+
+[dependencies]
+dawos-rt.workspace = true
+dawos-audio-io.workspace = true
+
+[lints]
+workspace = true

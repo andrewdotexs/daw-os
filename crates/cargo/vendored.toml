@@ -1,0 +1,13 @@
+# Passed to cargo with "--config cargo/vendored.toml" by the Makefile and
+# by the image build: dependencies then come from vendor/, never from the
+# network. vendor/ is not in the repository: "make engine-vendor" fills
+# it from crates.io, once, checking every file against the checksums of
+# Cargo.lock. It is to the engine what dl/ is to the rest of the image.
+[source.crates-io]
+replace-with = "vendored-sources"
+
+# cargo reads a relative path in a configuration file from the directory
+# above the one that holds the file: "vendor" here is crates/vendor, and
+# that is why this file sits in a directory of its own.
+[source.vendored-sources]
+directory = "vendor"

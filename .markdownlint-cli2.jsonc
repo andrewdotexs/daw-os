@@ -2,5 +2,5 @@
   // Files checked by "make lint" and by the lint workflow.
   "globs": ["**/*.md"],
   // Third-party and generated trees are not ours to lint.
-  "ignores": ["buildroot/**", "output/**", "dl/**", "node_modules/**"]
+  "ignores": ["buildroot/**", "output/**", "dl/**", "node_modules/**", "crates/vendor/**", "crates/target/**"]
 }

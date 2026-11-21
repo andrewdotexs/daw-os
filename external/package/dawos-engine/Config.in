@@ -1,0 +1,16 @@
+config BR2_PACKAGE_DAWOS_ENGINE
+	bool "dawos-engine"
+	depends on BR2_x86_64
+	depends on BR2_PACKAGE_HOST_RUSTC_TARGET_ARCH_SUPPORTS
+	select BR2_PACKAGE_HOST_RUSTC
+	help
+	  The dawOS audio engine (Phase 1). A Rust workspace kept in
+	  this repository, in crates/; built with the Rust compiler
+	  Buildroot installs for the build machine and linked with the
+	  toolchain of the image.
+
+	  Installs /usr/bin/dawos-engine.
+
+	  The external crates it depends on are not downloaded by the
+	  image build: "make engine-vendor" puts them in crates/vendor
+	  beforehand, checked against the checksums of Cargo.lock.

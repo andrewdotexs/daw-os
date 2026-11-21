@@ -1,0 +1,10 @@
+# The Rust compiler every developer and every build uses for dawOS.
+#
+# The same version Buildroot 2026.02.3 installs to build the image
+# (package rust-bin): code that builds here builds there. rustup reads
+# this file and installs the toolchain by itself the first time cargo is
+# run in this directory. Changing it is a decision (question D-18).
+[toolchain]
+channel = "1.88.0"
+components = ["clippy", "rustfmt"]
+profile = "minimal"
