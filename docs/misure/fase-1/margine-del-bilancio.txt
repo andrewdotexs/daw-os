@@ -1,0 +1,39 @@
+# Step P1.3, point 6: the same overload (120 % of the period, fifty nodes
+# of 64 us each per thread) with a tighter and tighter compute budget margin.
+# 285K, image 0.0.1.20261121221832, profile 285k, 21 November 2026.
+# Output pasted by the user in the conversation; not fetched from the machine.
+#
+# for margin in 150 50 20 5 0: dawos-engine run --seconds 10 --load 120
+#     --margin-us MARGIN --kernel-probe --require-rt
+# Columns: slot kind end cycles missed incomplete overruns late_avg late_max
+#          compute_avg compute_max least_margin (microseconds)
+margin_us 150:
+kernel_work_ms: 1878 rounds, mean 0.27, longest 0.28
+0      first  stopped      3754       0       3754        0      1.95      6.12     2561.68     2561.85        98.88
+1      first  stopped      3754       0       3754        0      1.97      6.39     2561.68     2561.86        98.57
+2      first  stopped      3754       0       3754        0      2.03      7.07     2561.73     2562.39        97.84
+3      first  stopped      3754       0       3754        0      2.02      7.02     2561.71     2562.26        97.94
+margin_us 50:
+kernel_work_ms: 1878 rounds, mean 0.27, longest 0.28
+0      first  stopped      3754       0       3754        0      1.96      6.26     2625.72     2625.86        34.66
+1      first  stopped      3754       0       3754        0      1.94      5.97     2625.72     2625.93        34.94
+2      first  stopped      3754       0       3754        0      1.82      7.17     2625.75     2625.99        33.73
+3      first  stopped      3754       0       3754        0      1.82      7.12     2625.74     2625.87        33.76
+margin_us 20:
+kernel_work_ms: 1878 rounds, mean 0.27, longest 0.28
+0      first  stopped      1877    1876       1877     1877      4.80      6.32     2689.84     2690.28            -
+1      first  stopped      1877    1876       1877     1877      4.89      7.20     2689.84     2690.06            -
+2      first  stopped      1877    1876       1877     1877      4.92      7.24     2689.87     2690.03            -
+3      first  stopped      1877    1876       1877     1877      4.66      6.49     2689.84     2690.02            -
+margin_us 5:
+kernel_work_ms: 1878 rounds, mean 0.27, longest 0.28
+0      first  stopped      1877    1876       1877     1877      4.62      6.30     2689.86     2690.51            -
+1      first  stopped      1877    1876       1877     1877      4.83      7.10     2689.84     2690.44            -
+2      first  stopped      1877    1876       1877     1877      5.25      7.26     2689.90     2690.45            -
+3      first  stopped      1877    1876       1877     1877      4.64      6.34     2689.89     2690.64            -
+margin_us 0:
+kernel_work_ms: 1878 rounds, mean 0.27, longest 2.78
+0      first  stopped      1877    1876       1877     1877      4.86      6.62     2689.83     2690.08            -
+1      first  stopped      1877    1876       1877     1877      4.77      6.54     2689.84     2690.01            -
+2      first  stopped      1877    1876       1877     1877      4.85      6.73     2689.86     2690.01            -
+3      first  stopped      1877    1876       1877     1877      4.86      6.60     2689.86     2690.11            -

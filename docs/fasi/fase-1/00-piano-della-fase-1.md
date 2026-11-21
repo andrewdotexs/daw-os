@@ -44,9 +44,9 @@ Un passo non si considera chiuso finché il suo criterio non è stato eseguito e
 | Passo | Contenuto | Criteri della fase che prepara o chiude |
 | --- | --- | --- |
 | P1.0 | Raccordo: immagine nuova, driver grafico, verifica del firmware. **Chiuso.** | — |
-| P1.1 | Progetto: ciclo a due fasi, protezione di K-04, domande aperte. Nessun codice | 5, 6 |
-| P1.2 | Scheletro: spazio di lavoro Rust, costruzione sul PC e nell'immagine, motore con il backend `null`, riga di comando | — |
-| P1.3 | Il ciclo e la protezione di K-04 con il backend `null`: bilancio di calcolo, sorvegliante, prova d'urto | 6 |
+| P1.1 | Progetto: ciclo a due fasi, protezione di K-04, domande aperte. Nessun codice. **Chiuso.** | 5, 6 |
+| P1.2 | Scheletro: spazio di lavoro Rust, costruzione sul PC e nell'immagine, motore con il backend `null`, riga di comando. **Superato.** | — |
+| P1.3 | Il ciclo e la protezione di K-04 con il backend `null`: bilancio di calcolo, sorvegliante, prova d'urto. **Superato**; il margine del bilancio si misura in P1.6 | 6 |
 | P1.4 | La scheda: ALSA in `mmap`, ingresso e uscita collegati, due periodi; passthrough; routing della Scarlett | — |
 | P1.5 | Calibrazione della latenza in loopback; verifica del segnale campione per campione | 1 |
 | P1.6 | La misura a ogni ciclo: margine, ritardo di risveglio, syscall e ingressi nel kernel, cause degli xrun | 4, 5 |

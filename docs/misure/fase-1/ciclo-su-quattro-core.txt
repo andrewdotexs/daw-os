@@ -1,0 +1,31 @@
+# Step P1.3, point 4: the two-phase cycle on the four live CPUs, null back end.
+# 285K, image 0.0.1.20261121221832, profile 285k, 21 November 2026.
+# Output pasted by the user in the conversation; not fetched from the machine.
+#
+# dawos-engine run --seconds 60 --require-rt
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 60
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 22513
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22513       0          0        0      2.03      8.31        0.07        0.14      2658.28
+1      first  stopped     22513       0          0        0      2.02      8.65        0.07        0.17      2657.94
+2      first  stopped     22513       0          0        0      2.06      8.91        0.07        0.14      2657.69
+3      first  stopped     22513       0          0        0      1.84      6.52        0.07        0.12      2660.08
+
+# dawos-engine run --seconds 60 --load 60 --require-rt
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22517       0          0        0      2.03      9.69     1602.20     1602.81      1054.83
+1      first  stopped     22517       0          0        0      1.92      6.27     1602.20     1602.80      1058.21
+2      first  stopped     22517       0          0        0      1.95      8.81     1602.02     1602.63      1055.86
+3      first  stopped     22517       0          0        0      2.05     10.44     1602.21     1602.81      1054.03

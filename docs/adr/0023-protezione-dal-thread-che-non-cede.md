@@ -1,6 +1,6 @@
 # ADR 0023 — Protezione dal thread live che non cede
 
-- **Stato**: accettata dall'utente il 21 novembre 2026 come progetto. Nulla è ancora nel codice: si realizza e si verifica con la prova d'urto nel passo P1.3 della Fase 1
+- **Stato**: accettata dall'utente il 21 novembre 2026 come progetto; realizzata e verificata lo stesso giorno sul 285K con la prova d'urto del [passo P1.3](../fasi/fase-1/P1.3-ciclo-e-protezione.md). Restano da fare il passo 4 del sorvegliante (P1.7) e la misura del margine (P1.6)
 - **Data**: 21 novembre 2026
 - **Origine**: rischio K-04 del documento 0; punti aperti A-06, A-07 e A-18; [ADR 0021](0021-core-live-senza-kernel.md), punto 4; prompt della Fase 1; [progetto P1.1](../fasi/fase-1/P1.1-progetto-ciclo-e-k04.md), parte 2
 
@@ -20,7 +20,8 @@ Il prompt della Fase 1 chiede che la protezione viva nel motore, che il sorvegli
 
 Ogni thread live confronta l'ora con la scadenza del calcolo tra un nodo e l'altro, senza syscall. Alla scadenza non prende altri nodi; il primo thread consegna ciò che è pronto e silenzio per il resto; il ciclo è contato come incompleto; tutti vanno all'attesa.
 
-- **Margine di partenza**: 150 µs prima della fine del quanto. Si sostituisce con il valore misurato in P1.3.
+- **Margine di partenza**: 150 µs prima della fine del quanto.
+- **Il margine deve superare il nodo più lungo**, finché il controllo non conosce la durata attesa di ogni nodo (dal passo P1.7). La misura del passo P1.3 non ha potuto dare il valore: con il backend `null` non c'è nulla da consegnare dopo il calcolo. Si misura con la scheda, nel passo P1.6 (punto aperto A-54).
 
 ### 2. Il sorvegliante
 
@@ -44,20 +45,23 @@ systemd sorveglia il motore: il thread delle statistiche segnala di essere vivo 
 
 ### I tempi
 
-| Evento | Tempo dal blocco |
-| --- | --- |
-| Il ciclo in corso si chiude senza quel nodo | Meno di 2,7 ms |
-| Il sorvegliante rileva il blocco | Entro 11 ms |
-| Il core live torna ai thread del kernel | Entro 15 ms |
-| Il thread di riserva è al lavoro | Entro 50 ms |
-| Il grafo senza il nodo è in uso | Entro 500 ms |
-| Riavvio della macchina | Mai |
+| Evento | Tempo dal blocco | Misurato sul 285K (P1.3) |
+| --- | --- | --- |
+| Il ciclo in corso si chiude senza quel nodo | Meno di 2,7 ms | — |
+| Il sorvegliante rileva il blocco | Entro 11 ms | 8,00 ms |
+| Il core live torna ai thread del kernel | Entro 15 ms | 8,03 ms |
+| Il thread di riserva è al lavoro | Entro 50 ms | 10,67 ms |
+| Il grafo senza il nodo è in uso | Entro 500 ms | Da fare in P1.7 |
+| Riavvio della macchina | Mai | Nessuno |
+
+Durante il blocco un lavoro chiesto al kernel su ogni core è rimasto in coda al più 6,68 ms.
 
 ## Perché
 
 - **Il sorvegliante da fuori, non un limite del kernel sul thread**: un limite di tempo di CPU per thread arma un timer sul core live, cioè proprio un ingresso nel kernel durante il calcolo.
 - **Isolare e non terminare**: in un processo solo, uccidere un thread lascia la memoria in uno stato che nessuno conosce. Spostato su un altro dominio a priorità minima, non fa danni.
 - **Il thread di riserva**: senza, un nodo difettoso toglierebbe un quarto della capacità live fino al riavvio.
+- **Il margine non protegge i thread del kernel** _(misurato in P1.3)_: un thread che sfora il periodo dorme comunque fino al seguente, e il lavoro del kernel resta entro 0,28 ms. Il margine protegge la consegna dell'audio.
 - **Tre quanti**: un ciclo sano dura meno di uno, e il bilancio ferma a meno di uno anche un ciclo pesante. Quindici millisecondi di fame per i thread del kernel di un core sono lontani da ogni soglia che il kernel sorveglia, che sono dell'ordine dei secondi.
 
 ## Alternative scartate
@@ -80,7 +84,7 @@ systemd sorveglia il motore: il thread delle statistiche segnala di essere vivo 
 
 ## Quando si riapre
 
-- Se la prova d'urto mostra che spostare da fuori un thread bloccato su un core live non riesce sempre.
+- Se spostare da fuori un thread bloccato su un core live non riesce sempre. Nella prova d'urto di P1.3 è riuscito due volte su due, in 30 µs; la prova si ripete nella campagna del passo P1.10.
 - Se il margine del bilancio misurato risulta così grande da togliere capacità utile ai core live.
 - Se compaiono falsi allarmi con la soglia di tre quanti.
 - All'apertura della Fase 4, per i processi host e i thread dei plugin.
