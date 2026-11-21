@@ -1,0 +1,46 @@
+# The dawOS workspace: every Rust crate of the project lives here
+# (question D-18, decided on 21 November 2026).
+#
+#   dawos-rt        the real-time core: clock, CPU placement, statistics.
+#                   Nothing in it allocates or blocks on a live path, and
+#                   it is the only crate allowed to contain unsafe code.
+#   dawos-audio-io  the audio back ends behind one interface ("null" now,
+#                   "alsa" in step P1.4, "file" in step P1.7).
+#   dawos-engine    the process and its command line.
+[workspace]
+resolver = "2"
+members = ["dawos-rt", "dawos-audio-io", "dawos-engine"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "GPL-3.0-or-later"
+publish = false
+
+# External dependencies are approved one by one, with their version and
+# the reason, in docs/fasi/fase-1/dipendenze.md. Their sources are kept in
+# vendor/ (see .cargo/config.toml): nothing is downloaded at build time.
+[workspace.dependencies]
+libc = { version = "=0.2.191", default-features = false }
+dawos-rt = { path = "dawos-rt" }
+dawos-audio-io = { path = "dawos-audio-io" }
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+undocumented_unsafe_blocks = "deny"
+
+# The engine is always measured as it will run: optimised, with the
+# checks that catch arithmetic mistakes left on.
+[profile.release]
+opt-level = 3
+overflow-checks = true
+debug = 1
+panic = "abort"
+
+[profile.dev]
+panic = "abort"

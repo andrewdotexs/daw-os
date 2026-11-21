@@ -15,3 +15,9 @@
 *.swp
 *~
 .DS_Store
+
+# Rust: build results, and the sources of the external crates, which
+# "make engine-vendor" downloads and checks against Cargo.lock.
+/crates/target/
+/crates/vendor/
+

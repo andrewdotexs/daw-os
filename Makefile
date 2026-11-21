@@ -74,8 +74,43 @@ config: | $(BR_DIR)/Makefile ## (Re)apply the defconfig, discarding local menuco
 # Each entry reads "package:prefix of its options in .config".
 WATCHED_PACKAGES := systemd:BR2_PACKAGE_SYSTEMD util-linux:BR2_PACKAGE_UTIL_LINUX
 
+# --- The audio engine (crates/) ---------------------------------------------------
+# cargo is always run inside crates/, where rust-toolchain.toml fixes the
+# compiler, with the sources of the external crates taken from
+# crates/vendor and never from the network.
+CRATES_DIR := $(TOP)/crates
+ENGINE_VENDOR := $(CRATES_DIR)/vendor/.dawos-vendored
+ENGINE_CARGO = cd $(CRATES_DIR) && cargo --config cargo/vendored.toml
+
+# The external crates, downloaded once and checked against the checksums
+# of Cargo.lock; again whenever Cargo.lock changes.
+$(ENGINE_VENDOR): $(CRATES_DIR)/Cargo.lock
+	cd $(CRATES_DIR) && cargo vendor --locked vendor > /dev/null
+	touch $@
+
+.PHONY: engine-vendor
+engine-vendor: $(ENGINE_VENDOR) ## Download the external crates of the engine into crates/vendor (needs the network, once)
+
+.PHONY: engine
+engine: $(ENGINE_VENDOR) ## Build the engine on this PC (crates/target/release/dawos-engine)
+	$(ENGINE_CARGO) build --offline --locked --release
+
+.PHONY: engine-test
+engine-test: $(ENGINE_VENDOR) ## Run the tests of the engine on this PC
+	$(ENGINE_CARGO) test --offline --locked
+
+.PHONY: engine-lint
+engine-lint: $(ENGINE_VENDOR) ## Check the Rust code: formatting, and clippy without a single warning
+	cd $(CRATES_DIR) && cargo fmt --all --check
+	$(ENGINE_CARGO) clippy --offline --locked --all-targets -- -D warnings
+
+# Packages whose source is a directory of this repository: Buildroot
+# copies it once and never again, so "make image" has them copied and
+# built anew every time. Each rebuilds only what changed.
+LOCAL_SOURCE_PACKAGES := dawos-engine
+
 .PHONY: image
-image: $(O)/.config ## Build the whole image (output/images/disk.img); JOBS=N limits parallelism
+image: $(O)/.config $(ENGINE_VENDOR) ## Build the whole image (output/images/disk.img); JOBS=N limits parallelism
 	@for entry in $(WATCHED_PACKAGES); do \
 		package=$${entry%%:*}; prefix=$${entry#*:}; \
 		if tools/package-options.sh changed "$(O)" "$${package}" "$${prefix}"; then \
@@ -83,6 +118,7 @@ image: $(O)/.config ## Build the whole image (output/images/disk.img); JOBS=N li
 			$(BR_MAKE) "$${package}-dirclean" || exit 1; \
 		fi; \
 	done
+	$(BR_MAKE) $(addsuffix -rebuild,$(LOCAL_SOURCE_PACKAGES))
 	$(BR_MAKE) all
 	@for entry in $(WATCHED_PACKAGES); do \
 		tools/package-options.sh record "$(O)" "$${entry%%:*}" "$${entry#*:}"; \
@@ -169,7 +205,7 @@ campaign-net: ## Network traffic for the campaign, from this PC, until the campa
 	@tools/campaign-net.sh $(HOST)
 
 .PHONY: lint
-lint: ## Run shellcheck and markdownlint, and look for addresses that must not be committed
+lint: engine-lint ## Run shellcheck, markdownlint, rustfmt and clippy, and look for addresses that must not be committed
 	shellcheck $(SHELL_SOURCES)
 	tools/check-private.sh
 	npx --yes markdownlint-cli2@$(MARKDOWNLINT_VERSION)

@@ -1,0 +1,14 @@
+[package]
+name = "dawos-rt"
+description = "dawOS real-time core: clock, CPU placement, statistics without allocation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+libc.workspace = true
+
+[lints]
+workspace = true

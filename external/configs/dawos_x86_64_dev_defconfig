@@ -151,3 +151,12 @@ BR2_PACKAGE_HOST_CRYPTSETUP=y
 BR2_PACKAGE_HOST_E2FSPROGS=y
 BR2_PACKAGE_HOST_DOSFSTOOLS=y
 BR2_PACKAGE_HOST_MTOOLS=y
+
+# --- The audio engine (Phase 1) ------------------------------------------------
+# dawos-engine, from crates/ in this repository. The Rust compiler is the
+# one Buildroot downloads ready-made (1.88.0, the version fixed in
+# crates/rust-toolchain.toml), not one built from source: an hour of
+# build time less.
+BR2_PACKAGE_HOST_RUST_BIN=y
+BR2_PACKAGE_DAWOS_ENGINE=y
+
