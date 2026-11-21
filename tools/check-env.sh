@@ -100,6 +100,15 @@ else
 	fail "rustup or cargo not found: install them with: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none; then open a new shell"
 fi
 
+# The ALSA back end of the engine links against alsa-lib, on this PC too
+# ('make engine-test', 'make lint'): its build asks pkg-config where the
+# library is. The image build has its own copy.
+if command -v pkg-config > /dev/null 2>&1 && pkg-config --exists alsa 2> /dev/null; then
+	ok "alsa-lib development files found (version $(pkg-config --modversion alsa))"
+else
+	fail "alsa-lib development files not found: sudo apt install libasound2-dev pkg-config"
+fi
+
 # Headers needed to build kernel host tools and the menuconfig interface.
 for header in ncurses.h openssl/ssl.h libelf.h; do
 	if [[ -f /usr/include/${header} ]] || compgen -G "/usr/include/*/${header}" > /dev/null; then

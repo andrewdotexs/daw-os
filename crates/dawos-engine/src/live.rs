@@ -2,12 +2,14 @@
 //! (ADR 0023, first line).
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Mutex;
 
-use dawos_audio_io::Backend;
+use dawos_audio_io::{Backend, Disturbance};
 use dawos_rt::clock;
 use dawos_rt::slot::Slot;
 use dawos_rt::stats::Durations;
 
+use crate::patch::Patch;
 use crate::plan::{Fault, Plan};
 
 /// What the threads of the engine share. Read-only after start-up,
@@ -27,6 +29,10 @@ pub struct Shared {
     pub fault: Fault,
     pub fault_thread: usize,
     pub fault_cycle: u64,
+    /// What the first live thread does with the sound of the card, when
+    /// the back end has sound. Shared with the spare thread that may
+    /// replace it; never waited for.
+    pub patch: Option<Mutex<Patch>>,
 }
 
 /// What one thread measured. Owned by the thread while it runs, handed
@@ -91,6 +97,9 @@ pub fn live_loop(
         overruns: 0,
     };
     let mut first = true;
+    // Sound is the business of the first slot alone.
+    let patch = shared.patch.as_ref().filter(|_| slot_index == 0);
+    let mut disturbed = false;
 
     loop {
         // ---- Wait phase: the one blocking call of the cycle.
@@ -112,6 +121,24 @@ pub fn live_loop(
                 first_cycle.store(wake.woke, Ordering::Release);
             }
             first = false;
+        }
+
+        // The input of this period, and what the patch makes of it. A
+        // patch that cannot be had (a thread went wrong while holding
+        // it) is a cycle without sound, not a wait.
+        if let Some(patch) = patch {
+            if let Ok(mut patch) = patch.try_lock() {
+                backend.capture(patch.input_mut());
+                patch.process();
+            }
+        }
+        if !disturbed && slot_index == 0 && !spare && wake.index >= shared.fault_cycle {
+            match shared.fault {
+                Fault::CardXrun => backend.disturb(Disturbance::Xrun),
+                Fault::CardLost => backend.disturb(Disturbance::CardLost),
+                _ => {}
+            }
+            disturbed = true;
         }
 
         let mut incomplete = false;
@@ -144,6 +171,14 @@ pub fn live_loop(
         {
             loop {
                 std::hint::spin_loop();
+            }
+        }
+
+        // The output, before the period ends: whatever the nodes did or
+        // did not finish.
+        if let Some(patch) = patch {
+            if let Ok(patch) = patch.try_lock() {
+                backend.deliver(patch.output());
             }
         }
 

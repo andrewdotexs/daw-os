@@ -3,6 +3,12 @@ config BR2_PACKAGE_DAWOS_ENGINE
 	depends on BR2_x86_64
 	depends on BR2_PACKAGE_HOST_RUSTC_TARGET_ARCH_SUPPORTS
 	select BR2_PACKAGE_HOST_RUSTC
+	select BR2_PACKAGE_ALSA_LIB
+	select BR2_PACKAGE_ALSA_LIB_PCM
+	select BR2_PACKAGE_ALSA_LIB_MIXER
+	select BR2_PACKAGE_ALSA_LIB_RAWMIDI
+	select BR2_PACKAGE_ALSA_LIB_HWDEP
+	select BR2_PACKAGE_ALSA_LIB_SEQ
 	help
 	  The dawOS audio engine (Phase 1). A Rust workspace kept in
 	  this repository, in crates/; built with the Rust compiler

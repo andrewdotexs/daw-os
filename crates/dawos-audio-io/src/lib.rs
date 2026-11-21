@@ -9,13 +9,23 @@
 //!   the engine and for the protection against a thread that does not
 //!   yield; not for latency figures, because its wake-up path is not the
 //!   one of a sound card.
-//! - `alsa`: step P1.4.
+//! - `alsa`: a sound card, through alsa-lib (question D-27): the device
+//!   itself, memory-mapped, capture and playback linked, two periods of
+//!   buffer. One live thread waits on it; how the others will is decided
+//!   with the measurements of step P1.6.
 //! - `file`: step P1.7.
+//!
+//! Samples cross this interface as the card has them: 32-bit signed
+//! integers, all the channels of a frame one after the other.
 
 #![forbid(unsafe_code)]
 
+mod alsa_backend;
+mod alsa_card;
 mod null;
 
+pub use alsa_backend::{keeper_loop, AlsaBackend, AlsaShared, CardStats};
+pub use alsa_card::{CardConfig, CardInfo};
 pub use null::NullBackend;
 
 use dawos_rt::clock::Instant;
@@ -84,4 +94,33 @@ pub trait Backend {
     /// Block until the next period is due. The only blocking call of the
     /// cycle: wait phase.
     fn wait(&mut self) -> Wake;
+
+    /// Channels of input and of output; none for a back end without
+    /// sound.
+    fn channels(&self) -> (usize, usize) {
+        (0, 0)
+    }
+
+    /// The input of the period that just began, one quantum, all
+    /// channels interleaved. Silence when there is none.
+    fn capture(&mut self, input: &mut [i32]) {
+        input.fill(0);
+    }
+
+    /// The output of this period, one quantum, all channels interleaved.
+    /// To be called before the period ends.
+    fn deliver(&mut self, _output: &[i32]) {}
+
+    /// Make something go wrong on purpose (tests of the recovery).
+    fn disturb(&mut self, _disturbance: Disturbance) {}
+}
+
+/// What can be made to go wrong in a back end, to see it recover.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Disturbance {
+    /// Skip input and output for some periods: the driver stops the
+    /// streams, as when the engine is late.
+    Xrun,
+    /// Behave as if the card had been unplugged.
+    CardLost,
 }

@@ -1,0 +1,266 @@
+#!/bin/sh
+# dawos-audio-test — the engine on a sound card: a tone out, the same
+# tone back in, and what happens when the card stops (step P1.4).
+#
+# The engine plays a test tone on output 3, copies input 3 to output 5
+# sample for sample, and measures inputs 3 and 5 second by second. For
+# the tone to be on both, output 3 must reach input 3 and output 5 must
+# reach input 5:
+#
+#   loopback   on the card made of software (snd-aloop), where every
+#              output is wired to the input of the same number. Works on
+#              any machine, a virtual one too: it proves the logic, not
+#              the timing, and xruns are allowed.
+#   card       on the USB interface. Output 3 reaches input 3 through a
+#              cable; output 5 reaches input 5 inside the interface,
+#              through its router (the file MODEL.test-loop.conf, set
+#              for the test and undone after it). No xrun is allowed.
+#
+# Cases of "loopback": the plain run, an xrun made on purpose, the card
+# taken away and given back, a live thread that never yields.
+#
+# Cases of "card": the plain run at every rate asked for, then at the
+# first rate an xrun made on purpose and a live thread that never
+# yields.
+#
+# Results go to /var/lib/dawos/measure/audio-<time>[-LABEL].
+
+set -u
+
+PROG=dawos-audio-test
+BASE=/var/lib/dawos/measure
+ENGINE=${DAWOS_ENGINE:-dawos-engine}
+SETUP=${DAWOS_CARD_SETUP:-dawos-card-setup}
+CARDS_DIR=${DAWOS_CARDS_DIR:-/usr/share/dawos/cards}
+
+usage() {
+	cat << USAGE
+Usage:
+  ${PROG} loopback [--seconds N] [LABEL]
+  ${PROG} card [--card N] [--rates "HZ ..."] [--seconds N] [--no-faults] [LABEL]
+
+  --seconds N    length of every plain run (default: 10 for loopback,
+                 600 for card)
+  --rates LIST   sample rates of the plain runs of "card" (default
+                 "48000 96000 192000")
+  --card N       the sound card (default: the first USB one)
+  --no-faults    "card": the plain runs only
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+# Value of a "name: value" line of an output of the engine.
+field() {
+	sed -n "s/^$2: //p" "$1" | head -n 1
+}
+
+# Column $2 of the row of the first live thread in the thread table.
+thread_column() {
+	awk -v column="$2" '
+		/^slot +kind/ { inside = 1; next }
+		inside && NF == 0 { inside = 0 }
+		inside && $1 == "0" && $3 != "never" { value = $column }
+		END { print value }' "$1"
+}
+
+# Level of the tone, weakest second, and its share, on input $2.
+heard() {
+	awk -v input="$2" '
+		/^input +seconds/ { inside = 1; next }
+		inside && NF == 0 { inside = 0 }
+		inside && $1 == input { printf "input %s tone %s dB share %s", $1, $6, $8 }' "$1"
+}
+
+# Run one case: $1 name, the rest are options of "dawos-engine run". The
+# verdict is the engine's own line "audio:".
+run_case() {
+	name=$1
+	shift
+	cases=$((cases + 1))
+	# shellcheck disable=SC2086  # device_options is several words
+	"${ENGINE}" run --backend alsa ${device_options} --tone 3 --route 3:5 --listen 3,5 "$@" \
+		> "${dir}/${name}.txt" 2> "${dir}/${name}.err"
+	status=$?
+	audio=$(field "${dir}/${name}.txt" audio)
+	k04=$(field "${dir}/${name}.txt" k04)
+	result=FAIL
+	case "${audio}" in
+	PASS*)
+		result=PASS
+		# A case with a stuck thread also has the verdict of the
+		# protection; its limits are those of the reference machine,
+		# so on the software card it does not count.
+		case "${mode}:${k04}" in
+		card:FAIL*) result=FAIL ;;
+		esac
+		;;
+	esac
+	[ "${result}" = PASS ] && passed=$((passed + 1))
+	{
+		printf '%-18s %-5s' "${name}" "${result}"
+		printf ' xruns %s, recoveries %s, lost %s; wake-up avg %s max %s us; compute avg %s max %s us; %s; %s' \
+			"$(field "${dir}/${name}.txt" card_xruns)" \
+			"$(field "${dir}/${name}.txt" card_recoveries)" \
+			"$(field "${dir}/${name}.txt" card_lost | sed 's/ .*//')" \
+			"$(thread_column "${dir}/${name}.txt" 8)" "$(thread_column "${dir}/${name}.txt" 9)" \
+			"$(thread_column "${dir}/${name}.txt" 10)" "$(thread_column "${dir}/${name}.txt" 11)" \
+			"$(heard "${dir}/${name}.txt" 3)" "$(heard "${dir}/${name}.txt" 5)"
+		[ -n "${k04}" ] && printf '; k04 %s' "${k04%% *}"
+		[ "${status}" -ne 0 ] && [ -s "${dir}/${name}.err" ] && printf '; %s' "$(tail -n 1 "${dir}/${name}.err")"
+		printf '\n'
+	} >> "${dir}/summary.txt"
+	tail -n 1 "${dir}/summary.txt"
+}
+
+first_usb_card() {
+	for directory in /proc/asound/card[0-9]*; do
+		[ -r "${directory}/usbid" ] || continue
+		echo "${directory##*/card}"
+		return 0
+	done
+	return 1
+}
+
+mode=${1:-}
+case "${mode}" in
+loopback | card) shift ;;
+-h | --help)
+	usage
+	exit 0
+	;;
+*)
+	usage >&2
+	exit 1
+	;;
+esac
+
+seconds=
+rates="48000 96000 192000"
+card=
+faults=yes
+label=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--seconds)
+		seconds=${2:-}
+		shift 2
+		;;
+	--rates)
+		rates=${2:-}
+		shift 2
+		;;
+	--card)
+		card=${2:-}
+		shift 2
+		;;
+	--no-faults)
+		faults=no
+		shift
+		;;
+	-*) die "unknown option '$1'" ;;
+	*)
+		label=$1
+		shift
+		;;
+	esac
+done
+case "${seconds}" in
+*[!0-9]*) die "--seconds takes a number" ;;
+esac
+[ "$(id -u)" = 0 ] || die "must run as root"
+
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+dir="${BASE}/audio-${stamp}${label:+-${label}}"
+mkdir -p "${dir}" || die "cannot create ${dir}"
+cases=0
+passed=0
+{
+	echo "started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+	echo "mode: ${mode}"
+	echo "label: ${label:-none}"
+	echo "kernel: $(uname -a | cut -d' ' -f1,3-)"
+	# shellcheck source=/dev/null
+	echo "image: $(. /etc/os-release && echo "${VERSION_ID:-unknown}")"
+	echo "virtual: $(systemd-detect-virt 2> /dev/null || echo unknown)"
+	echo "engine: $("${ENGINE}" --version 2> /dev/null)"
+	echo "uptime_s: $(cut -d. -f1 /proc/uptime)"
+} > "${dir}/meta.txt"
+echo "directory: ${dir}"
+printf '%-18s %-5s %s\n' "case" "result" "figures" > "${dir}/summary.txt"
+cat "${dir}/summary.txt"
+
+if [ "${mode}" = loopback ]; then
+	loaded=no
+	if [ ! -d /proc/asound/Loopback ]; then
+		modprobe snd-aloop || die "cannot load snd-aloop"
+		loaded=yes
+		sleep 1
+	fi
+	device_options="--device hw:Loopback,0,0 --capture-device hw:Loopback,1,0"
+	echo "card: Loopback (snd-aloop)" >> "${dir}/meta.txt"
+	seconds=${seconds:-10}
+	run_case plain --seconds "${seconds}" --allow-xruns
+	run_case card-xrun --seconds 8 --allow-xruns --fault card-xrun
+	run_case card-lost --seconds 8 --allow-xruns --fault card-lost
+	run_case stuck-node --seconds 8 --allow-xruns --fault stuck-node --fault-thread 0
+	if [ "${loaded}" = yes ]; then
+		modprobe -r snd-aloop 2> /dev/null || true
+	fi
+else
+	if [ -z "${card}" ]; then
+		card=$(first_usb_card) || die "no USB sound card: is the interface connected?"
+	fi
+	[ -d "/proc/asound/card${card}" ] || die "there is no sound card ${card}"
+	identifier=$(cat "/proc/asound/card${card}/id")
+	model=$(tr ':' '-' < "/proc/asound/card${card}/usbid" 2> /dev/null)
+	device_options="--device hw:${identifier},0"
+	{
+		echo "card: ${identifier} (${model:-not a USB card})"
+		echo "rates: ${rates}"
+	} >> "${dir}/meta.txt"
+	seconds=${seconds:-600}
+
+	# The router of the interface: the known state, then the loop the
+	# test needs.
+	loop="${CARDS_DIR}/${model}.test-loop.conf"
+	if [ -r "${CARDS_DIR}/${model}.conf" ]; then
+		{
+			"${SETUP}" apply --card "${card}"
+			[ -r "${loop}" ] && "${SETUP}" apply --card "${card}" "${loop}"
+		} > "${dir}/routing-before.txt" 2>&1
+		grep -E '^(set|failed|differs|missing|bad value|read-only)' "${dir}/routing-before.txt"
+	else
+		echo "no state file for the card ${model}: its router is left as it is" | tee "${dir}/routing-before.txt"
+	fi
+
+	first=
+	for rate in ${rates}; do
+		first=${first:-${rate}}
+		run_case "plain-${rate}" --rate "${rate}" --seconds "${seconds}" --require-rt
+	done
+	if [ "${faults}" = yes ]; then
+		run_case "card-xrun-${first}" --rate "${first}" --seconds 10 --require-rt --fault card-xrun
+		run_case "stuck-node-${first}" --rate "${first}" --seconds 12 --require-rt --kernel-probe \
+			--fault stuck-node --fault-thread 0 --fault-after 4
+	fi
+
+	if [ -r "${CARDS_DIR}/${model}.conf" ]; then
+		"${SETUP}" apply --card "${card}" > "${dir}/routing-after.txt" 2>&1
+		grep -E '^(set|failed|differs|missing|bad value|read-only)' "${dir}/routing-after.txt"
+	fi
+fi
+
+{
+	echo
+	if [ "${passed}" -eq "${cases}" ]; then
+		echo "verdict: PASS (${passed} of ${cases} cases)"
+	else
+		echo "verdict: FAIL (${passed} of ${cases} cases)"
+	fi
+	echo "finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} | tee -a "${dir}/summary.txt"
+[ "${passed}" -eq "${cases}" ]

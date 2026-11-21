@@ -11,6 +11,10 @@ enable dawos-fail-boot-test.service
 # Runs one update at boot when asked to by a marker file, for the
 # automatic test of the update path (dev variant; inert otherwise).
 enable dawos-update-test.service
+# Runs the audio test on the software sound card at boot when asked to
+# by a marker file, for "make qemu-audio-test" (dev variant; inert
+# otherwise).
+enable dawos-audio-boot-test.service
 # Runs only on a boot armed with "dawos-boot-trace --arm".
 enable dawos-boot-trace.service
 

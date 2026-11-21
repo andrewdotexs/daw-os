@@ -16,6 +16,15 @@ I sorgenti non stanno nel repository: `make engine-vendor` li scarica una volta 
 | --- | --- | --- | --- | --- |
 | `libc` | 0.2.191 | MIT oppure Apache-2.0 | Solo in `dawos-rt`, modulo `sys` | Le chiamate alla libreria C e al kernel (orologio, attesa, core e priorità del thread, blocco della memoria) con le strutture dati giuste per l'architettura. Scriverle a mano vorrebbe dire ricopiare quelle strutture, con il rischio di sbagliarle. Nessuna dipendenza a sua volta; chiede Rust 1.65 o successivo _(verificato nell'indice di crates.io il 21 novembre 2026)_ |
 
+| `alsa` | 0.12.1 | Apache-2.0 oppure MIT | Solo in `dawos-audio-io` | Involucro sottile e sicuro di alsa-lib (decisione D-27; scelta dell'utente del 21 novembre 2026): `mmap`, flussi collegati, attesa, stato, senza `unsafe` nostro. Ha anche un modulo che parla con il kernel senza alsa-lib: ne uso la lettura della pagina di stato, e servirà per il confronto del passo P1.8 |
+| `alsa-sys` | 0.6.1 | MIT | Dipendenza di `alsa` | Le dichiarazioni di alsa-lib, già generate: non serve `bindgen` |
+| `bitflags` | 2.13.2 | MIT oppure Apache-2.0 | Dipendenza di `alsa` | Insiemi di opzioni |
+| `cfg-if` | 1.0.5 | MIT oppure Apache-2.0 | Dipendenza di `alsa` | Compilazione condizionata |
+| `pkg-config` | 0.3.34 | MIT oppure Apache-2.0 | Solo per costruire `alsa-sys` | Chiede a `pkg-config` dov'è alsa-lib |
+| `cc`, `shlex`, `find-msvc-tools` | 1.11.3, 2.0.1, 0.1.15 | MIT oppure Apache-2.0 | Solo per costruire `alsa-sys` | Compilano una prova che sulle macchine a 64 bit non viene eseguita _(verificato nello script di costruzione)_ |
+
+`alsa` chiede sul PC di sviluppo gli header di alsa-lib (`libasound2-dev`) e `pkg-config`; nell'immagine usa alsa-lib 1.2.15.3 di Buildroot. I sorgenti in `crates/vendor` passano da 6,6 a 9,2 MiB.
+
 ## Che cosa non è entrato, e perché
 
 | Bisogno | Scelta |
@@ -27,5 +36,4 @@ I sorgenti non stanno nel repository: `make engine-vendor` li scarica una volta 
 
 | Passo | Bisogno | Candidato |
 | --- | --- | --- |
-| P1.4, parte 2 | Parlare con alsa-lib (decisione D-27) | **Approvato dall'utente il 21 novembre 2026**: `alsa` 0.12.1 (Apache-2.0 oppure MIT), involucro sottile e sicuro di alsa-lib. Porta con sé `alsa-sys` 0.6.1, `bitflags` 2.13.2 e `cfg-if` 1.0.5; solo per costruire, `pkg-config` 0.3.34, `cc` 1.11.3, `shlex` 2.0.1 e `find-msvc-tools` 0.1.15. Si compila con Rust 1.88.0 _(verificato)_. Chiede gli header di alsa-lib sul PC di sviluppo (`libasound2-dev`) |
 | P1.7 | Leggere il file che descrive il grafo | Da proporre; oppure un formato abbastanza semplice da leggere a mano |
