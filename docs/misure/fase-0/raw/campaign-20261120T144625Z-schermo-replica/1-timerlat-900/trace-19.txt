@@ -1,0 +1,1500 @@
+          <idle>-0       [004] d..3.  1152.093878: thread_noise: swapper/4:0 start 1152.093876728 duration 294 ns
+     timerlatu/4-2215    [004] ....1  1152.093878: timerlat_sample: timer_latency=1561 seqnum=2669716 context=1
+     timerlatu/4-2215    [004] ....1  1152.093878: #2669716 context thread timer_latency      1561 ns
+     timerlatu/4-2215    [004] ....1  1152.093878: timerlat_sample: timer_latency=1974 seqnum=2669716 context=2
+     timerlatu/4-2215    [004] ....1  1152.093878: #2669716 context user-ret timer_latency      1974 ns
+          <idle>-0       [007] d.h1.  1152.094025: timerlat_sample: timer_latency=511 seqnum=2669714 context=0
+          <idle>-0       [007] d.h1.  1152.094025: #2669714 context    irq timer_latency       511 ns
+          <idle>-0       [007] dNh2.  1152.094025: irq_noise: local_timer:236 start 1152.094024747 duration 658 ns
+          <idle>-0       [007] d..3.  1152.094026: thread_noise: swapper/7:0 start 1152.094024799 duration 289 ns
+     timerlatu/7-2218    [007] ....1  1152.094026: timerlat_sample: timer_latency=1572 seqnum=2669714 context=1
+     timerlatu/7-2218    [007] ....1  1152.094026: #2669714 context thread timer_latency      1572 ns
+     timerlatu/7-2218    [007] ....1  1152.094026: timerlat_sample: timer_latency=1989 seqnum=2669714 context=2
+     timerlatu/7-2218    [007] ....1  1152.094026: #2669714 context user-ret timer_latency      1989 ns
+          <idle>-0       [006] d.h1.  1152.094062: timerlat_sample: timer_latency=515 seqnum=2669715 context=0
+          <idle>-0       [006] d.h1.  1152.094062: #2669715 context    irq timer_latency       515 ns
+          <idle>-0       [006] dNh2.  1152.094063: irq_noise: local_timer:236 start 1152.094061995 duration 690 ns
+          <idle>-0       [006] d..3.  1152.094063: thread_noise: swapper/6:0 start 1152.094062047 duration 281 ns
+     timerlatu/6-2217    [006] ....1  1152.094063: timerlat_sample: timer_latency=1617 seqnum=2669715 context=1
+     timerlatu/6-2217    [006] ....1  1152.094063: #2669715 context thread timer_latency      1617 ns
+     timerlatu/6-2217    [006] ....1  1152.094064: timerlat_sample: timer_latency=2015 seqnum=2669715 context=2
+     timerlatu/6-2217    [006] ....1  1152.094064: #2669715 context user-ret timer_latency      2015 ns
+          <idle>-0       [005] d.h1.  1152.094078: timerlat_sample: timer_latency=510 seqnum=2669716 context=0
+          <idle>-0       [005] d.h1.  1152.094078: #2669716 context    irq timer_latency       510 ns
+          <idle>-0       [005] dNh2.  1152.094079: irq_noise: local_timer:236 start 1152.094077905 duration 686 ns
+          <idle>-0       [005] d..3.  1152.094079: thread_noise: swapper/5:0 start 1152.094077958 duration 282 ns
+     timerlatu/5-2216    [005] ....1  1152.094079: timerlat_sample: timer_latency=1589 seqnum=2669716 context=1
+     timerlatu/5-2216    [005] ....1  1152.094079: #2669716 context thread timer_latency      1589 ns
+     timerlatu/5-2216    [005] ....1  1152.094079: timerlat_sample: timer_latency=1986 seqnum=2669716 context=2
+     timerlatu/5-2216    [005] ....1  1152.094080: #2669716 context user-ret timer_latency      1986 ns
+          <idle>-0       [004] d.h1.  1152.094127: timerlat_sample: timer_latency=523 seqnum=2669717 context=0
+          <idle>-0       [004] d.h1.  1152.094127: #2669717 context    irq timer_latency       523 ns
+          <idle>-0       [004] dNh2.  1152.094127: irq_noise: local_timer:236 start 1152.094126680 duration 628 ns
+          <idle>-0       [004] d..3.  1152.094128: thread_noise: swapper/4:0 start 1152.094126732 duration 280 ns
+     timerlatu/4-2215    [004] ....1  1152.094128: timerlat_sample: timer_latency=1544 seqnum=2669717 context=1
+     timerlatu/4-2215    [004] ....1  1152.094128: #2669717 context thread timer_latency      1544 ns
+     timerlatu/4-2215    [004] ....1  1152.094128: timerlat_sample: timer_latency=1943 seqnum=2669717 context=2
+     timerlatu/4-2215    [004] ....1  1152.094128: #2669717 context user-ret timer_latency      1943 ns
+          <idle>-0       [007] d.h1.  1152.094275: timerlat_sample: timer_latency=511 seqnum=2669715 context=0
+          <idle>-0       [007] d.h1.  1152.094275: #2669715 context    irq timer_latency       511 ns
+          <idle>-0       [007] dNh2.  1152.094275: irq_noise: local_timer:236 start 1152.094274749 duration 641 ns
+          <idle>-0       [007] d..3.  1152.094276: thread_noise: swapper/7:0 start 1152.094274801 duration 279 ns
+     timerlatu/7-2218    [007] ....1  1152.094276: timerlat_sample: timer_latency=1545 seqnum=2669715 context=1
+     timerlatu/7-2218    [007] ....1  1152.094276: #2669715 context thread timer_latency      1545 ns
+     timerlatu/7-2218    [007] ....1  1152.094276: timerlat_sample: timer_latency=1940 seqnum=2669715 context=2
+     timerlatu/7-2218    [007] ....1  1152.094276: #2669715 context user-ret timer_latency      1940 ns
+          <idle>-0       [006] d.h1.  1152.094312: timerlat_sample: timer_latency=512 seqnum=2669716 context=0
+          <idle>-0       [006] d.h1.  1152.094312: #2669716 context    irq timer_latency       512 ns
+          <idle>-0       [006] dNh2.  1152.094314: irq_noise: local_timer:236 start 1152.094311993 duration 1764 ns
+          <idle>-0       [006] d..3.  1152.094314: thread_noise: swapper/6:0 start 1152.094312046 duration 279 ns
+     timerlatu/6-2217    [006] ....1  1152.094314: timerlat_sample: timer_latency=2682 seqnum=2669716 context=1
+     timerlatu/6-2217    [006] ....1  1152.094314: #2669716 context thread timer_latency      2682 ns
+     timerlatu/6-2217    [006] ....1  1152.094315: timerlat_sample: timer_latency=3096 seqnum=2669716 context=2
+     timerlatu/6-2217    [006] ....1  1152.094315: #2669716 context user-ret timer_latency      3096 ns
+          <idle>-0       [005] d.h1.  1152.094328: timerlat_sample: timer_latency=535 seqnum=2669717 context=0
+          <idle>-0       [005] d.h1.  1152.094328: #2669717 context    irq timer_latency       535 ns
+          <idle>-0       [005] dNh2.  1152.094329: irq_noise: local_timer:236 start 1152.094327933 duration 769 ns
+          <idle>-0       [005] d..3.  1152.094329: thread_noise: swapper/5:0 start 1152.094327985 duration 280 ns
+     timerlatu/5-2216    [005] ....1  1152.094329: timerlat_sample: timer_latency=1699 seqnum=2669717 context=1
+     timerlatu/5-2216    [005] ....1  1152.094329: #2669717 context thread timer_latency      1699 ns
+     timerlatu/5-2216    [005] ....1  1152.094330: timerlat_sample: timer_latency=2104 seqnum=2669717 context=2
+     timerlatu/5-2216    [005] ....1  1152.094330: #2669717 context user-ret timer_latency      2104 ns
+          <idle>-0       [004] d.h1.  1152.094377: timerlat_sample: timer_latency=495 seqnum=2669718 context=0
+          <idle>-0       [004] d.h1.  1152.094377: #2669718 context    irq timer_latency       495 ns
+          <idle>-0       [004] dNh2.  1152.094377: irq_noise: local_timer:236 start 1152.094376654 duration 690 ns
+          <idle>-0       [004] d..3.  1152.094378: thread_noise: swapper/4:0 start 1152.094376706 duration 279 ns
+     timerlatu/4-2215    [004] ....1  1152.094378: timerlat_sample: timer_latency=1578 seqnum=2669718 context=1
+     timerlatu/4-2215    [004] ....1  1152.094378: #2669718 context thread timer_latency      1578 ns
+     timerlatu/4-2215    [004] ....1  1152.094378: timerlat_sample: timer_latency=1995 seqnum=2669718 context=2
+     timerlatu/4-2215    [004] ....1  1152.094378: #2669718 context user-ret timer_latency      1995 ns
+          <idle>-0       [007] d.h1.  1152.094525: timerlat_sample: timer_latency=539 seqnum=2669716 context=0
+          <idle>-0       [007] d.h1.  1152.094525: #2669716 context    irq timer_latency       539 ns
+          <idle>-0       [007] dNh2.  1152.094525: irq_noise: local_timer:236 start 1152.094524779 duration 657 ns
+          <idle>-0       [007] d..3.  1152.094526: thread_noise: swapper/7:0 start 1152.094524831 duration 278 ns
+     timerlatu/7-2218    [007] ....1  1152.094526: timerlat_sample: timer_latency=1585 seqnum=2669716 context=1
+     timerlatu/7-2218    [007] ....1  1152.094526: #2669716 context thread timer_latency      1585 ns
+     timerlatu/7-2218    [007] ....1  1152.094526: timerlat_sample: timer_latency=1991 seqnum=2669716 context=2
+     timerlatu/7-2218    [007] ....1  1152.094526: #2669716 context user-ret timer_latency      1991 ns
+          <idle>-0       [006] d.h1.  1152.094562: timerlat_sample: timer_latency=536 seqnum=2669717 context=0
+          <idle>-0       [006] d.h1.  1152.094562: #2669717 context    irq timer_latency       536 ns
+          <idle>-0       [006] dNh2.  1152.094563: irq_noise: local_timer:236 start 1152.094562020 duration 659 ns
+          <idle>-0       [006] d..3.  1152.094563: thread_noise: swapper/6:0 start 1152.094562071 duration 285 ns
+     timerlatu/6-2217    [006] ....1  1152.094563: timerlat_sample: timer_latency=1611 seqnum=2669717 context=1
+     timerlatu/6-2217    [006] ....1  1152.094563: #2669717 context thread timer_latency      1611 ns
+     timerlatu/6-2217    [006] ....1  1152.094564: timerlat_sample: timer_latency=2011 seqnum=2669717 context=2
+     timerlatu/6-2217    [006] ....1  1152.094564: #2669717 context user-ret timer_latency      2011 ns
+          <idle>-0       [005] d.h1.  1152.094578: timerlat_sample: timer_latency=508 seqnum=2669718 context=0
+          <idle>-0       [005] d.h1.  1152.094578: #2669718 context    irq timer_latency       508 ns
+          <idle>-0       [005] dNh2.  1152.094579: irq_noise: local_timer:236 start 1152.094577905 duration 690 ns
+          <idle>-0       [005] d..3.  1152.094579: thread_noise: swapper/5:0 start 1152.094577960 duration 308 ns
+     timerlatu/5-2216    [005] ....1  1152.094579: timerlat_sample: timer_latency=1614 seqnum=2669718 context=1
+     timerlatu/5-2216    [005] ....1  1152.094579: #2669718 context thread timer_latency      1614 ns
+     timerlatu/5-2216    [005] ....1  1152.094579: timerlat_sample: timer_latency=2013 seqnum=2669718 context=2
+     timerlatu/5-2216    [005] ....1  1152.094580: #2669718 context user-ret timer_latency      2013 ns
+          <idle>-0       [004] d.h1.  1152.094627: timerlat_sample: timer_latency=518 seqnum=2669719 context=0
+          <idle>-0       [004] d.h1.  1152.094627: #2669719 context    irq timer_latency       518 ns
+          <idle>-0       [004] dNh2.  1152.094627: irq_noise: local_timer:236 start 1152.094626679 duration 743 ns
+          <idle>-0       [004] d..3.  1152.094628: thread_noise: swapper/4:0 start 1152.094626731 duration 298 ns
+     timerlatu/4-2215    [004] ....1  1152.094628: timerlat_sample: timer_latency=1672 seqnum=2669719 context=1
+     timerlatu/4-2215    [004] ....1  1152.094628: #2669719 context thread timer_latency      1672 ns
+     timerlatu/4-2215    [004] ....1  1152.094628: timerlat_sample: timer_latency=2079 seqnum=2669719 context=2
+     timerlatu/4-2215    [004] ....1  1152.094628: #2669719 context user-ret timer_latency      2079 ns
+          <idle>-0       [007] d.h1.  1152.094775: timerlat_sample: timer_latency=562 seqnum=2669717 context=0
+          <idle>-0       [007] d.h1.  1152.094775: #2669717 context    irq timer_latency       562 ns
+          <idle>-0       [007] dNh2.  1152.094775: irq_noise: local_timer:236 start 1152.094774794 duration 648 ns
+          <idle>-0       [007] d..3.  1152.094776: thread_noise: swapper/7:0 start 1152.094774857 duration 343 ns
+     timerlatu/7-2218    [007] ....1  1152.094776: timerlat_sample: timer_latency=1660 seqnum=2669717 context=1
+     timerlatu/7-2218    [007] ....1  1152.094776: #2669717 context thread timer_latency      1660 ns
+     timerlatu/7-2218    [007] ....1  1152.094776: timerlat_sample: timer_latency=2084 seqnum=2669717 context=2
+     timerlatu/7-2218    [007] ....1  1152.094776: #2669717 context user-ret timer_latency      2084 ns
+          <idle>-0       [006] d.h1.  1152.094812: timerlat_sample: timer_latency=527 seqnum=2669718 context=0
+          <idle>-0       [006] d.h1.  1152.094812: #2669718 context    irq timer_latency       527 ns
+          <idle>-0       [006] dNh2.  1152.094813: irq_noise: local_timer:236 start 1152.094812001 duration 666 ns
+          <idle>-0       [006] d..3.  1152.094813: thread_noise: swapper/6:0 start 1152.094812065 duration 323 ns
+     timerlatu/6-2217    [006] ....1  1152.094813: timerlat_sample: timer_latency=1634 seqnum=2669718 context=1
+     timerlatu/6-2217    [006] ....1  1152.094813: #2669718 context thread timer_latency      1634 ns
+     timerlatu/6-2217    [006] ....1  1152.094814: timerlat_sample: timer_latency=2046 seqnum=2669718 context=2
+     timerlatu/6-2217    [006] ....1  1152.094814: #2669718 context user-ret timer_latency      2046 ns
+          <idle>-0       [005] d.h1.  1152.094828: timerlat_sample: timer_latency=554 seqnum=2669719 context=0
+          <idle>-0       [005] d.h1.  1152.094828: #2669719 context    irq timer_latency       554 ns
+          <idle>-0       [005] dNh2.  1152.094829: irq_noise: local_timer:236 start 1152.094827946 duration 632 ns
+          <idle>-0       [005] d..3.  1152.094829: thread_noise: swapper/5:0 start 1152.094828008 duration 302 ns
+     timerlatu/5-2216    [005] ....1  1152.094829: timerlat_sample: timer_latency=1592 seqnum=2669719 context=1
+     timerlatu/5-2216    [005] ....1  1152.094829: #2669719 context thread timer_latency      1592 ns
+     timerlatu/5-2216    [005] ....1  1152.094829: timerlat_sample: timer_latency=2013 seqnum=2669719 context=2
+     timerlatu/5-2216    [005] ....1  1152.094830: #2669719 context user-ret timer_latency      2013 ns
+          <idle>-0       [004] d.h1.  1152.094877: timerlat_sample: timer_latency=540 seqnum=2669720 context=0
+          <idle>-0       [004] d.h1.  1152.094877: #2669720 context    irq timer_latency       540 ns
+          <idle>-0       [004] dNh2.  1152.094877: irq_noise: local_timer:236 start 1152.094876692 duration 646 ns
+          <idle>-0       [004] d..3.  1152.094878: thread_noise: swapper/4:0 start 1152.094876756 duration 299 ns
+     timerlatu/4-2215    [004] ....1  1152.094878: timerlat_sample: timer_latency=1587 seqnum=2669720 context=1
+     timerlatu/4-2215    [004] ....1  1152.094878: #2669720 context thread timer_latency      1587 ns
+     timerlatu/4-2215    [004] ....1  1152.094878: timerlat_sample: timer_latency=2009 seqnum=2669720 context=2
+     timerlatu/4-2215    [004] ....1  1152.094878: #2669720 context user-ret timer_latency      2009 ns
+          <idle>-0       [007] d.h1.  1152.095025: timerlat_sample: timer_latency=504 seqnum=2669718 context=0
+          <idle>-0       [007] d.h1.  1152.095025: #2669718 context    irq timer_latency       504 ns
+          <idle>-0       [007] dNh2.  1152.095026: irq_noise: local_timer:236 start 1152.095024749 duration 757 ns
+          <idle>-0       [007] d..3.  1152.095026: thread_noise: swapper/7:0 start 1152.095024801 duration 280 ns
+     timerlatu/7-2218    [007] ....1  1152.095026: timerlat_sample: timer_latency=1650 seqnum=2669718 context=1
+     timerlatu/7-2218    [007] ....1  1152.095026: #2669718 context thread timer_latency      1650 ns
+     timerlatu/7-2218    [007] ....1  1152.095026: timerlat_sample: timer_latency=2082 seqnum=2669718 context=2
+     timerlatu/7-2218    [007] ....1  1152.095026: #2669718 context user-ret timer_latency      2082 ns
+          <idle>-0       [006] d.h1.  1152.095062: timerlat_sample: timer_latency=505 seqnum=2669719 context=0
+          <idle>-0       [006] d.h1.  1152.095062: #2669719 context    irq timer_latency       505 ns
+          <idle>-0       [006] dNh2.  1152.095063: irq_noise: local_timer:236 start 1152.095061994 duration 669 ns
+          <idle>-0       [006] d..3.  1152.095063: thread_noise: swapper/6:0 start 1152.095062046 duration 288 ns
+     timerlatu/6-2217    [006] ....1  1152.095063: timerlat_sample: timer_latency=1592 seqnum=2669719 context=1
+     timerlatu/6-2217    [006] ....1  1152.095063: #2669719 context thread timer_latency      1592 ns
+     timerlatu/6-2217    [006] ....1  1152.095064: timerlat_sample: timer_latency=1996 seqnum=2669719 context=2
+     timerlatu/6-2217    [006] ....1  1152.095064: #2669719 context user-ret timer_latency      1996 ns
+          <idle>-0       [005] d.h1.  1152.095078: timerlat_sample: timer_latency=528 seqnum=2669720 context=0
+          <idle>-0       [005] d.h1.  1152.095078: #2669720 context    irq timer_latency       528 ns
+          <idle>-0       [005] dNh2.  1152.095079: irq_noise: local_timer:236 start 1152.095077932 duration 629 ns
+          <idle>-0       [005] d..3.  1152.095079: thread_noise: swapper/5:0 start 1152.095077984 duration 280 ns
+     timerlatu/5-2216    [005] ....1  1152.095079: timerlat_sample: timer_latency=1550 seqnum=2669720 context=1
+     timerlatu/5-2216    [005] ....1  1152.095079: #2669720 context thread timer_latency      1550 ns
+     timerlatu/5-2216    [005] ....1  1152.095079: timerlat_sample: timer_latency=1946 seqnum=2669720 context=2
+     timerlatu/5-2216    [005] ....1  1152.095079: #2669720 context user-ret timer_latency      1946 ns
+          <idle>-0       [004] d.h1.  1152.095127: timerlat_sample: timer_latency=511 seqnum=2669721 context=0
+          <idle>-0       [004] d.h1.  1152.095127: #2669721 context    irq timer_latency       511 ns
+          <idle>-0       [004] dNh2.  1152.095127: irq_noise: local_timer:236 start 1152.095126674 duration 672 ns
+          <idle>-0       [004] d..3.  1152.095128: thread_noise: swapper/4:0 start 1152.095126728 duration 279 ns
+     timerlatu/4-2215    [004] ....1  1152.095128: timerlat_sample: timer_latency=1570 seqnum=2669721 context=1
+     timerlatu/4-2215    [004] ....1  1152.095128: #2669721 context thread timer_latency      1570 ns
+     timerlatu/4-2215    [004] ....1  1152.095128: timerlat_sample: timer_latency=1973 seqnum=2669721 context=2
+     timerlatu/4-2215    [004] ....1  1152.095128: #2669721 context user-ret timer_latency      1973 ns
+          <idle>-0       [007] d.h1.  1152.095275: timerlat_sample: timer_latency=534 seqnum=2669719 context=0
+          <idle>-0       [007] d.h1.  1152.095275: #2669719 context    irq timer_latency       534 ns
+          <idle>-0       [007] dNh2.  1152.095275: irq_noise: local_timer:236 start 1152.095274781 duration 634 ns
+          <idle>-0       [007] d..3.  1152.095276: thread_noise: swapper/7:0 start 1152.095274834 duration 279 ns
+     timerlatu/7-2218    [007] ....1  1152.095276: timerlat_sample: timer_latency=1559 seqnum=2669719 context=1
+     timerlatu/7-2218    [007] ....1  1152.095276: #2669719 context thread timer_latency      1559 ns
+     timerlatu/7-2218    [007] ....1  1152.095276: timerlat_sample: timer_latency=1961 seqnum=2669719 context=2
+     timerlatu/7-2218    [007] ....1  1152.095276: #2669719 context user-ret timer_latency      1961 ns
+          <idle>-0       [006] d.h1.  1152.095312: timerlat_sample: timer_latency=522 seqnum=2669720 context=0
+          <idle>-0       [006] d.h1.  1152.095312: #2669720 context    irq timer_latency       522 ns
+          <idle>-0       [006] dNh2.  1152.095313: irq_noise: local_timer:236 start 1152.095312011 duration 659 ns
+          <idle>-0       [006] d..3.  1152.095313: thread_noise: swapper/6:0 start 1152.095312065 duration 282 ns
+     timerlatu/6-2217    [006] ....1  1152.095313: timerlat_sample: timer_latency=1592 seqnum=2669720 context=1
+     timerlatu/6-2217    [006] ....1  1152.095313: #2669720 context thread timer_latency      1592 ns
+     timerlatu/6-2217    [006] ....1  1152.095314: timerlat_sample: timer_latency=2000 seqnum=2669720 context=2
+     timerlatu/6-2217    [006] ....1  1152.095314: #2669720 context user-ret timer_latency      2000 ns
+          <idle>-0       [005] d.h1.  1152.095328: timerlat_sample: timer_latency=497 seqnum=2669721 context=0
+          <idle>-0       [005] d.h1.  1152.095328: #2669721 context    irq timer_latency       497 ns
+          <idle>-0       [005] dNh2.  1152.095329: irq_noise: local_timer:236 start 1152.095327904 duration 625 ns
+          <idle>-0       [005] d..3.  1152.095329: thread_noise: swapper/5:0 start 1152.095327955 duration 280 ns
+     timerlatu/5-2216    [005] ....1  1152.095329: timerlat_sample: timer_latency=1515 seqnum=2669721 context=1
+     timerlatu/5-2216    [005] ....1  1152.095329: #2669721 context thread timer_latency      1515 ns
+     timerlatu/5-2216    [005] ....1  1152.095329: timerlat_sample: timer_latency=1916 seqnum=2669721 context=2
+     timerlatu/5-2216    [005] ....1  1152.095329: #2669721 context user-ret timer_latency      1916 ns
+          <idle>-0       [004] d.h1.  1152.095377: timerlat_sample: timer_latency=532 seqnum=2669722 context=0
+          <idle>-0       [004] d.h1.  1152.095377: #2669722 context    irq timer_latency       532 ns
+          <idle>-0       [004] dNh2.  1152.095377: irq_noise: local_timer:236 start 1152.095376700 duration 641 ns
+          <idle>-0       [004] d..3.  1152.095378: thread_noise: swapper/4:0 start 1152.095376752 duration 280 ns
+     timerlatu/4-2215    [004] ....1  1152.095378: timerlat_sample: timer_latency=1567 seqnum=2669722 context=1
+     timerlatu/4-2215    [004] ....1  1152.095378: #2669722 context thread timer_latency      1567 ns
+     timerlatu/4-2215    [004] ....1  1152.095378: timerlat_sample: timer_latency=1963 seqnum=2669722 context=2
+     timerlatu/4-2215    [004] ....1  1152.095378: #2669722 context user-ret timer_latency      1963 ns
+          <idle>-0       [007] d.h1.  1152.095525: timerlat_sample: timer_latency=530 seqnum=2669720 context=0
+          <idle>-0       [007] d.h1.  1152.095525: #2669720 context    irq timer_latency       530 ns
+          <idle>-0       [007] dNh2.  1152.095525: irq_noise: local_timer:236 start 1152.095524779 duration 635 ns
+          <idle>-0       [007] d..3.  1152.095526: thread_noise: swapper/7:0 start 1152.095524831 duration 279 ns
+     timerlatu/7-2218    [007] ....1  1152.095526: timerlat_sample: timer_latency=1556 seqnum=2669720 context=1
+     timerlatu/7-2218    [007] ....1  1152.095526: #2669720 context thread timer_latency      1556 ns
+     timerlatu/7-2218    [007] ....1  1152.095526: timerlat_sample: timer_latency=1976 seqnum=2669720 context=2
+     timerlatu/7-2218    [007] ....1  1152.095526: #2669720 context user-ret timer_latency      1976 ns
+          <idle>-0       [006] d.h1.  1152.095562: timerlat_sample: timer_latency=501 seqnum=2669721 context=0
+          <idle>-0       [006] d.h1.  1152.095562: #2669721 context    irq timer_latency       501 ns
+          <idle>-0       [006] dNh2.  1152.095563: irq_noise: local_timer:236 start 1152.095561994 duration 660 ns
+          <idle>-0       [006] d..3.  1152.095563: thread_noise: swapper/6:0 start 1152.095562045 duration 285 ns
+     timerlatu/6-2217    [006] ....1  1152.095563: timerlat_sample: timer_latency=1575 seqnum=2669721 context=1
+     timerlatu/6-2217    [006] ....1  1152.095563: #2669721 context thread timer_latency      1575 ns
+     timerlatu/6-2217    [006] ....1  1152.095564: timerlat_sample: timer_latency=1979 seqnum=2669721 context=2
+     timerlatu/6-2217    [006] ....1  1152.095564: #2669721 context user-ret timer_latency      1979 ns
+          <idle>-0       [005] d.h1.  1152.095578: timerlat_sample: timer_latency=496 seqnum=2669722 context=0
+          <idle>-0       [005] d.h1.  1152.095578: #2669722 context    irq timer_latency       496 ns
+          <idle>-0       [005] dNh2.  1152.095579: irq_noise: local_timer:236 start 1152.095577904 duration 648 ns
+          <idle>-0       [005] d..3.  1152.095579: thread_noise: swapper/5:0 start 1152.095577956 duration 284 ns
+     timerlatu/5-2216    [005] ....1  1152.095579: timerlat_sample: timer_latency=1541 seqnum=2669722 context=1
+     timerlatu/5-2216    [005] ....1  1152.095579: #2669722 context thread timer_latency      1541 ns
+     timerlatu/5-2216    [005] ....1  1152.095579: timerlat_sample: timer_latency=1941 seqnum=2669722 context=2
+     timerlatu/5-2216    [005] ....1  1152.095579: #2669722 context user-ret timer_latency      1941 ns
+          <idle>-0       [004] d.h1.  1152.095627: timerlat_sample: timer_latency=509 seqnum=2669723 context=0
+          <idle>-0       [004] d.h1.  1152.095627: #2669723 context    irq timer_latency       509 ns
+          <idle>-0       [004] dNh2.  1152.095627: irq_noise: local_timer:236 start 1152.095626680 duration 634 ns
+          <idle>-0       [004] d..3.  1152.095628: thread_noise: swapper/4:0 start 1152.095626732 duration 295 ns
+     timerlatu/4-2215    [004] ....1  1152.095628: timerlat_sample: timer_latency=1550 seqnum=2669723 context=1
+     timerlatu/4-2215    [004] ....1  1152.095628: #2669723 context thread timer_latency      1550 ns
+     timerlatu/4-2215    [004] ....1  1152.095628: timerlat_sample: timer_latency=1951 seqnum=2669723 context=2
+     timerlatu/4-2215    [004] ....1  1152.095628: #2669723 context user-ret timer_latency      1951 ns
+          <idle>-0       [007] d.h1.  1152.095775: timerlat_sample: timer_latency=524 seqnum=2669721 context=0
+          <idle>-0       [007] d.h1.  1152.095775: #2669721 context    irq timer_latency       524 ns
+          <idle>-0       [007] dNh2.  1152.095776: irq_noise: local_timer:236 start 1152.095774765 duration 1074 ns
+          <idle>-0       [007] d..3.  1152.095777: thread_noise: swapper/7:0 start 1152.095774828 duration 929 ns
+     timerlatu/7-2218    [007] ....1  1152.095777: timerlat_sample: timer_latency=2630 seqnum=2669721 context=1
+     timerlatu/7-2218    [007] ....1  1152.095777: #2669721 context thread timer_latency      2630 ns
+     timerlatu/7-2218    [007] ....1  1152.095778: timerlat_sample: timer_latency=3174 seqnum=2669721 context=2
+     timerlatu/7-2218    [007] ....1  1152.095778: #2669721 context user-ret timer_latency      3174 ns
+          <idle>-0       [006] d.h1.  1152.095812: timerlat_sample: timer_latency=780 seqnum=2669722 context=0
+          <idle>-0       [006] d.h1.  1152.095812: #2669722 context    irq timer_latency       780 ns
+          <idle>-0       [006] dNh2.  1152.095813: irq_noise: local_timer:236 start 1152.095812041 duration 1175 ns
+          <idle>-0       [006] d..3.  1152.095814: thread_noise: swapper/6:0 start 1152.095812327 duration 445 ns
+     timerlatu/6-2217    [006] ....1  1152.095814: timerlat_sample: timer_latency=2298 seqnum=2669722 context=1
+     timerlatu/6-2217    [006] ....1  1152.095814: #2669722 context thread timer_latency      2298 ns
+     timerlatu/6-2217    [006] ....1  1152.095814: timerlat_sample: timer_latency=2842 seqnum=2669722 context=2
+     timerlatu/6-2217    [006] ....1  1152.095814: #2669722 context user-ret timer_latency      2842 ns
+          <idle>-0       [005] d.h1.  1152.095829: timerlat_sample: timer_latency=1030 seqnum=2669723 context=0
+          <idle>-0       [005] d.h1.  1152.095829: #2669723 context    irq timer_latency      1030 ns
+          <idle>-0       [005] dNh2.  1152.095830: irq_noise: local_timer:236 start 1152.095828189 duration 1556 ns
+          <idle>-0       [005] d..3.  1152.095830: thread_noise: swapper/5:0 start 1152.095828494 duration 384 ns
+     timerlatu/5-2216    [005] ....1  1152.095830: timerlat_sample: timer_latency=2833 seqnum=2669723 context=1
+     timerlatu/5-2216    [005] ....1  1152.095830: #2669723 context thread timer_latency      2833 ns
+     timerlatu/5-2216    [005] ....1  1152.095831: timerlat_sample: timer_latency=3243 seqnum=2669723 context=2
+     timerlatu/5-2216    [005] ....1  1152.095831: #2669723 context user-ret timer_latency      3243 ns
+          <idle>-0       [004] d.h1.  1152.095877: timerlat_sample: timer_latency=846 seqnum=2669724 context=0
+          <idle>-0       [004] d.h1.  1152.095877: #2669724 context    irq timer_latency       846 ns
+          <idle>-0       [004] dNh2.  1152.095878: irq_noise: local_timer:236 start 1152.095876986 duration 968 ns
+          <idle>-0       [004] d..3.  1152.095878: thread_noise: swapper/4:0 start 1152.095877071 duration 312 ns
+     timerlatu/4-2215    [004] ....1  1152.095878: timerlat_sample: timer_latency=2208 seqnum=2669724 context=1
+     timerlatu/4-2215    [004] ....1  1152.095879: #2669724 context thread timer_latency      2208 ns
+     timerlatu/4-2215    [004] ....1  1152.095879: timerlat_sample: timer_latency=2847 seqnum=2669724 context=2
+     timerlatu/4-2215    [004] ....1  1152.095879: #2669724 context user-ret timer_latency      2847 ns
+          <idle>-0       [007] d.h1.  1152.096025: timerlat_sample: timer_latency=654 seqnum=2669722 context=0
+          <idle>-0       [007] d.h1.  1152.096025: #2669722 context    irq timer_latency       654 ns
+          <idle>-0       [007] dNh2.  1152.096026: irq_noise: local_timer:236 start 1152.096024907 duration 1532 ns
+          <idle>-0       [007] d..3.  1152.096027: thread_noise: swapper/7:0 start 1152.096024960 duration 287 ns
+     timerlatu/7-2218    [007] ....1  1152.096027: timerlat_sample: timer_latency=2584 seqnum=2669722 context=1
+     timerlatu/7-2218    [007] ....1  1152.096027: #2669722 context thread timer_latency      2584 ns
+     timerlatu/7-2218    [007] ....1  1152.096027: timerlat_sample: timer_latency=2986 seqnum=2669722 context=2
+     timerlatu/7-2218    [007] ....1  1152.096027: #2669722 context user-ret timer_latency      2986 ns
+          <idle>-0       [006] d.h1.  1152.096062: timerlat_sample: timer_latency=522 seqnum=2669723 context=0
+          <idle>-0       [006] d.h1.  1152.096062: #2669723 context    irq timer_latency       522 ns
+          <idle>-0       [006] dNh2.  1152.096063: irq_noise: local_timer:236 start 1152.096062019 duration 902 ns
+          <idle>-0       [006] d..3.  1152.096063: thread_noise: swapper/6:0 start 1152.096062071 duration 279 ns
+     timerlatu/6-2217    [006] ....1  1152.096063: timerlat_sample: timer_latency=1832 seqnum=2669723 context=1
+     timerlatu/6-2217    [006] ....1  1152.096063: #2669723 context thread timer_latency      1832 ns
+     timerlatu/6-2217    [006] ....1  1152.096064: timerlat_sample: timer_latency=2238 seqnum=2669723 context=2
+     timerlatu/6-2217    [006] ....1  1152.096064: #2669723 context user-ret timer_latency      2238 ns
+          <idle>-0       [005] d.h1.  1152.096078: timerlat_sample: timer_latency=546 seqnum=2669724 context=0
+          <idle>-0       [005] d.h1.  1152.096078: #2669724 context    irq timer_latency       546 ns
+          <idle>-0       [005] dNh2.  1152.096079: irq_noise: local_timer:236 start 1152.096077959 duration 1081 ns
+          <idle>-0       [005] d..3.  1152.096079: thread_noise: swapper/5:0 start 1152.096078011 duration 284 ns
+     timerlatu/5-2216    [005] ....1  1152.096080: timerlat_sample: timer_latency=2025 seqnum=2669724 context=1
+     timerlatu/5-2216    [005] ....1  1152.096080: #2669724 context thread timer_latency      2025 ns
+     timerlatu/5-2216    [005] ....1  1152.096080: timerlat_sample: timer_latency=2444 seqnum=2669724 context=2
+     timerlatu/5-2216    [005] ....1  1152.096080: #2669724 context user-ret timer_latency      2444 ns
+          <idle>-0       [004] d.h1.  1152.096127: timerlat_sample: timer_latency=530 seqnum=2669725 context=0
+          <idle>-0       [004] d.h1.  1152.096127: #2669725 context    irq timer_latency       530 ns
+          <idle>-0       [004] dNh2.  1152.096128: irq_noise: local_timer:236 start 1152.096126705 duration 1019 ns
+          <idle>-0       [004] d..3.  1152.096128: thread_noise: swapper/4:0 start 1152.096126757 duration 281 ns
+     timerlatu/4-2215    [004] ....1  1152.096128: timerlat_sample: timer_latency=1945 seqnum=2669725 context=1
+     timerlatu/4-2215    [004] ....1  1152.096128: #2669725 context thread timer_latency      1945 ns
+     timerlatu/4-2215    [004] ....1  1152.096129: timerlat_sample: timer_latency=2345 seqnum=2669725 context=2
+     timerlatu/4-2215    [004] ....1  1152.096129: #2669725 context user-ret timer_latency      2345 ns
+          <idle>-0       [007] d.h1.  1152.096275: timerlat_sample: timer_latency=600 seqnum=2669723 context=0
+          <idle>-0       [007] d.h1.  1152.096275: #2669723 context    irq timer_latency       600 ns
+          <idle>-0       [007] dNh2.  1152.096276: irq_noise: local_timer:236 start 1152.096274855 duration 1275 ns
+          <idle>-0       [007] d..3.  1152.096276: thread_noise: swapper/7:0 start 1152.096274907 duration 320 ns
+     timerlatu/7-2218    [007] ....1  1152.096277: timerlat_sample: timer_latency=2307 seqnum=2669723 context=1
+     timerlatu/7-2218    [007] ....1  1152.096277: #2669723 context thread timer_latency      2307 ns
+     timerlatu/7-2218    [007] ....1  1152.096277: timerlat_sample: timer_latency=2731 seqnum=2669723 context=2
+     timerlatu/7-2218    [007] ....1  1152.096277: #2669723 context user-ret timer_latency      2731 ns
+          <idle>-0       [006] d.h1.  1152.096312: timerlat_sample: timer_latency=494 seqnum=2669724 context=0
+          <idle>-0       [006] d.h1.  1152.096312: #2669724 context    irq timer_latency       494 ns
+          <idle>-0       [006] dNh2.  1152.096313: irq_noise: local_timer:236 start 1152.096311994 duration 1054 ns
+          <idle>-0       [006] d..3.  1152.096313: thread_noise: swapper/6:0 start 1152.096312046 duration 286 ns
+     timerlatu/6-2217    [006] ....1  1152.096314: timerlat_sample: timer_latency=1967 seqnum=2669724 context=1
+     timerlatu/6-2217    [006] ....1  1152.096314: #2669724 context thread timer_latency      1967 ns
+     timerlatu/6-2217    [006] ....1  1152.096314: timerlat_sample: timer_latency=2385 seqnum=2669724 context=2
+     timerlatu/6-2217    [006] ....1  1152.096314: #2669724 context user-ret timer_latency      2385 ns
+          <idle>-0       [005] d.h1.  1152.096328: timerlat_sample: timer_latency=538 seqnum=2669725 context=0
+          <idle>-0       [005] d.h1.  1152.096328: #2669725 context    irq timer_latency       538 ns
+          <idle>-0       [005] dNh2.  1152.096329: irq_noise: local_timer:236 start 1152.096327954 duration 947 ns
+          <idle>-0       [005] d..3.  1152.096329: thread_noise: swapper/5:0 start 1152.096328006 duration 278 ns
+     timerlatu/5-2216    [005] ....1  1152.096329: timerlat_sample: timer_latency=1876 seqnum=2669725 context=1
+     timerlatu/5-2216    [005] ....1  1152.096329: #2669725 context thread timer_latency      1876 ns
+     timerlatu/5-2216    [005] ....1  1152.096330: timerlat_sample: timer_latency=2278 seqnum=2669725 context=2
+     timerlatu/5-2216    [005] ....1  1152.096330: #2669725 context user-ret timer_latency      2278 ns
+          <idle>-0       [004] d.h1.  1152.096377: timerlat_sample: timer_latency=768 seqnum=2669726 context=0
+          <idle>-0       [004] d.h1.  1152.096377: #2669726 context    irq timer_latency       768 ns
+          <idle>-0       [004] dNh2.  1152.096378: irq_noise: local_timer:236 start 1152.096376946 duration 1438 ns
+          <idle>-0       [004] d..3.  1152.096379: thread_noise: swapper/4:0 start 1152.096376998 duration 597 ns
+     timerlatu/4-2215    [004] ....1  1152.096379: timerlat_sample: timer_latency=2917 seqnum=2669726 context=1
+     timerlatu/4-2215    [004] ....1  1152.096379: #2669726 context thread timer_latency      2917 ns
+     timerlatu/4-2215    [004] ....1  1152.096380: timerlat_sample: timer_latency=3440 seqnum=2669726 context=2
+     timerlatu/4-2215    [004] ....1  1152.096380: #2669726 context user-ret timer_latency      3440 ns
+          <idle>-0       [007] d.h1.  1152.096525: timerlat_sample: timer_latency=557 seqnum=2669724 context=0
+          <idle>-0       [007] d.h1.  1152.096525: #2669724 context    irq timer_latency       557 ns
+          <idle>-0       [007] dNh2.  1152.096526: irq_noise: local_timer:236 start 1152.096524816 duration 1158 ns
+          <idle>-0       [007] d..3.  1152.096526: thread_noise: swapper/7:0 start 1152.096524867 duration 281 ns
+     timerlatu/7-2218    [007] ....1  1152.096526: timerlat_sample: timer_latency=2109 seqnum=2669724 context=1
+     timerlatu/7-2218    [007] ....1  1152.096527: #2669724 context thread timer_latency      2109 ns
+     timerlatu/7-2218    [007] ....1  1152.096527: timerlat_sample: timer_latency=2527 seqnum=2669724 context=2
+     timerlatu/7-2218    [007] ....1  1152.096527: #2669724 context user-ret timer_latency      2527 ns
+          <idle>-0       [006] d.h1.  1152.096562: timerlat_sample: timer_latency=544 seqnum=2669725 context=0
+          <idle>-0       [006] d.h1.  1152.096562: #2669725 context    irq timer_latency       544 ns
+          <idle>-0       [006] dNh2.  1152.096563: irq_noise: local_timer:236 start 1152.096562046 duration 833 ns
+          <idle>-0       [006] d..3.  1152.096563: thread_noise: swapper/6:0 start 1152.096562098 duration 279 ns
+     timerlatu/6-2217    [006] ....1  1152.096563: timerlat_sample: timer_latency=1787 seqnum=2669725 context=1
+     timerlatu/6-2217    [006] ....1  1152.096563: #2669725 context thread timer_latency      1787 ns
+     timerlatu/6-2217    [006] ....1  1152.096564: timerlat_sample: timer_latency=2188 seqnum=2669725 context=2
+     timerlatu/6-2217    [006] ....1  1152.096564: #2669725 context user-ret timer_latency      2188 ns
+          <idle>-0       [005] d.h1.  1152.096578: timerlat_sample: timer_latency=608 seqnum=2669726 context=0
+          <idle>-0       [005] d.h1.  1152.096578: #2669726 context    irq timer_latency       608 ns
+          <idle>-0       [005] dNh2.  1152.096579: irq_noise: local_timer:236 start 1152.096578027 duration 1100 ns
+          <idle>-0       [005] d..3.  1152.096579: thread_noise: swapper/5:0 start 1152.096578079 duration 298 ns
+     timerlatu/5-2216    [005] ....1  1152.096580: timerlat_sample: timer_latency=2121 seqnum=2669726 context=1
+     timerlatu/5-2216    [005] ....1  1152.096580: #2669726 context thread timer_latency      2121 ns
+     timerlatu/5-2216    [005] ....1  1152.096580: timerlat_sample: timer_latency=2519 seqnum=2669726 context=2
+     timerlatu/5-2216    [005] ....1  1152.096580: #2669726 context user-ret timer_latency      2519 ns
+          <idle>-0       [004] d.h1.  1152.096627: timerlat_sample: timer_latency=627 seqnum=2669727 context=0
+          <idle>-0       [004] d.h1.  1152.096627: #2669727 context    irq timer_latency       627 ns
+          <idle>-0       [004] dNh2.  1152.096628: irq_noise: local_timer:236 start 1152.096626806 duration 1008 ns
+          <idle>-0       [004] d..3.  1152.096628: thread_noise: swapper/4:0 start 1152.096626858 duration 278 ns
+     timerlatu/4-2215    [004] ....1  1152.096628: timerlat_sample: timer_latency=2026 seqnum=2669727 context=1
+     timerlatu/4-2215    [004] ....1  1152.096628: #2669727 context thread timer_latency      2026 ns
+     timerlatu/4-2215    [004] ....1  1152.096629: timerlat_sample: timer_latency=2426 seqnum=2669727 context=2
+     timerlatu/4-2215    [004] ....1  1152.096629: #2669727 context user-ret timer_latency      2426 ns
+          <idle>-0       [007] d.h1.  1152.096775: timerlat_sample: timer_latency=806 seqnum=2669725 context=0
+          <idle>-0       [007] d.h1.  1152.096775: #2669725 context    irq timer_latency       806 ns
+          <idle>-0       [007] dNh2.  1152.096776: irq_noise: local_timer:236 start 1152.096775050 duration 1124 ns
+          <idle>-0       [007] d..3.  1152.096777: thread_noise: swapper/7:0 start 1152.096775118 duration 516 ns
+     timerlatu/7-2218    [007] ....1  1152.096777: timerlat_sample: timer_latency=2539 seqnum=2669725 context=1
+     timerlatu/7-2218    [007] ....1  1152.096777: #2669725 context thread timer_latency      2539 ns
+     timerlatu/7-2218    [007] ....1  1152.096777: timerlat_sample: timer_latency=2959 seqnum=2669725 context=2
+     timerlatu/7-2218    [007] ....1  1152.096777: #2669725 context user-ret timer_latency      2959 ns
+          <idle>-0       [006] d.h1.  1152.096812: timerlat_sample: timer_latency=696 seqnum=2669726 context=0
+          <idle>-0       [006] d.h1.  1152.096813: #2669726 context    irq timer_latency       696 ns
+          <idle>-0       [006] dNh2.  1152.096814: irq_noise: local_timer:236 start 1152.096812092 duration 1971 ns
+          <idle>-0       [006] d..3.  1152.096815: thread_noise: swapper/6:0 start 1152.096812252 duration 1359 ns
+     timerlatu/6-2217    [006] ....1  1152.096816: timerlat_sample: timer_latency=4048 seqnum=2669726 context=1
+     timerlatu/6-2217    [006] ....1  1152.096816: #2669726 context thread timer_latency      4048 ns
+     timerlatu/6-2217    [006] ....1  1152.096816: timerlat_sample: timer_latency=4621 seqnum=2669726 context=2
+     timerlatu/6-2217    [006] ....1  1152.096816: #2669726 context user-ret timer_latency      4621 ns
+          <idle>-0       [005] d.h1.  1152.096828: timerlat_sample: timer_latency=666 seqnum=2669727 context=0
+          <idle>-0       [005] d.h1.  1152.096828: #2669727 context    irq timer_latency       666 ns
+          <idle>-0       [005] dNh2.  1152.096829: irq_noise: local_timer:236 start 1152.096828077 duration 1068 ns
+          <idle>-0       [005] d..3.  1152.096830: thread_noise: swapper/5:0 start 1152.096828139 duration 318 ns
+     timerlatu/5-2216    [005] ....1  1152.096830: timerlat_sample: timer_latency=2158 seqnum=2669727 context=1
+     timerlatu/5-2216    [005] ....1  1152.096830: #2669727 context thread timer_latency      2158 ns
+     timerlatu/5-2216    [005] ....1  1152.096830: timerlat_sample: timer_latency=2897 seqnum=2669727 context=2
+     timerlatu/5-2216    [005] ....1  1152.096830: #2669727 context user-ret timer_latency      2897 ns
+          <idle>-0       [004] d.h1.  1152.096877: timerlat_sample: timer_latency=790 seqnum=2669728 context=0
+          <idle>-0       [004] d.h1.  1152.096877: #2669728 context    irq timer_latency       790 ns
+          <idle>-0       [004] dNh2.  1152.096879: irq_noise: local_timer:236 start 1152.096876833 duration 1880 ns
+          <idle>-0       [004] d..3.  1152.096879: thread_noise: swapper/4:0 start 1152.096877023 duration 488 ns
+     timerlatu/4-2215    [004] ....1  1152.096879: timerlat_sample: timer_latency=3132 seqnum=2669728 context=1
+     timerlatu/4-2215    [004] ....1  1152.096879: #2669728 context thread timer_latency      3132 ns
+     timerlatu/4-2215    [004] ....1  1152.096880: timerlat_sample: timer_latency=3803 seqnum=2669728 context=2
+     timerlatu/4-2215    [004] ....1  1152.096880: #2669728 context user-ret timer_latency      3803 ns
+          <idle>-0       [007] d.h1.  1152.097025: timerlat_sample: timer_latency=624 seqnum=2669726 context=0
+          <idle>-0       [007] d.h1.  1152.097025: #2669726 context    irq timer_latency       624 ns
+          <idle>-0       [007] dNh2.  1152.097026: irq_noise: local_timer:236 start 1152.097024887 duration 1386 ns
+          <idle>-0       [007] d..3.  1152.097027: thread_noise: swapper/7:0 start 1152.097024938 duration 333 ns
+     timerlatu/7-2218    [007] ....1  1152.097027: timerlat_sample: timer_latency=2494 seqnum=2669726 context=1
+     timerlatu/7-2218    [007] ....1  1152.097027: #2669726 context thread timer_latency      2494 ns
+     timerlatu/7-2218    [007] ....1  1152.097027: timerlat_sample: timer_latency=2900 seqnum=2669726 context=2
+     timerlatu/7-2218    [007] ....1  1152.097027: #2669726 context user-ret timer_latency      2900 ns
+          <idle>-0       [006] d.h1.  1152.097062: timerlat_sample: timer_latency=540 seqnum=2669727 context=0
+          <idle>-0       [006] d.h1.  1152.097062: #2669727 context    irq timer_latency       540 ns
+          <idle>-0       [006] dNh2.  1152.097063: irq_noise: local_timer:236 start 1152.097062047 duration 1069 ns
+          <idle>-0       [006] d..3.  1152.097063: thread_noise: swapper/6:0 start 1152.097062098 duration 288 ns
+     timerlatu/6-2217    [006] ....1  1152.097064: timerlat_sample: timer_latency=2073 seqnum=2669727 context=1
+     timerlatu/6-2217    [006] ....1  1152.097064: #2669727 context thread timer_latency      2073 ns
+     timerlatu/6-2217    [006] ....1  1152.097064: timerlat_sample: timer_latency=2484 seqnum=2669727 context=2
+     timerlatu/6-2217    [006] ....1  1152.097064: #2669727 context user-ret timer_latency      2484 ns
+          <idle>-0       [005] d.h1.  1152.097078: timerlat_sample: timer_latency=871 seqnum=2669728 context=0
+          <idle>-0       [005] d.h1.  1152.097079: #2669728 context    irq timer_latency       871 ns
+          <idle>-0       [005] dNh2.  1152.097080: irq_noise: local_timer:236 start 1152.097078288 duration 1768 ns
+          <idle>-0       [005] d..3.  1152.097081: thread_noise: swapper/5:0 start 1152.097078347 duration 723 ns
+     timerlatu/5-2216    [005] ....1  1152.097081: timerlat_sample: timer_latency=3885 seqnum=2669728 context=1
+     timerlatu/5-2216    [005] ....1  1152.097081: #2669728 context thread timer_latency      3885 ns
+     timerlatu/5-2216    [005] ....1  1152.097082: timerlat_sample: timer_latency=4348 seqnum=2669728 context=2
+     timerlatu/5-2216    [005] ....1  1152.097082: #2669728 context user-ret timer_latency      4348 ns
+          <idle>-0       [004] d.h1.  1152.097127: timerlat_sample: timer_latency=656 seqnum=2669729 context=0
+          <idle>-0       [004] d.h1.  1152.097127: #2669729 context    irq timer_latency       656 ns
+          <idle>-0       [004] dNh2.  1152.097128: irq_noise: local_timer:236 start 1152.097126835 duration 1055 ns
+          <idle>-0       [004] d..3.  1152.097128: thread_noise: swapper/4:0 start 1152.097126893 duration 388 ns
+     timerlatu/4-2215    [004] ....1  1152.097129: timerlat_sample: timer_latency=2437 seqnum=2669729 context=1
+     timerlatu/4-2215    [004] ....1  1152.097129: #2669729 context thread timer_latency      2437 ns
+     timerlatu/4-2215    [004] ....1  1152.097129: timerlat_sample: timer_latency=2906 seqnum=2669729 context=2
+     timerlatu/4-2215    [004] ....1  1152.097129: #2669729 context user-ret timer_latency      2906 ns
+          <idle>-0       [007] d.h1.  1152.097275: timerlat_sample: timer_latency=761 seqnum=2669727 context=0
+          <idle>-0       [007] d.h1.  1152.097275: #2669727 context    irq timer_latency       761 ns
+          <idle>-0       [007] dNh2.  1152.097277: irq_noise: local_timer:236 start 1152.097275027 duration 1623 ns
+          <idle>-0       [007] d..3.  1152.097277: thread_noise: swapper/7:0 start 1152.097275078 duration 429 ns
+     timerlatu/7-2218    [007] ....1  1152.097277: timerlat_sample: timer_latency=2926 seqnum=2669727 context=1
+     timerlatu/7-2218    [007] ....1  1152.097277: #2669727 context thread timer_latency      2926 ns
+     timerlatu/7-2218    [007] ....1  1152.097278: timerlat_sample: timer_latency=3333 seqnum=2669727 context=2
+     timerlatu/7-2218    [007] ....1  1152.097278: #2669727 context user-ret timer_latency      3333 ns
+          <idle>-0       [006] d.h1.  1152.097312: timerlat_sample: timer_latency=599 seqnum=2669728 context=0
+          <idle>-0       [006] d.h1.  1152.097312: #2669728 context    irq timer_latency       599 ns
+          <idle>-0       [006] dNh2.  1152.097313: irq_noise: local_timer:236 start 1152.097312107 duration 1009 ns
+          <idle>-0       [006] d..3.  1152.097314: thread_noise: swapper/6:0 start 1152.097312160 duration 801 ns
+     timerlatu/6-2217    [006] ....1  1152.097314: timerlat_sample: timer_latency=2540 seqnum=2669728 context=1
+     timerlatu/6-2217    [006] ....1  1152.097314: #2669728 context thread timer_latency      2540 ns
+     timerlatu/6-2217    [006] ....1  1152.097315: timerlat_sample: timer_latency=2943 seqnum=2669728 context=2
+     timerlatu/6-2217    [006] ....1  1152.097315: #2669728 context user-ret timer_latency      2943 ns
+          <idle>-0       [005] d.h1.  1152.097328: timerlat_sample: timer_latency=634 seqnum=2669729 context=0
+          <idle>-0       [005] d.h1.  1152.097328: #2669729 context    irq timer_latency       634 ns
+          <idle>-0       [005] dNh2.  1152.097329: irq_noise: local_timer:236 start 1152.097328058 duration 1340 ns
+          <idle>-0       [005] d..3.  1152.097330: thread_noise: swapper/5:0 start 1152.097328111 duration 280 ns
+     timerlatu/5-2216    [005] ....1  1152.097330: timerlat_sample: timer_latency=2368 seqnum=2669729 context=1
+     timerlatu/5-2216    [005] ....1  1152.097330: #2669729 context thread timer_latency      2368 ns
+     timerlatu/5-2216    [005] ....1  1152.097330: timerlat_sample: timer_latency=2785 seqnum=2669729 context=2
+     timerlatu/5-2216    [005] ....1  1152.097330: #2669729 context user-ret timer_latency      2785 ns
+          <idle>-0       [004] d.h1.  1152.097377: timerlat_sample: timer_latency=644 seqnum=2669730 context=0
+          <idle>-0       [004] d.h1.  1152.097377: #2669730 context    irq timer_latency       644 ns
+          <idle>-0       [004] dNh2.  1152.097378: irq_noise: local_timer:236 start 1152.097376830 duration 1146 ns
+          <idle>-0       [004] d..3.  1152.097378: thread_noise: swapper/4:0 start 1152.097376882 duration 404 ns
+     timerlatu/4-2215    [004] ....1  1152.097379: timerlat_sample: timer_latency=2344 seqnum=2669730 context=1
+     timerlatu/4-2215    [004] ....1  1152.097379: #2669730 context thread timer_latency      2344 ns
+     timerlatu/4-2215    [004] ....1  1152.097379: timerlat_sample: timer_latency=2803 seqnum=2669730 context=2
+     timerlatu/4-2215    [004] ....1  1152.097379: #2669730 context user-ret timer_latency      2803 ns
+          <idle>-0       [007] d.h1.  1152.097525: timerlat_sample: timer_latency=814 seqnum=2669728 context=0
+          <idle>-0       [007] d.h1.  1152.097525: #2669728 context    irq timer_latency       814 ns
+          <idle>-0       [007] dNh2.  1152.097527: irq_noise: local_timer:236 start 1152.097525082 duration 1912 ns
+          <idle>-0       [007] d..3.  1152.097527: thread_noise: swapper/7:0 start 1152.097525133 duration 287 ns
+     timerlatu/7-2218    [007] ....1  1152.097527: timerlat_sample: timer_latency=3127 seqnum=2669728 context=1
+     timerlatu/7-2218    [007] ....1  1152.097528: #2669728 context thread timer_latency      3127 ns
+     timerlatu/7-2218    [007] ....1  1152.097528: timerlat_sample: timer_latency=3537 seqnum=2669728 context=2
+     timerlatu/7-2218    [007] ....1  1152.097528: #2669728 context user-ret timer_latency      3537 ns
+          <idle>-0       [006] d.h1.  1152.097562: timerlat_sample: timer_latency=530 seqnum=2669729 context=0
+          <idle>-0       [006] d.h1.  1152.097562: #2669729 context    irq timer_latency       530 ns
+          <idle>-0       [006] dNh2.  1152.097563: irq_noise: local_timer:236 start 1152.097562041 duration 815 ns
+          <idle>-0       [006] d..3.  1152.097563: thread_noise: swapper/6:0 start 1152.097562093 duration 282 ns
+     timerlatu/6-2217    [006] ....1  1152.097563: timerlat_sample: timer_latency=1756 seqnum=2669729 context=1
+     timerlatu/6-2217    [006] ....1  1152.097563: #2669729 context thread timer_latency      1756 ns
+     timerlatu/6-2217    [006] ....1  1152.097564: timerlat_sample: timer_latency=2155 seqnum=2669729 context=2
+     timerlatu/6-2217    [006] ....1  1152.097564: #2669729 context user-ret timer_latency      2155 ns
+          <idle>-0       [005] d.h1.  1152.097578: timerlat_sample: timer_latency=737 seqnum=2669730 context=0
+          <idle>-0       [005] d.h1.  1152.097578: #2669730 context    irq timer_latency       737 ns
+          <idle>-0       [005] dNh2.  1152.097580: irq_noise: local_timer:236 start 1152.097578164 duration 1576 ns
+          <idle>-0       [005] d..3.  1152.097580: thread_noise: swapper/5:0 start 1152.097578216 duration 312 ns
+     timerlatu/5-2216    [005] ....1  1152.097580: timerlat_sample: timer_latency=2743 seqnum=2669730 context=1
+     timerlatu/5-2216    [005] ....1  1152.097580: #2669730 context thread timer_latency      2743 ns
+     timerlatu/5-2216    [005] ....1  1152.097581: timerlat_sample: timer_latency=3284 seqnum=2669730 context=2
+     timerlatu/5-2216    [005] ....1  1152.097581: #2669730 context user-ret timer_latency      3284 ns
+          <idle>-0       [004] d.h1.  1152.097627: timerlat_sample: timer_latency=701 seqnum=2669731 context=0
+          <idle>-0       [004] d.h1.  1152.097627: #2669731 context    irq timer_latency       701 ns
+          <idle>-0       [004] dNh2.  1152.097628: irq_noise: local_timer:236 start 1152.097626888 duration 1078 ns
+          <idle>-0       [004] d..3.  1152.097628: thread_noise: swapper/4:0 start 1152.097626941 duration 292 ns
+     timerlatu/4-2215    [004] ....1  1152.097628: timerlat_sample: timer_latency=2183 seqnum=2669731 context=1
+     timerlatu/4-2215    [004] ....1  1152.097629: #2669731 context thread timer_latency      2183 ns
+     timerlatu/4-2215    [004] ....1  1152.097629: timerlat_sample: timer_latency=2576 seqnum=2669731 context=2
+     timerlatu/4-2215    [004] ....1  1152.097629: #2669731 context user-ret timer_latency      2576 ns
+          <idle>-0       [007] d.h1.  1152.097775: timerlat_sample: timer_latency=530 seqnum=2669729 context=0
+          <idle>-0       [007] d.h1.  1152.097775: #2669729 context    irq timer_latency       530 ns
+          <idle>-0       [007] dNh2.  1152.097776: irq_noise: local_timer:236 start 1152.097774784 duration 792 ns
+          <idle>-0       [007] d..3.  1152.097776: thread_noise: swapper/7:0 start 1152.097774851 duration 311 ns
+     timerlatu/7-2218    [007] ....1  1152.097776: timerlat_sample: timer_latency=1728 seqnum=2669729 context=1
+     timerlatu/7-2218    [007] ....1  1152.097776: #2669729 context thread timer_latency      1728 ns
+     timerlatu/7-2218    [007] ....1  1152.097776: timerlat_sample: timer_latency=2134 seqnum=2669729 context=2
+     timerlatu/7-2218    [007] ....1  1152.097777: #2669729 context user-ret timer_latency      2134 ns
+          <idle>-0       [006] d.h1.  1152.097812: timerlat_sample: timer_latency=545 seqnum=2669730 context=0
+          <idle>-0       [006] d.h1.  1152.097812: #2669730 context    irq timer_latency       545 ns
+          <idle>-0       [006] dNh2.  1152.097813: irq_noise: local_timer:236 start 1152.097812033 duration 695 ns
+          <idle>-0       [006] d..3.  1152.097813: thread_noise: swapper/6:0 start 1152.097812111 duration 322 ns
+     timerlatu/6-2217    [006] ....1  1152.097813: timerlat_sample: timer_latency=1667 seqnum=2669730 context=1
+     timerlatu/6-2217    [006] ....1  1152.097813: #2669730 context thread timer_latency      1667 ns
+     timerlatu/6-2217    [006] ....1  1152.097814: timerlat_sample: timer_latency=2091 seqnum=2669730 context=2
+     timerlatu/6-2217    [006] ....1  1152.097814: #2669730 context user-ret timer_latency      2091 ns
+          <idle>-0       [005] d.h1.  1152.097828: timerlat_sample: timer_latency=540 seqnum=2669731 context=0
+          <idle>-0       [005] d.h1.  1152.097828: #2669731 context    irq timer_latency       540 ns
+          <idle>-0       [005] dNh2.  1152.097829: irq_noise: local_timer:236 start 1152.097827961 duration 637 ns
+          <idle>-0       [005] d..3.  1152.097829: thread_noise: swapper/5:0 start 1152.097828022 duration 310 ns
+     timerlatu/5-2216    [005] ....1  1152.097829: timerlat_sample: timer_latency=1591 seqnum=2669731 context=1
+     timerlatu/5-2216    [005] ....1  1152.097829: #2669731 context thread timer_latency      1591 ns
+     timerlatu/5-2216    [005] ....1  1152.097830: timerlat_sample: timer_latency=1997 seqnum=2669731 context=2
+     timerlatu/5-2216    [005] ....1  1152.097830: #2669731 context user-ret timer_latency      1997 ns
+          <idle>-0       [004] d.h1.  1152.097877: timerlat_sample: timer_latency=530 seqnum=2669732 context=0
+          <idle>-0       [004] d.h1.  1152.097877: #2669732 context    irq timer_latency       530 ns
+          <idle>-0       [004] dNh2.  1152.097877: irq_noise: local_timer:236 start 1152.097876713 duration 698 ns
+          <idle>-0       [004] d..3.  1152.097878: thread_noise: swapper/4:0 start 1152.097876773 duration 312 ns
+     timerlatu/4-2215    [004] ....1  1152.097878: timerlat_sample: timer_latency=1643 seqnum=2669732 context=1
+     timerlatu/4-2215    [004] ....1  1152.097878: #2669732 context thread timer_latency      1643 ns
+     timerlatu/4-2215    [004] ....1  1152.097878: timerlat_sample: timer_latency=2046 seqnum=2669732 context=2
+     timerlatu/4-2215    [004] ....1  1152.097878: #2669732 context user-ret timer_latency      2046 ns
+          <idle>-0       [007] d.h1.  1152.098025: timerlat_sample: timer_latency=529 seqnum=2669730 context=0
+          <idle>-0       [007] d.h1.  1152.098025: #2669730 context    irq timer_latency       529 ns
+          <idle>-0       [007] dNh2.  1152.098026: irq_noise: local_timer:236 start 1152.098024801 duration 702 ns
+          <idle>-0       [007] d..3.  1152.098026: thread_noise: swapper/7:0 start 1152.098024853 duration 281 ns
+     timerlatu/7-2218    [007] ....1  1152.098026: timerlat_sample: timer_latency=1627 seqnum=2669730 context=1
+     timerlatu/7-2218    [007] ....1  1152.098026: #2669730 context thread timer_latency      1627 ns
+     timerlatu/7-2218    [007] ....1  1152.098026: timerlat_sample: timer_latency=2029 seqnum=2669730 context=2
+     timerlatu/7-2218    [007] ....1  1152.098026: #2669730 context user-ret timer_latency      2029 ns
+          <idle>-0       [006] d.h1.  1152.098062: timerlat_sample: timer_latency=521 seqnum=2669731 context=0
+          <idle>-0       [006] d.h1.  1152.098062: #2669731 context    irq timer_latency       521 ns
+          <idle>-0       [006] dNh2.  1152.098063: irq_noise: local_timer:236 start 1152.098062036 duration 651 ns
+          <idle>-0       [006] d..3.  1152.098063: thread_noise: swapper/6:0 start 1152.098062088 duration 295 ns
+     timerlatu/6-2217    [006] ....1  1152.098063: timerlat_sample: timer_latency=1601 seqnum=2669731 context=1
+     timerlatu/6-2217    [006] ....1  1152.098063: #2669731 context thread timer_latency      1601 ns
+     timerlatu/6-2217    [006] ....1  1152.098064: timerlat_sample: timer_latency=2004 seqnum=2669731 context=2
+     timerlatu/6-2217    [006] ....1  1152.098064: #2669731 context user-ret timer_latency      2004 ns
+          <idle>-0       [005] d.h1.  1152.098078: timerlat_sample: timer_latency=521 seqnum=2669732 context=0
+          <idle>-0       [005] d.h1.  1152.098078: #2669732 context    irq timer_latency       521 ns
+          <idle>-0       [005] dNh2.  1152.098079: irq_noise: local_timer:236 start 1152.098077953 duration 635 ns
+          <idle>-0       [005] d..3.  1152.098079: thread_noise: swapper/5:0 start 1152.098078005 duration 292 ns
+     timerlatu/5-2216    [005] ....1  1152.098079: timerlat_sample: timer_latency=1561 seqnum=2669732 context=1
+     timerlatu/5-2216    [005] ....1  1152.098079: #2669732 context thread timer_latency      1561 ns
+     timerlatu/5-2216    [005] ....1  1152.098079: timerlat_sample: timer_latency=1965 seqnum=2669732 context=2
+     timerlatu/5-2216    [005] ....1  1152.098080: #2669732 context user-ret timer_latency      1965 ns
+          <idle>-0       [004] d.h1.  1152.098127: timerlat_sample: timer_latency=540 seqnum=2669733 context=0
+          <idle>-0       [004] d.h1.  1152.098127: #2669733 context    irq timer_latency       540 ns
+          <idle>-0       [004] dNh2.  1152.098127: irq_noise: local_timer:236 start 1152.098126733 duration 656 ns
+          <idle>-0       [004] d..3.  1152.098128: thread_noise: swapper/4:0 start 1152.098126784 duration 294 ns
+     timerlatu/4-2215    [004] ....1  1152.098128: timerlat_sample: timer_latency=1606 seqnum=2669733 context=1
+     timerlatu/4-2215    [004] ....1  1152.098128: #2669733 context thread timer_latency      1606 ns
+     timerlatu/4-2215    [004] ....1  1152.098128: timerlat_sample: timer_latency=2010 seqnum=2669733 context=2
+     timerlatu/4-2215    [004] ....1  1152.098128: #2669733 context user-ret timer_latency      2010 ns
+          <idle>-0       [007] d.h1.  1152.098275: timerlat_sample: timer_latency=508 seqnum=2669731 context=0
+          <idle>-0       [007] d.h1.  1152.098275: #2669731 context    irq timer_latency       508 ns
+          <idle>-0       [007] dNh2.  1152.098276: irq_noise: local_timer:236 start 1152.098274782 duration 757 ns
+          <idle>-0       [007] d..3.  1152.098276: thread_noise: swapper/7:0 start 1152.098274834 duration 378 ns
+     timerlatu/7-2218    [007] ....1  1152.098276: timerlat_sample: timer_latency=1760 seqnum=2669731 context=1
+     timerlatu/7-2218    [007] ....1  1152.098276: #2669731 context thread timer_latency      1760 ns
+     timerlatu/7-2218    [007] ....1  1152.098277: timerlat_sample: timer_latency=2169 seqnum=2669731 context=2
+     timerlatu/7-2218    [007] ....1  1152.098277: #2669731 context user-ret timer_latency      2169 ns
+          <idle>-0       [006] d.h1.  1152.098312: timerlat_sample: timer_latency=504 seqnum=2669732 context=0
+          <idle>-0       [006] d.h1.  1152.098312: #2669732 context    irq timer_latency       504 ns
+          <idle>-0       [006] dNh2.  1152.098313: irq_noise: local_timer:236 start 1152.098312021 duration 657 ns
+          <idle>-0       [006] d..3.  1152.098313: thread_noise: swapper/6:0 start 1152.098312073 duration 278 ns
+     timerlatu/6-2217    [006] ....1  1152.098313: timerlat_sample: timer_latency=1569 seqnum=2669732 context=1
+     timerlatu/6-2217    [006] ....1  1152.098313: #2669732 context thread timer_latency      1569 ns
+     timerlatu/6-2217    [006] ....1  1152.098314: timerlat_sample: timer_latency=1979 seqnum=2669732 context=2
+     timerlatu/6-2217    [006] ....1  1152.098314: #2669732 context user-ret timer_latency      1979 ns
+          <idle>-0       [005] d.h1.  1152.098328: timerlat_sample: timer_latency=500 seqnum=2669733 context=0
+          <idle>-0       [005] d.h1.  1152.098328: #2669733 context    irq timer_latency       500 ns
+          <idle>-0       [005] dNh2.  1152.098329: irq_noise: local_timer:236 start 1152.098327933 duration 664 ns
+          <idle>-0       [005] d..3.  1152.098329: thread_noise: swapper/5:0 start 1152.098327985 duration 281 ns
+     timerlatu/5-2216    [005] ....1  1152.098329: timerlat_sample: timer_latency=1560 seqnum=2669733 context=1
+     timerlatu/5-2216    [005] ....1  1152.098329: #2669733 context thread timer_latency      1560 ns
+     timerlatu/5-2216    [005] ....1  1152.098329: timerlat_sample: timer_latency=1957 seqnum=2669733 context=2
+     timerlatu/5-2216    [005] ....1  1152.098330: #2669733 context user-ret timer_latency      1957 ns
+          <idle>-0       [004] d.h1.  1152.098377: timerlat_sample: timer_latency=505 seqnum=2669734 context=0
+          <idle>-0       [004] d.h1.  1152.098377: #2669734 context    irq timer_latency       505 ns
+          <idle>-0       [004] dNh2.  1152.098377: irq_noise: local_timer:236 start 1152.098376700 duration 649 ns
+          <idle>-0       [004] d..3.  1152.098378: thread_noise: swapper/4:0 start 1152.098376752 duration 279 ns
+     timerlatu/4-2215    [004] ....1  1152.098378: timerlat_sample: timer_latency=1546 seqnum=2669734 context=1
+     timerlatu/4-2215    [004] ....1  1152.098378: #2669734 context thread timer_latency      1546 ns
+     timerlatu/4-2215    [004] ....1  1152.098378: timerlat_sample: timer_latency=1947 seqnum=2669734 context=2
+     timerlatu/4-2215    [004] ....1  1152.098378: #2669734 context user-ret timer_latency      1947 ns
+          <idle>-0       [007] d.h1.  1152.098525: timerlat_sample: timer_latency=525 seqnum=2669732 context=0
+          <idle>-0       [007] d.h1.  1152.098525: #2669732 context    irq timer_latency       525 ns
+          <idle>-0       [007] dNh2.  1152.098526: irq_noise: local_timer:236 start 1152.098524801 duration 727 ns
+          <idle>-0       [007] d..3.  1152.098526: thread_noise: swapper/7:0 start 1152.098524853 duration 277 ns
+     timerlatu/7-2218    [007] ....1  1152.098526: timerlat_sample: timer_latency=1642 seqnum=2669732 context=1
+     timerlatu/7-2218    [007] ....1  1152.098526: #2669732 context thread timer_latency      1642 ns
+     timerlatu/7-2218    [007] ....1  1152.098526: timerlat_sample: timer_latency=2042 seqnum=2669732 context=2
+     timerlatu/7-2218    [007] ....1  1152.098526: #2669732 context user-ret timer_latency      2042 ns
+          <idle>-0       [006] d.h1.  1152.098562: timerlat_sample: timer_latency=502 seqnum=2669733 context=0
+          <idle>-0       [006] d.h1.  1152.098562: #2669733 context    irq timer_latency       502 ns
+          <idle>-0       [006] dNh2.  1152.098563: irq_noise: local_timer:236 start 1152.098562020 duration 672 ns
+          <idle>-0       [006] d..3.  1152.098563: thread_noise: swapper/6:0 start 1152.098562073 duration 281 ns
+     timerlatu/6-2217    [006] ....1  1152.098563: timerlat_sample: timer_latency=1583 seqnum=2669733 context=1
+     timerlatu/6-2217    [006] ....1  1152.098563: #2669733 context thread timer_latency      1583 ns
+     timerlatu/6-2217    [006] ....1  1152.098564: timerlat_sample: timer_latency=1995 seqnum=2669733 context=2
+     timerlatu/6-2217    [006] ....1  1152.098564: #2669733 context user-ret timer_latency      1995 ns
+          <idle>-0       [005] d.h1.  1152.098578: timerlat_sample: timer_latency=523 seqnum=2669734 context=0
+          <idle>-0       [005] d.h1.  1152.098578: #2669734 context    irq timer_latency       523 ns
+          <idle>-0       [005] dNh2.  1152.098579: irq_noise: local_timer:236 start 1152.098577959 duration 631 ns
+          <idle>-0       [005] d..3.  1152.098579: thread_noise: swapper/5:0 start 1152.098578011 duration 281 ns
+     timerlatu/5-2216    [005] ....1  1152.098579: timerlat_sample: timer_latency=1549 seqnum=2669734 context=1
+     timerlatu/5-2216    [005] ....1  1152.098579: #2669734 context thread timer_latency      1549 ns
+     timerlatu/5-2216    [005] ....1  1152.098579: timerlat_sample: timer_latency=1947 seqnum=2669734 context=2
+     timerlatu/5-2216    [005] ....1  1152.098580: #2669734 context user-ret timer_latency      1947 ns
+          <idle>-0       [004] d.h1.  1152.098627: timerlat_sample: timer_latency=530 seqnum=2669735 context=0
+          <idle>-0       [004] d.h1.  1152.098627: #2669735 context    irq timer_latency       530 ns
+          <idle>-0       [004] dNh2.  1152.098627: irq_noise: local_timer:236 start 1152.098626727 duration 637 ns
+          <idle>-0       [004] d..3.  1152.098628: thread_noise: swapper/4:0 start 1152.098626779 duration 277 ns
+     timerlatu/4-2215    [004] ....1  1152.098628: timerlat_sample: timer_latency=1558 seqnum=2669735 context=1
+     timerlatu/4-2215    [004] ....1  1152.098628: #2669735 context thread timer_latency      1558 ns
+     timerlatu/4-2215    [004] ....1  1152.098628: timerlat_sample: timer_latency=1974 seqnum=2669735 context=2
+     timerlatu/4-2215    [004] ....1  1152.098628: #2669735 context user-ret timer_latency      1974 ns
+          <idle>-0       [007] d.h1.  1152.098775: timerlat_sample: timer_latency=552 seqnum=2669733 context=0
+          <idle>-0       [007] d.h1.  1152.098775: #2669733 context    irq timer_latency       552 ns
+          <idle>-0       [007] dNh2.  1152.098776: irq_noise: local_timer:236 start 1152.098774820 duration 671 ns
+          <idle>-0       [007] d..3.  1152.098776: thread_noise: swapper/7:0 start 1152.098774882 duration 312 ns
+     timerlatu/7-2218    [007] ....1  1152.098776: timerlat_sample: timer_latency=1636 seqnum=2669733 context=1
+     timerlatu/7-2218    [007] ....1  1152.098776: #2669733 context thread timer_latency      1636 ns
+     timerlatu/7-2218    [007] ....1  1152.098777: timerlat_sample: timer_latency=2158 seqnum=2669733 context=2
+     timerlatu/7-2218    [007] ....1  1152.098777: #2669733 context user-ret timer_latency      2158 ns
+          <idle>-0       [006] d.h1.  1152.098812: timerlat_sample: timer_latency=548 seqnum=2669734 context=0
+          <idle>-0       [006] d.h1.  1152.098812: #2669734 context    irq timer_latency       548 ns
+          <idle>-0       [006] dNh2.  1152.098813: irq_noise: local_timer:236 start 1152.098812059 duration 670 ns
+          <idle>-0       [006] d..3.  1152.098813: thread_noise: swapper/6:0 start 1152.098812121 duration 314 ns
+     timerlatu/6-2217    [006] ....1  1152.098813: timerlat_sample: timer_latency=1652 seqnum=2669734 context=1
+     timerlatu/6-2217    [006] ....1  1152.098813: #2669734 context thread timer_latency      1652 ns
+     timerlatu/6-2217    [006] ....1  1152.098814: timerlat_sample: timer_latency=2085 seqnum=2669734 context=2
+     timerlatu/6-2217    [006] ....1  1152.098814: #2669734 context user-ret timer_latency      2085 ns
+          <idle>-0       [005] d.h1.  1152.098828: timerlat_sample: timer_latency=532 seqnum=2669735 context=0
+          <idle>-0       [005] d.h1.  1152.098828: #2669735 context    irq timer_latency       532 ns
+          <idle>-0       [005] dNh2.  1152.098829: irq_noise: local_timer:236 start 1152.098827961 duration 634 ns
+          <idle>-0       [005] d..3.  1152.098829: thread_noise: swapper/5:0 start 1152.098828022 duration 331 ns
+     timerlatu/5-2216    [005] ....1  1152.098829: timerlat_sample: timer_latency=1600 seqnum=2669735 context=1
+     timerlatu/5-2216    [005] ....1  1152.098829: #2669735 context thread timer_latency      1600 ns
+     timerlatu/5-2216    [005] ....1  1152.098830: timerlat_sample: timer_latency=2026 seqnum=2669735 context=2
+     timerlatu/5-2216    [005] ....1  1152.098830: #2669735 context user-ret timer_latency      2026 ns
+          <idle>-0       [004] d.h1.  1152.098877: timerlat_sample: timer_latency=552 seqnum=2669736 context=0
+          <idle>-0       [004] d.h1.  1152.098877: #2669736 context    irq timer_latency       552 ns
+          <idle>-0       [004] dNh2.  1152.098877: irq_noise: local_timer:236 start 1152.098876743 duration 640 ns
+          <idle>-0       [004] d..3.  1152.098878: thread_noise: swapper/4:0 start 1152.098876803 duration 315 ns
+     timerlatu/4-2215    [004] ....1  1152.098878: timerlat_sample: timer_latency=1610 seqnum=2669736 context=1
+     timerlatu/4-2215    [004] ....1  1152.098878: #2669736 context thread timer_latency      1610 ns
+     timerlatu/4-2215    [004] ....1  1152.098878: timerlat_sample: timer_latency=2042 seqnum=2669736 context=2
+     timerlatu/4-2215    [004] ....1  1152.098878: #2669736 context user-ret timer_latency      2042 ns
+          <idle>-0       [007] d.h1.  1152.099025: timerlat_sample: timer_latency=523 seqnum=2669734 context=0
+          <idle>-0       [007] d.h1.  1152.099025: #2669734 context    irq timer_latency       523 ns
+          <idle>-0       [007] dNh2.  1152.099026: irq_noise: local_timer:236 start 1152.099024804 duration 652 ns
+          <idle>-0       [007] d..3.  1152.099026: thread_noise: swapper/7:0 start 1152.099024855 duration 280 ns
+     timerlatu/7-2218    [007] ....1  1152.099026: timerlat_sample: timer_latency=1570 seqnum=2669734 context=1
+     timerlatu/7-2218    [007] ....1  1152.099026: #2669734 context thread timer_latency      1570 ns
+     timerlatu/7-2218    [007] ....1  1152.099026: timerlat_sample: timer_latency=1971 seqnum=2669734 context=2
+     timerlatu/7-2218    [007] ....1  1152.099026: #2669734 context user-ret timer_latency      1971 ns
+          <idle>-0       [006] d.h1.  1152.099062: timerlat_sample: timer_latency=517 seqnum=2669735 context=0
+          <idle>-0       [006] d.h1.  1152.099062: #2669735 context    irq timer_latency       517 ns
+          <idle>-0       [006] dNh2.  1152.099063: irq_noise: local_timer:236 start 1152.099062041 duration 651 ns
+          <idle>-0       [006] d..3.  1152.099063: thread_noise: swapper/6:0 start 1152.099062093 duration 286 ns
+     timerlatu/6-2217    [006] ....1  1152.099063: timerlat_sample: timer_latency=1583 seqnum=2669735 context=1
+     timerlatu/6-2217    [006] ....1  1152.099063: #2669735 context thread timer_latency      1583 ns
+     timerlatu/6-2217    [006] ....1  1152.099064: timerlat_sample: timer_latency=1988 seqnum=2669735 context=2
+     timerlatu/6-2217    [006] ....1  1152.099064: #2669735 context user-ret timer_latency      1988 ns
+          <idle>-0       [005] d.h1.  1152.099078: timerlat_sample: timer_latency=545 seqnum=2669736 context=0
+          <idle>-0       [005] d.h1.  1152.099078: #2669736 context    irq timer_latency       545 ns
+          <idle>-0       [005] dNh2.  1152.099079: irq_noise: local_timer:236 start 1152.099077983 duration 642 ns
+          <idle>-0       [005] d..3.  1152.099079: thread_noise: swapper/5:0 start 1152.099078037 duration 284 ns
+     timerlatu/5-2216    [005] ....1  1152.099079: timerlat_sample: timer_latency=1586 seqnum=2669736 context=1
+     timerlatu/5-2216    [005] ....1  1152.099079: #2669736 context thread timer_latency      1586 ns
+     timerlatu/5-2216    [005] ....1  1152.099080: timerlat_sample: timer_latency=1988 seqnum=2669736 context=2
+     timerlatu/5-2216    [005] ....1  1152.099080: #2669736 context user-ret timer_latency      1988 ns
+          <idle>-0       [004] d.h1.  1152.099127: timerlat_sample: timer_latency=531 seqnum=2669737 context=0
+          <idle>-0       [004] d.h1.  1152.099127: #2669737 context    irq timer_latency       531 ns
+          <idle>-0       [004] dNh2.  1152.099127: irq_noise: local_timer:236 start 1152.099126733 duration 626 ns
+          <idle>-0       [004] d..3.  1152.099128: thread_noise: swapper/4:0 start 1152.099126785 duration 285 ns
+     timerlatu/4-2215    [004] ....1  1152.099128: timerlat_sample: timer_latency=1560 seqnum=2669737 context=1
+     timerlatu/4-2215    [004] ....1  1152.099128: #2669737 context thread timer_latency      1560 ns
+     timerlatu/4-2215    [004] ....1  1152.099128: timerlat_sample: timer_latency=1965 seqnum=2669737 context=2
+     timerlatu/4-2215    [004] ....1  1152.099128: #2669737 context user-ret timer_latency      1965 ns
+          <idle>-0       [007] d.h1.  1152.099275: timerlat_sample: timer_latency=498 seqnum=2669735 context=0
+          <idle>-0       [007] d.h1.  1152.099275: #2669735 context    irq timer_latency       498 ns
+          <idle>-0       [007] dNh2.  1152.099275: irq_noise: local_timer:236 start 1152.099274780 duration 639 ns
+          <idle>-0       [007] d..3.  1152.099276: thread_noise: swapper/7:0 start 1152.099274833 duration 279 ns
+     timerlatu/7-2218    [007] ....1  1152.099276: timerlat_sample: timer_latency=1526 seqnum=2669735 context=1
+     timerlatu/7-2218    [007] ....1  1152.099276: #2669735 context thread timer_latency      1526 ns
+     timerlatu/7-2218    [007] ....1  1152.099276: timerlat_sample: timer_latency=1924 seqnum=2669735 context=2
+     timerlatu/7-2218    [007] ....1  1152.099276: #2669735 context user-ret timer_latency      1924 ns
+          <idle>-0       [006] d.h1.  1152.099312: timerlat_sample: timer_latency=492 seqnum=2669736 context=0
+          <idle>-0       [006] d.h1.  1152.099312: #2669736 context    irq timer_latency       492 ns
+          <idle>-0       [006] dNh2.  1152.099313: irq_noise: local_timer:236 start 1152.099312018 duration 701 ns
+          <idle>-0       [006] d..3.  1152.099313: thread_noise: swapper/6:0 start 1152.099312070 duration 284 ns
+     timerlatu/6-2217    [006] ....1  1152.099313: timerlat_sample: timer_latency=1609 seqnum=2669736 context=1
+     timerlatu/6-2217    [006] ....1  1152.099313: #2669736 context thread timer_latency      1609 ns
+     timerlatu/6-2217    [006] ....1  1152.099314: timerlat_sample: timer_latency=2016 seqnum=2669736 context=2
+     timerlatu/6-2217    [006] ....1  1152.099314: #2669736 context user-ret timer_latency      2016 ns
+          <idle>-0       [005] d.h1.  1152.099328: timerlat_sample: timer_latency=515 seqnum=2669737 context=0
+          <idle>-0       [005] d.h1.  1152.099328: #2669737 context    irq timer_latency       515 ns
+          <idle>-0       [005] dNh2.  1152.099329: irq_noise: local_timer:236 start 1152.099327958 duration 653 ns
+          <idle>-0       [005] d..3.  1152.099329: thread_noise: swapper/5:0 start 1152.099328009 duration 282 ns
+     timerlatu/5-2216    [005] ....1  1152.099329: timerlat_sample: timer_latency=1564 seqnum=2669737 context=1
+     timerlatu/5-2216    [005] ....1  1152.099329: #2669737 context thread timer_latency      1564 ns
+     timerlatu/5-2216    [005] ....1  1152.099329: timerlat_sample: timer_latency=1971 seqnum=2669737 context=2
+     timerlatu/5-2216    [005] ....1  1152.099330: #2669737 context user-ret timer_latency      1971 ns
+          <idle>-0       [004] d.h1.  1152.099377: timerlat_sample: timer_latency=497 seqnum=2669738 context=0
+          <idle>-0       [004] d.h1.  1152.099377: #2669738 context    irq timer_latency       497 ns
+          <idle>-0       [004] dNh2.  1152.099377: irq_noise: local_timer:236 start 1152.099376701 duration 620 ns
+          <idle>-0       [004] d..3.  1152.099378: thread_noise: swapper/4:0 start 1152.099376753 duration 281 ns
+     timerlatu/4-2215    [004] ....1  1152.099378: timerlat_sample: timer_latency=1511 seqnum=2669738 context=1
+     timerlatu/4-2215    [004] ....1  1152.099378: #2669738 context thread timer_latency      1511 ns
+     timerlatu/4-2215    [004] ....1  1152.099378: timerlat_sample: timer_latency=1934 seqnum=2669738 context=2
+     timerlatu/4-2215    [004] ....1  1152.099378: #2669738 context user-ret timer_latency      1934 ns
+          <idle>-0       [007] d.h1.  1152.099525: timerlat_sample: timer_latency=495 seqnum=2669736 context=0
+          <idle>-0       [007] d.h1.  1152.099525: #2669736 context    irq timer_latency       495 ns
+          <idle>-0       [007] dNh2.  1152.099525: irq_noise: local_timer:236 start 1152.099524778 duration 630 ns
+          <idle>-0       [007] d..3.  1152.099526: thread_noise: swapper/7:0 start 1152.099524831 duration 289 ns
+     timerlatu/7-2218    [007] ....1  1152.099526: timerlat_sample: timer_latency=1527 seqnum=2669736 context=1
+     timerlatu/7-2218    [007] ....1  1152.099526: #2669736 context thread timer_latency      1527 ns
+     timerlatu/7-2218    [007] ....1  1152.099526: timerlat_sample: timer_latency=1941 seqnum=2669736 context=2
+     timerlatu/7-2218    [007] ....1  1152.099526: #2669736 context user-ret timer_latency      1941 ns
+          <idle>-0       [006] d.h1.  1152.099562: timerlat_sample: timer_latency=560 seqnum=2669737 context=0
+          <idle>-0       [006] d.h1.  1152.099562: #2669737 context    irq timer_latency       560 ns
+          <idle>-0       [006] dNh2.  1152.099563: irq_noise: local_timer:236 start 1152.099562089 duration 693 ns
+          <idle>-0       [006] d..3.  1152.099563: thread_noise: swapper/6:0 start 1152.099562141 duration 289 ns
+     timerlatu/6-2217    [006] ....1  1152.099563: timerlat_sample: timer_latency=1716 seqnum=2669737 context=1
+     timerlatu/6-2217    [006] ....1  1152.099563: #2669737 context thread timer_latency      1716 ns
+     timerlatu/6-2217    [006] ....1  1152.099564: timerlat_sample: timer_latency=2118 seqnum=2669737 context=2
+     timerlatu/6-2217    [006] ....1  1152.099564: #2669737 context user-ret timer_latency      2118 ns
+          <idle>-0       [005] d.h1.  1152.099578: timerlat_sample: timer_latency=516 seqnum=2669738 context=0
+          <idle>-0       [005] d.h1.  1152.099578: #2669738 context    irq timer_latency       516 ns
+          <idle>-0       [005] dNh2.  1152.099579: irq_noise: local_timer:236 start 1152.099577959 duration 630 ns
+          <idle>-0       [005] d..3.  1152.099579: thread_noise: swapper/5:0 start 1152.099578012 duration 282 ns
+     timerlatu/5-2216    [005] ....1  1152.099579: timerlat_sample: timer_latency=1539 seqnum=2669738 context=1
+     timerlatu/5-2216    [005] ....1  1152.099579: #2669738 context thread timer_latency      1539 ns
+     timerlatu/5-2216    [005] ....1  1152.099579: timerlat_sample: timer_latency=1943 seqnum=2669738 context=2
+     timerlatu/5-2216    [005] ....1  1152.099580: #2669738 context user-ret timer_latency      1943 ns
+          <idle>-0       [004] d.h1.  1152.099627: timerlat_sample: timer_latency=494 seqnum=2669739 context=0
+          <idle>-0       [004] d.h1.  1152.099627: #2669739 context    irq timer_latency       494 ns
+          <idle>-0       [004] dNh2.  1152.099627: irq_noise: local_timer:236 start 1152.099626700 duration 684 ns
+          <idle>-0       [004] d..3.  1152.099628: thread_noise: swapper/4:0 start 1152.099626752 duration 280 ns
+     timerlatu/4-2215    [004] ....1  1152.099628: timerlat_sample: timer_latency=1572 seqnum=2669739 context=1
+     timerlatu/4-2215    [004] ....1  1152.099628: #2669739 context thread timer_latency      1572 ns
+     timerlatu/4-2215    [004] ....1  1152.099628: timerlat_sample: timer_latency=1968 seqnum=2669739 context=2
+     timerlatu/4-2215    [004] ....1  1152.099628: #2669739 context user-ret timer_latency      1968 ns
+          <idle>-0       [007] d.h1.  1152.099775: timerlat_sample: timer_latency=562 seqnum=2669737 context=0
+          <idle>-0       [007] d.h1.  1152.099775: #2669737 context    irq timer_latency       562 ns
+          <idle>-0       [007] dNh2.  1152.099776: irq_noise: local_timer:236 start 1152.099774838 duration 661 ns
+          <idle>-0       [007] d..3.  1152.099776: thread_noise: swapper/7:0 start 1152.099774901 duration 307 ns
+     timerlatu/7-2218    [007] ....1  1152.099776: timerlat_sample: timer_latency=1636 seqnum=2669737 context=1
+     timerlatu/7-2218    [007] ....1  1152.099776: #2669737 context thread timer_latency      1636 ns
+     timerlatu/7-2218    [007] ....1  1152.099776: timerlat_sample: timer_latency=2048 seqnum=2669737 context=2
+     timerlatu/7-2218    [007] ....1  1152.099776: #2669737 context user-ret timer_latency      2048 ns
+          <idle>-0       [006] d.h1.  1152.099812: timerlat_sample: timer_latency=536 seqnum=2669738 context=0
+          <idle>-0       [006] d.h1.  1152.099812: #2669738 context    irq timer_latency       536 ns
+          <idle>-0       [006] dNh2.  1152.099813: irq_noise: local_timer:236 start 1152.099812056 duration 666 ns
+          <idle>-0       [006] d..3.  1152.099813: thread_noise: swapper/6:0 start 1152.099812119 duration 306 ns
+     timerlatu/6-2217    [006] ....1  1152.099813: timerlat_sample: timer_latency=1631 seqnum=2669738 context=1
+     timerlatu/6-2217    [006] ....1  1152.099813: #2669738 context thread timer_latency      1631 ns
+     timerlatu/6-2217    [006] ....1  1152.099814: timerlat_sample: timer_latency=2041 seqnum=2669738 context=2
+     timerlatu/6-2217    [006] ....1  1152.099814: #2669738 context user-ret timer_latency      2041 ns
+          <idle>-0       [005] d.h1.  1152.099828: timerlat_sample: timer_latency=573 seqnum=2669739 context=0
+          <idle>-0       [005] d.h1.  1152.099828: #2669739 context    irq timer_latency       573 ns
+          <idle>-0       [005] dNh2.  1152.099829: irq_noise: local_timer:236 start 1152.099828005 duration 684 ns
+          <idle>-0       [005] d..3.  1152.099829: thread_noise: swapper/5:0 start 1152.099828074 duration 361 ns
+     timerlatu/5-2216    [005] ....1  1152.099829: timerlat_sample: timer_latency=1740 seqnum=2669739 context=1
+     timerlatu/5-2216    [005] ....1  1152.099829: #2669739 context thread timer_latency      1740 ns
+     timerlatu/5-2216    [005] ....1  1152.099830: timerlat_sample: timer_latency=2197 seqnum=2669739 context=2
+     timerlatu/5-2216    [005] ....1  1152.099830: #2669739 context user-ret timer_latency      2197 ns
+          <idle>-0       [004] d.h1.  1152.099877: timerlat_sample: timer_latency=558 seqnum=2669740 context=0
+          <idle>-0       [004] d.h1.  1152.099877: #2669740 context    irq timer_latency       558 ns
+          <idle>-0       [004] dNh2.  1152.099877: irq_noise: local_timer:236 start 1152.099876752 duration 687 ns
+          <idle>-0       [004] d..3.  1152.099878: thread_noise: swapper/4:0 start 1152.099876819 duration 354 ns
+     timerlatu/4-2215    [004] ....1  1152.099878: timerlat_sample: timer_latency=1719 seqnum=2669740 context=1
+     timerlatu/4-2215    [004] ....1  1152.099878: #2669740 context thread timer_latency      1719 ns
+     timerlatu/4-2215    [004] ....1  1152.099878: timerlat_sample: timer_latency=2179 seqnum=2669740 context=2
+     timerlatu/4-2215    [004] ....1  1152.099879: #2669740 context user-ret timer_latency      2179 ns
+          <idle>-0       [007] d.h1.  1152.100025: timerlat_sample: timer_latency=543 seqnum=2669738 context=0
+          <idle>-0       [007] d.h1.  1152.100025: #2669738 context    irq timer_latency       543 ns
+          <idle>-0       [007] dNh2.  1152.100026: irq_noise: local_timer:236 start 1152.100024833 duration 638 ns
+          <idle>-0       [007] d..3.  1152.100026: thread_noise: swapper/7:0 start 1152.100024884 duration 299 ns
+     timerlatu/7-2218    [007] ....1  1152.100026: timerlat_sample: timer_latency=1635 seqnum=2669738 context=1
+     timerlatu/7-2218    [007] ....1  1152.100026: #2669738 context thread timer_latency      1635 ns
+     timerlatu/7-2218    [007] ....1  1152.100026: timerlat_sample: timer_latency=2035 seqnum=2669738 context=2
+     timerlatu/7-2218    [007] ....1  1152.100026: #2669738 context user-ret timer_latency      2035 ns
+          <idle>-0       [006] d.h1.  1152.100062: timerlat_sample: timer_latency=534 seqnum=2669739 context=0
+          <idle>-0       [006] d.h1.  1152.100062: #2669739 context    irq timer_latency       534 ns
+          <idle>-0       [006] dNh2.  1152.100063: irq_noise: local_timer:236 start 1152.100062066 duration 653 ns
+          <idle>-0       [006] d..3.  1152.100063: thread_noise: swapper/6:0 start 1152.100062119 duration 298 ns
+     timerlatu/6-2217    [006] ....1  1152.100063: timerlat_sample: timer_latency=1613 seqnum=2669739 context=1
+     timerlatu/6-2217    [006] ....1  1152.100063: #2669739 context thread timer_latency      1613 ns
+     timerlatu/6-2217    [006] ....1  1152.100064: timerlat_sample: timer_latency=2014 seqnum=2669739 context=2
+     timerlatu/6-2217    [006] ....1  1152.100064: #2669739 context user-ret timer_latency      2014 ns
+          <idle>-0       [005] d.h1.  1152.100078: timerlat_sample: timer_latency=541 seqnum=2669740 context=0
+          <idle>-0       [005] d.h1.  1152.100078: #2669740 context    irq timer_latency       541 ns
+          <idle>-0       [005] dNh2.  1152.100079: irq_noise: local_timer:236 start 1152.100077991 duration 627 ns
+          <idle>-0       [005] d..3.  1152.100079: thread_noise: swapper/5:0 start 1152.100078042 duration 281 ns
+     timerlatu/5-2216    [005] ....1  1152.100079: timerlat_sample: timer_latency=1565 seqnum=2669740 context=1
+     timerlatu/5-2216    [005] ....1  1152.100079: #2669740 context thread timer_latency      1565 ns
+     timerlatu/5-2216    [005] ....1  1152.100079: timerlat_sample: timer_latency=1967 seqnum=2669740 context=2
+     timerlatu/5-2216    [005] ....1  1152.100080: #2669740 context user-ret timer_latency      1967 ns
+          <idle>-0       [004] d.h1.  1152.100127: timerlat_sample: timer_latency=529 seqnum=2669741 context=0
+          <idle>-0       [004] d.h1.  1152.100127: #2669741 context    irq timer_latency       529 ns
+          <idle>-0       [004] dNh2.  1152.100127: irq_noise: local_timer:236 start 1152.100126734 duration 696 ns
+          <idle>-0       [004] d..3.  1152.100128: thread_noise: swapper/4:0 start 1152.100126793 duration 335 ns
+     timerlatu/4-2215    [004] ....1  1152.100128: timerlat_sample: timer_latency=1690 seqnum=2669741 context=1
+     timerlatu/4-2215    [004] ....1  1152.100128: #2669741 context thread timer_latency      1690 ns
+     timerlatu/4-2215    [004] ....1  1152.100128: timerlat_sample: timer_latency=2160 seqnum=2669741 context=2
+     timerlatu/4-2215    [004] ....1  1152.100129: #2669741 context user-ret timer_latency      2160 ns
+          <idle>-0       [007] d.h1.  1152.100275: timerlat_sample: timer_latency=541 seqnum=2669739 context=0
+          <idle>-0       [007] d.h1.  1152.100275: #2669739 context    irq timer_latency       541 ns
+          <idle>-0       [007] dNh2.  1152.100276: irq_noise: local_timer:236 start 1152.100274833 duration 640 ns
+          <idle>-0       [007] d..3.  1152.100276: thread_noise: swapper/7:0 start 1152.100274885 duration 299 ns
+     timerlatu/7-2218    [007] ....1  1152.100276: timerlat_sample: timer_latency=1595 seqnum=2669739 context=1
+     timerlatu/7-2218    [007] ....1  1152.100276: #2669739 context thread timer_latency      1595 ns
+     timerlatu/7-2218    [007] ....1  1152.100276: timerlat_sample: timer_latency=1994 seqnum=2669739 context=2
+     timerlatu/7-2218    [007] ....1  1152.100276: #2669739 context user-ret timer_latency      1994 ns
+          <idle>-0       [006] d.h1.  1152.100312: timerlat_sample: timer_latency=536 seqnum=2669740 context=0
+          <idle>-0       [006] d.h1.  1152.100312: #2669740 context    irq timer_latency       536 ns
+          <idle>-0       [006] dNh2.  1152.100313: irq_noise: local_timer:236 start 1152.100312071 duration 650 ns
+          <idle>-0       [006] d..3.  1152.100313: thread_noise: swapper/6:0 start 1152.100312123 duration 280 ns
+     timerlatu/6-2217    [006] ....1  1152.100313: timerlat_sample: timer_latency=1595 seqnum=2669740 context=1
+     timerlatu/6-2217    [006] ....1  1152.100313: #2669740 context thread timer_latency      1595 ns
+     timerlatu/6-2217    [006] ....1  1152.100314: timerlat_sample: timer_latency=1992 seqnum=2669740 context=2
+     timerlatu/6-2217    [006] ....1  1152.100314: #2669740 context user-ret timer_latency      1992 ns
+          <idle>-0       [005] d.h1.  1152.100328: timerlat_sample: timer_latency=507 seqnum=2669741 context=0
+          <idle>-0       [005] d.h1.  1152.100328: #2669741 context    irq timer_latency       507 ns
+          <idle>-0       [005] dNh2.  1152.100329: irq_noise: local_timer:236 start 1152.100327958 duration 623 ns
+          <idle>-0       [005] d..3.  1152.100329: thread_noise: swapper/5:0 start 1152.100328010 duration 279 ns
+     timerlatu/5-2216    [005] ....1  1152.100329: timerlat_sample: timer_latency=1520 seqnum=2669741 context=1
+     timerlatu/5-2216    [005] ....1  1152.100329: #2669741 context thread timer_latency      1520 ns
+     timerlatu/5-2216    [005] ....1  1152.100329: timerlat_sample: timer_latency=1921 seqnum=2669741 context=2
+     timerlatu/5-2216    [005] ....1  1152.100330: #2669741 context user-ret timer_latency      1921 ns
+          <idle>-0       [004] d.h1.  1152.100377: timerlat_sample: timer_latency=521 seqnum=2669742 context=0
+          <idle>-0       [004] d.h1.  1152.100377: #2669742 context    irq timer_latency       521 ns
+          <idle>-0       [004] dNh2.  1152.100377: irq_noise: local_timer:236 start 1152.100376734 duration 627 ns
+          <idle>-0       [004] d..3.  1152.100378: thread_noise: swapper/4:0 start 1152.100376786 duration 280 ns
+     timerlatu/4-2215    [004] ....1  1152.100378: timerlat_sample: timer_latency=1543 seqnum=2669742 context=1
+     timerlatu/4-2215    [004] ....1  1152.100378: #2669742 context thread timer_latency      1543 ns
+     timerlatu/4-2215    [004] ....1  1152.100378: timerlat_sample: timer_latency=1937 seqnum=2669742 context=2
+     timerlatu/4-2215    [004] ....1  1152.100378: #2669742 context user-ret timer_latency      1937 ns
+          <idle>-0       [007] d.h1.  1152.100525: timerlat_sample: timer_latency=531 seqnum=2669740 context=0
+          <idle>-0       [007] d.h1.  1152.100525: #2669740 context    irq timer_latency       531 ns
+          <idle>-0       [007] dNh2.  1152.100526: irq_noise: local_timer:236 start 1152.100524824 duration 751 ns
+          <idle>-0       [007] d..3.  1152.100526: thread_noise: swapper/7:0 start 1152.100524877 duration 279 ns
+     timerlatu/7-2218    [007] ....1  1152.100526: timerlat_sample: timer_latency=1671 seqnum=2669740 context=1
+     timerlatu/7-2218    [007] ....1  1152.100526: #2669740 context thread timer_latency      1671 ns
+     timerlatu/7-2218    [007] ....1  1152.100526: timerlat_sample: timer_latency=2094 seqnum=2669740 context=2
+     timerlatu/7-2218    [007] ....1  1152.100527: #2669740 context user-ret timer_latency      2094 ns
+          <idle>-0       [006] d.h1.  1152.100562: timerlat_sample: timer_latency=507 seqnum=2669741 context=0
+          <idle>-0       [006] d.h1.  1152.100562: #2669741 context    irq timer_latency       507 ns
+          <idle>-0       [006] dNh2.  1152.100563: irq_noise: local_timer:236 start 1152.100562045 duration 649 ns
+          <idle>-0       [006] d..3.  1152.100563: thread_noise: swapper/6:0 start 1152.100562097 duration 285 ns
+     timerlatu/6-2217    [006] ....1  1152.100563: timerlat_sample: timer_latency=1570 seqnum=2669741 context=1
+     timerlatu/6-2217    [006] ....1  1152.100563: #2669741 context thread timer_latency      1570 ns
+     timerlatu/6-2217    [006] ....1  1152.100564: timerlat_sample: timer_latency=1984 seqnum=2669741 context=2
+     timerlatu/6-2217    [006] ....1  1152.100564: #2669741 context user-ret timer_latency      1984 ns
+          <idle>-0       [005] d.h1.  1152.100578: timerlat_sample: timer_latency=501 seqnum=2669742 context=0
+          <idle>-0       [005] d.h1.  1152.100578: #2669742 context    irq timer_latency       501 ns
+          <idle>-0       [005] dNh2.  1152.100579: irq_noise: local_timer:236 start 1152.100577954 duration 617 ns
+          <idle>-0       [005] d..3.  1152.100579: thread_noise: swapper/5:0 start 1152.100578006 duration 280 ns
+     timerlatu/5-2216    [005] ....1  1152.100579: timerlat_sample: timer_latency=1514 seqnum=2669742 context=1
+     timerlatu/5-2216    [005] ....1  1152.100579: #2669742 context thread timer_latency      1514 ns
+     timerlatu/5-2216    [005] ....1  1152.100579: timerlat_sample: timer_latency=1912 seqnum=2669742 context=2
+     timerlatu/5-2216    [005] ....1  1152.100580: #2669742 context user-ret timer_latency      1912 ns
+          <idle>-0       [004] d.h1.  1152.100627: timerlat_sample: timer_latency=516 seqnum=2669743 context=0
+          <idle>-0       [004] d.h1.  1152.100627: #2669743 context    irq timer_latency       516 ns
+          <idle>-0       [004] dNh2.  1152.100627: irq_noise: local_timer:236 start 1152.100626731 duration 646 ns
+          <idle>-0       [004] d..3.  1152.100628: thread_noise: swapper/4:0 start 1152.100626783 duration 281 ns
+     timerlatu/4-2215    [004] ....1  1152.100628: timerlat_sample: timer_latency=1556 seqnum=2669743 context=1
+     timerlatu/4-2215    [004] ....1  1152.100628: #2669743 context thread timer_latency      1556 ns
+     timerlatu/4-2215    [004] ....1  1152.100628: timerlat_sample: timer_latency=1952 seqnum=2669743 context=2
+     timerlatu/4-2215    [004] ....1  1152.100628: #2669743 context user-ret timer_latency      1952 ns
+          <idle>-0       [007] d.h1.  1152.100775: timerlat_sample: timer_latency=559 seqnum=2669741 context=0
+          <idle>-0       [007] d.h1.  1152.100775: #2669741 context    irq timer_latency       559 ns
+          <idle>-0       [007] dNh2.  1152.100776: irq_noise: local_timer:236 start 1152.100774845 duration 650 ns
+          <idle>-0       [007] d..3.  1152.100776: thread_noise: swapper/7:0 start 1152.100774907 duration 303 ns
+     timerlatu/7-2218    [007] ....1  1152.100776: timerlat_sample: timer_latency=1613 seqnum=2669741 context=1
+     timerlatu/7-2218    [007] ....1  1152.100776: #2669741 context thread timer_latency      1613 ns
+     timerlatu/7-2218    [007] ....1  1152.100776: timerlat_sample: timer_latency=2031 seqnum=2669741 context=2
+     timerlatu/7-2218    [007] ....1  1152.100776: #2669741 context user-ret timer_latency      2031 ns
+          <idle>-0       [006] d.h1.  1152.100812: timerlat_sample: timer_latency=544 seqnum=2669742 context=0
+          <idle>-0       [006] d.h1.  1152.100812: #2669742 context    irq timer_latency       544 ns
+          <idle>-0       [006] dNh2.  1152.100813: irq_noise: local_timer:236 start 1152.100812073 duration 664 ns
+          <idle>-0       [006] d..3.  1152.100813: thread_noise: swapper/6:0 start 1152.100812136 duration 309 ns
+     timerlatu/6-2217    [006] ....1  1152.100813: timerlat_sample: timer_latency=1641 seqnum=2669742 context=1
+     timerlatu/6-2217    [006] ....1  1152.100813: #2669742 context thread timer_latency      1641 ns
+     timerlatu/6-2217    [006] ....1  1152.100814: timerlat_sample: timer_latency=2044 seqnum=2669742 context=2
+     timerlatu/6-2217    [006] ....1  1152.100814: #2669742 context user-ret timer_latency      2044 ns
+          <idle>-0       [005] d.h1.  1152.100828: timerlat_sample: timer_latency=519 seqnum=2669743 context=0
+          <idle>-0       [005] d.h1.  1152.100828: #2669743 context    irq timer_latency       519 ns
+          <idle>-0       [005] dNh2.  1152.100829: irq_noise: local_timer:236 start 1152.100827967 duration 631 ns
+          <idle>-0       [005] d..3.  1152.100829: thread_noise: swapper/5:0 start 1152.100828027 duration 313 ns
+     timerlatu/5-2216    [005] ....1  1152.100829: timerlat_sample: timer_latency=1608 seqnum=2669743 context=1
+     timerlatu/5-2216    [005] ....1  1152.100829: #2669743 context thread timer_latency      1608 ns
+     timerlatu/5-2216    [005] ....1  1152.100830: timerlat_sample: timer_latency=2015 seqnum=2669743 context=2
+     timerlatu/5-2216    [005] ....1  1152.100830: #2669743 context user-ret timer_latency      2015 ns
+          <idle>-0       [004] d.h1.  1152.100877: timerlat_sample: timer_latency=533 seqnum=2669744 context=0
+          <idle>-0       [004] d.h1.  1152.100877: #2669744 context    irq timer_latency       533 ns
+          <idle>-0       [004] dNh2.  1152.100877: irq_noise: local_timer:236 start 1152.100876741 duration 637 ns
+          <idle>-0       [004] d..3.  1152.100878: thread_noise: swapper/4:0 start 1152.100876802 duration 314 ns
+     timerlatu/4-2215    [004] ....1  1152.100878: timerlat_sample: timer_latency=1588 seqnum=2669744 context=1
+     timerlatu/4-2215    [004] ....1  1152.100878: #2669744 context thread timer_latency      1588 ns
+     timerlatu/4-2215    [004] ....1  1152.100878: timerlat_sample: timer_latency=1997 seqnum=2669744 context=2
+     timerlatu/4-2215    [004] ....1  1152.100878: #2669744 context user-ret timer_latency      1997 ns
+          <idle>-0       [007] d.h1.  1152.101025: timerlat_sample: timer_latency=510 seqnum=2669742 context=0
+          <idle>-0       [007] d.h1.  1152.101025: #2669742 context    irq timer_latency       510 ns
+          <idle>-0       [007] dNh2.  1152.101026: irq_noise: local_timer:236 start 1152.101024808 duration 690 ns
+          <idle>-0       [007] d..3.  1152.101026: thread_noise: swapper/7:0 start 1152.101024861 duration 297 ns
+     timerlatu/7-2218    [007] ....1  1152.101026: timerlat_sample: timer_latency=1708 seqnum=2669742 context=1
+     timerlatu/7-2218    [007] ....1  1152.101026: #2669742 context thread timer_latency      1708 ns
+     timerlatu/7-2218    [007] ....1  1152.101026: timerlat_sample: timer_latency=2109 seqnum=2669742 context=2
+     timerlatu/7-2218    [007] ....1  1152.101027: #2669742 context user-ret timer_latency      2109 ns
+          <idle>-0       [006] d.h1.  1152.101062: timerlat_sample: timer_latency=502 seqnum=2669743 context=0
+          <idle>-0       [006] d.h1.  1152.101062: #2669743 context    irq timer_latency       502 ns
+          <idle>-0       [006] dNh2.  1152.101063: irq_noise: local_timer:236 start 1152.101062044 duration 651 ns
+          <idle>-0       [006] d..3.  1152.101063: thread_noise: swapper/6:0 start 1152.101062095 duration 300 ns
+     timerlatu/6-2217    [006] ....1  1152.101063: timerlat_sample: timer_latency=1585 seqnum=2669743 context=1
+     timerlatu/6-2217    [006] ....1  1152.101063: #2669743 context thread timer_latency      1585 ns
+     timerlatu/6-2217    [006] ....1  1152.101064: timerlat_sample: timer_latency=1983 seqnum=2669743 context=2
+     timerlatu/6-2217    [006] ....1  1152.101064: #2669743 context user-ret timer_latency      1983 ns
+          <idle>-0       [005] d.h1.  1152.101078: timerlat_sample: timer_latency=526 seqnum=2669744 context=0
+          <idle>-0       [005] d.h1.  1152.101078: #2669744 context    irq timer_latency       526 ns
+          <idle>-0       [005] dNh2.  1152.101079: irq_noise: local_timer:236 start 1152.101077984 duration 638 ns
+          <idle>-0       [005] d..3.  1152.101079: thread_noise: swapper/5:0 start 1152.101078036 duration 299 ns
+     timerlatu/5-2216    [005] ....1  1152.101079: timerlat_sample: timer_latency=1573 seqnum=2669744 context=1
+     timerlatu/5-2216    [005] ....1  1152.101079: #2669744 context thread timer_latency      1573 ns
+     timerlatu/5-2216    [005] ....1  1152.101080: timerlat_sample: timer_latency=1975 seqnum=2669744 context=2
+     timerlatu/5-2216    [005] ....1  1152.101080: #2669744 context user-ret timer_latency      1975 ns
+          <idle>-0       [004] d.h1.  1152.101127: timerlat_sample: timer_latency=512 seqnum=2669745 context=0
+          <idle>-0       [004] d.h1.  1152.101127: #2669745 context    irq timer_latency       512 ns
+          <idle>-0       [004] dNh2.  1152.101127: irq_noise: local_timer:236 start 1152.101126731 duration 620 ns
+          <idle>-0       [004] d..3.  1152.101128: thread_noise: swapper/4:0 start 1152.101126784 duration 297 ns
+     timerlatu/4-2215    [004] ....1  1152.101128: timerlat_sample: timer_latency=1544 seqnum=2669745 context=1
+     timerlatu/4-2215    [004] ....1  1152.101128: #2669745 context thread timer_latency      1544 ns
+     timerlatu/4-2215    [004] ....1  1152.101128: timerlat_sample: timer_latency=1988 seqnum=2669745 context=2
+     timerlatu/4-2215    [004] ....1  1152.101128: #2669745 context user-ret timer_latency      1988 ns
+          <idle>-0       [007] d.h1.  1152.101275: timerlat_sample: timer_latency=525 seqnum=2669743 context=0
+          <idle>-0       [007] d.h1.  1152.101275: #2669743 context    irq timer_latency       525 ns
+          <idle>-0       [007] dNh2.  1152.101276: irq_noise: local_timer:236 start 1152.101274826 duration 638 ns
+          <idle>-0       [007] d..3.  1152.101276: thread_noise: swapper/7:0 start 1152.101274878 duration 278 ns
+     timerlatu/7-2218    [007] ....1  1152.101276: timerlat_sample: timer_latency=1553 seqnum=2669743 context=1
+     timerlatu/7-2218    [007] ....1  1152.101276: #2669743 context thread timer_latency      1553 ns
+     timerlatu/7-2218    [007] ....1  1152.101276: timerlat_sample: timer_latency=1956 seqnum=2669743 context=2
+     timerlatu/7-2218    [007] ....1  1152.101276: #2669743 context user-ret timer_latency      1956 ns
+          <idle>-0       [006] d.h1.  1152.101312: timerlat_sample: timer_latency=501 seqnum=2669744 context=0
+          <idle>-0       [006] d.h1.  1152.101312: #2669744 context    irq timer_latency       501 ns
+          <idle>-0       [006] dNh2.  1152.101313: irq_noise: local_timer:236 start 1152.101312045 duration 651 ns
+          <idle>-0       [006] d..3.  1152.101313: thread_noise: swapper/6:0 start 1152.101312097 duration 281 ns
+     timerlatu/6-2217    [006] ....1  1152.101313: timerlat_sample: timer_latency=1565 seqnum=2669744 context=1
+     timerlatu/6-2217    [006] ....1  1152.101313: #2669744 context thread timer_latency      1565 ns
+     timerlatu/6-2217    [006] ....1  1152.101314: timerlat_sample: timer_latency=1971 seqnum=2669744 context=2
+     timerlatu/6-2217    [006] ....1  1152.101314: #2669744 context user-ret timer_latency      1971 ns
+          <idle>-0       [005] d.h1.  1152.101328: timerlat_sample: timer_latency=498 seqnum=2669745 context=0
+          <idle>-0       [005] d.h1.  1152.101328: #2669745 context    irq timer_latency       498 ns
+          <idle>-0       [005] dNh2.  1152.101329: irq_noise: local_timer:236 start 1152.101327959 duration 629 ns
+          <idle>-0       [005] d..3.  1152.101329: thread_noise: swapper/5:0 start 1152.101328010 duration 279 ns
+     timerlatu/5-2216    [005] ....1  1152.101329: timerlat_sample: timer_latency=1518 seqnum=2669745 context=1
+     timerlatu/5-2216    [005] ....1  1152.101329: #2669745 context thread timer_latency      1518 ns
+     timerlatu/5-2216    [005] ....1  1152.101329: timerlat_sample: timer_latency=1922 seqnum=2669745 context=2
+     timerlatu/5-2216    [005] ....1  1152.101330: #2669745 context user-ret timer_latency      1922 ns
+          <idle>-0       [004] d.h1.  1152.101377: timerlat_sample: timer_latency=531 seqnum=2669746 context=0
+          <idle>-0       [004] d.h1.  1152.101377: #2669746 context    irq timer_latency       531 ns
+          <idle>-0       [004] dNh2.  1152.101377: irq_noise: local_timer:236 start 1152.101376753 duration 629 ns
+          <idle>-0       [004] d..3.  1152.101378: thread_noise: swapper/4:0 start 1152.101376804 duration 279 ns
+     timerlatu/4-2215    [004] ....1  1152.101378: timerlat_sample: timer_latency=1549 seqnum=2669746 context=1
+     timerlatu/4-2215    [004] ....1  1152.101378: #2669746 context thread timer_latency      1549 ns
+     timerlatu/4-2215    [004] ....1  1152.101378: timerlat_sample: timer_latency=1943 seqnum=2669746 context=2
+     timerlatu/4-2215    [004] ....1  1152.101378: #2669746 context user-ret timer_latency      1943 ns
+          <idle>-0       [007] d.h1.  1152.101525: timerlat_sample: timer_latency=525 seqnum=2669744 context=0
+          <idle>-0       [007] d.h1.  1152.101525: #2669744 context    irq timer_latency       525 ns
+          <idle>-0       [007] dNh2.  1152.101526: irq_noise: local_timer:236 start 1152.101524828 duration 651 ns
+          <idle>-0       [007] d..3.  1152.101526: thread_noise: swapper/7:0 start 1152.101524880 duration 280 ns
+     timerlatu/7-2218    [007] ....1  1152.101526: timerlat_sample: timer_latency=1567 seqnum=2669744 context=1
+     timerlatu/7-2218    [007] ....1  1152.101526: #2669744 context thread timer_latency      1567 ns
+     timerlatu/7-2218    [007] ....1  1152.101526: timerlat_sample: timer_latency=1979 seqnum=2669744 context=2
+     timerlatu/7-2218    [007] ....1  1152.101526: #2669744 context user-ret timer_latency      1979 ns
+          <idle>-0       [006] d.h1.  1152.101562: timerlat_sample: timer_latency=525 seqnum=2669745 context=0
+          <idle>-0       [006] d.h1.  1152.101562: #2669745 context    irq timer_latency       525 ns
+          <idle>-0       [006] dNh2.  1152.101563: irq_noise: local_timer:236 start 1152.101562071 duration 652 ns
+          <idle>-0       [006] d..3.  1152.101563: thread_noise: swapper/6:0 start 1152.101562123 duration 281 ns
+     timerlatu/6-2217    [006] ....1  1152.101563: timerlat_sample: timer_latency=1588 seqnum=2669745 context=1
+     timerlatu/6-2217    [006] ....1  1152.101563: #2669745 context thread timer_latency      1588 ns
+     timerlatu/6-2217    [006] ....1  1152.101564: timerlat_sample: timer_latency=1987 seqnum=2669745 context=2
+     timerlatu/6-2217    [006] ....1  1152.101564: #2669745 context user-ret timer_latency      1987 ns
+          <idle>-0       [005] d.h1.  1152.101578: timerlat_sample: timer_latency=520 seqnum=2669746 context=0
+          <idle>-0       [005] d.h1.  1152.101578: #2669746 context    irq timer_latency       520 ns
+          <idle>-0       [005] dNh2.  1152.101579: irq_noise: local_timer:236 start 1152.101577982 duration 651 ns
+          <idle>-0       [005] d..3.  1152.101579: thread_noise: swapper/5:0 start 1152.101578034 duration 282 ns
+     timerlatu/5-2216    [005] ....1  1152.101579: timerlat_sample: timer_latency=1563 seqnum=2669746 context=1
+     timerlatu/5-2216    [005] ....1  1152.101579: #2669746 context thread timer_latency      1563 ns
+     timerlatu/5-2216    [005] ....1  1152.101580: timerlat_sample: timer_latency=1964 seqnum=2669746 context=2
+     timerlatu/5-2216    [005] ....1  1152.101580: #2669746 context user-ret timer_latency      1964 ns
+          <idle>-0       [004] d.h1.  1152.101627: timerlat_sample: timer_latency=527 seqnum=2669747 context=0
+          <idle>-0       [004] d.h1.  1152.101627: #2669747 context    irq timer_latency       527 ns
+          <idle>-0       [004] dNh2.  1152.101627: irq_noise: local_timer:236 start 1152.101626750 duration 629 ns
+          <idle>-0       [004] d..3.  1152.101628: thread_noise: swapper/4:0 start 1152.101626803 duration 278 ns
+     timerlatu/4-2215    [004] ....1  1152.101628: timerlat_sample: timer_latency=1544 seqnum=2669747 context=1
+     timerlatu/4-2215    [004] ....1  1152.101628: #2669747 context thread timer_latency      1544 ns
+     timerlatu/4-2215    [004] ....1  1152.101628: timerlat_sample: timer_latency=1934 seqnum=2669747 context=2
+     timerlatu/4-2215    [004] ....1  1152.101628: #2669747 context user-ret timer_latency      1934 ns
+          <idle>-0       [007] d.h1.  1152.101775: timerlat_sample: timer_latency=553 seqnum=2669745 context=0
+          <idle>-0       [007] d.h1.  1152.101775: #2669745 context    irq timer_latency       553 ns
+          <idle>-0       [007] dNh2.  1152.101776: irq_noise: local_timer:236 start 1152.101774847 duration 648 ns
+          <idle>-0       [007] d..3.  1152.101776: thread_noise: swapper/7:0 start 1152.101774910 duration 303 ns
+     timerlatu/7-2218    [007] ....1  1152.101776: timerlat_sample: timer_latency=1605 seqnum=2669745 context=1
+     timerlatu/7-2218    [007] ....1  1152.101776: #2669745 context thread timer_latency      1605 ns
+     timerlatu/7-2218    [007] ....1  1152.101776: timerlat_sample: timer_latency=2014 seqnum=2669745 context=2
+     timerlatu/7-2218    [007] ....1  1152.101776: #2669745 context user-ret timer_latency      2014 ns
+          <idle>-0       [006] d.h1.  1152.101812: timerlat_sample: timer_latency=519 seqnum=2669746 context=0
+          <idle>-0       [006] d.h1.  1152.101812: #2669746 context    irq timer_latency       519 ns
+          <idle>-0       [006] dNh2.  1152.101813: irq_noise: local_timer:236 start 1152.101812056 duration 663 ns
+          <idle>-0       [006] d..3.  1152.101813: thread_noise: swapper/6:0 start 1152.101812119 duration 304 ns
+     timerlatu/6-2217    [006] ....1  1152.101813: timerlat_sample: timer_latency=1610 seqnum=2669746 context=1
+     timerlatu/6-2217    [006] ....1  1152.101813: #2669746 context thread timer_latency      1610 ns
+     timerlatu/6-2217    [006] ....1  1152.101814: timerlat_sample: timer_latency=2017 seqnum=2669746 context=2
+     timerlatu/6-2217    [006] ....1  1152.101814: #2669746 context user-ret timer_latency      2017 ns
+          <idle>-0       [005] d.h1.  1152.101828: timerlat_sample: timer_latency=566 seqnum=2669747 context=0
+          <idle>-0       [005] d.h1.  1152.101828: #2669747 context    irq timer_latency       566 ns
+          <idle>-0       [005] dNh2.  1152.101829: irq_noise: local_timer:236 start 1152.101828022 duration 650 ns
+          <idle>-0       [005] d..3.  1152.101829: thread_noise: swapper/5:0 start 1152.101828082 duration 313 ns
+     timerlatu/5-2216    [005] ....1  1152.101829: timerlat_sample: timer_latency=1634 seqnum=2669747 context=1
+     timerlatu/5-2216    [005] ....1  1152.101829: #2669747 context thread timer_latency      1634 ns
+     timerlatu/5-2216    [005] ....1  1152.101830: timerlat_sample: timer_latency=2040 seqnum=2669747 context=2
+     timerlatu/5-2216    [005] ....1  1152.101830: #2669747 context user-ret timer_latency      2040 ns
+          <idle>-0       [004] d.h1.  1152.101877: timerlat_sample: timer_latency=553 seqnum=2669748 context=0
+          <idle>-0       [004] d.h1.  1152.101877: #2669748 context    irq timer_latency       553 ns
+          <idle>-0       [004] dNh2.  1152.101878: irq_noise: local_timer:236 start 1152.101876769 duration 847 ns
+          <idle>-0       [004] d..3.  1152.101878: thread_noise: swapper/4:0 start 1152.101876830 duration 301 ns
+     timerlatu/4-2215    [004] ....1  1152.101878: timerlat_sample: timer_latency=1808 seqnum=2669748 context=1
+     timerlatu/4-2215    [004] ....1  1152.101878: #2669748 context thread timer_latency      1808 ns
+     timerlatu/4-2215    [004] ....1  1152.101879: timerlat_sample: timer_latency=2212 seqnum=2669748 context=2
+     timerlatu/4-2215    [004] ....1  1152.101879: #2669748 context user-ret timer_latency      2212 ns
+          <idle>-0       [007] d.h1.  1152.102025: timerlat_sample: timer_latency=494 seqnum=2669746 context=0
+          <idle>-0       [007] d.h1.  1152.102025: #2669746 context    irq timer_latency       494 ns
+          <idle>-0       [007] dNh2.  1152.102026: irq_noise: local_timer:236 start 1152.102024802 duration 677 ns
+          <idle>-0       [007] d..3.  1152.102026: thread_noise: swapper/7:0 start 1152.102024854 duration 306 ns
+     timerlatu/7-2218    [007] ....1  1152.102026: timerlat_sample: timer_latency=1588 seqnum=2669746 context=1
+     timerlatu/7-2218    [007] ....1  1152.102026: #2669746 context thread timer_latency      1588 ns
+     timerlatu/7-2218    [007] ....1  1152.102026: timerlat_sample: timer_latency=1992 seqnum=2669746 context=2
+     timerlatu/7-2218    [007] ....1  1152.102026: #2669746 context user-ret timer_latency      1992 ns
+          <idle>-0       [006] d.h1.  1152.102062: timerlat_sample: timer_latency=496 seqnum=2669747 context=0
+          <idle>-0       [006] d.h1.  1152.102062: #2669747 context    irq timer_latency       496 ns
+          <idle>-0       [006] dNh2.  1152.102063: irq_noise: local_timer:236 start 1152.102062047 duration 765 ns
+          <idle>-0       [006] d..3.  1152.102063: thread_noise: swapper/6:0 start 1152.102062099 duration 305 ns
+     timerlatu/6-2217    [006] ....1  1152.102063: timerlat_sample: timer_latency=1695 seqnum=2669747 context=1
+     timerlatu/6-2217    [006] ....1  1152.102063: #2669747 context thread timer_latency      1695 ns
+     timerlatu/6-2217    [006] ....1  1152.102064: timerlat_sample: timer_latency=2104 seqnum=2669747 context=2
+     timerlatu/6-2217    [006] ....1  1152.102064: #2669747 context user-ret timer_latency      2104 ns
+          <idle>-0       [005] d.h1.  1152.102078: timerlat_sample: timer_latency=515 seqnum=2669748 context=0
+          <idle>-0       [005] d.h1.  1152.102078: #2669748 context    irq timer_latency       515 ns
+          <idle>-0       [005] dNh2.  1152.102079: irq_noise: local_timer:236 start 1152.102077982 duration 634 ns
+          <idle>-0       [005] d..3.  1152.102079: thread_noise: swapper/5:0 start 1152.102078034 duration 298 ns
+     timerlatu/5-2216    [005] ....1  1152.102079: timerlat_sample: timer_latency=1558 seqnum=2669748 context=1
+     timerlatu/5-2216    [005] ....1  1152.102079: #2669748 context thread timer_latency      1558 ns
+     timerlatu/5-2216    [005] ....1  1152.102079: timerlat_sample: timer_latency=1959 seqnum=2669748 context=2
+     timerlatu/5-2216    [005] ....1  1152.102080: #2669748 context user-ret timer_latency      1959 ns
+          <idle>-0       [004] d.h1.  1152.102127: timerlat_sample: timer_latency=504 seqnum=2669749 context=0
+          <idle>-0       [004] d.h1.  1152.102127: #2669749 context    irq timer_latency       504 ns
+          <idle>-0       [004] dNh2.  1152.102127: irq_noise: local_timer:236 start 1152.102126733 duration 671 ns
+          <idle>-0       [004] d..3.  1152.102128: thread_noise: swapper/4:0 start 1152.102126784 duration 310 ns
+     timerlatu/4-2215    [004] ....1  1152.102128: timerlat_sample: timer_latency=1596 seqnum=2669749 context=1
+     timerlatu/4-2215    [004] ....1  1152.102128: #2669749 context thread timer_latency      1596 ns
+     timerlatu/4-2215    [004] ....1  1152.102128: timerlat_sample: timer_latency=2193 seqnum=2669749 context=2
+     timerlatu/4-2215    [004] ....1  1152.102129: #2669749 context user-ret timer_latency      2193 ns
+          <idle>-0       [007] d.h1.  1152.102275: timerlat_sample: timer_latency=516 seqnum=2669747 context=0
+          <idle>-0       [007] d.h1.  1152.102275: #2669747 context    irq timer_latency       516 ns
+          <idle>-0       [007] dNh2.  1152.102276: irq_noise: local_timer:236 start 1152.102274827 duration 765 ns
+          <idle>-0       [007] d..3.  1152.102276: thread_noise: swapper/7:0 start 1152.102274878 duration 280 ns
+     timerlatu/7-2218    [007] ....1  1152.102276: timerlat_sample: timer_latency=1676 seqnum=2669747 context=1
+     timerlatu/7-2218    [007] ....1  1152.102276: #2669747 context thread timer_latency      1676 ns
+     timerlatu/7-2218    [007] ....1  1152.102276: timerlat_sample: timer_latency=2078 seqnum=2669747 context=2
+     timerlatu/7-2218    [007] ....1  1152.102277: #2669747 context user-ret timer_latency      2078 ns
+          <idle>-0       [006] d.h1.  1152.102312: timerlat_sample: timer_latency=538 seqnum=2669748 context=0
+          <idle>-0       [006] d.h1.  1152.102312: #2669748 context    irq timer_latency       538 ns
+          <idle>-0       [006] dNh2.  1152.102313: irq_noise: local_timer:236 start 1152.102312089 duration 677 ns
+          <idle>-0       [006] d..3.  1152.102313: thread_noise: swapper/6:0 start 1152.102312143 duration 280 ns
+     timerlatu/6-2217    [006] ....1  1152.102313: timerlat_sample: timer_latency=1625 seqnum=2669748 context=1
+     timerlatu/6-2217    [006] ....1  1152.102313: #2669748 context thread timer_latency      1625 ns
+     timerlatu/6-2217    [006] ....1  1152.102314: timerlat_sample: timer_latency=2024 seqnum=2669748 context=2
+     timerlatu/6-2217    [006] ....1  1152.102314: #2669748 context user-ret timer_latency      2024 ns
+          <idle>-0       [005] d.h1.  1152.102328: timerlat_sample: timer_latency=514 seqnum=2669749 context=0
+          <idle>-0       [005] d.h1.  1152.102328: #2669749 context    irq timer_latency       514 ns
+          <idle>-0       [005] dNh2.  1152.102329: irq_noise: local_timer:236 start 1152.102327984 duration 738 ns
+          <idle>-0       [005] d..3.  1152.102329: thread_noise: swapper/5:0 start 1152.102328035 duration 279 ns
+     timerlatu/5-2216    [005] ....1  1152.102329: timerlat_sample: timer_latency=1641 seqnum=2669749 context=1
+     timerlatu/5-2216    [005] ....1  1152.102329: #2669749 context thread timer_latency      1641 ns
+     timerlatu/5-2216    [005] ....1  1152.102330: timerlat_sample: timer_latency=2041 seqnum=2669749 context=2
+     timerlatu/5-2216    [005] ....1  1152.102330: #2669749 context user-ret timer_latency      2041 ns
+          <idle>-0       [004] d.h1.  1152.102377: timerlat_sample: timer_latency=502 seqnum=2669750 context=0
+          <idle>-0       [004] d.h1.  1152.102377: #2669750 context    irq timer_latency       502 ns
+          <idle>-0       [004] dNh2.  1152.102377: irq_noise: local_timer:236 start 1152.102376733 duration 640 ns
+          <idle>-0       [004] d..3.  1152.102378: thread_noise: swapper/4:0 start 1152.102376785 duration 419 ns
+     timerlatu/4-2215    [004] ....1  1152.102378: timerlat_sample: timer_latency=1675 seqnum=2669750 context=1
+     timerlatu/4-2215    [004] ....1  1152.102378: #2669750 context thread timer_latency      1675 ns
+     timerlatu/4-2215    [004] ....1  1152.102378: timerlat_sample: timer_latency=2073 seqnum=2669750 context=2
+     timerlatu/4-2215    [004] ....1  1152.102378: #2669750 context user-ret timer_latency      2073 ns
+          <idle>-0       [007] d.h1.  1152.102525: timerlat_sample: timer_latency=514 seqnum=2669748 context=0
+          <idle>-0       [007] d.h1.  1152.102525: #2669748 context    irq timer_latency       514 ns
+          <idle>-0       [007] dNh2.  1152.102526: irq_noise: local_timer:236 start 1152.102524826 duration 755 ns
+          <idle>-0       [007] d..3.  1152.102526: thread_noise: swapper/7:0 start 1152.102524878 duration 304 ns
+     timerlatu/7-2218    [007] ....1  1152.102526: timerlat_sample: timer_latency=1688 seqnum=2669748 context=1
+     timerlatu/7-2218    [007] ....1  1152.102526: #2669748 context thread timer_latency      1688 ns
+     timerlatu/7-2218    [007] ....1  1152.102526: timerlat_sample: timer_latency=2101 seqnum=2669748 context=2
+     timerlatu/7-2218    [007] ....1  1152.102527: #2669748 context user-ret timer_latency      2101 ns
+          <idle>-0       [006] d.h1.  1152.102562: timerlat_sample: timer_latency=517 seqnum=2669749 context=0
+          <idle>-0       [006] d.h1.  1152.102562: #2669749 context    irq timer_latency       517 ns
+          <idle>-0       [006] dNh2.  1152.102563: irq_noise: local_timer:236 start 1152.102562073 duration 705 ns
+          <idle>-0       [006] d..3.  1152.102563: thread_noise: swapper/6:0 start 1152.102562124 duration 280 ns
+     timerlatu/6-2217    [006] ....1  1152.102563: timerlat_sample: timer_latency=1634 seqnum=2669749 context=1
+     timerlatu/6-2217    [006] ....1  1152.102563: #2669749 context thread timer_latency      1634 ns
+     timerlatu/6-2217    [006] ....1  1152.102564: timerlat_sample: timer_latency=2035 seqnum=2669749 context=2
+     timerlatu/6-2217    [006] ....1  1152.102564: #2669749 context user-ret timer_latency      2035 ns
+          <idle>-0       [005] d.h1.  1152.102578: timerlat_sample: timer_latency=513 seqnum=2669750 context=0
+          <idle>-0       [005] d.h1.  1152.102578: #2669750 context    irq timer_latency       513 ns
+          <idle>-0       [005] dNh2.  1152.102579: irq_noise: local_timer:236 start 1152.102577984 duration 664 ns
+          <idle>-0       [005] d..3.  1152.102579: thread_noise: swapper/5:0 start 1152.102578036 duration 280 ns
+     timerlatu/5-2216    [005] ....1  1152.102579: timerlat_sample: timer_latency=1566 seqnum=2669750 context=1
+     timerlatu/5-2216    [005] ....1  1152.102579: #2669750 context thread timer_latency      1566 ns
+     timerlatu/5-2216    [005] ....1  1152.102580: timerlat_sample: timer_latency=1963 seqnum=2669750 context=2
+     timerlatu/5-2216    [005] ....1  1152.102580: #2669750 context user-ret timer_latency      1963 ns
+          <idle>-0       [004] d.h1.  1152.102627: timerlat_sample: timer_latency=500 seqnum=2669751 context=0
+          <idle>-0       [004] d.h1.  1152.102627: #2669751 context    irq timer_latency       500 ns
+          <idle>-0       [004] dNh2.  1152.102627: irq_noise: local_timer:236 start 1152.102626733 duration 620 ns
+          <idle>-0       [004] d..3.  1152.102628: thread_noise: swapper/4:0 start 1152.102626785 duration 279 ns
+     timerlatu/4-2215    [004] ....1  1152.102628: timerlat_sample: timer_latency=1510 seqnum=2669751 context=1
+     timerlatu/4-2215    [004] ....1  1152.102628: #2669751 context thread timer_latency      1510 ns
+     timerlatu/4-2215    [004] ....1  1152.102628: timerlat_sample: timer_latency=1905 seqnum=2669751 context=2
+     timerlatu/4-2215    [004] ....1  1152.102628: #2669751 context user-ret timer_latency      1905 ns
+          <idle>-0       [007] d.h1.  1152.102775: timerlat_sample: timer_latency=568 seqnum=2669749 context=0
+          <idle>-0       [007] d.h1.  1152.102775: #2669749 context    irq timer_latency       568 ns
+          <idle>-0       [007] dNh2.  1152.102776: irq_noise: local_timer:236 start 1152.102774871 duration 689 ns
+          <idle>-0       [007] d..3.  1152.102776: thread_noise: swapper/7:0 start 1152.102774934 duration 304 ns
+     timerlatu/7-2218    [007] ....1  1152.102776: timerlat_sample: timer_latency=1664 seqnum=2669749 context=1
+     timerlatu/7-2218    [007] ....1  1152.102776: #2669749 context thread timer_latency      1664 ns
+     timerlatu/7-2218    [007] ....1  1152.102776: timerlat_sample: timer_latency=2068 seqnum=2669749 context=2
+     timerlatu/7-2218    [007] ....1  1152.102777: #2669749 context user-ret timer_latency      2068 ns
+          <idle>-0       [006] d.h1.  1152.102812: timerlat_sample: timer_latency=538 seqnum=2669750 context=0
+          <idle>-0       [006] d.h1.  1152.102812: #2669750 context    irq timer_latency       538 ns
+          <idle>-0       [006] dNh2.  1152.102813: irq_noise: local_timer:236 start 1152.102812084 duration 717 ns
+          <idle>-0       [006] d..3.  1152.102813: thread_noise: swapper/6:0 start 1152.102812148 duration 309 ns
+     timerlatu/6-2217    [006] ....1  1152.102813: timerlat_sample: timer_latency=1690 seqnum=2669750 context=1
+     timerlatu/6-2217    [006] ....1  1152.102813: #2669750 context thread timer_latency      1690 ns
+     timerlatu/6-2217    [006] ....1  1152.102814: timerlat_sample: timer_latency=2116 seqnum=2669750 context=2
+     timerlatu/6-2217    [006] ....1  1152.102814: #2669750 context user-ret timer_latency      2116 ns
+          <idle>-0       [005] d.h1.  1152.102828: timerlat_sample: timer_latency=530 seqnum=2669751 context=0
+          <idle>-0       [005] d.h1.  1152.102828: #2669751 context    irq timer_latency       530 ns
+          <idle>-0       [005] dNh2.  1152.102829: irq_noise: local_timer:236 start 1152.102827992 duration 765 ns
+          <idle>-0       [005] d..3.  1152.102829: thread_noise: swapper/5:0 start 1152.102828056 duration 303 ns
+     timerlatu/5-2216    [005] ....1  1152.102829: timerlat_sample: timer_latency=1703 seqnum=2669751 context=1
+     timerlatu/5-2216    [005] ....1  1152.102829: #2669751 context thread timer_latency      1703 ns
+     timerlatu/5-2216    [005] ....1  1152.102830: timerlat_sample: timer_latency=2108 seqnum=2669751 context=2
+     timerlatu/5-2216    [005] ....1  1152.102830: #2669751 context user-ret timer_latency      2108 ns
+          <idle>-0       [004] d.h1.  1152.102877: timerlat_sample: timer_latency=538 seqnum=2669752 context=0
+          <idle>-0       [004] d.h1.  1152.102877: #2669752 context    irq timer_latency       538 ns
+          <idle>-0       [004] dNh2.  1152.102877: irq_noise: local_timer:236 start 1152.102876763 duration 667 ns
+          <idle>-0       [004] d..3.  1152.102878: thread_noise: swapper/4:0 start 1152.102876825 duration 367 ns
+     timerlatu/4-2215    [004] ....1  1152.102878: timerlat_sample: timer_latency=1679 seqnum=2669752 context=1
+     timerlatu/4-2215    [004] ....1  1152.102878: #2669752 context thread timer_latency      1679 ns
+     timerlatu/4-2215    [004] ....1  1152.102878: timerlat_sample: timer_latency=2083 seqnum=2669752 context=2
+     timerlatu/4-2215    [004] ....1  1152.102878: #2669752 context user-ret timer_latency      2083 ns
+          <idle>-0       [007] d.h1.  1152.103025: timerlat_sample: timer_latency=544 seqnum=2669750 context=0
+          <idle>-0       [007] d.h1.  1152.103025: #2669750 context    irq timer_latency       544 ns
+          <idle>-0       [007] dNh2.  1152.103026: irq_noise: local_timer:236 start 1152.103024860 duration 604 ns
+          <idle>-0       [007] d..3.  1152.103026: thread_noise: swapper/7:0 start 1152.103024912 duration 296 ns
+     timerlatu/7-2218    [007] ....1  1152.103026: timerlat_sample: timer_latency=1620 seqnum=2669750 context=1
+     timerlatu/7-2218    [007] ....1  1152.103026: #2669750 context thread timer_latency      1620 ns
+     timerlatu/7-2218    [007] ....1  1152.103026: timerlat_sample: timer_latency=2022 seqnum=2669750 context=2
+     timerlatu/7-2218    [007] ....1  1152.103026: #2669750 context user-ret timer_latency      2022 ns
+          <idle>-0       [006] d.h1.  1152.103062: timerlat_sample: timer_latency=557 seqnum=2669751 context=0
+          <idle>-0       [006] d.h1.  1152.103062: #2669751 context    irq timer_latency       557 ns
+          <idle>-0       [006] dNh2.  1152.103063: irq_noise: local_timer:236 start 1152.103062117 duration 698 ns
+          <idle>-0       [006] d..3.  1152.103063: thread_noise: swapper/6:0 start 1152.103062169 duration 302 ns
+     timerlatu/6-2217    [006] ....1  1152.103063: timerlat_sample: timer_latency=1722 seqnum=2669751 context=1
+     timerlatu/6-2217    [006] ....1  1152.103063: #2669751 context thread timer_latency      1722 ns
+     timerlatu/6-2217    [006] ....1  1152.103064: timerlat_sample: timer_latency=2127 seqnum=2669751 context=2
+     timerlatu/6-2217    [006] ....1  1152.103064: #2669751 context user-ret timer_latency      2127 ns
+          <idle>-0       [005] d.h1.  1152.103078: timerlat_sample: timer_latency=513 seqnum=2669752 context=0
+          <idle>-0       [005] d.h1.  1152.103078: #2669752 context    irq timer_latency       513 ns
+          <idle>-0       [005] dNh2.  1152.103079: irq_noise: local_timer:236 start 1152.103077988 duration 683 ns
+          <idle>-0       [005] d..3.  1152.103079: thread_noise: swapper/5:0 start 1152.103078041 duration 295 ns
+     timerlatu/5-2216    [005] ....1  1152.103079: timerlat_sample: timer_latency=1629 seqnum=2669752 context=1
+     timerlatu/5-2216    [005] ....1  1152.103079: #2669752 context thread timer_latency      1629 ns
+     timerlatu/5-2216    [005] ....1  1152.103080: timerlat_sample: timer_latency=2026 seqnum=2669752 context=2
+     timerlatu/5-2216    [005] ....1  1152.103080: #2669752 context user-ret timer_latency      2026 ns
+          <idle>-0       [004] d.h1.  1152.103127: timerlat_sample: timer_latency=521 seqnum=2669753 context=0
+          <idle>-0       [004] d.h1.  1152.103127: #2669753 context    irq timer_latency       521 ns
+          <idle>-0       [004] dNh2.  1152.103127: irq_noise: local_timer:236 start 1152.103126759 duration 579 ns
+          <idle>-0       [004] d..3.  1152.103128: thread_noise: swapper/4:0 start 1152.103126811 duration 295 ns
+     timerlatu/4-2215    [004] ....1  1152.103128: timerlat_sample: timer_latency=1535 seqnum=2669753 context=1
+     timerlatu/4-2215    [004] ....1  1152.103128: #2669753 context thread timer_latency      1535 ns
+     timerlatu/4-2215    [004] ....1  1152.103128: timerlat_sample: timer_latency=1938 seqnum=2669753 context=2
+     timerlatu/4-2215    [004] ....1  1152.103128: #2669753 context user-ret timer_latency      1938 ns
+          <idle>-0       [007] d.h1.  1152.103275: timerlat_sample: timer_latency=542 seqnum=2669751 context=0
+          <idle>-0       [007] d.h1.  1152.103275: #2669751 context    irq timer_latency       542 ns
+          <idle>-0       [007] dNh2.  1152.103276: irq_noise: local_timer:236 start 1152.103274860 duration 699 ns
+          <idle>-0       [007] d..3.  1152.103276: thread_noise: swapper/7:0 start 1152.103274913 duration 280 ns
+     timerlatu/7-2218    [007] ....1  1152.103276: timerlat_sample: timer_latency=1633 seqnum=2669751 context=1
+     timerlatu/7-2218    [007] ....1  1152.103276: #2669751 context thread timer_latency      1633 ns
+     timerlatu/7-2218    [007] ....1  1152.103276: timerlat_sample: timer_latency=2044 seqnum=2669751 context=2
+     timerlatu/7-2218    [007] ....1  1152.103277: #2669751 context user-ret timer_latency      2044 ns
+          <idle>-0       [006] d.h1.  1152.103312: timerlat_sample: timer_latency=507 seqnum=2669752 context=0
+          <idle>-0       [006] d.h1.  1152.103312: #2669752 context    irq timer_latency       507 ns
+          <idle>-0       [006] dNh2.  1152.103313: irq_noise: local_timer:236 start 1152.103312069 duration 660 ns
+          <idle>-0       [006] d..3.  1152.103313: thread_noise: swapper/6:0 start 1152.103312122 duration 414 ns
+     timerlatu/6-2217    [006] ....1  1152.103313: timerlat_sample: timer_latency=1713 seqnum=2669752 context=1
+     timerlatu/6-2217    [006] ....1  1152.103313: #2669752 context thread timer_latency      1713 ns
+     timerlatu/6-2217    [006] ....1  1152.103314: timerlat_sample: timer_latency=2155 seqnum=2669752 context=2
+     timerlatu/6-2217    [006] ....1  1152.103314: #2669752 context user-ret timer_latency      2155 ns
+          <idle>-0       [005] d.h1.  1152.103328: timerlat_sample: timer_latency=524 seqnum=2669753 context=0
+          <idle>-0       [005] d.h1.  1152.103328: #2669753 context    irq timer_latency       524 ns
+          <idle>-0       [005] dNh2.  1152.103329: irq_noise: local_timer:236 start 1152.103328003 duration 618 ns
+          <idle>-0       [005] d..3.  1152.103329: thread_noise: swapper/5:0 start 1152.103328054 duration 279 ns
+     timerlatu/5-2216    [005] ....1  1152.103329: timerlat_sample: timer_latency=1536 seqnum=2669753 context=1
+     timerlatu/5-2216    [005] ....1  1152.103329: #2669753 context thread timer_latency      1536 ns
+     timerlatu/5-2216    [005] ....1  1152.103329: timerlat_sample: timer_latency=1938 seqnum=2669753 context=2
+     timerlatu/5-2216    [005] ....1  1152.103330: #2669753 context user-ret timer_latency      1938 ns
+          <idle>-0       [004] d.h1.  1152.103377: timerlat_sample: timer_latency=520 seqnum=2669754 context=0
+          <idle>-0       [004] d.h1.  1152.103377: #2669754 context    irq timer_latency       520 ns
+          <idle>-0       [004] dNh2.  1152.103377: irq_noise: local_timer:236 start 1152.103376760 duration 675 ns
+          <idle>-0       [004] d..3.  1152.103378: thread_noise: swapper/4:0 start 1152.103376811 duration 281 ns
+     timerlatu/4-2215    [004] ....1  1152.103378: timerlat_sample: timer_latency=1590 seqnum=2669754 context=1
+     timerlatu/4-2215    [004] ....1  1152.103378: #2669754 context thread timer_latency      1590 ns
+     timerlatu/4-2215    [004] ....1  1152.103378: timerlat_sample: timer_latency=1986 seqnum=2669754 context=2
+     timerlatu/4-2215    [004] ....1  1152.103378: #2669754 context user-ret timer_latency      1986 ns
+          <idle>-0       [007] d.h1.  1152.103525: timerlat_sample: timer_latency=506 seqnum=2669752 context=0
+          <idle>-0       [007] d.h1.  1152.103525: #2669752 context    irq timer_latency       506 ns
+          <idle>-0       [007] dNh2.  1152.103526: irq_noise: local_timer:236 start 1152.103524827 duration 634 ns
+          <idle>-0       [007] d..3.  1152.103526: thread_noise: swapper/7:0 start 1152.103524879 duration 405 ns
+     timerlatu/7-2218    [007] ....1  1152.103526: timerlat_sample: timer_latency=1658 seqnum=2669752 context=1
+     timerlatu/7-2218    [007] ....1  1152.103526: #2669752 context thread timer_latency      1658 ns
+     timerlatu/7-2218    [007] ....1  1152.103526: timerlat_sample: timer_latency=2055 seqnum=2669752 context=2
+     timerlatu/7-2218    [007] ....1  1152.103527: #2669752 context user-ret timer_latency      2055 ns
+          <idle>-0       [006] d.h1.  1152.103562: timerlat_sample: timer_latency=552 seqnum=2669753 context=0
+          <idle>-0       [006] d.h1.  1152.103562: #2669753 context    irq timer_latency       552 ns
+          <idle>-0       [006] dNh2.  1152.103563: irq_noise: local_timer:236 start 1152.103562114 duration 677 ns
+          <idle>-0       [006] d..3.  1152.103563: thread_noise: swapper/6:0 start 1152.103562168 duration 282 ns
+     timerlatu/6-2217    [006] ....1  1152.103563: timerlat_sample: timer_latency=1642 seqnum=2669753 context=1
+     timerlatu/6-2217    [006] ....1  1152.103563: #2669753 context thread timer_latency      1642 ns
+     timerlatu/6-2217    [006] ....1  1152.103564: timerlat_sample: timer_latency=2057 seqnum=2669753 context=2
+     timerlatu/6-2217    [006] ....1  1152.103564: #2669753 context user-ret timer_latency      2057 ns
+          <idle>-0       [005] d.h1.  1152.103578: timerlat_sample: timer_latency=502 seqnum=2669754 context=0
+          <idle>-0       [005] d.h1.  1152.103578: #2669754 context    irq timer_latency       502 ns
+          <idle>-0       [005] dNh2.  1152.103579: irq_noise: local_timer:236 start 1152.103577982 duration 703 ns
+          <idle>-0       [005] d..3.  1152.103579: thread_noise: swapper/5:0 start 1152.103578035 duration 290 ns
+     timerlatu/5-2216    [005] ....1  1152.103579: timerlat_sample: timer_latency=1608 seqnum=2669754 context=1
+     timerlatu/5-2216    [005] ....1  1152.103579: #2669754 context thread timer_latency      1608 ns
+     timerlatu/5-2216    [005] ....1  1152.103580: timerlat_sample: timer_latency=2014 seqnum=2669754 context=2
+     timerlatu/5-2216    [005] ....1  1152.103580: #2669754 context user-ret timer_latency      2014 ns
+          <idle>-0       [004] d.h1.  1152.103627: timerlat_sample: timer_latency=511 seqnum=2669755 context=0
+          <idle>-0       [004] d.h1.  1152.103627: #2669755 context    irq timer_latency       511 ns
+          <idle>-0       [004] dNh2.  1152.103627: irq_noise: local_timer:236 start 1152.103626753 duration 656 ns
+          <idle>-0       [004] d..3.  1152.103628: thread_noise: swapper/4:0 start 1152.103626804 duration 285 ns
+     timerlatu/4-2215    [004] ....1  1152.103628: timerlat_sample: timer_latency=1574 seqnum=2669755 context=1
+     timerlatu/4-2215    [004] ....1  1152.103628: #2669755 context thread timer_latency      1574 ns
+     timerlatu/4-2215    [004] ....1  1152.103628: timerlat_sample: timer_latency=1989 seqnum=2669755 context=2
+     timerlatu/4-2215    [004] ....1  1152.103628: #2669755 context user-ret timer_latency      1989 ns
+          <idle>-0       [007] d.h1.  1152.103776: timerlat_sample: timer_latency=1201 seqnum=2669753 context=0
+          <idle>-0       [007] d.h1.  1152.103776: #2669753 context    irq timer_latency      1201 ns
+          <idle>-0       [007] dNh2.  1152.103777: irq_noise: local_timer:236 start 1152.103775336 duration 1591 ns
+          <idle>-0       [007] d..3.  1152.103777: thread_noise: swapper/7:0 start 1152.103775576 duration 318 ns
+     timerlatu/7-2218    [007] ....1  1152.103777: timerlat_sample: timer_latency=3037 seqnum=2669753 context=1
+     timerlatu/7-2218    [007] ....1  1152.103778: #2669753 context thread timer_latency      3037 ns
+     timerlatu/7-2218    [007] ....1  1152.103778: timerlat_sample: timer_latency=3537 seqnum=2669753 context=2
+     timerlatu/7-2218    [007] ....1  1152.103778: #2669753 context user-ret timer_latency      3537 ns
+          <idle>-0       [006] d.h1.  1152.103812: timerlat_sample: timer_latency=669 seqnum=2669754 context=0
+          <idle>-0       [006] d.h1.  1152.103812: #2669754 context    irq timer_latency       669 ns
+          <idle>-0       [006] dNh2.  1152.103814: irq_noise: local_timer:236 start 1152.103812224 duration 1465 ns
+          <idle>-0       [006] d..3.  1152.103814: thread_noise: swapper/6:0 start 1152.103812288 duration 302 ns
+     timerlatu/6-2217    [006] ....1  1152.103814: timerlat_sample: timer_latency=2556 seqnum=2669754 context=1
+     timerlatu/6-2217    [006] ....1  1152.103814: #2669754 context thread timer_latency      2556 ns
+     timerlatu/6-2217    [006] ....1  1152.103815: timerlat_sample: timer_latency=2966 seqnum=2669754 context=2
+     timerlatu/6-2217    [006] ....1  1152.103815: #2669754 context user-ret timer_latency      2966 ns
+          <idle>-0       [005] d.h1.  1152.103829: timerlat_sample: timer_latency=1017 seqnum=2669755 context=0
+          <idle>-0       [005] d.h1.  1152.103829: #2669755 context    irq timer_latency      1017 ns
+          <idle>-0       [005] dNh2.  1152.103830: irq_noise: local_timer:236 start 1152.103828484 duration 1072 ns
+          <idle>-0       [005] d..3.  1152.103830: thread_noise: swapper/5:0 start 1152.103828552 duration 456 ns
+     timerlatu/5-2216    [005] ....1  1152.103830: timerlat_sample: timer_latency=2644 seqnum=2669755 context=1
+     timerlatu/5-2216    [005] ....1  1152.103830: #2669755 context thread timer_latency      2644 ns
+     timerlatu/5-2216    [005] ....1  1152.103831: timerlat_sample: timer_latency=3055 seqnum=2669755 context=2
+     timerlatu/5-2216    [005] ....1  1152.103831: #2669755 context user-ret timer_latency      3055 ns
+          <idle>-0       [004] d.h1.  1152.103877: timerlat_sample: timer_latency=686 seqnum=2669756 context=0
+          <idle>-0       [004] d.h1.  1152.103877: #2669756 context    irq timer_latency       686 ns
+          <idle>-0       [004] dNh2.  1152.103878: irq_noise: local_timer:236 start 1152.103876899 duration 1106 ns
+          <idle>-0       [004] d..3.  1152.103878: thread_noise: swapper/4:0 start 1152.103876982 duration 301 ns
+     timerlatu/4-2215    [004] ....1  1152.103879: timerlat_sample: timer_latency=2180 seqnum=2669756 context=1
+     timerlatu/4-2215    [004] ....1  1152.103879: #2669756 context thread timer_latency      2180 ns
+     timerlatu/4-2215    [004] ....1  1152.103879: timerlat_sample: timer_latency=2611 seqnum=2669756 context=2
+     timerlatu/4-2215    [004] ....1  1152.103879: #2669756 context user-ret timer_latency      2611 ns
+          <idle>-0       [007] d.h1.  1152.104025: timerlat_sample: timer_latency=534 seqnum=2669754 context=0
+          <idle>-0       [007] d.h1.  1152.104025: #2669754 context    irq timer_latency       534 ns
+          <idle>-0       [007] dNh2.  1152.104026: irq_noise: local_timer:236 start 1152.104024859 duration 1048 ns
+          <idle>-0       [007] d..3.  1152.104026: thread_noise: swapper/7:0 start 1152.104024911 duration 433 ns
+     timerlatu/7-2218    [007] ....1  1152.104027: timerlat_sample: timer_latency=2126 seqnum=2669754 context=1
+     timerlatu/7-2218    [007] ....1  1152.104027: #2669754 context thread timer_latency      2126 ns
+     timerlatu/7-2218    [007] ....1  1152.104027: timerlat_sample: timer_latency=2538 seqnum=2669754 context=2
+     timerlatu/7-2218    [007] ....1  1152.104027: #2669754 context user-ret timer_latency      2538 ns
+          <idle>-0       [006] d.h1.  1152.104062: timerlat_sample: timer_latency=776 seqnum=2669755 context=0
+          <idle>-0       [006] d.h1.  1152.104063: #2669755 context    irq timer_latency       776 ns
+          <idle>-0       [006] dNh2.  1152.104064: irq_noise: local_timer:236 start 1152.104062345 duration 1244 ns
+          <idle>-0       [006] d..3.  1152.104064: thread_noise: swapper/6:0 start 1152.104062397 duration 297 ns
+     timerlatu/6-2217    [006] ....1  1152.104064: timerlat_sample: timer_latency=2441 seqnum=2669755 context=1
+     timerlatu/6-2217    [006] ....1  1152.104064: #2669755 context thread timer_latency      2441 ns
+     timerlatu/6-2217    [006] ....1  1152.104064: timerlat_sample: timer_latency=2838 seqnum=2669755 context=2
+     timerlatu/6-2217    [006] ....1  1152.104065: #2669755 context user-ret timer_latency      2838 ns
+          <idle>-0       [005] d.h1.  1152.104078: timerlat_sample: timer_latency=499 seqnum=2669756 context=0
+          <idle>-0       [005] d.h1.  1152.104078: #2669756 context    irq timer_latency       499 ns
+          <idle>-0       [005] dNh2.  1152.104079: irq_noise: local_timer:236 start 1152.104077984 duration 1364 ns
+          <idle>-0       [005] d..3.  1152.104080: thread_noise: swapper/5:0 start 1152.104078036 duration 343 ns
+     timerlatu/5-2216    [005] ....1  1152.104080: timerlat_sample: timer_latency=2317 seqnum=2669756 context=1
+     timerlatu/5-2216    [005] ....1  1152.104080: #2669756 context thread timer_latency      2317 ns
+     timerlatu/5-2216    [005] ....1  1152.104080: timerlat_sample: timer_latency=2889 seqnum=2669756 context=2
+     timerlatu/5-2216    [005] ....1  1152.104081: #2669756 context user-ret timer_latency      2889 ns
+          <idle>-0       [004] d.h1.  1152.104127: timerlat_sample: timer_latency=605 seqnum=2669757 context=0
+          <idle>-0       [004] d.h1.  1152.104127: #2669757 context    irq timer_latency       605 ns
+          <idle>-0       [004] dNh2.  1152.104128: irq_noise: local_timer:236 start 1152.104126851 duration 1013 ns
+          <idle>-0       [004] d..3.  1152.104128: thread_noise: swapper/4:0 start 1152.104126903 duration 300 ns
+     timerlatu/4-2215    [004] ....1  1152.104128: timerlat_sample: timer_latency=2031 seqnum=2669757 context=1
+     timerlatu/4-2215    [004] ....1  1152.104128: #2669757 context thread timer_latency      2031 ns
+     timerlatu/4-2215    [004] ....1  1152.104129: timerlat_sample: timer_latency=2433 seqnum=2669757 context=2
+     timerlatu/4-2215    [004] ....1  1152.104129: #2669757 context user-ret timer_latency      2433 ns
+          <idle>-0       [007] d.h1.  1152.104275: timerlat_sample: timer_latency=531 seqnum=2669755 context=0
+          <idle>-0       [007] d.h1.  1152.104275: #2669755 context    irq timer_latency       531 ns
+          <idle>-0       [007] dNh2.  1152.104276: irq_noise: local_timer:236 start 1152.104274858 duration 1041 ns
+          <idle>-0       [007] d..3.  1152.104276: thread_noise: swapper/7:0 start 1152.104274910 duration 278 ns
+     timerlatu/7-2218    [007] ....1  1152.104276: timerlat_sample: timer_latency=1961 seqnum=2669755 context=1
+     timerlatu/7-2218    [007] ....1  1152.104276: #2669755 context thread timer_latency      1961 ns
+     timerlatu/7-2218    [007] ....1  1152.104277: timerlat_sample: timer_latency=2361 seqnum=2669755 context=2
+     timerlatu/7-2218    [007] ....1  1152.104277: #2669755 context user-ret timer_latency      2361 ns
+          <idle>-0       [006] d.h1.  1152.104312: timerlat_sample: timer_latency=560 seqnum=2669756 context=0
+          <idle>-0       [006] d.h1.  1152.104312: #2669756 context    irq timer_latency       560 ns
+          <idle>-0       [006] dNh2.  1152.104313: irq_noise: local_timer:236 start 1152.104312131 duration 1143 ns
+          <idle>-0       [006] d..3.  1152.104314: thread_noise: swapper/6:0 start 1152.104312182 duration 279 ns
+     timerlatu/6-2217    [006] ....1  1152.104314: timerlat_sample: timer_latency=2112 seqnum=2669756 context=1
+     timerlatu/6-2217    [006] ....1  1152.104314: #2669756 context thread timer_latency      2112 ns
+     timerlatu/6-2217    [006] ....1  1152.104314: timerlat_sample: timer_latency=2513 seqnum=2669756 context=2
+     timerlatu/6-2217    [006] ....1  1152.104314: #2669756 context user-ret timer_latency      2513 ns
+          <idle>-0       [005] d.h1.  1152.104328: timerlat_sample: timer_latency=809 seqnum=2669757 context=0
+          <idle>-0       [005] d.h1.  1152.104328: #2669757 context    irq timer_latency       809 ns
+          <idle>-0       [005] dNh2.  1152.104329: irq_noise: local_timer:236 start 1152.104328295 duration 1113 ns
+          <idle>-0       [005] d..3.  1152.104330: thread_noise: swapper/5:0 start 1152.104328348 duration 281 ns
+     timerlatu/5-2216    [005] ....1  1152.104330: timerlat_sample: timer_latency=2314 seqnum=2669757 context=1
+     timerlatu/5-2216    [005] ....1  1152.104330: #2669757 context thread timer_latency      2314 ns
+     timerlatu/5-2216    [005] ....1  1152.104330: timerlat_sample: timer_latency=2731 seqnum=2669757 context=2
+     timerlatu/5-2216    [005] ....1  1152.104330: #2669757 context user-ret timer_latency      2731 ns
+          <idle>-0       [004] d.h1.  1152.104377: timerlat_sample: timer_latency=579 seqnum=2669758 context=0
+          <idle>-0       [004] d.h1.  1152.104377: #2669758 context    irq timer_latency       579 ns
+          <idle>-0       [004] dNh2.  1152.104378: irq_noise: local_timer:236 start 1152.104376826 duration 844 ns
+          <idle>-0       [004] d..3.  1152.104378: thread_noise: swapper/4:0 start 1152.104376879 duration 280 ns
+     timerlatu/4-2215    [004] ....1  1152.104378: timerlat_sample: timer_latency=1816 seqnum=2669758 context=1
+     timerlatu/4-2215    [004] ....1  1152.104378: #2669758 context thread timer_latency      1816 ns
+     timerlatu/4-2215    [004] ....1  1152.104379: timerlat_sample: timer_latency=2234 seqnum=2669758 context=2
+     timerlatu/4-2215    [004] ....1  1152.104379: #2669758 context user-ret timer_latency      2234 ns
+          <idle>-0       [007] d.h1.  1152.104525: timerlat_sample: timer_latency=535 seqnum=2669756 context=0
+          <idle>-0       [007] d.h1.  1152.104525: #2669756 context    irq timer_latency       535 ns
+          <idle>-0       [007] dNh2.  1152.104526: irq_noise: local_timer:236 start 1152.104524864 duration 1265 ns
+          <idle>-0       [007] d..3.  1152.104526: thread_noise: swapper/7:0 start 1152.104524917 duration 288 ns
+     timerlatu/7-2218    [007] ....1  1152.104527: timerlat_sample: timer_latency=2204 seqnum=2669756 context=1
+     timerlatu/7-2218    [007] ....1  1152.104527: #2669756 context thread timer_latency      2204 ns
+     timerlatu/7-2218    [007] ....1  1152.104527: timerlat_sample: timer_latency=2618 seqnum=2669756 context=2
+     timerlatu/7-2218    [007] ....1  1152.104527: #2669756 context user-ret timer_latency      2618 ns
+          <idle>-0       [006] d.h1.  1152.104562: timerlat_sample: timer_latency=498 seqnum=2669757 context=0
+          <idle>-0       [006] d.h1.  1152.104562: #2669757 context    irq timer_latency       498 ns
+          <idle>-0       [006] dNh2.  1152.104563: irq_noise: local_timer:236 start 1152.104562071 duration 807 ns
+          <idle>-0       [006] d..3.  1152.104563: thread_noise: swapper/6:0 start 1152.104562123 duration 281 ns
+     timerlatu/6-2217    [006] ....1  1152.104563: timerlat_sample: timer_latency=1714 seqnum=2669757 context=1
+     timerlatu/6-2217    [006] ....1  1152.104563: #2669757 context thread timer_latency      1714 ns
+     timerlatu/6-2217    [006] ....1  1152.104564: timerlat_sample: timer_latency=2128 seqnum=2669757 context=2
+     timerlatu/6-2217    [006] ....1  1152.104564: #2669757 context user-ret timer_latency      2128 ns
+          <idle>-0       [005] d.h1.  1152.104578: timerlat_sample: timer_latency=712 seqnum=2669758 context=0
+          <idle>-0       [005] d.h1.  1152.104578: #2669758 context    irq timer_latency       712 ns
+          <idle>-0       [005] dNh2.  1152.104579: irq_noise: local_timer:236 start 1152.104578202 duration 1026 ns
+          <idle>-0       [005] d..3.  1152.104580: thread_noise: swapper/5:0 start 1152.104578253 duration 297 ns
+     timerlatu/5-2216    [005] ....1  1152.104580: timerlat_sample: timer_latency=2150 seqnum=2669758 context=1
+     timerlatu/5-2216    [005] ....1  1152.104580: #2669758 context thread timer_latency      2150 ns
+     timerlatu/5-2216    [005] ....1  1152.104580: timerlat_sample: timer_latency=2838 seqnum=2669758 context=2
+     timerlatu/5-2216    [005] ....1  1152.104580: #2669758 context user-ret timer_latency      2838 ns
+          <idle>-0       [004] d.h1.  1152.104627: timerlat_sample: timer_latency=504 seqnum=2669759 context=0
+          <idle>-0       [004] d.h1.  1152.104627: #2669759 context    irq timer_latency       504 ns
+          <idle>-0       [004] dNh2.  1152.104628: irq_noise: local_timer:236 start 1152.104626754 duration 772 ns
+          <idle>-0       [004] d..3.  1152.104628: thread_noise: swapper/4:0 start 1152.104626806 duration 279 ns
+     timerlatu/4-2215    [004] ....1  1152.104628: timerlat_sample: timer_latency=1669 seqnum=2669759 context=1
+     timerlatu/4-2215    [004] ....1  1152.104628: #2669759 context thread timer_latency      1669 ns
+     timerlatu/4-2215    [004] ....1  1152.104629: timerlat_sample: timer_latency=2198 seqnum=2669759 context=2
+     timerlatu/4-2215    [004] ....1  1152.104629: #2669759 context user-ret timer_latency      2198 ns
+          <idle>-0       [007] d.h1.  1152.104776: timerlat_sample: timer_latency=1234 seqnum=2669757 context=0
+          <idle>-0       [007] d.h1.  1152.104776: #2669757 context    irq timer_latency      1234 ns
+          <idle>-0       [007] dNh2.  1152.104777: irq_noise: local_timer:236 start 1152.104775511 duration 1846 ns
+          <idle>-0       [007] d..3.  1152.104778: thread_noise: swapper/7:0 start 1152.104775618 duration 701 ns
+     timerlatu/7-2218    [007] ....1  1152.104778: timerlat_sample: timer_latency=3841 seqnum=2669757 context=1
+     timerlatu/7-2218    [007] ....1  1152.104778: #2669757 context thread timer_latency      3841 ns
+     timerlatu/7-2218    [007] ....1  1152.104779: timerlat_sample: timer_latency=4398 seqnum=2669757 context=2
+     timerlatu/7-2218    [007] ....1  1152.104779: #2669757 context user-ret timer_latency      4398 ns
+          <idle>-0       [006] d.h1.  1152.104812: timerlat_sample: timer_latency=809 seqnum=2669758 context=0
+          <idle>-0       [006] d.h1.  1152.104813: #2669758 context    irq timer_latency       809 ns
+          <idle>-0       [006] dNh2.  1152.104813: irq_noise: local_timer:236 start 1152.104812337 duration 967 ns
+          <idle>-0       [006] d..3.  1152.104814: thread_noise: swapper/6:0 start 1152.104812436 duration 301 ns
+     timerlatu/6-2217    [006] ....1  1152.104814: timerlat_sample: timer_latency=2165 seqnum=2669758 context=1
+     timerlatu/6-2217    [006] ....1  1152.104814: #2669758 context thread timer_latency      2165 ns
+     timerlatu/6-2217    [006] ....1  1152.104814: timerlat_sample: timer_latency=2810 seqnum=2669758 context=2
+     timerlatu/6-2217    [006] ....1  1152.104815: #2669758 context user-ret timer_latency      2810 ns
+          <idle>-0       [005] d.h1.  1152.104828: timerlat_sample: timer_latency=917 seqnum=2669759 context=0
+          <idle>-0       [005] d.h1.  1152.104829: #2669759 context    irq timer_latency       917 ns
+          <idle>-0       [005] dNh2.  1152.104830: irq_noise: local_timer:236 start 1152.104828213 duration 1569 ns
+          <idle>-0       [005] d..3.  1152.104830: thread_noise: swapper/5:0 start 1152.104828460 duration 300 ns
+     timerlatu/5-2216    [005] ....1  1152.104830: timerlat_sample: timer_latency=2703 seqnum=2669759 context=1
+     timerlatu/5-2216    [005] ....1  1152.104830: #2669759 context thread timer_latency      2703 ns
+     timerlatu/5-2216    [005] ....1  1152.104831: timerlat_sample: timer_latency=3117 seqnum=2669759 context=2
+     timerlatu/5-2216    [005] ....1  1152.104831: #2669759 context user-ret timer_latency      3117 ns
+          <idle>-0       [004] d.h1.  1152.104877: timerlat_sample: timer_latency=1080 seqnum=2669760 context=0
+          <idle>-0       [004] d.h1.  1152.104877: #2669760 context    irq timer_latency      1080 ns
+          <idle>-0       [004] dNh2.  1152.104878: irq_noise: local_timer:236 start 1152.104877025 duration 1271 ns
+          <idle>-0       [004] d..3.  1152.104879: thread_noise: swapper/4:0 start 1152.104877385 duration 386 ns
+     timerlatu/4-2215    [004] ....1  1152.104879: timerlat_sample: timer_latency=2542 seqnum=2669760 context=1
+     timerlatu/4-2215    [004] ....1  1152.104879: #2669760 context thread timer_latency      2542 ns
+     timerlatu/4-2215    [004] ....1  1152.104880: timerlat_sample: timer_latency=3157 seqnum=2669760 context=2
+     timerlatu/4-2215    [004] ....1  1152.104880: #2669760 context user-ret timer_latency      3157 ns
+          <idle>-0       [007] d.h1.  1152.105025: timerlat_sample: timer_latency=849 seqnum=2669758 context=0
+          <idle>-0       [007] d.h1.  1152.105025: #2669758 context    irq timer_latency       849 ns
+          <idle>-0       [007] dNh2.  1152.105026: irq_noise: local_timer:236 start 1152.105025184 duration 1104 ns
+          <idle>-0       [007] d..3.  1152.105027: thread_noise: swapper/7:0 start 1152.105025236 duration 366 ns
+     timerlatu/7-2218    [007] ....1  1152.105027: timerlat_sample: timer_latency=2433 seqnum=2669758 context=1
+     timerlatu/7-2218    [007] ....1  1152.105027: #2669758 context thread timer_latency      2433 ns
+     timerlatu/7-2218    [007] ....1  1152.105027: timerlat_sample: timer_latency=2839 seqnum=2669758 context=2
+     timerlatu/7-2218    [007] ....1  1152.105027: #2669758 context user-ret timer_latency      2839 ns
+          <idle>-0       [006] d.h1.  1152.105062: timerlat_sample: timer_latency=603 seqnum=2669759 context=0
+          <idle>-0       [006] d.h1.  1152.105062: #2669759 context    irq timer_latency       603 ns
+          <idle>-0       [006] dNh2.  1152.105064: irq_noise: local_timer:236 start 1152.105062181 duration 1515 ns
+          <idle>-0       [006] d..3.  1152.105064: thread_noise: swapper/6:0 start 1152.105062233 duration 285 ns
+     timerlatu/6-2217    [006] ....1  1152.105064: timerlat_sample: timer_latency=2536 seqnum=2669759 context=1
+     timerlatu/6-2217    [006] ....1  1152.105064: #2669759 context thread timer_latency      2536 ns
+     timerlatu/6-2217    [006] ....1  1152.105065: timerlat_sample: timer_latency=2951 seqnum=2669759 context=2
+     timerlatu/6-2217    [006] ....1  1152.105065: #2669759 context user-ret timer_latency      2951 ns
+          <idle>-0       [005] d.h1.  1152.105078: timerlat_sample: timer_latency=767 seqnum=2669760 context=0
+          <idle>-0       [005] d.h1.  1152.105078: #2669760 context    irq timer_latency       767 ns
+          <idle>-0       [005] dNh2.  1152.105080: irq_noise: local_timer:236 start 1152.105078261 duration 1305 ns
+          <idle>-0       [005] d..3.  1152.105080: thread_noise: swapper/5:0 start 1152.105078313 duration 357 ns
+     timerlatu/5-2216    [005] ....1  1152.105080: timerlat_sample: timer_latency=2541 seqnum=2669760 context=1
+     timerlatu/5-2216    [005] ....1  1152.105080: #2669760 context thread timer_latency      2541 ns
+     timerlatu/5-2216    [005] ....1  1152.105081: timerlat_sample: timer_latency=2974 seqnum=2669760 context=2
+     timerlatu/5-2216    [005] ....1  1152.105081: #2669760 context user-ret timer_latency      2974 ns
+          <idle>-0       [004] d.h1.  1152.105127: timerlat_sample: timer_latency=670 seqnum=2669761 context=0
+          <idle>-0       [004] d.h1.  1152.105127: #2669761 context    irq timer_latency       670 ns
+          <idle>-0       [004] dNh2.  1152.105128: irq_noise: local_timer:236 start 1152.105126925 duration 1215 ns
+          <idle>-0       [004] d..3.  1152.105128: thread_noise: swapper/4:0 start 1152.105126977 duration 304 ns
+     timerlatu/4-2215    [004] ....1  1152.105129: timerlat_sample: timer_latency=2299 seqnum=2669761 context=1
+     timerlatu/4-2215    [004] ....1  1152.105129: #2669761 context thread timer_latency      2299 ns
+     timerlatu/4-2215    [004] ....1  1152.105129: timerlat_sample: timer_latency=2720 seqnum=2669761 context=2
+     timerlatu/4-2215    [004] ....1  1152.105129: #2669761 context user-ret timer_latency      2720 ns
+          <idle>-0       [007] d.h1.  1152.105275: timerlat_sample: timer_latency=569 seqnum=2669759 context=0
+          <idle>-0       [007] d.h1.  1152.105275: #2669759 context    irq timer_latency       569 ns
+          <idle>-0       [007] dNh2.  1152.105276: irq_noise: local_timer:236 start 1152.105274906 duration 1318 ns
+          <idle>-0       [007] d..3.  1152.105277: thread_noise: swapper/7:0 start 1152.105274957 duration 299 ns
+     timerlatu/7-2218    [007] ....1  1152.105277: timerlat_sample: timer_latency=2299 seqnum=2669759 context=1
+     timerlatu/7-2218    [007] ....1  1152.105277: #2669759 context thread timer_latency      2299 ns
+     timerlatu/7-2218    [007] ....1  1152.105277: timerlat_sample: timer_latency=2705 seqnum=2669759 context=2
+     timerlatu/7-2218    [007] ....1  1152.105277: #2669759 context user-ret timer_latency      2705 ns
+          <idle>-0       [006] d.h1.  1152.105312: timerlat_sample: timer_latency=523 seqnum=2669760 context=0
+          <idle>-0       [006] d.h1.  1152.105312: #2669760 context    irq timer_latency       523 ns
+          <idle>-0       [006] dNh2.  1152.105313: irq_noise: local_timer:236 start 1152.105312100 duration 785 ns
+          <idle>-0       [006] d..3.  1152.105313: thread_noise: swapper/6:0 start 1152.105312155 duration 280 ns
+     timerlatu/6-2217    [006] ....1  1152.105313: timerlat_sample: timer_latency=1719 seqnum=2669760 context=1
+     timerlatu/6-2217    [006] ....1  1152.105313: #2669760 context thread timer_latency      1719 ns
+     timerlatu/6-2217    [006] ....1  1152.105314: timerlat_sample: timer_latency=2121 seqnum=2669760 context=2
+     timerlatu/6-2217    [006] ....1  1152.105314: #2669760 context user-ret timer_latency      2121 ns
+          <idle>-0       [005] d.h1.  1152.105328: timerlat_sample: timer_latency=738 seqnum=2669761 context=0
+          <idle>-0       [005] d.h1.  1152.105328: #2669761 context    irq timer_latency       738 ns
+          <idle>-0       [005] dNh2.  1152.105330: irq_noise: local_timer:236 start 1152.105328234 duration 1601 ns
+          <idle>-0       [005] d..3.  1152.105330: thread_noise: swapper/5:0 start 1152.105328287 duration 290 ns
+     timerlatu/5-2216    [005] ....1  1152.105330: timerlat_sample: timer_latency=2747 seqnum=2669761 context=1
+     timerlatu/5-2216    [005] ....1  1152.105330: #2669761 context thread timer_latency      2747 ns
+     timerlatu/5-2216    [005] ....1  1152.105331: timerlat_sample: timer_latency=3191 seqnum=2669761 context=2
+     timerlatu/5-2216    [005] ....1  1152.105331: #2669761 context user-ret timer_latency      3191 ns
+          <idle>-0       [004] d.h1.  1152.105377: timerlat_sample: timer_latency=665 seqnum=2669762 context=0
+          <idle>-0       [004] d.h1.  1152.105377: #2669762 context    irq timer_latency       665 ns
+          <idle>-0       [004] dNh2.  1152.105378: irq_noise: local_timer:236 start 1152.105376921 duration 1156 ns
+          <idle>-0       [004] d..3.  1152.105378: thread_noise: swapper/4:0 start 1152.105376974 duration 281 ns
+     timerlatu/4-2215    [004] ....1  1152.105379: timerlat_sample: timer_latency=2217 seqnum=2669762 context=1
+     timerlatu/4-2215    [004] ....1  1152.105379: #2669762 context thread timer_latency      2217 ns
+     timerlatu/4-2215    [004] ....1  1152.105379: timerlat_sample: timer_latency=2620 seqnum=2669762 context=2
+     timerlatu/4-2215    [004] ....1  1152.105379: #2669762 context user-ret timer_latency      2620 ns
+          <idle>-0       [007] d.h1.  1152.105525: timerlat_sample: timer_latency=561 seqnum=2669760 context=0
+          <idle>-0       [007] d.h1.  1152.105525: #2669760 context    irq timer_latency       561 ns
+          <idle>-0       [007] dNh2.  1152.105526: irq_noise: local_timer:236 start 1152.105524899 duration 832 ns
+          <idle>-0       [007] d..3.  1152.105526: thread_noise: swapper/7:0 start 1152.105524951 duration 419 ns
+     timerlatu/7-2218    [007] ....1  1152.105526: timerlat_sample: timer_latency=1924 seqnum=2669760 context=1
+     timerlatu/7-2218    [007] ....1  1152.105526: #2669760 context thread timer_latency      1924 ns
+     timerlatu/7-2218    [007] ....1  1152.105527: timerlat_sample: timer_latency=2364 seqnum=2669760 context=2
+     timerlatu/7-2218    [007] ....1  1152.105527: #2669760 context user-ret timer_latency      2364 ns
+          <idle>-0       [006] d.h1.  1152.105571: timerlat_sample: timer_latency=9765 seqnum=2669761 context=0
+          <idle>-0       [006] d.h1.  1152.105572: #2669761 context    irq timer_latency      9765 ns
+          <idle>-0       [006] dNh2.  1152.105579: irq_noise: local_timer:236 start 1152.105571347 duration 7580 ns
+          <idle>-0       [005] d.h1.  1152.105579: timerlat_sample: timer_latency=1515 seqnum=2669762 context=0
+          <idle>-0       [005] d.h1.  1152.105579: #2669762 context    irq timer_latency      1515 ns
+          <idle>-0       [006] d..3.  1152.105579: thread_noise: swapper/6:0 start 1152.105571399 duration 286 ns
+     timerlatu/6-2217    [006] ....1  1152.105579: timerlat_sample: timer_latency=17767 seqnum=2669761 context=1
+     timerlatu/6-2217    [006] ....1  1152.105579: #2669761 context thread timer_latency     17767 ns
+          <idle>-0       [005] dNh2.  1152.105581: irq_noise: local_timer:236 start 1152.105579013 duration 1569 ns
+          <idle>-0       [005] d..3.  1152.105581: thread_noise: swapper/5:0 start 1152.105579065 duration 527 ns
+     timerlatu/5-2216    [005] ....1  1152.105581: timerlat_sample: timer_latency=3725 seqnum=2669762 context=1
+     timerlatu/5-2216    [005] ....1  1152.105581: #2669762 context thread timer_latency      3725 ns
+     timerlatu/5-2216    [005] ....1  1152.105582: timerlat_sample: timer_latency=4123 seqnum=2669762 context=2
+     timerlatu/5-2216    [005] ....1  1152.105582: #2669762 context user-ret timer_latency      4123 ns
+     timerlatu/6-2217    [006] d.h21  1152.105583: irq_noise: irq_work:246 start 1152.105581021 duration 1165 ns

@@ -1,0 +1,311 @@
+#!/bin/sh
+# dawos-firmware — has the firmware of this machine changed since the
+# settings it was measured with?
+#
+# The real-time behaviour of a machine depends on settings of its
+# firmware that the system cannot choose: power limits, idle states,
+# frequency limits, the microcode it loads. They were set by hand once,
+# and measured (measurement campaign of step P0.7). A firmware update, a
+# reset to factory values or a change made in the firmware menus alters
+# them without any trace in the system. This tool reads what can be read
+# of them, the "fingerprint", and compares it with a reference (ADR 0021,
+# open point A-48).
+#
+# The fingerprint: version and date of the firmware, revision of the
+# microcode, whether the firmware declares idle states (the kernel then
+# has a driver for them), which PCI Express services it hands over to
+# the kernel, and a list of configuration registers of the processor,
+# read on one performance core and on one efficiency core, neither of
+# them live.
+#
+# Not compared, only written down: the count of system-management
+# interrupts so far (the firmware takes a few hundred while it starts,
+# never the same number). Whoever starts a session can read it again and
+# see whether it grew.
+#
+# The reference is the one that comes with the image for the boot profile
+# in use (/usr/share/dawos/profiles/NAME.firmware), unless one was
+# accepted on this machine (--accept), which is kept on the state
+# partition and wins.
+#
+# A difference is reported, never acted on: the boot goes on, the unit
+# does not fail, the update is not rolled back. An image cannot know
+# whether the person at the machine changed the firmware on purpose.
+#
+#   dawos-firmware --read      print the fingerprint of this boot
+#   dawos-firmware --check     compare it with the reference, write
+#                              /run/dawos/firmware.txt (what dawos-tune
+#                              runs at every boot)
+#   dawos-firmware --status    print the result of the last --check
+#   dawos-firmware --accept    make the fingerprint of this boot the
+#                              reference of this machine
+#   dawos-firmware --forget    drop the accepted reference: back to the
+#                              one of the image
+#
+# Exit status of --check: 0 when nothing differs or there is nothing to
+# compare (profile "generic", virtual machine), 2 when something differs,
+# 3 when there is no reference or the fingerprint cannot be read.
+#
+# Reading a register of a CPU interrupts that CPU once. At boot this
+# runs before anything live does; by hand, do not run it during a
+# session.
+#
+# For tests the directories it reads and writes can be redirected with
+# DAWOS_SYS, DAWOS_PROC, DAWOS_DEV, DAWOS_RUN, DAWOS_PROFILES and
+# DAWOS_STATE, the kernel log read from the file DAWOS_KERNEL_LOG, and
+# the virtual machine check overridden with DAWOS_VIRTUAL=0|1.
+
+set -u
+
+PROG=dawos-firmware
+SYS=${DAWOS_SYS:-/sys}
+PROC=${DAWOS_PROC:-/proc}
+DEV=${DAWOS_DEV:-/dev}
+RUN_DIR=${DAWOS_RUN:-/run/dawos}
+PROFILES=${DAWOS_PROFILES:-/usr/share/dawos/profiles}
+STATE=${DAWOS_STATE:-/var/lib/dawos}
+RESULT=${RUN_DIR}/firmware.txt
+
+# Configuration registers of the processor (model-specific registers)
+# that the firmware sets and nothing in dawOS writes, except where noted.
+# Counters and registers that follow the load are left out on purpose.
+#   0x3a   feature control: virtualization allowed, and locked
+#   0xce   platform information: base and lowest frequency ratios
+#   0xe2   deepest package idle state allowed, and its lock
+#   0x194  frequency ratio override, overclocking lock
+#   0x1a0  miscellaneous enables (speed step, turbo, monitor/mwait)
+#   0x1a2  temperature at which the processor throttles
+#   0x1a4  hardware prefetchers
+#   0x1aa  miscellaneous power management
+#   0x1ad  highest turbo ratios of the performance cores
+#   0x1fc  power control: among others, turning C1 into C1E
+#   0x601  current limit of the voltage regulator
+#   0x610  package power limits (dawos-tune lowers them if the firmware
+#          hands over more than the profile allows: read before it does)
+#   0x620  lowest and highest frequency ratio of the uncore
+#   0x650  highest turbo ratios of the efficiency cores
+#   0x770  hardware-managed performance states enabled
+REGISTERS="0x3a 0xce 0xe2 0x194 0x1a0 0x1a2 0x1a4 0x1aa 0x1ad 0x1fc 0x601 0x610 0x620 0x650 0x770"
+
+usage() {
+	sed -n '/^#   dawos-firmware --read/,/^#                              one of the image/s/^# \{0,3\}//p' "$0"
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+read_file() {
+	[ -r "$1" ] && cat "$1" 2> /dev/null
+}
+
+# Value of a key in a "key=value" file.
+get() {
+	sed -n "s/^$2=//p" "$1" 2> /dev/null | head -n 1
+}
+
+# First CPU of a kernel CPU list ("16-19" gives 16).
+first_cpu() {
+	echo "$1" | sed 's/[,-].*//'
+}
+
+# The 64 bits of register $2 on CPU $1, in hexadecimal; "-" where it
+# cannot be read. The kernel serves the registers of each CPU as a file:
+# eight bytes at the offset equal to the register number.
+msr() {
+	value=$(dd if="${DEV}/cpu/$1/msr" bs=8 skip=$(($2)) count=1 iflag=skip_bytes 2> /dev/null |
+		od -An -tx8 | tr -d ' \n')
+	echo "${value:--}"
+}
+
+# The kernel log of this boot. From the journal, which keeps all of it;
+# the kernel's own buffer loses its beginning on a machine that has been
+# on for days.
+kernel_log() {
+	if [ -n "${DAWOS_KERNEL_LOG:-}" ]; then
+		cat "${DAWOS_KERNEL_LOG}"
+	else
+		journalctl -k -b --no-pager -o cat 2> /dev/null || dmesg 2> /dev/null
+	fi
+}
+
+# --- What this boot is --------------------------------------------------------
+gather() {
+	profile=$(sed -n 's/.*dawos\.profile=\([a-z0-9-]*\).*/\1/p' "${PROC}/cmdline")
+	profile=${profile:-generic}
+	profile_file=${PROFILES}/${profile}.conf
+	image_reference=${PROFILES}/${profile}.firmware
+	accepted_reference=${STATE}/firmware/${profile}.firmware
+
+	case "${DAWOS_VIRTUAL:-}" in
+	0) virtual=false ;;
+	1) virtual=true ;;
+	*) if systemd-detect-virt --quiet --vm 2> /dev/null; then virtual=true; else virtual=false; fi ;;
+	esac
+
+	# Why there is nothing to compare, if so.
+	skip=
+	if [ "${profile}" = generic ]; then
+		skip="the profile 'generic' describes no machine"
+	elif [ ! -r "${profile_file}" ]; then
+		skip="this image has no profile '${profile}'"
+	elif [ "${virtual}" = true ]; then
+		skip="virtual machine"
+	fi
+
+	# One performance core that is not live, one efficiency core of the
+	# system domain.
+	p_cpu=
+	e_cpu=
+	if [ -z "${skip}" ]; then
+		p_cpu=$(first_cpu "$(get "${profile_file}" preemptive)")
+		e_cpu=$(first_cpu "$(get "${profile_file}" system)")
+	fi
+}
+
+# Print the fingerprint, one "key=value" per line.
+fingerprint() {
+	echo "bios_version=$(read_file "${SYS}/class/dmi/id/bios_version")"
+	echo "bios_date=$(read_file "${SYS}/class/dmi/id/bios_date")"
+	echo "microcode=$(sed -n 's/^microcode[[:space:]]*: //p' "${PROC}/cpuinfo" | head -n 1)"
+	# "none" when the firmware declares no idle state: a stopped CPU is
+	# then in C1 (ADR 0009).
+	idle_driver=$(read_file "${SYS}/devices/system/cpu/cpuidle/current_driver")
+	echo "idle_driver=${idle_driver:-none}"
+	# What the firmware lets the kernel control on the first PCI Express
+	# root: error reporting (AER) and link power saving depend on it.
+	echo "pci_control=$(kernel_log | sed -n 's/.*_OSC: OS now controls \[\(.*\)\].*/\1/p' | head -n 1)"
+	for register in ${REGISTERS}; do
+		echo "msr_${register}_p=$(msr "${p_cpu}" "${register}")"
+		echo "msr_${register}_e=$(msr "${e_cpu}" "${register}")"
+	done
+}
+
+# --- Actions --------------------------------------------------------------------
+do_read() {
+	[ -z "${skip}" ] || die "nothing to read: ${skip}"
+	echo "# profile ${profile}; registers read on CPU ${p_cpu} (_p) and CPU ${e_cpu} (_e)"
+	fingerprint
+}
+
+do_check() {
+	mkdir -p "${RUN_DIR}" || die "cannot create ${RUN_DIR}"
+	status=same
+	which=
+	differences=
+	if [ -n "${skip}" ]; then
+		status=skipped
+	else
+		if [ -r "${accepted_reference}" ]; then
+			reference=${accepted_reference}
+			which=accepted
+		elif [ -r "${image_reference}" ]; then
+			reference=${image_reference}
+			which=image
+		else
+			status=no-reference
+		fi
+	fi
+	if [ "${status}" = same ]; then
+		now=$(fingerprint)
+		# Every key of the reference must have the same value now. A key
+		# the reference does not name is not compared: a later version of
+		# this tool may read more than an older reference holds.
+		differences=$(grep -E '^[a-z0-9_]+=' "${reference}" | while IFS='=' read -r key wanted; do
+			found=$(echo "${now}" | sed -n "s/^${key}=//p" | head -n 1)
+			[ "${found}" = "${wanted}" ] || echo "${key}: reference ${wanted:-(empty)}, now ${found:-(not read)}"
+		done)
+		if echo "${now}" | grep -q '^msr_.*=-$' || [ -z "$(echo "${now}" | sed -n 's/^bios_version=//p')" ]; then
+			status=unreadable
+		elif [ -n "${differences}" ]; then
+			status=changed
+		fi
+	fi
+	{
+		echo "status=${status}"
+		echo "profile=${profile}"
+		echo "reference=${which:-none}"
+		[ -z "${skip}" ] || echo "reason=${skip}"
+		echo "checked_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+		# Register 0x34: system-management interrupts since power-on.
+		[ -n "${skip}" ] || echo "smi_count=$(printf '%d' "0x$(msr "${e_cpu}" 0x34)" 2> /dev/null || echo unknown)"
+		echo "${differences}" | while IFS= read -r line; do
+			[ -n "${line}" ] && echo "difference=${line}"
+		done
+	} > "${RESULT}.new"
+	mv "${RESULT}.new" "${RESULT}"
+
+	case "${status}" in
+	same) echo "${PROG}: the firmware matches the reference (${which})" ;;
+	skipped) echo "${PROG}: nothing to compare: ${skip}" ;;
+	no-reference) echo "${PROG}: no reference for the profile '${profile}'" ;;
+	unreadable) echo "${PROG}: the fingerprint of the firmware could not be read in full" ;;
+	changed)
+		echo "${PROG}: the firmware differs from the reference (${which}):"
+		echo "${differences}" | sed "s/^/${PROG}:   /"
+		echo "${PROG}: if the change is wanted, measure again and run '${PROG} --accept'"
+		;;
+	esac
+	case "${status}" in
+	same | skipped) return 0 ;;
+	changed) return 2 ;;
+	*) return 3 ;;
+	esac
+}
+
+do_accept() {
+	[ -z "${skip}" ] || die "nothing to accept: ${skip}"
+	now=$(fingerprint)
+	if echo "${now}" | grep -q '^msr_.*=-$'; then
+		die "the registers of the processor cannot be read: nothing accepted"
+	fi
+	mkdir -p "${accepted_reference%/*}" || die "cannot create ${accepted_reference%/*}"
+	{
+		echo "# Firmware reference of this machine for the boot profile '${profile}'."
+		echo "# Accepted with '${PROG} --accept' on $(date -u +%Y-%m-%dT%H:%M:%SZ)."
+		echo "# Registers read on CPU ${p_cpu} (_p) and CPU ${e_cpu} (_e)."
+		echo "${now}"
+	} > "${accepted_reference}.new" || die "cannot write ${accepted_reference}.new"
+	mv "${accepted_reference}.new" "${accepted_reference}" || die "cannot write ${accepted_reference}"
+	echo "${PROG}: this firmware is now the reference of the profile '${profile}' (${accepted_reference})"
+}
+
+do_forget() {
+	if [ -e "${accepted_reference}" ]; then
+		rm -f "${accepted_reference}" || die "cannot remove ${accepted_reference}"
+		echo "${PROG}: accepted reference removed; the reference is the one of the image again"
+	else
+		echo "${PROG}: no accepted reference for the profile '${profile}'"
+	fi
+}
+
+case "${1:-}" in
+--read)
+	gather
+	do_read
+	;;
+--check)
+	gather
+	do_check
+	;;
+--status)
+	[ -r "${RESULT}" ] || die "no check yet (${RESULT})"
+	cat "${RESULT}"
+	;;
+--accept)
+	gather
+	do_accept
+	;;
+--forget)
+	gather
+	do_forget
+	;;
+-h | --help)
+	usage
+	;;
+*)
+	usage >&2
+	exit 1
+	;;
+esac

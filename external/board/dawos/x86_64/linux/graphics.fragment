@@ -6,9 +6,12 @@
 # !PREEMPT_RT. For Arrow Lake xe is still experimental in 6.18: it binds
 # only when told to (module parameter force_probe=<PCI device id>).
 #
-# A module, and never loaded by itself (see /etc/modprobe.d): without it
-# the console stays on the firmware's framebuffer, as it has been so far.
-# dawos-gpu-test loads it on request (experiment E-04, step P0.6c).
+# A module, and never loaded by the kernel on its own (see
+# /etc/modprobe.d): dawos-tune loads it at every boot for the profiles
+# that name it (graphics_driver=, ADR 0022), because a screen the
+# firmware lit and no driver holds disturbs the live CPUs (step P1.0).
+# A module and not built in: its firmware files are read from the root
+# file system, and a boot without it stays possible (profile "generic").
 CONFIG_DRM_XE=m
 CONFIG_DRM_XE_DISPLAY=y
 # CONFIG_DRM_I915 is not set

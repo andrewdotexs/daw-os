@@ -1,0 +1,48 @@
+# Firmware reference of the boot profile "285k" (see dawos-firmware).
+#
+# What the firmware of the reference machine hands over with the
+# settings the measurements were made with: firmware 3402, read on
+# 19 and 20 November 2026 on three boots, always with these values
+# (docs/misure/fase-1/registri-*.txt in the repository). dawos-tune
+# compares every boot with this file, unless a reference was accepted on
+# the machine itself (dawos-firmware --accept).
+#
+# One "key=value" per line. Registers of the processor in hexadecimal,
+# 64 bits: _p read on the first CPU of the preemptive domain (a
+# performance core), _e on the first CPU of the system domain (an
+# efficiency core).
+bios_version=3402
+bios_date=09/18/2026
+microcode=0x122
+idle_driver=none
+pci_control=PME PCIeCapability LTR
+msr_0x3a_p=0000000000000005
+msr_0x3a_e=0000000000000005
+msr_0xce_p=08040838f1812500
+msr_0xce_e=08040838f1812500
+msr_0xe2_p=0000000000008000
+msr_0xe2_e=0000000000008000
+msr_0x194_p=00000000001e0000
+msr_0x194_e=00000000001e0000
+msr_0x1a0_p=0000000000850089
+msr_0x1a0_e=0000000000850089
+msr_0x1a2_p=0000000000691400
+msr_0x1a2_e=0000000000691400
+msr_0x1a4_p=0000000000000000
+msr_0x1a4_e=0000000000000084
+msr_0x1aa_p=00000000000030c2
+msr_0x1aa_e=00000000000030c2
+msr_0x1ad_p=3636363636363939
+msr_0x1ad_e=3636363636363939
+msr_0x1fc_p=0000000000f8005d
+msr_0x1fc_e=0000000000f8005d
+msr_0x601_p=0000000080000d48
+msr_0x601_e=0000000080000d48
+msr_0x610_p=0042850000df8500
+msr_0x610_e=0042850000df8500
+msr_0x620_p=0000000000000826
+msr_0x620_e=0000000000000826
+msr_0x650_p=2e2e2e2e2e2e2e2e
+msr_0x650_e=2e2e2e2e2e2e2e2e
+msr_0x770_p=0000000000000001
+msr_0x770_e=0000000000000001

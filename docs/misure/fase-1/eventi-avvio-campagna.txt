@@ -1,0 +1,44 @@
+== boot c10ef8c631414d4ca9d50a58a9bbec7c: devices that came or went, with their times ==
+2026-11-17T23:12:54+00:00 dawos kernel: pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+2026-11-17T23:12:54+00:00 dawos kernel: RAPL PMU: API unit is 2^-32 Joules, 3 fixed counters, 655360 ms ovfl timer
+2026-11-17T23:12:54+00:00 dawos kernel: [drm] Initialized simpledrm 1.0.0 for simple-framebuffer.0 on minor 0
+2026-11-17T23:12:54+00:00 dawos kernel: Console: switching to colour frame buffer device 128x48
+2026-11-17T23:12:54+00:00 dawos kernel: simple-framebuffer simple-framebuffer.0: [drm] fb0: simpledrmdrmfb frame buffer device
+2026-11-17T23:12:54+00:00 dawos kernel: usb 3-2: new full-speed USB device number 2 using xhci_hcd
+2026-11-17T23:12:54+00:00 dawos kernel: usb 3-2: Product: AURA LED Controller
+2026-11-17T23:12:54+00:00 dawos kernel: usb 3-4: new high-speed USB device number 3 using xhci_hcd
+2026-11-17T23:12:54+00:00 dawos kernel: usb 3-4: Product: USB2.0 Hub
+2026-11-17T23:12:54+00:00 dawos kernel: usb 3-5: new low-speed USB device number 4 using xhci_hcd
+2026-11-17T23:12:54+00:00 dawos kernel: usb 3-5: Product: Trust Keyboard
+2026-11-17T23:12:54+00:00 dawos kernel: usb 3-12: new full-speed USB device number 5 using xhci_hcd
+2026-11-17T23:12:55+00:00 dawos kernel: usb 3-12: Product: TouchScreen
+2026-11-17T23:12:57+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-18T13:18:17+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Down
+2026-11-18T13:18:21+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-18T13:32:35+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Down
+2026-11-18T13:32:38+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-18T13:33:37+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Down
+2026-11-18T13:33:41+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-18T13:39:06+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Down
+2026-11-18T13:39:10+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-18T13:49:13+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Down
+2026-11-18T13:49:20+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-18T14:25:05+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Down
+2026-11-18T14:25:09+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-18T15:26:54+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Down
+2026-11-18T15:26:57+00:00 dawos kernel: igc 0000:83:00.0 eno1: NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+2026-11-19T12:51:13+00:00 dawos kernel: usb 3-12: USB disconnect, device number 5
+
+== the last lines of the boot ==
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Stopping Network Time Synchronization...
+2026-11-19T13:26:32+00:00 dawos systemd[1]: systemd-tmpfiles-setup.service: Deactivated successfully.
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Stopped Create System Files and Directories.
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Stopping Flush Journal to Persistent Storage...
+2026-11-19T13:26:32+00:00 dawos systemd[1]: systemd-update-done.service: Deactivated successfully.
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Stopped Update is Completed.
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Stopped target Local File Systems.
+2026-11-19T13:26:32+00:00 dawos systemd[1]: boot.automount: Deactivated successfully.
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Unset automount EFI System Partition Automount.
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Unmounting /etc/machine-id...
+2026-11-19T13:26:32+00:00 dawos systemd[1]: Unmounting Temporary Directory /tmp...
+2026-11-19T13:26:32+00:00 dawos systemd[1]: systemd-timesyncd.service: Deactivated successfully.

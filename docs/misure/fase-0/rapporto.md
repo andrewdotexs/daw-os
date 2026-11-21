@@ -3,7 +3,7 @@
 - **Che cos'è**: il rapporto di chiusura della Fase 0, chiesto dal documento 0 al passo P0.8. Dice che cosa è stato misurato, su quale configurazione, con quale esito, e che cosa resta aperto per la Fase 1.
 - **Macchina**: il 285K (ASUS ROG STRIX Z890-I, Intel Core Ultra 9 285K, 64 GB); la scheda completa è in [hardware-285k.md](../../fasi/fase-0/hardware-285k.md).
 - **Date**: la fase è andata dal 13 al 19 novembre 2026; la campagna di misura dal 18 al 19.
-- **Stato**: completo, redatto il 19 novembre 2026; definitivo con la chiusura del passo P0.8 e l'etichetta `fase-0`.
+- **Stato**: definitivo. Redatto il 19 novembre 2026; la fase è chiusa con l'etichetta `fase-0` sul commit `c9de63b` di `main`.
 
 Le etichette sono quelle del documento 0: _(verificato)_ per ciò che è misurato o letto nei dati, _(stima)_ per ciò che è calcolato da altri numeri, _(da verificare)_ per ciò che è supposto.
 
@@ -362,6 +362,10 @@ Il piano `ipi` della campagna, il 19 novembre 2026 dalle 17:08 alle 20:09 UTC. D
 - **Quanto pesa oggi**: un interrupt di uno o due microsecondi ogni cento secondi per core _(stima della durata)_. Poco nel totale; ma l'ADR 0021 chiede zero nella fase di calcolo, e queste sono le eccezioni da rinviare o da documentare.
 
 **Il collegamento di rete è caduto altre due volte**, una nell'ora ferma e una in quella con il solo monitoraggio: non dipende dal carico. Le nove cadute dei due giorni stanno tutte tra le 14:18 e le 19:16 ora locale; nessuna di notte, nessuna al mattino. Fa pensare a qualcosa fuori dalla macchina _(ipotesi; A-36)_.
+
+### 10.6 Nota successiva alla chiusura
+
+Il 20 novembre 2026, a fase chiusa, la stessa miscela di carico è stata misurata di nuovo per mezz'ora, dopo che la macchina era stata spenta e riaccesa e senza traffico di rete: nessun risveglio sopra gli 8 µs, massimo 6,6 µs. La coda descritta nelle sezioni 4 e 5 quel giorno non c'era. Tutte le misure di questo rapporto sono state fatte su un solo avvio, quello del 17 novembre alle 23:12 UTC, lo stesso della misura anomala della sezione 10.1. Che la differenza venga dall'avvio, dal traffico di rete o dal ciclo del carico è in corso di accertamento nel sotto-passo [P1.0](../../fasi/fase-1/P1.0-raccordo.md). Il verdetto della fase non cambia; il limite «una macchina, una corsa di 24 ore» della sezione 9 va letto anche come «un solo avvio».
 
 ## 11. Che cosa resta aperto per la Fase 1
 

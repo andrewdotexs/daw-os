@@ -1,0 +1,134 @@
+== when and what ==
+read_utc: 2026-11-20T13:49:03Z
+uptime_s: 991
+boot_id: 94bf6ecf33c244c7a058d0ade1419813
+bios: 3402 09/18/2026
+live_cpus: 4-7
+
+== registers: number, value on cpu 0, value on cpu 16 ==
+0x17 0004000000000000 0004000000000000
+0x1b 00000000fee00d00 00000000fee00c00
+0x3a 0000000000000005 0000000000000005
+0x8b 0000012200000000 0000012200000000
+0xce 08040838f1812500 08040838f1812500
+0xe2 0000000000008000 0000000000008000
+0xe4 0000000000000000 0000000000000000
+0x10a 000000000df9fd6b 000000000df9fd6b
+0x13c 0000000000000001 0000000000000001
+0x194 00000000001e0000 00000000001e0000
+0x198 0000260900003600 0000238500002e00
+0x199 0000000000003900 0000000000003900
+0x19a 0000000000000000 0000000000000000
+0x19b 0000000000000013 0000000000000013
+0x19c 0000000088450000 0000000088450000
+0x19d 0000000000000000 0000000000000000
+0x1a0 0000000000850089 0000000000850089
+0x1a2 0000000000691400 0000000000691400
+0x1a4 0000000000000000 0000000000000084
+0x1a6 0000000000000000 0000000000000000
+0x1aa 00000000000030c2 00000000000030c2
+0x1ad 3636363636363939 3636363636363939
+0x1ae 0807060504030201 0807060504030201
+0x1af - -
+0x1b0 - -
+0x1b1 0000000088450000 0000000088440000
+0x1b2 0000000002000003 0000000002000003
+0x1fc 0000000000f8005d 0000000000f8005d
+0x34 0000000000000185 0000000000000185
+0x601 0000000080000d48 0000000080000d48
+0x603 0036000000363636 0036000000363636
+0x606 00000000000a0e03 00000000000a0e03
+0x60a 0000000000000000 0000000000000000
+0x60b 0000000000000000 0000000000000000
+0x60c 0000000000000000 0000000000000000
+0x60d 0000000000000000 0000000000000000
+0x610 0042850000df8500 0042850000df8500
+0x611 0000000005eac1fb 0000000005eac38c
+0x614 00120000000003e8 00120000000003e8
+0x618 0000000000000000 0000000000000000
+0x61c - -
+0x620 0000000000000826 0000000000000826
+0x621 0000000024090025 0000000024090025
+0x638 0000000000000000 0000000000000000
+0x639 000000000302f0a7 000000000302f0a7
+0x63a 0000000000000000 0000000000000000
+0x640 0000000000000000 0000000000000000
+0x641 0000000000000000 0000000000000000
+0x642 0000000000000010 0000000000000010
+0x648 0000000000000025 0000000000000025
+0x649 0000000000000000 0000000000000000
+0x64a 0000000000000000 0000000000000000
+0x64b 0000000080000000 0000000080000000
+0x64c 0000000000000000 0000000000000000
+0x64d 0000000000000000 0000000000000000
+0x64e 0000000f234fec5e 0000000056f0bbf7
+0x64f 0000000010c21000 0000000010c21000
+0x650 2e2e2e2e2e2e2e2e 2e2e2e2e2e2e2e2e
+0x65c 0000000000dd0000 0000000000dd0000
+0x690 - -
+0x6b0 0000000000000000 0000000000000000
+0x6b1 0000000000000000 0000000000000000
+0x770 0000000000000001 0000000000000001
+0x771 0000000001243c58 0000000001152d41
+0x772 000000008000ff01 000000008000ff01
+0x773 0000000000000005 0000000000000005
+0x774 0000000040005858 000000004000410c
+0x777 0000000000000004 0000000000000004
+
+== frequency settings the kernel shows, cpu by cpu ==
+cpu0: driver intel_pstate, governor powersave, min 5500000, max 5500000, hardware max 5500000, preference balance_performance, base 3700000
+cpu1: driver intel_pstate, governor powersave, min 5500000, max 5500000, hardware max 5500000, preference balance_performance, base 3700000
+cpu2: driver intel_pstate, governor powersave, min 5700000, max 5700000, hardware max 5700000, preference balance_performance, base 3700000
+cpu3: driver intel_pstate, governor powersave, min 5500000, max 5500000, hardware max 5500000, preference balance_performance, base 3700000
+cpu4: driver intel_pstate, governor powersave, min 4600000, max 4600000, hardware max 5500000, preference balance_performance, base 3700000
+cpu5: driver intel_pstate, governor powersave, min 4600000, max 4600000, hardware max 5500000, preference balance_performance, base 3700000
+cpu6: driver intel_pstate, governor powersave, min 4600000, max 4600000, hardware max 5500000, preference balance_performance, base 3700000
+cpu7: driver intel_pstate, governor powersave, min 4600000, max 4600000, hardware max 5700000, preference balance_performance, base 3700000
+cpu8: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu9: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu10: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu11: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu12: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu13: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu14: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu15: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu16: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu17: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu18: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu19: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu20: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu21: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu22: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+cpu23: driver intel_pstate, governor powersave, min 800000, max 4700000, hardware max 4700000, preference balance_performance, base 3200000
+
+== intel_pstate ==
+hwp_dynamic_boost: 0
+max_perf_pct: 100
+min_perf_pct: 14
+no_turbo: 0
+status: active
+
+== temperature sensors ==
+acpitz: 27800 
+coretemp: 34000 34000 34000 34000 34000 34000 34000 34000 37000 36000 36000 36000 36000 36000 34000 34000 34000 34000 36000 
+
+== clock ==
+clocksource: tsc
+tsc: Detected 3700.000 MHz processor
+tsc: Detected 3686.400 MHz TSC
+clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 99544814920 ns
+clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x6a464ae9873, max_idle_ns: 881590529744 ns
+CPU0: Thermal monitoring enabled (TM1)
+x86/cpu: User Mode Instruction Prevention (UMIP) activated
+thermal_sys: Registered thermal governor 'step_wise'
+clocksource: Switched to clocksource tsc-early
+clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x6a464ae9873, max_idle_ns: 881590529744 ns
+clocksource: Switched to clocksource tsc
+thermal LNXTHERM:00: registered as thermal_zone0
+ACPI: thermal: Thermal Zone [TZ00] (28 C)
+intel_pstate: Intel P-state driver initializing
+intel_pstate: HWP enabled
+microcode: Current revision: 0x00000122
