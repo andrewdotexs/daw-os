@@ -95,6 +95,8 @@ Conferme e scoperte:
 
 Il controller del processore è libero: è il posto naturale per la Scarlett, da sola (rischio K-07). Resta **da verificare nella Fase 1** a quale controller arrivino davvero i segnali USB 2.0 delle porte Thunderbolt: su molte schede le linee USB 2.0 di quelle porte vanno al chipset. Si vede collegando la Scarlett e guardando `lsusb -t`.
 
+**Verificato il 21 novembre 2026** ([P1.0](../fase-1/P1.0-raccordo.md), parte 3b): una Scarlett 18i20 di seconda generazione collegata alla porta Thunderbolt 1 compare sul controller del chipset, `80:14.0`, porta 3-11. Le linee USB 2.0 delle porte Thunderbolt vanno al chipset: il controller del processore non è raggiungibile da un'interfaccia USB 2.0 collegata direttamente. Con il controller condiviso la misura è comunque pulita (punto aperto A-53).
+
 ## Osservazioni
 
 **Il firmware consegna la macchina con x2APIC bloccato.** Il kernel deve quindi avere il rimappaggio degli interrupt (`CONFIG_IRQ_REMAP`), e nel firmware deve restare attivo VT-d. Senza, il kernel va in panico a 0,16 secondi dall'avvio. Scoperto al primo avvio reale; i dettagli sono nella guida del passo P0.4a.
