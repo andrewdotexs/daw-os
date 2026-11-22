@@ -28,15 +28,19 @@ use std::time::Duration;
 
 use dawos_rt::clock::{self, Instant};
 
-use crate::alsa_card::{Card, CardConfig, CardError, CardInfo, Ready};
+use crate::alsa_card::{Card, CardConfig, CardError, CardInfo, Ready, XrunView};
 use crate::{Backend, Disturbance, Format, Wake};
 
 /// Periods without a sign of life after which a running card is taken
 /// for gone.
 const STALLS_BEFORE_GONE: u32 = 3;
 
-/// Periods of input and output skipped to provoke an xrun on purpose.
-const PERIODS_TO_SKIP: u32 = 4;
+/// How many xruns are kept one by one, from the first.
+const XRUNS_KEPT: usize = 12;
+
+/// Periods the live thread sleeps through, away from the card, to
+/// provoke an xrun on purpose: the buffers hold two.
+const PERIODS_TO_SKIP: u64 = 4;
 
 /// What happened to the card during a run. Written by the live thread
 /// and by the keeper, read at the end.
@@ -81,8 +85,9 @@ struct Seat {
     /// next wait, where system calls are allowed.
     pending: Option<CardError>,
     stalls: u32,
-    /// Periods still to skip, to provoke an xrun (a test).
-    skip: u32,
+    /// Until when to stay away from the card, to provoke an xrun (a
+    /// test); 0: not asked.
+    skip_until: Instant,
     /// Whether this cycle has no card behind it.
     silent: bool,
 }
@@ -112,6 +117,9 @@ pub struct AlsaShared {
     next_index: AtomicU64,
     last_due: AtomicU64,
     stats: CardStats,
+    /// The first xruns: when, in nanoseconds from the start, and how the
+    /// streams stood.
+    xrun_log: Mutex<Vec<(u64, XrunView)>>,
 }
 
 impl AlsaShared {
@@ -127,7 +135,7 @@ impl AlsaShared {
                 dead: None,
                 pending: None,
                 stalls: 0,
-                skip: 0,
+                skip_until: 0,
                 silent: true,
             }),
             handoff: Mutex::new(Handoff::default()),
@@ -137,6 +145,7 @@ impl AlsaShared {
             next_index: AtomicU64::new(0),
             last_due: AtomicU64::new(0),
             stats: CardStats::default(),
+            xrun_log: Mutex::new(Vec::with_capacity(XRUNS_KEPT)),
         }))
     }
 
@@ -156,6 +165,16 @@ impl AlsaShared {
     #[must_use]
     pub const fn stats(&self) -> &CardStats {
         &self.stats
+    }
+
+    /// The first xruns of the run: when, in nanoseconds from the start
+    /// of the periods, and how the two streams stood.
+    #[must_use]
+    pub fn xrun_log(&self) -> Vec<(u64, XrunView)> {
+        self.xrun_log
+            .lock()
+            .map(|log| log.clone())
+            .unwrap_or_default()
     }
 
     /// Tell the keeper that the run is over.
@@ -288,7 +307,7 @@ impl AlsaBackend {
         }
         seat.pending = None;
         seat.stalls = 0;
-        seat.skip = 0;
+        seat.skip_until = 0;
         let stats = &self.shared.stats;
         stats.lost.fetch_add(1, Ordering::AcqRel);
         match error {
@@ -325,10 +344,21 @@ impl AlsaBackend {
     fn recover(&self, seat: &mut Seat) {
         let stats = &self.shared.stats;
         stats.xruns.fetch_add(1, Ordering::AcqRel);
-        seat.skip = 0;
+        seat.skip_until = 0;
         let before = clock::now();
         let result = match seat.card.as_mut() {
-            Some(card) => card.recover(),
+            Some(card) => {
+                // Keep the first ones, to tell which stream ran out.
+                // The room is there already: nothing grows here.
+                if let Ok(mut log) = self.shared.xrun_log.try_lock() {
+                    if log.len() < log.capacity() {
+                        let since =
+                            before.saturating_sub(self.shared.start.load(Ordering::Acquire));
+                        log.push((since, card.look()));
+                    }
+                }
+                card.recover()
+            }
             None => return,
         };
         match result {
@@ -382,6 +412,13 @@ impl Backend for AlsaBackend {
             let Some(card) = seat.card.as_mut() else {
                 return self.clock_wake(seat);
             };
+            // A test: sleep while the card runs unserved. Waiting on the
+            // card would not do: it has input to give, and would not
+            // let the thread sleep.
+            if seat.skip_until != 0 {
+                clock::sleep_until(seat.skip_until);
+                seat.skip_until = 0;
+            }
             if !card.started() {
                 match card.start() {
                     Ok(()) => {}
@@ -452,7 +489,7 @@ impl Backend for AlsaBackend {
             return;
         };
         let seat = &mut *guard;
-        if seat.silent || seat.skip > 0 || seat.pending.is_some() {
+        if seat.silent || seat.pending.is_some() {
             input.fill(0);
             return;
         }
@@ -471,10 +508,6 @@ impl Backend for AlsaBackend {
             return;
         };
         let seat = &mut *guard;
-        if seat.skip > 0 {
-            seat.skip -= 1;
-            return;
-        }
         if seat.silent || seat.pending.is_some() {
             return;
         }
@@ -496,7 +529,9 @@ impl Backend for AlsaBackend {
             return;
         };
         match disturbance {
-            Disturbance::Xrun => guard.skip = PERIODS_TO_SKIP,
+            Disturbance::Xrun => {
+                guard.skip_until = clock::now() + PERIODS_TO_SKIP * self.period_ns;
+            }
             Disturbance::CardLost => {
                 if guard.card.is_some() {
                     guard.pending = Some(CardError::Gone(::alsa::Error::unsupported(

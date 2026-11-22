@@ -9,6 +9,7 @@ use std::time::Duration;
 
 use dawos_audio_io::{
     keeper_loop, AlsaBackend, AlsaShared, Backend, CardConfig, CardInfo, Format, NullBackend,
+    XrunView,
 };
 use dawos_rt::cpu::{self, Policy};
 use dawos_rt::slot::Slot;
@@ -73,6 +74,9 @@ pub struct CardOutcome {
     pub in_use_at_the_end: bool,
     /// What was heard on the inputs listened to.
     pub heard: Vec<Heard>,
+    /// The first xruns: seconds from the start, and how the streams
+    /// stood.
+    pub xrun_log: Vec<(f64, XrunView)>,
 }
 
 /// The tone counts as heard above this level, in dB relative to full
@@ -272,6 +276,11 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 tone_db: -f64::from(options.tone_below_db),
                 routes: options.routes.clone(),
                 listen: options.listen.clone(),
+                keep_seconds: if options.each_second {
+                    options.seconds.min(3600) as usize
+                } else {
+                    0
+                },
             },
             card.info().inputs,
             card.info().outputs,
@@ -487,6 +496,11 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             bad_stamps: count(&stats.bad_stamps),
             last_error: stats.last_error.load(Ordering::Acquire),
             in_use_at_the_end,
+            xrun_log: card
+                .xrun_log()
+                .into_iter()
+                .map(|(since, view)| (since as f64 / 1e9, view))
+                .collect(),
             heard: shared
                 .patch
                 .as_ref()
@@ -1009,6 +1023,20 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         "card_lost: {} (last error number {}), back {}, attempts to open it again {}",
         card.lost, card.last_error, card.back, card.reopen_attempts
     );
+    for (index, (second, view)) in card.xrun_log.iter().enumerate() {
+        println!(
+            "card_xrun_{}: at {:.3} s; capture {}, {} frames to read (most ever {}); playback {}, {} frames of room (most ever {}), delay {}",
+            index + 1,
+            second,
+            view.capture_state,
+            view.capture_avail,
+            view.capture_avail_max,
+            view.playback_state,
+            view.playback_avail,
+            view.playback_avail_max,
+            view.playback_delay
+        );
+    }
     println!("card_short_writes: {}", card.short_writes);
     println!("card_stamps_not_believed: {}", card.bad_stamps);
     match options.tone {
@@ -1058,6 +1086,35 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
                 format!("{:.4}", heard.share_min)
             },
         );
+    }
+    if card.heard.iter().all(|heard| heard.each_second.is_empty()) {
+        return;
+    }
+    println!();
+    println!("second by second (second 1 is not in the table above):");
+    println!(
+        "{:<6} {:>6} {:>8} {:>8} {:>8}",
+        "second", "input", "level", "tone", "share"
+    );
+    let seconds = card
+        .heard
+        .iter()
+        .map(|heard| heard.each_second.len())
+        .max()
+        .unwrap_or(0);
+    for second in 0..seconds {
+        for heard in &card.heard {
+            if let Some(&(level, tone, share)) = heard.each_second.get(second) {
+                println!(
+                    "{:<6} {:>6} {:>8} {:>8} {:>8.4}",
+                    second + 1,
+                    heard.channel + 1,
+                    decibels(level),
+                    decibels(tone),
+                    share
+                );
+            }
+        }
     }
 }
 

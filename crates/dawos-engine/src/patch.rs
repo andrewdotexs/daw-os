@@ -25,6 +25,8 @@ pub struct PatchConfig {
     pub routes: Vec<(usize, usize)>,
     /// Inputs to measure.
     pub listen: Vec<usize>,
+    /// How many seconds to keep one by one, from the first (0: none).
+    pub keep_seconds: usize,
 }
 
 /// One second of one input, summed up.
@@ -57,6 +59,9 @@ pub struct Heard {
     /// The share of the power that was the tone, in the worst second: 1
     /// is a pure tone.
     pub share_min: f64,
+    /// Second by second, from the first one: effective level, level of
+    /// the tone, share. As many as were asked to be kept.
+    pub each_second: Vec<(f64, f64, f64)>,
 }
 
 struct Listener {
@@ -165,6 +170,8 @@ impl Patch {
                         tone_min_db: f64::INFINITY,
                         tone_max_db: f64::NEG_INFINITY,
                         share_min: f64::INFINITY,
+                        // Room for all of them now: nothing grows later.
+                        each_second: Vec::with_capacity(config.keep_seconds),
                     },
                 })
                 .collect(),
@@ -234,10 +241,6 @@ impl Patch {
         let count = self.block_frames as f64;
         for listener in &mut self.listeners {
             let block = std::mem::take(&mut listener.block);
-            // The first second holds the start of the card: left out.
-            if self.blocks == 0 {
-                continue;
-            }
             let power = block.squares / count;
             let tone = 2.0 * block.in_phase.hypot(block.quadrature) / count;
             let share = if power > 0.0 {
@@ -246,6 +249,16 @@ impl Patch {
                 0.0
             };
             let heard = &mut listener.heard;
+            if heard.each_second.len() < heard.each_second.capacity() {
+                heard
+                    .each_second
+                    .push((decibels(power.sqrt()), decibels(tone), share));
+            }
+            // The first second holds the start of the card: left out of
+            // the summary.
+            if self.blocks == 0 {
+                continue;
+            }
             heard.seconds += 1;
             heard.peak_db = heard.peak_db.max(decibels(block.peak));
             let level = decibels(power.sqrt());
@@ -289,6 +302,7 @@ mod tests {
             tone_db: -12.0,
             routes: vec![(2, 4)],
             listen: vec![2, 4, 0],
+            keep_seconds: 2,
         }
     }
 
@@ -320,6 +334,9 @@ mod tests {
             assert!((heard.peak_db + 12.0).abs() < 0.01, "{heard:?}");
             // A sine: effective level 3 dB below its peak.
             assert!((heard.level_min_db + 15.01).abs() < 0.01, "{heard:?}");
+            // Two seconds kept, the first one included.
+            assert_eq!(heard.each_second.len(), 2);
+            assert!((heard.each_second[1].1 + 12.0).abs() < 0.01, "{heard:?}");
         }
         let silent = &heard[2];
         assert_eq!(silent.seconds, 3);

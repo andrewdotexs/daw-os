@@ -25,7 +25,7 @@ mod alsa_card;
 mod null;
 
 pub use alsa_backend::{keeper_loop, AlsaBackend, AlsaShared, CardStats};
-pub use alsa_card::{CardConfig, CardInfo};
+pub use alsa_card::{CardConfig, CardInfo, XrunView};
 pub use null::NullBackend;
 
 use dawos_rt::clock::Instant;
@@ -118,8 +118,8 @@ pub trait Backend {
 /// What can be made to go wrong in a back end, to see it recover.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Disturbance {
-    /// Skip input and output for some periods: the driver stops the
-    /// streams, as when the engine is late.
+    /// Sleep through some periods without serving the card: the driver
+    /// stops the streams, as when the engine is late.
     Xrun,
     /// Behave as if the card had been unplugged.
     CardLost,

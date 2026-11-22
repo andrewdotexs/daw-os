@@ -58,6 +58,42 @@ pub enum CardError {
     Gone(::alsa::Error),
 }
 
+/// The two streams as the kernel saw them when an xrun was found: which
+/// one ran out, and by how much. Frames; -1 where the kernel did not
+/// answer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct XrunView {
+    /// Frames waiting to be read.
+    pub capture_avail: i64,
+    /// The most frames that ever waited to be read.
+    pub capture_avail_max: i64,
+    /// Frames of room in the output buffer: the whole buffer means it
+    /// ran empty.
+    pub playback_avail: i64,
+    /// The most room there ever was in the output buffer.
+    pub playback_avail_max: i64,
+    /// Frames between the last one written and the converters.
+    pub playback_delay: i64,
+    /// State of the capture stream.
+    pub capture_state: &'static str,
+    /// State of the playback stream.
+    pub playback_state: &'static str,
+}
+
+fn state_name(state: State) -> &'static str {
+    match state {
+        State::Open => "open",
+        State::Setup => "setup",
+        State::Prepared => "prepared",
+        State::Running => "running",
+        State::XRun => "xrun",
+        State::Draining => "draining",
+        State::Paused => "paused",
+        State::Suspended => "suspended",
+        State::Disconnected => "disconnected",
+    }
+}
+
 /// What [`Card::wait`] found.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Ready {
@@ -290,6 +326,25 @@ impl Card {
         }
         self.started = true;
         Ok(())
+    }
+
+    /// Ask the kernel how the two streams stand: two system calls, for
+    /// the moment an xrun is found.
+    #[must_use]
+    pub fn look(&self) -> XrunView {
+        let capture = self.capture.status().ok();
+        let playback = self.playback.status().ok();
+        XrunView {
+            capture_avail: capture.as_ref().map_or(-1, |status| status.get_avail()),
+            capture_avail_max: capture.as_ref().map_or(-1, |status| status.get_avail_max()),
+            playback_avail: playback.as_ref().map_or(-1, |status| status.get_avail()),
+            playback_avail_max: playback
+                .as_ref()
+                .map_or(-1, |status| status.get_avail_max()),
+            playback_delay: playback.as_ref().map_or(-1, |status| status.get_delay()),
+            capture_state: state_name(self.capture.state()),
+            playback_state: state_name(self.playback.state()),
+        }
     }
 
     /// After an xrun: both streams from the beginning, the output full

@@ -30,6 +30,8 @@ pub struct RunOptions {
     pub routes: Vec<(usize, usize)>,
     /// Inputs to measure, from 0.
     pub listen: Vec<usize>,
+    /// Print what was heard second by second, not only summed up.
+    pub each_second: bool,
     /// Do not count xruns against the run (a virtual machine has them).
     pub allow_xruns: bool,
     /// Sample rate in hertz.
@@ -108,6 +110,8 @@ Options of run:
   --listen IN[,IN...]
                      with alsa: measure these inputs, second by second:
                      level, level of the test tone, share of the tone
+  --each-second      with --listen: also print every second by itself
+                     (the first hour at most)
   --allow-xruns      with alsa: do not fail the run for xruns, as long as
                      the card comes back every time
   --rate HZ          sample rate (default 48000)
@@ -171,6 +175,7 @@ impl Default for RunOptions {
             tone_below_db: 12,
             routes: Vec::new(),
             listen: Vec::new(),
+            each_second: false,
             allow_xruns: false,
             rate: 48_000,
             frames: None,
@@ -226,6 +231,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                     options.listen.push(channel(input, "--listen")?);
                 }
             }
+            "--each-second" => options.each_second = true,
             "--allow-xruns" => options.allow_xruns = true,
             "--rate" => options.rate = number(value("--rate")?, "--rate", 8_000, 768_000)?,
             "--quantum" => {
@@ -279,6 +285,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             || options.tone.is_some()
             || !options.routes.is_empty()
             || !options.listen.is_empty()
+            || options.each_second
             || options.allow_xruns
             || matches!(options.fault, Fault::CardXrun | Fault::CardLost);
         if sound {
@@ -362,7 +369,7 @@ mod tests {
     #[test]
     fn run_takes_the_options_about_sound() {
         let text = "run --backend alsa --device hw:USB,0 --capture-device hw:Loopback,1 --tone 3 \
-                    --tone-hz 440 --tone-level 20 --route 3:5,4:6 --listen 3,5 --allow-xruns \
+                    --tone-hz 440 --tone-level 20 --route 3:5,4:6 --listen 3,5 --each-second --allow-xruns \
                     --fault card-xrun";
         let Ok(Command::Run(options)) = parse(&arguments(text)) else {
             panic!("run was not understood");
@@ -375,6 +382,7 @@ mod tests {
         assert_eq!(options.tone_below_db, 20);
         assert_eq!(options.routes, vec![(2, 4), (3, 5)]);
         assert_eq!(options.listen, vec![2, 4]);
+        assert!(options.each_second);
         assert!(options.allow_xruns);
         assert_eq!(options.fault, Fault::CardXrun);
     }
