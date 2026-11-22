@@ -21,6 +21,11 @@ pub enum Fault {
     /// The watchdog stops, then a node never returns: only the second
     /// line (systemd) is left.
     WatchdogOff,
+    /// The engine skips input and output for some periods: the driver
+    /// stops the card, as when the engine is late (ALSA back end).
+    CardXrun,
+    /// The card is taken away, as if unplugged (ALSA back end).
+    CardLost,
 }
 
 /// What a test node does when it is run.

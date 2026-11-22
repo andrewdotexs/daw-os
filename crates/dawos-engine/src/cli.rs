@@ -8,12 +8,36 @@ use crate::plan::Fault;
 pub enum Command {
     Help,
     Version,
-    Run(RunOptions),
+    /// Boxed: far larger than the other two.
+    Run(Box<RunOptions>),
 }
 
 /// Options of `run`.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RunOptions {
+    /// Where the periods come from.
+    pub backend: BackendKind,
+    /// ALSA name of the sound card, like `hw:USB,0`; and of its capture
+    /// side when that is another device.
+    pub device: Option<String>,
+    pub capture_device: Option<String>,
+    /// Output that carries the test tone, from 0; its frequency in
+    /// hertz and its peak level in dB below full scale.
+    pub tone: Option<usize>,
+    pub tone_hz: u32,
+    pub tone_below_db: u32,
+    /// Inputs copied to outputs, (input, output), from 0.
+    pub routes: Vec<(usize, usize)>,
+    /// Inputs to measure, from 0.
+    pub listen: Vec<usize>,
+    /// Periods in the buffers of the card.
+    pub periods: u32,
+    /// Seconds at the beginning of the run that are not judged.
+    pub warm_up_s: u64,
+    /// Print what was heard second by second, not only summed up.
+    pub each_second: bool,
+    /// Do not count xruns against the run (a virtual machine has them).
+    pub allow_xruns: bool,
     /// Sample rate in hertz.
     pub rate: u32,
     /// Samples per period; `None`: the quantum of 2.667 ms for the rate.
@@ -47,6 +71,15 @@ pub struct RunOptions {
     pub kernel_probe: bool,
 }
 
+/// The back ends of `--backend`.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum BackendKind {
+    /// A timer of the CPU, no sound.
+    Null,
+    /// A sound card, through alsa-lib.
+    Alsa,
+}
+
 /// Whether the cycle must run with a real-time priority.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Realtime {
@@ -66,8 +99,34 @@ Usage:
   dawos-engine --help
 
 Options of run:
-  --backend NAME     source of the periods: null (a timer; the only one
-                     yet)
+  --backend NAME     source of the periods: null (a timer, no sound; the
+                     default) or alsa (a sound card)
+  --device NAME      with alsa: the card, like hw:USB,0
+  --capture-device NAME
+                     with alsa: the capture side, when it is another
+                     device (default: the same as --device)
+  --tone OUT         with alsa: a test tone on this output, from 1
+  --tone-hz HZ       its frequency (default 1000; with 1125, a whole
+                     number of cycles per quantum, --listen also finds
+                     every slip of the signal, to the sample)
+  --tone-level DB    its peak level in dB below full scale (default 12)
+  --route IN:OUT[,IN:OUT...]
+                     with alsa: copy these inputs to these outputs,
+                     sample for sample; every other output is silent
+  --listen IN[,IN...]
+                     with alsa: measure these inputs, second by second:
+                     level, level of the test tone, share of the tone
+  --periods N        with alsa: periods in the buffers of the card, 2 to 8
+                     (default 2: the output plays two quanta after the
+                     input)
+  --warm-up N        with alsa: do not judge the first N seconds of the
+                     run (an interface settles for some seconds after
+                     its streams start); what happens there is counted
+                     apart (default 0)
+  --each-second      with --listen: also print every second by itself
+                     (the first hour at most)
+  --allow-xruns      with alsa: do not fail the run for xruns, as long as
+                     the card comes back every time
   --rate HZ          sample rate (default 48000)
   --quantum N        samples per period (default: 128 up to 48 kHz, 256 up
                      to 96 kHz, 512 above: always 2.667 ms)
@@ -77,7 +136,7 @@ Options of run:
   --system LIST      CPUs of the watchdog and of the parked spare threads
                      (default: the system domain of the boot profile)
   --threads N        live threads (default: one per live CPU; one without
-                     a profile)
+                     a profile; with alsa one, the only number yet)
   --priority N       real-time priority of the live threads, 1 to 94
                      (default 80; the watchdog runs at 95)
   --margin-us N      compute budget: stop taking work this long before
@@ -85,7 +144,9 @@ Options of run:
   --load PERCENT     keep each thread busy for this share of the period,
                      0 to 300 (default 0)
   --fault NAME       make something go wrong: stuck-node, stuck-thread,
-                     watchdog-off (default: nothing)
+                     watchdog-off; with alsa also card-xrun (the engine
+                     skips some periods) and card-lost (as if the card
+                     had been unplugged) (default: nothing)
   --fault-after N    seconds before the fault (default 3)
   --fault-thread N   the live thread it strikes, from 0 (default 0)
   --kernel-probe     again and again, ask the kernel for a piece of work
@@ -111,7 +172,7 @@ pub fn parse(arguments: &[String]) -> Result<Command, String> {
     match rest.next() {
         None | Some("--help" | "-h" | "help") => Ok(Command::Help),
         Some("--version" | "-V") => Ok(Command::Version),
-        Some("run") => parse_run(rest).map(Command::Run),
+        Some("run") => parse_run(rest).map(|options| Command::Run(Box::new(options))),
         Some(other) => Err(format!("unknown command '{other}'")),
     }
 }
@@ -119,6 +180,18 @@ pub fn parse(arguments: &[String]) -> Result<Command, String> {
 impl Default for RunOptions {
     fn default() -> Self {
         Self {
+            backend: BackendKind::Null,
+            device: None,
+            capture_device: None,
+            tone: None,
+            tone_hz: 1000,
+            tone_below_db: 12,
+            routes: Vec::new(),
+            listen: Vec::new(),
+            periods: 2,
+            warm_up_s: 0,
+            each_second: false,
+            allow_xruns: false,
             rate: 48_000,
             frames: None,
             seconds: 10,
@@ -143,11 +216,40 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
         let mut value = |name: &str| rest.next().ok_or_else(|| format!("{name} needs a value"));
         match option {
             "--backend" => {
-                let name = value("--backend")?;
-                if name != "null" {
-                    return Err(format!("unknown back end '{name}': only 'null' exists yet"));
+                options.backend = match value("--backend")? {
+                    "null" => BackendKind::Null,
+                    "alsa" => BackendKind::Alsa,
+                    name => return Err(format!("unknown back end '{name}': null or alsa")),
+                };
+            }
+            "--device" => options.device = Some(value("--device")?.to_string()),
+            "--capture-device" => {
+                options.capture_device = Some(value("--capture-device")?.to_string())
+            }
+            "--tone" => options.tone = Some(channel(value("--tone")?, "--tone")?),
+            "--tone-hz" => options.tone_hz = number(value("--tone-hz")?, "--tone-hz", 20, 20_000)?,
+            "--tone-level" => {
+                options.tone_below_db = number(value("--tone-level")?, "--tone-level", 0, 120)?
+            }
+            "--route" => {
+                for pair in value("--route")?.split(',') {
+                    let Some((input, output)) = pair.split_once(':') else {
+                        return Err(format!("--route: '{pair}' is not IN:OUT"));
+                    };
+                    options
+                        .routes
+                        .push((channel(input, "--route")?, channel(output, "--route")?));
                 }
             }
+            "--listen" => {
+                for input in value("--listen")?.split(',') {
+                    options.listen.push(channel(input, "--listen")?);
+                }
+            }
+            "--periods" => options.periods = number(value("--periods")?, "--periods", 2, 8)?,
+            "--warm-up" => options.warm_up_s = number(value("--warm-up")?, "--warm-up", 0, 3600)?,
+            "--each-second" => options.each_second = true,
+            "--allow-xruns" => options.allow_xruns = true,
             "--rate" => options.rate = number(value("--rate")?, "--rate", 8_000, 768_000)?,
             "--quantum" => {
                 options.frames = Some(number(value("--quantum")?, "--quantum", 8, 65_536)?)
@@ -169,9 +271,11 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                     "stuck-node" => Fault::StuckNode,
                     "stuck-thread" => Fault::StuckThread,
                     "watchdog-off" => Fault::WatchdogOff,
+                    "card-xrun" => Fault::CardXrun,
+                    "card-lost" => Fault::CardLost,
                     other => {
                         return Err(format!(
-                            "unknown fault '{other}': stuck-node, stuck-thread or watchdog-off"
+                            "unknown fault '{other}': stuck-node, stuck-thread, watchdog-off, card-xrun or card-lost"
                         ))
                     }
                 };
@@ -188,7 +292,34 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             other => return Err(format!("unknown option '{other}'")),
         }
     }
+    if options.backend == BackendKind::Alsa {
+        if options.device.is_none() {
+            return Err("--backend alsa needs --device, like hw:USB,0".to_string());
+        }
+        if options.warm_up_s >= options.seconds {
+            return Err("--warm-up must be less than --seconds".to_string());
+        }
+    } else {
+        let sound = options.device.is_some()
+            || options.capture_device.is_some()
+            || options.tone.is_some()
+            || !options.routes.is_empty()
+            || !options.listen.is_empty()
+            || options.each_second
+            || options.periods != 2
+            || options.warm_up_s != 0
+            || options.allow_xruns
+            || matches!(options.fault, Fault::CardXrun | Fault::CardLost);
+        if sound {
+            return Err("the options about sound need --backend alsa".to_string());
+        }
+    }
     Ok(options)
+}
+
+/// A channel as people count them, from 1; returned from 0.
+fn channel(text: &str, name: &str) -> Result<usize, String> {
+    number::<usize>(text, name, 1, 256).map(|channel| channel - 1)
 }
 
 /// A number between `lowest` and `highest`, or a message naming the
@@ -225,10 +356,7 @@ mod tests {
 
     #[test]
     fn run_has_defaults() {
-        assert_eq!(
-            parse(&arguments("run")),
-            Ok(Command::Run(RunOptions::default()))
-        );
+        assert_eq!(parse(&arguments("run")), Ok(Command::Run(Box::default())));
         let options = RunOptions::default();
         assert_eq!(options.rate, 48_000);
         assert_eq!(options.priority, 80);
@@ -261,6 +389,27 @@ mod tests {
     }
 
     #[test]
+    fn run_takes_the_options_about_sound() {
+        let text = "run --backend alsa --device hw:USB,0 --capture-device hw:Loopback,1 --tone 3 \
+                    --tone-hz 440 --tone-level 20 --route 3:5,4:6 --listen 3,5 --each-second --allow-xruns \
+                    --fault card-xrun";
+        let Ok(Command::Run(options)) = parse(&arguments(text)) else {
+            panic!("run was not understood");
+        };
+        assert_eq!(options.backend, BackendKind::Alsa);
+        assert_eq!(options.device.as_deref(), Some("hw:USB,0"));
+        assert_eq!(options.capture_device.as_deref(), Some("hw:Loopback,1"));
+        assert_eq!(options.tone, Some(2));
+        assert_eq!(options.tone_hz, 440);
+        assert_eq!(options.tone_below_db, 20);
+        assert_eq!(options.routes, vec![(2, 4), (3, 5)]);
+        assert_eq!(options.listen, vec![2, 4]);
+        assert!(options.each_second);
+        assert!(options.allow_xruns);
+        assert_eq!(options.fault, Fault::CardXrun);
+    }
+
+    #[test]
     fn mistakes_are_named() {
         for (text, expected) in [
             ("walk", "unknown command"),
@@ -268,7 +417,20 @@ mod tests {
             ("run --rate fast", "not a number"),
             ("run --priority 0", "not between"),
             ("run --priority 95", "not between"),
-            ("run --backend alsa", "unknown back end"),
+            ("run --backend jack", "unknown back end"),
+            ("run --backend alsa", "needs --device"),
+            ("run --tone 3", "need --backend alsa"),
+            ("run --fault card-lost", "need --backend alsa"),
+            ("run --backend alsa --device hw:0 --tone 0", "not between"),
+            ("run --backend alsa --device hw:0 --route 3", "not IN:OUT"),
+            (
+                "run --backend alsa --device hw:0 --route 3:x",
+                "not a number",
+            ),
+            (
+                "run --backend alsa --device hw:0 --warm-up 10",
+                "less than --seconds",
+            ),
             ("run --fault explode", "unknown fault"),
             ("run --loud", "unknown option"),
         ] {

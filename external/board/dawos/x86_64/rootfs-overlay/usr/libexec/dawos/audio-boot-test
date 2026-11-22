@@ -1,0 +1,42 @@
+#!/bin/sh
+# dawOS (dev variant): run the audio test on the software sound card at
+# boot, for "make qemu-audio-test".
+#
+# The marker file is removed before anything else, so the test runs once.
+# The outcome is printed on the console as one line the test reads:
+#
+#   DAWOS-AUDIO-TEST result=pass passed=4 cases=4
+#   DAWOS-AUDIO-TEST result=fail passed=2 cases=4
+
+set -u
+
+marker=/var/lib/dawos/test/audio-test
+
+# shellcheck source=/dev/null
+. /etc/os-release
+[ "${VARIANT_ID:-}" = dev ] || exit 0
+[ -e "${marker}" ] || exit 0
+rm -f "${marker}"
+
+if output=$(dawos-audio-test loopback boot 2>&1); then
+	result=pass
+else
+	result=fail
+fi
+counts=$(echo "${output}" | sed -n 's/^verdict: [A-Z]* (\([0-9]*\) of \([0-9]*\) cases)$/passed=\1 cases=\2/p')
+report="${output}
+DAWOS-AUDIO-TEST result=${result} ${counts:-passed=0 cases=0}"
+echo "${report}"
+
+# The test that started this reads the serial port of the virtual
+# machine, which is the console only in the generic profile: in the
+# others the report is written to the serial port as well (as the boot
+# report does). Never on a real machine.
+case " $(cat /proc/cmdline) " in
+*" console=ttyS0"*) ;;
+*)
+	if [ -w /dev/ttyS0 ] && systemd-detect-virt --quiet --vm 2> /dev/null; then
+		echo "${report}" > /dev/ttyS0 2> /dev/null || true
+	fi
+	;;
+esac

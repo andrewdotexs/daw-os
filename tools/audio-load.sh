@@ -9,6 +9,13 @@
 #   ssh "root@${H}" sh -s -- start [OPTIONS]  < tools/audio-load.sh
 #   ssh "root@${H}" sh -s -- status           < tools/audio-load.sh
 #   ssh "root@${H}" sh -s -- stop             < tools/audio-load.sh
+#   ssh "root@${H}" sh -s -- card [N]         < tools/audio-load.sh > FILE
+#
+# "card" reads what step P1.4 needs before the engine opens the interface:
+# every mixer control with its value, and, for each sample rate, whether
+# the driver accepts two periods of one quantum (2.667 ms) in mmap access,
+# with the parameters it really sets. It plays silence and records for
+# four seconds per rate: about half a minute in all.
 #
 # Options of start:
 #   --card N        the sound card (default: the first USB one)
@@ -111,6 +118,22 @@ irq_count() {
 			found = 1
 		}
 		END { if (!found) print 0 }' /proc/interrupts
+}
+
+# Largest number of channels of a direction (Playback or Capture) of card
+# $1 among the settings that offer the rate $3.
+channels_at() {
+	awk -v direction="$2:" -v rate="$3" '
+		$1 == "Playback:" || $1 == "Capture:" { inside = ($1 == direction) }
+		inside && $1 == "Channels:" { channels = $2 + 0 }
+		inside && $1 == "Rates:" {
+			for (i = 2; i <= NF; i++) {
+				value = $i
+				sub(/,/, "", value)
+				if (value == rate && channels > best) best = channels
+			}
+		}
+		END { if (best > 0) print best }' "/proc/asound/card$1/stream0" 2> /dev/null
 }
 
 choose_card() {
@@ -261,6 +284,89 @@ do_start() {
 	do_status
 }
 
+# One trial of "card": card $1 at rate $2 with a quantum of $3 frames, on
+# the CPUs $4. Playback and capture run together for four seconds, with
+# two periods of one quantum and mmap access, as the engine will ask.
+card_trial() {
+	play_channels=$(channels_at "$1" Playback "$2")
+	record_channels=$(channels_at "$1" Capture "$2")
+	echo
+	echo "-- rate $2, quantum $3, buffer $(($3 * 2)): playback ${play_channels:-no} channels, capture ${record_channels:-no} channels --"
+	if [ -z "${play_channels}" ] || [ -z "${record_channels}" ]; then
+		echo "result: the interface does not offer this rate in both directions"
+		return 0
+	fi
+	shape=$(stream_shape "$1" Playback)
+	format=${shape% *}
+	chrt -f 60 taskset -c "$4" \
+		arecord -M -v -D "hw:$1,0" -t raw -f "${format}" -c "${record_channels}" -r "$2" \
+		--period-size="$3" --buffer-size="$(($3 * 2))" -d 4 /dev/null > "${STATE}/card-record.txt" 2>&1 &
+	record_pid=$!
+	chrt -f 60 taskset -c "$4" \
+		aplay -M -v -D "hw:$1,0" -t raw -f "${format}" -c "${play_channels}" -r "$2" \
+		--period-size="$3" --buffer-size="$(($3 * 2))" -d 4 /dev/zero > "${STATE}/card-play.txt" 2>&1 &
+	play_pid=$!
+	sleep 2
+	echo "while running, as the kernel reports it:"
+	for stream in pcm0p pcm0c; do
+		for file in hw_params sw_params; do
+			echo "  ${stream} ${file}: $(tr '\n' ' ' < "/proc/asound/card$1/${stream}/sub0/${file}" 2> /dev/null)"
+		done
+	done
+	awk '
+		$1 == "Playback:" || $1 == "Capture:" { name = $1 }
+		/Status:/ { running = /Running/ }
+		/^  Interface / { running = 0 }
+		running { print "  " name $0 }' "/proc/asound/card$1/stream0" 2> /dev/null
+	wait "${play_pid}"
+	play_status=$?
+	wait "${record_pid}"
+	record_status=$?
+	echo "playback: exit status ${play_status}, underruns reported $(grep -c -i 'underrun' "${STATE}/card-play.txt")"
+	echo "capture: exit status ${record_status}, overruns reported $(grep -c -i 'overrun' "${STATE}/card-record.txt")"
+	echo "playback, as aplay reports it:"
+	sed 's/^/  /' "${STATE}/card-play.txt"
+	echo "capture, as arecord reports it:"
+	sed 's/^/  /' "${STATE}/card-record.txt"
+	rm -f "${STATE}/card-play.txt" "${STATE}/card-record.txt"
+	# The interface needs a moment to change its clock.
+	sleep 1
+}
+
+do_card() {
+	[ "$(id -u)" = 0 ] || die "must run as root"
+	choose_card "${1:-}"
+	if systemctl --quiet is-active "${PLAY_UNIT}" 2> /dev/null || systemctl --quiet is-active "${RECORD_UNIT}" 2> /dev/null; then
+		die "the audio load is running: stop it first"
+	fi
+	cpus=$(domain system)
+	[ -n "${cpus}" ] || die "no 'system' domain in ${TOPOLOGY}: is the boot profile applied?"
+	mkdir -p "${STATE}"
+
+	echo "== when and what =="
+	date -u '+read_utc: %Y-%m-%dT%H:%M:%SZ'
+	echo "uptime_s: $(cut -d. -f1 /proc/uptime)"
+	echo "kernel: $(uname -r)"
+	echo "alsa_utils: $(aplay --version 2>&1 | head -n 1)"
+	echo "alsa_lib: $(find /usr/lib -maxdepth 1 -name 'libasound.so.*' -type f 2> /dev/null | sed 's|.*/||' | tr '\n' ' ')"
+	echo "card: ${card} ($(read_file "/proc/asound/card${card}/id"), usb_id $(read_file "/proc/asound/card${card}/usbid"))"
+	echo "trials_on_cpus: ${cpus} (real-time priority 60)"
+
+	echo
+	echo "== mixer controls, with their values (amixer contents) =="
+	amixer -c "${card}" contents 2>&1
+
+	echo
+	echo "== trials: two periods of one quantum, mmap access, four seconds each =="
+	for pair in 44100:128 48000:128 88200:256 96000:256 176400:512 192000:512; do
+		card_trial "${card}" "${pair%:*}" "${pair#*:}" "${cpus}"
+	done
+
+	echo
+	echo "== kernel messages about sound and USB in the last minute =="
+	journalctl -k --since=-1min --no-pager -o cat 2> /dev/null | grep -i -E 'usb|snd|alsa|scarlett|xhci' || echo "(none)"
+}
+
 # The lines of one stream that say how it runs.
 stream_status() {
 	directory=/proc/asound/card$1/pcm0$2/sub0
@@ -312,8 +418,9 @@ start)
 	;;
 status) do_status ;;
 stop) do_stop ;;
+card) do_card "${2:-}" ;;
 *)
-	echo "usage: ${PROG} probe | start [--card N] [--rate HZ] [--period N] [--buffer N] [--no-record] [--no-play] | status | stop" >&2
+	echo "usage: ${PROG} probe | start [--card N] [--rate HZ] [--period N] [--buffer N] [--no-record] [--no-play] | status | stop | card [N]" >&2
 	exit 1
 	;;
 esac

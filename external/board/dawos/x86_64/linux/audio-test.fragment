@@ -1,0 +1,12 @@
+# A sound card made of software, for the tests of the audio engine.
+#
+# snd-aloop is a "cable": what is played on one of its two devices is
+# recorded from the other. The ALSA back end of the engine is tried on
+# it in a virtual machine, where there is no audio interface (step P1.4;
+# choice of the user, 21 November 2026).
+#
+# A module, never loaded by itself: no hardware asks for it. On a real
+# machine it is loaded only by the test that needs it. Everything it
+# relies on (PCM, timers) is already built into the kernel, so adding it
+# changes no code of the kernel image.
+CONFIG_SND_ALOOP=m

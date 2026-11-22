@@ -1,0 +1,17 @@
+# dawOS (dev variant): run the audio test on the software sound card at
+# boot when a marker file asks for it. Used by "make qemu-audio-test",
+# which cannot type commands into the machine it boots; see
+# /usr/libexec/dawos/audio-boot-test.
+[Unit]
+Description=dawOS audio test at boot (the engine on a software sound card)
+ConditionPathExists=/var/lib/dawos/test/audio-test
+After=dawos-tune.service multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/dawos/audio-boot-test
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target

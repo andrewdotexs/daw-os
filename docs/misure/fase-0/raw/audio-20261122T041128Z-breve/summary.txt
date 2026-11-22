@@ -1,0 +1,9 @@
+case               result figures
+plain-48000        FAIL  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.24 max 4.33 us; compute avg 2.88 max 3.95 us; input 3 tone - dB share 0.0000; input 5 tone - dB share 0.0000; dawos-engine: the sound card did not do what was asked
+plain-96000        FAIL  xruns 2, recoveries 2 (longest 1.59 ms), lost 0; wake-up avg 3.18 max 4.48 us; compute avg 4.23 max 5.18 us; input 3 tone - dB share 0.0000; input 5 tone - dB share 0.0000; dawos-engine: the sound card did not do what was asked
+plain-192000       FAIL  xruns 91, recoveries 91 (longest 1.81 ms), lost 0; wake-up avg 3.21 max 8.65 us; compute avg 6.30 max 7.89 us; input 3 tone - dB share 0.0000; input 5 tone - dB share 0.0000; dawos-engine: the sound card did not do what was asked
+card-xrun-48000    FAIL  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.17 max 6.29 us; compute avg 2.85 max 3.77 us; input 3 tone - dB share 0.0000; input 5 tone - dB share 0.0000; dawos-engine: the sound card did not do what was asked
+stuck-node-48000   FAIL  xruns 1, recoveries 1 (longest 0.18 ms), lost 0; wake-up avg 1.92 max 3.34 us; compute avg 1.83 max 2.76 us; input 3 tone -87.8 dB share 0.0237; input 5 tone -86.0 dB share 0.0358; k04 PASS; dawos-engine: the sound card did not do what was asked
+
+verdict: FAIL (0 of 5 cases)
+finished_utc: 2026-11-22T04:12:54Z

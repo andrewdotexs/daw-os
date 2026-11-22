@@ -7,14 +7,18 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
-use dawos_audio_io::{Format, NullBackend};
+use dawos_audio_io::{
+    keeper_loop, AlsaBackend, AlsaShared, Backend, CardConfig, CardInfo, Format, NullBackend,
+    XrunView,
+};
 use dawos_rt::cpu::{self, Policy};
 use dawos_rt::slot::Slot;
 use dawos_rt::{clock, topology};
 
-use crate::cli::{Realtime, RunOptions};
+use crate::cli::{BackendKind, Realtime, RunOptions};
 use crate::live::{live_loop, End, Shared, ThreadReport};
 use crate::notify::Notifier;
+use crate::patch::{Heard, Patch, PatchConfig};
 use crate::plan::{Fault, Plan};
 use crate::watchdog::{watchdog_loop, Event, Spare, Watch, STUCK_PERIODS};
 
@@ -49,6 +53,48 @@ pub struct KernelProbe {
     pub readable: bool,
 }
 
+/// What happened to the sound card during a run, in plain numbers.
+pub struct CardOutcome {
+    /// What the driver accepted.
+    pub info: CardInfo,
+    pub card_cycles: u64,
+    pub silent_cycles: u64,
+    pub xruns: u64,
+    /// Those of the xruns that fell in the warm-up.
+    pub early_xruns: u64,
+    pub recoveries: u64,
+    pub longest_recovery_ms: f64,
+    pub stalls: u64,
+    pub lost: u64,
+    pub back: u64,
+    pub reopen_attempts: u64,
+    pub paused_restarts: u64,
+    pub short_writes: u64,
+    pub bad_stamps: u64,
+    /// Error number that made the card be given up, the last time.
+    pub last_error: i32,
+    /// Whether a card was in use when the run ended.
+    pub in_use_at_the_end: bool,
+    /// What was heard on the inputs listened to.
+    pub heard: Vec<Heard>,
+    /// The first xruns: seconds from the start, and how the streams
+    /// stood.
+    pub xrun_log: Vec<(f64, XrunView)>,
+}
+
+/// The tone counts as heard above this level, in dB relative to full
+/// scale; and as clean when it is at least this share of the power.
+const TONE_HEARD_DB: f64 = -60.0;
+const TONE_CLEAN_SHARE: f64 = 0.9;
+
+/// The largest slip of the signal a run may have and still pass, in
+/// samples. The Scarlett 18i20 of the second generation slips by one or
+/// two samples now and then, with any buffer and in either mode of the
+/// USB driver: an open point (A-58), counted and reported, not a failure
+/// of the engine. Anything larger is. The quarter of a sample on top is
+/// the error of the measure on a slip that falls across two quanta.
+const SLIP_LIMIT_SAMPLES: f64 = 2.25;
+
 /// What a run produced.
 pub struct Outcome {
     pub format: Format,
@@ -68,6 +114,8 @@ pub struct Outcome {
     pub systemd: bool,
     /// The kernel probe, when asked for.
     pub kernel_probe: Option<KernelProbe>,
+    /// The sound card, with the back end that has one.
+    pub card: Option<CardOutcome>,
 }
 
 /// One intervention of the watchdog, with times in milliseconds from the
@@ -88,16 +136,27 @@ pub struct EventView {
 pub fn run(options: &RunOptions) -> Result<(), String> {
     let outcome = execute(options)?;
     print(&outcome);
+    let mut failures = Vec::new();
     match verdict(&outcome) {
-        Verdict::NotAsked => Ok(()),
-        Verdict::Pass(text) => {
-            println!("k04: PASS ({text})");
-            Ok(())
-        }
+        Verdict::NotAsked => {}
+        Verdict::Pass(text) => println!("k04: PASS ({text})"),
         Verdict::Fail(text) => {
             println!("k04: FAIL ({text})");
-            Err("the fault was not handled as ADR 0023 requires".to_string())
+            failures.push("the fault was not handled as ADR 0023 requires");
         }
+    }
+    match audio_verdict(&outcome) {
+        Verdict::NotAsked => {}
+        Verdict::Pass(text) => println!("audio: PASS ({text})"),
+        Verdict::Fail(text) => {
+            println!("audio: FAIL ({text})");
+            failures.push("the sound card did not do what was asked");
+        }
+    }
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        Err(failures.join("; "))
     }
 }
 
@@ -118,6 +177,8 @@ fn cpus(option: Option<&str>, domain: &str) -> Result<Vec<usize>, String> {
 struct Common {
     shared: Arc<Shared>,
     spares: Arc<Vec<Spare>>,
+    /// The sound card, when the back end is ALSA.
+    card: Option<Arc<AlsaShared>>,
     format: Format,
     start_ns: u64,
     live_cpus: Vec<usize>,
@@ -170,7 +231,17 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         cpus(options.live.as_deref(), "live").map_err(|error| format!("--live: {error}"))?;
     let system_cpus =
         cpus(options.system.as_deref(), "system").map_err(|error| format!("--system: {error}"))?;
-    let threads = options.threads.unwrap_or(live_cpus.len().max(1));
+    let with_card = options.backend == BackendKind::Alsa;
+    // One live thread on a sound card yet: how the others wait for the
+    // card is decided with the measurements of step P1.6.
+    let threads = options
+        .threads
+        .unwrap_or(if with_card { 1 } else { live_cpus.len().max(1) });
+    if with_card && threads > 1 {
+        return Err(
+            "--backend alsa runs one live thread yet: leave --threads out, or say 1".to_string(),
+        );
+    }
     if !live_cpus.is_empty() && threads > live_cpus.len() {
         return Err(format!(
             "{threads} live threads asked for, and {} live CPUs: one thread per CPU at most",
@@ -195,6 +266,43 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         Err(_) => false,
     };
 
+    // ---- The sound card: opened here, before any thread exists. It is
+    // slow work, and what it finds decides whether the run can start.
+    let card = match (&options.device, with_card) {
+        (Some(device), true) => Some(AlsaShared::open(CardConfig {
+            capture: options
+                .capture_device
+                .clone()
+                .unwrap_or_else(|| device.clone()),
+            playback: device.clone(),
+            format,
+            periods: options.periods,
+        })?),
+        _ => None,
+    };
+    let patch = match &card {
+        Some(card) => Some(Mutex::new(Patch::new(
+            &PatchConfig {
+                tone_output: options.tone,
+                tone_hz: f64::from(options.tone_hz),
+                tone_db: -f64::from(options.tone_below_db),
+                routes: options.routes.clone(),
+                listen: options.listen.clone(),
+                keep_seconds: if options.each_second {
+                    options.seconds.min(3600) as usize
+                } else {
+                    0
+                },
+                warm_up_seconds: u32::try_from(options.warm_up_s).unwrap_or(u32::MAX),
+            },
+            card.info().inputs,
+            card.info().outputs,
+            format.frames as usize,
+            format.rate,
+        )?)),
+        None => None,
+    };
+
     let fault_cycle = options.fault_after_s * 1_000_000_000 / period_ns;
     let shared = Arc::new(Shared {
         slots: (0..threads).map(|_| Slot::new()).collect(),
@@ -212,6 +320,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         fault: options.fault,
         fault_thread: options.fault_thread,
         fault_cycle,
+        patch,
     });
     let spares: Arc<Vec<Spare>> = Arc::new((0..threads).map(|_| Spare::default()).collect());
     let events: Arc<Vec<Event>> = Arc::new((0..MAX_EVENTS).map(|_| Event::default()).collect());
@@ -220,9 +329,14 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     // The periods start a little from now: time for every thread to be
     // in place and waiting.
     let start_ns = clock::now() + 300_000_000;
+    if let Some(card) = &card {
+        card.set_start(start_ns);
+        card.set_warm_up(options.warm_up_s * 1_000_000_000);
+    }
     let common = Arc::new(Common {
         shared: Arc::clone(&shared),
         spares: Arc::clone(&spares),
+        card: card.clone(),
         format,
         start_ns,
         live_cpus: live_cpus.clone(),
@@ -282,6 +396,22 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         })?
     };
 
+    // ---- The keeper of the card: on the system CPUs, at normal
+    // priority. It closes a card that was given up and opens it again.
+    let keeper = match &card {
+        Some(card) => {
+            let card = Arc::clone(card);
+            let common = Arc::clone(&common);
+            Some(spawn("card-keeper".to_string(), move || {
+                if !common.system_cpus.is_empty() {
+                    let _ = cpu::set_affinity(0, &common.system_cpus);
+                }
+                keeper_loop(&card);
+            })?)
+        }
+        None => None,
+    };
+
     // ---- The kernel probe, when asked for: on the system CPUs, at
     // normal priority.
     let probe = if options.kernel_probe {
@@ -307,6 +437,9 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     let late = common.ready.load(Ordering::Acquire) < expected;
     if !errors.is_empty() || late {
         shared.stop.store(true, Ordering::Release);
+        if let Some(card) = &card {
+            card.stop();
+        }
         for spare in spares.iter() {
             spare.gate.open();
         }
@@ -354,6 +487,43 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         let _ = watchdog.join();
     }
     let kernel_probe = probe.and_then(|handle| handle.join().ok());
+    let card = card.map(|card| {
+        let in_use_at_the_end = card.has_card();
+        card.stop();
+        if let Some(keeper) = keeper {
+            let _ = keeper.join();
+        }
+        let stats = card.stats();
+        let count = |counter: &AtomicU64| counter.load(Ordering::Acquire);
+        CardOutcome {
+            info: card.info().clone(),
+            card_cycles: count(&stats.card_cycles),
+            silent_cycles: count(&stats.silent_cycles),
+            xruns: count(&stats.xruns),
+            early_xruns: count(&stats.early_xruns),
+            recoveries: count(&stats.recoveries),
+            longest_recovery_ms: count(&stats.longest_recovery_ns) as f64 / 1e6,
+            stalls: count(&stats.stalls),
+            lost: count(&stats.lost),
+            back: count(&stats.back),
+            reopen_attempts: count(&stats.reopen_attempts),
+            paused_restarts: count(&stats.paused_restarts),
+            short_writes: count(&stats.short_writes),
+            bad_stamps: count(&stats.bad_stamps),
+            last_error: stats.last_error.load(Ordering::Acquire),
+            in_use_at_the_end,
+            xrun_log: card
+                .xrun_log()
+                .into_iter()
+                .map(|(since, view)| (since as f64 / 1e9, view))
+                .collect(),
+            heard: shared
+                .patch
+                .as_ref()
+                .and_then(|patch| patch.try_lock().ok().map(|patch| patch.heard()))
+                .unwrap_or_default(),
+        }
+    });
 
     let events = events
         .iter()
@@ -397,6 +567,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         watchdog_rounds: heartbeat.load(Ordering::Acquire),
         systemd: notifier.active(),
         kernel_probe,
+        card,
     })
 }
 
@@ -460,9 +631,26 @@ fn live_thread(common: &Common, index: usize) -> ThreadReport {
     common.take_priority(common.priority, &format!("live thread {index}"));
     let slot = &common.shared.slots[index];
     slot.take(cpu::thread_id());
-    let mut backend = NullBackend::with_start(common.format, common.start_ns);
+    let mut backend = backend(common, index, false);
     common.ready.fetch_add(1, Ordering::AcqRel);
-    live_loop(&common.shared, index, slot.generation(), None, &mut backend)
+    live_loop(
+        &common.shared,
+        index,
+        slot.generation(),
+        None,
+        backend.as_mut(),
+    )
+}
+
+/// The back end of the thread that holds a slot: the sound card for the
+/// first slot when there is one, a timer otherwise. `joining`: the
+/// periods have already begun.
+fn backend(common: &Common, slot: usize, joining: bool) -> Box<dyn Backend> {
+    match &common.card {
+        Some(card) if slot == 0 => Box::new(AlsaBackend::new(Arc::clone(card))),
+        _ if joining => Box::new(NullBackend::joining(common.format, common.start_ns)),
+        _ => Box::new(NullBackend::with_start(common.format, common.start_ns)),
+    }
 }
 
 /// A spare thread: parked on the system CPUs until the watchdog opens its
@@ -486,13 +674,13 @@ fn spare_thread(common: &Common, index: usize) -> Option<ThreadReport> {
     let slot_index = spare.slot.load(Ordering::Acquire);
     let generation = spare.generation.load(Ordering::Acquire);
     common.shared.slots[slot_index].take(cpu::thread_id());
-    let mut backend = NullBackend::joining(common.format, common.start_ns);
+    let mut backend = backend(common, slot_index, true);
     Some(live_loop(
         &common.shared,
         slot_index,
         generation,
         Some(&spare.first_cycle_ns),
-        &mut backend,
+        backend.as_mut(),
     ))
 }
 
@@ -509,7 +697,8 @@ fn verdict(outcome: &Outcome) -> Verdict {
     // millisecond of slack: 11 ms at 2.667 ms.
     let detect_limit_ms = (STUCK_PERIODS + 1) as f64 * period_ms + 0.5;
     match outcome.options.fault {
-        Fault::None => Verdict::NotAsked,
+        // The faults of the card are judged with the sound.
+        Fault::None | Fault::CardXrun | Fault::CardLost => Verdict::NotAsked,
         Fault::WatchdogOff => {
             if outcome.events.is_empty() {
                 Verdict::Pass(
@@ -556,6 +745,114 @@ fn verdict(outcome: &Outcome) -> Verdict {
     }
 }
 
+/// The answer to "did the sound card do what was asked?".
+fn audio_verdict(outcome: &Outcome) -> Verdict {
+    let Some(card) = &outcome.card else {
+        return Verdict::NotAsked;
+    };
+    let options = &outcome.options;
+    let mut good = Vec::new();
+    let mut bad = Vec::new();
+
+    if !card.in_use_at_the_end || card.back != card.lost {
+        bad.push("the card was not in use at the end".to_string());
+    }
+    if card.recoveries + card.lost < card.xruns {
+        bad.push(format!(
+            "{} xruns, {} recovered",
+            card.xruns, card.recoveries
+        ));
+    }
+    match options.fault {
+        Fault::CardXrun => {
+            if card.xruns >= 1 && card.recoveries == card.xruns && card.lost == 0 {
+                good.push(format!(
+                    "the xrun asked for was recovered in {:.2} ms",
+                    card.longest_recovery_ms
+                ));
+            } else {
+                bad.push("the xrun asked for did not happen, or was not recovered".to_string());
+            }
+        }
+        Fault::CardLost => {
+            if card.lost >= 1 && card.back == card.lost {
+                good.push("the card taken away came back".to_string());
+            } else {
+                bad.push("the card taken away did not come back".to_string());
+            }
+        }
+        // A thread stuck for three periods and more is an xrun by
+        // design: what matters is that the card came back.
+        Fault::StuckNode | Fault::StuckThread => {
+            good.push(format!("{} xruns after the stuck thread", card.xruns));
+        }
+        _ if options.allow_xruns => good.push(format!("{} xruns, allowed", card.xruns)),
+        _ => {
+            // The xruns of the warm-up are those of an interface that is
+            // settling: reported, not judged.
+            let judged = card.xruns - card.early_xruns.min(card.xruns);
+            if judged == 0 && card.stalls == 0 && card.lost == 0 && card.short_writes == 0 {
+                good.push(if card.early_xruns == 0 {
+                    "no xrun".to_string()
+                } else {
+                    format!("no xrun after the warm-up ({} in it)", card.early_xruns)
+                });
+            } else {
+                bad.push(format!(
+                    "{judged} xruns after the warm-up, {} waits without a period, card lost {} times, {} short writes",
+                    card.stalls, card.lost, card.short_writes
+                ));
+            }
+        }
+    }
+
+    // With a tone, every input listened to must carry it; in every
+    // second, unless the run was disturbed on purpose.
+    let disturbed =
+        options.allow_xruns || !matches!(options.fault, Fault::None | Fault::WatchdogOff);
+    if options.tone.is_some() {
+        for heard in &card.heard {
+            let input = heard.channel + 1;
+            // A slip is a fault of its own kind: no xrun, and the signal
+            // is not what was played. Judged only in a run that was not
+            // disturbed on purpose, and said first: the second it falls
+            // in is not a clean one, and that is the same fault.
+            if !disturbed && heard.largest_slip > SLIP_LIMIT_SAMPLES {
+                bad.push(format!(
+                    "a slip of {:.0} samples on input {input}",
+                    heard.largest_slip
+                ));
+                continue;
+            }
+            let found = if disturbed {
+                heard.seconds > 0 && heard.tone_max_db >= TONE_HEARD_DB
+            } else {
+                heard.seconds > 0
+                    && heard.tone_min_db >= TONE_HEARD_DB
+                    && heard.share_min >= TONE_CLEAN_SHARE
+            };
+            if found {
+                good.push(format!("the tone is on input {input}"));
+                if !disturbed && heard.slip_count > 0 {
+                    good.push(format!(
+                        "{} slips of at most {:.0} samples on input {input} (open point A-58)",
+                        heard.slip_count,
+                        heard.largest_slip.round()
+                    ));
+                }
+            } else {
+                bad.push(format!("the tone is not on input {input}"));
+            }
+        }
+    }
+
+    if bad.is_empty() {
+        Verdict::Pass(good.join("; "))
+    } else {
+        Verdict::Fail(bad.join("; "))
+    }
+}
+
 fn us(ns: Option<u64>) -> String {
     ns.map_or_else(
         || "-".to_string(),
@@ -577,7 +874,14 @@ fn list(cpus: &[usize]) -> String {
 fn print(outcome: &Outcome) {
     let options = &outcome.options;
     println!("dawos-engine {}", env!("CARGO_PKG_VERSION"));
-    println!("backend: null");
+    println!(
+        "backend: {}",
+        if outcome.card.is_some() {
+            "alsa"
+        } else {
+            "null"
+        }
+    );
     println!("rate_hz: {}", outcome.format.rate);
     println!("quantum_frames: {}", outcome.format.frames);
     println!(
@@ -623,6 +927,8 @@ fn print(outcome: &Outcome) {
                 "watchdog-off, then stuck-node on thread {} after {} s",
                 options.fault_thread, options.fault_after_s
             ),
+            Fault::CardXrun => format!("card-xrun after {} s", options.fault_after_s),
+            Fault::CardLost => format!("card-lost after {} s", options.fault_after_s),
         }
     );
     println!("watchdog_rounds: {}", outcome.watchdog_rounds);
@@ -691,6 +997,10 @@ fn print(outcome: &Outcome) {
         );
     }
 
+    if let Some(card) = &outcome.card {
+        print_card(card, options);
+    }
+
     if !outcome.events.is_empty() {
         println!();
         println!("watchdog events (milliseconds from the start of the compute phase the thread never left):");
@@ -707,6 +1017,174 @@ fn print(outcome: &Outcome) {
             event.spare_ms.map_or_else(|| "never".to_string(), |ms| format!("{ms:.2}")),
             if event.demote_errors == 0 { "" } else { " (moving the thread failed)" },
         );
+    }
+}
+
+fn decibels(value: f64) -> String {
+    if value.is_finite() {
+        format!("{value:.1}")
+    } else {
+        "-".to_string()
+    }
+}
+
+fn print_card(card: &CardOutcome, options: &RunOptions) {
+    let info = &card.info;
+    println!();
+    println!("card_capture: {}", info.capture);
+    println!("card_playback: {}", info.playback);
+    println!(
+        "card_format: S32_LE, {} Hz, {} inputs, {} outputs",
+        info.rate, info.inputs, info.outputs
+    );
+    println!(
+        "card_period_frames: {} (buffer: capture {}, playback {})",
+        info.period, info.capture_buffer, info.playback_buffer
+    );
+    println!("card_linked: {}", if info.linked { "yes" } else { "no" });
+    println!(
+        "card_period_stamps: {}",
+        if info.timestamps {
+            "yes (the wake-up delay is counted from the stamp of the period)"
+        } else {
+            "no (no wake-up delay)"
+        }
+    );
+    println!(
+        "card_cycles: {} with the card, {} without",
+        card.card_cycles, card.silent_cycles
+    );
+    println!("warm_up_seconds: {}", options.warm_up_s);
+    println!(
+        "card_xruns: {} ({} of them in the warm-up)",
+        card.xruns, card.early_xruns
+    );
+    println!(
+        "card_recoveries: {} (longest {:.2} ms)",
+        card.recoveries, card.longest_recovery_ms
+    );
+    println!(
+        "card_restarts_after_a_pause: {} (the start before had given no input)",
+        card.paused_restarts
+    );
+    println!("card_waits_without_period: {}", card.stalls);
+    println!(
+        "card_lost: {} (last error number {}), back {}, attempts to open it again {}",
+        card.lost, card.last_error, card.back, card.reopen_attempts
+    );
+    for (index, (second, view)) in card.xrun_log.iter().enumerate() {
+        println!(
+            "card_xrun_{}: at {:.3} s; capture {}, {} frames to read (most ever {}); playback {}, {} frames of room (most ever {}), delay {}",
+            index + 1,
+            second,
+            view.capture_state,
+            view.capture_avail,
+            view.capture_avail_max,
+            view.playback_state,
+            view.playback_avail,
+            view.playback_avail_max,
+            view.playback_delay
+        );
+    }
+    println!("card_short_writes: {}", card.short_writes);
+    println!("card_stamps_not_believed: {}", card.bad_stamps);
+    match options.tone {
+        Some(output) => println!(
+            "tone: output {}, {} Hz, peak {} dB below full scale",
+            output + 1,
+            options.tone_hz,
+            options.tone_below_db
+        ),
+        None => println!("tone: none"),
+    }
+    println!(
+        "routes: {}",
+        if options.routes.is_empty() {
+            "none".to_string()
+        } else {
+            options
+                .routes
+                .iter()
+                .map(|(input, output)| format!("{}:{}", input + 1, output + 1))
+                .collect::<Vec<_>>()
+                .join(",")
+        }
+    );
+    if card.heard.is_empty() {
+        return;
+    }
+    println!();
+    println!(
+        "inputs listened to (dB relative to full scale; the first {} s and the last, incomplete second left out):",
+        options.warm_up_s.max(1)
+    );
+    println!(
+        "{:<6} {:>8} {:>8} {:>10} {:>10} {:>9} {:>9} {:>10}",
+        "input", "seconds", "peak", "level_min", "level_max", "tone_min", "tone_max", "share_min"
+    );
+    for heard in &card.heard {
+        println!(
+            "{:<6} {:>8} {:>8} {:>10} {:>10} {:>9} {:>9} {:>10}",
+            heard.channel + 1,
+            heard.seconds,
+            decibels(heard.peak_db),
+            decibels(heard.level_min_db),
+            decibels(heard.level_max_db),
+            decibels(heard.tone_min_db),
+            decibels(heard.tone_max_db),
+            if heard.seconds == 0 {
+                "-".to_string()
+            } else {
+                format!("{:.4}", heard.share_min)
+            },
+        );
+    }
+    for heard in &card.heard {
+        println!(
+            "slips_on_input_{}: {} (largest {:.2} samples); in the warm-up {} (largest {:.2})",
+            heard.channel + 1,
+            heard.slip_count,
+            heard.largest_slip,
+            heard.early_slip_count,
+            heard.largest_early_slip
+        );
+        for slip in &heard.slips {
+            println!(
+                "  slip on input {} at {:.3} s: {:+.2} samples",
+                heard.channel + 1,
+                slip.second,
+                slip.samples
+            );
+        }
+    }
+    if card.heard.iter().all(|heard| heard.each_second.is_empty()) {
+        return;
+    }
+    println!();
+    println!("second by second (the warm-up is not in the table above):");
+    println!(
+        "{:<6} {:>6} {:>8} {:>8} {:>8}",
+        "second", "input", "level", "tone", "share"
+    );
+    let seconds = card
+        .heard
+        .iter()
+        .map(|heard| heard.each_second.len())
+        .max()
+        .unwrap_or(0);
+    for second in 0..seconds {
+        for heard in &card.heard {
+            if let Some(&(level, tone, share)) = heard.each_second.get(second) {
+                println!(
+                    "{:<6} {:>6} {:>8} {:>8} {:>8.4}",
+                    second + 1,
+                    heard.channel + 1,
+                    decibels(level),
+                    decibels(tone),
+                    share
+                );
+            }
+        }
     }
 }
 
@@ -729,7 +1207,9 @@ mod tests {
     // on whatever machine runs the tests. Times are not judged here.
     fn options(fault: Fault) -> RunOptions {
         RunOptions {
-            frames: Some(48),
+            // A period of 5 ms: without a real-time priority a shorter one
+            // makes the tests depend on how quiet the machine is.
+            frames: Some(240),
             seconds: 2,
             threads: Some(2),
             realtime: Realtime::Off,
@@ -753,11 +1233,11 @@ mod tests {
             assert_eq!(report.end, End::Stopped);
             let cycles = report.cycles + report.missed;
             assert!(
-                (1_900..=2_010).contains(&cycles),
+                (380..=402).contains(&cycles),
                 "{cycles} cycles in two seconds"
             );
         }
-        assert!(outcome.watchdog_rounds > 1_000);
+        assert!(outcome.watchdog_rounds > 200);
     }
 
     #[test]
@@ -777,14 +1257,14 @@ mod tests {
             .iter()
             .find(|report| report.slot == 0)
             .expect("slot 0");
-        assert!(other.cycles > 1_000);
+        assert!(other.cycles > 200);
         let spare = outcome
             .reports
             .iter()
             .find(|report| report.slot == 1 && report.spare)
             .expect("the spare thread of slot 1");
         assert!(
-            spare.cycles > 500,
+            spare.cycles > 100,
             "{} cycles of the spare thread",
             spare.cycles
         );
@@ -800,7 +1280,7 @@ mod tests {
         assert!(outcome
             .reports
             .iter()
-            .any(|report| report.slot == 1 && report.spare && report.cycles > 300));
+            .any(|report| report.slot == 1 && report.spare && report.cycles > 60));
     }
 
     #[test]
@@ -815,7 +1295,7 @@ mod tests {
         );
         for report in &outcome.reports {
             assert!(
-                report.incomplete > 1_000,
+                report.incomplete > 200,
                 "{} incomplete cycles",
                 report.incomplete
             );

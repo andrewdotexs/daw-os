@@ -1,0 +1,9 @@
+case               result figures
+plain-48000        FAIL  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.29 max 8.71 us; compute avg 2.79 max 4.05 us; input 3 tone -81.8 to -81.8 dB share 0.1114; input 5 tone -81.9 to -81.8 dB share 0.1114; audio: FAIL (the tone is not on input 3; the tone is not on input 5)
+plain-96000        FAIL  xruns 2, recoveries 2 (longest 1.53 ms), lost 0; wake-up avg 3.24 max 4.35 us; compute avg 4.37 max 5.39 us; input 3 tone - to -84.9 dB share 0.0000; input 5 tone - to -84.9 dB share 0.0000; audio: FAIL (2 xruns, 0 waits without a period, card lost 0 times, 0 short writes; the tone is not on input 3; the tone is not on input 5)
+plain-192000       FAIL  xruns 90, recoveries 90 (longest 1.87 ms), lost 0; wake-up avg 3.21 max 3.89 us; compute avg 6.26 max 7.73 us; input 3 tone - to -83.5 dB share 0.0000; input 5 tone - to -83.5 dB share 0.0000; audio: FAIL (90 xruns, 0 waits without a period, card lost 0 times, 0 short writes; the tone is not on input 3; the tone is not on input 5)
+card-xrun-48000    FAIL  xruns 1, recoveries 1 (longest 0.18 ms), lost 0; wake-up avg 3.27 max 3.92 us; compute avg 2.79 max 3.91 us; input 3 tone - to -81.7 dB share 0.0000; input 5 tone - to -81.7 dB share 0.0000; audio: FAIL (the tone is not on input 3; the tone is not on input 5)
+stuck-node-48000   FAIL  xruns 1, recoveries 1 (longest 0.18 ms), lost 0; wake-up avg 1.94 max 3.47 us; compute avg 1.85 max 3.10 us; input 3 tone -81.9 to -81.7 dB share 0.0916; input 5 tone -81.9 to -81.7 dB share 0.0916; k04 PASS; audio: FAIL (the tone is not on input 3; the tone is not on input 5)
+
+verdict: FAIL (0 of 5 cases)
+finished_utc: 2026-11-22T05:03:36Z

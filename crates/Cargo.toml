@@ -4,8 +4,8 @@
 #   dawos-rt        the real-time core: clock, CPU placement, statistics.
 #                   Nothing in it allocates or blocks on a live path, and
 #                   it is the only crate allowed to contain unsafe code.
-#   dawos-audio-io  the audio back ends behind one interface ("null" now,
-#                   "alsa" in step P1.4, "file" in step P1.7).
+#   dawos-audio-io  the audio back ends behind one interface ("null" and
+#                   "alsa"; "file" in step P1.7).
 #   dawos-engine    the process and its command line.
 [workspace]
 resolver = "2"
@@ -23,6 +23,7 @@ publish = false
 # vendor/ (see .cargo/config.toml): nothing is downloaded at build time.
 [workspace.dependencies]
 libc = { version = "=0.2.191", default-features = false }
+alsa = { version = "=0.12.1" }
 dawos-rt = { path = "dawos-rt" }
 dawos-audio-io = { path = "dawos-audio-io" }
 

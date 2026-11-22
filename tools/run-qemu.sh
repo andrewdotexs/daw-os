@@ -29,6 +29,7 @@ new_target=no
 tamper=
 ab_test=
 update_test=
+audio_test=
 profile=
 cpu_model_id=
 secure_boot=yes
@@ -60,6 +61,11 @@ Usage: ${0##*/} [options]
                     unit fails in it. In the last two cases, after three
                     failed attempts the boot loader must fall back to
                     slot A
+  --audio-test      with --test: boot the image and have it run the audio
+                    engine on the software sound card (snd-aloop): a tone
+                    out and back, an xrun, the card taken away, a thread
+                    that never yields. Timing does not count in a virtual
+                    machine; what the engine does about it does
   --update-test WHAT  with --test: boot the image, have it update itself
                     from a local server and reboot. WHAT is 'good': the
                     release of output/release-test must be installed in the
@@ -112,6 +118,7 @@ while (($# > 0)); do
 		ab_test=${2:?--ab-test needs 'good', 'bad' or 'unit'}
 		shift
 		;;
+	--audio-test) audio_test=yes ;;
 	--update-test)
 		update_test=${2:?--update-test needs 'good' or 'tampered'}
 		shift
@@ -428,6 +435,20 @@ if [[ -n ${update_test} ]]; then
 	fi
 fi
 
+# --- Audio test: the engine on the software sound card --------------------------
+if [[ -n ${audio_test} ]]; then
+	[[ ${mode} == test ]] || die "--audio-test needs --test"
+	[[ -z ${ab_test}${tamper}${update_test} ]] || die "--audio-test cannot be combined with --ab-test, --tamper or --update-test"
+	image_copy=${state_dir}/audio.img
+	cp --sparse=always "${image}" "${image_copy}"
+	image=${image_copy}
+	# dawos-audio-boot-test.service runs the test at boot and prints one
+	# line: that line is the report this run waits for.
+	state_write "${image}" "loopback" lib/dawos/test/audio-test
+	report_pattern='DAWOS-AUDIO-TEST result=[a-z]* .*'
+	expectations=("result=pass")
+fi
+
 # --- UEFI firmware ----------------------------------------------------------
 # OVMF comes as two files: read-only code and a variable store. The names
 # differ between distributions; each line is "<code> <vars template>".
@@ -696,6 +717,9 @@ for expected in "${expectations[@]}"; do
 	fi
 done
 if ((failed)); then
+	if [[ -n ${audio_test} ]]; then
+		tr -d '\r' < "${log}" | grep -a -E '^(plain|card-xrun|card-lost|stuck-node) +(PASS|FAIL)' >&2 || true
+	fi
 	echo "(console log: ${log})" >&2
 	exit 1
 fi
@@ -730,6 +754,12 @@ fi
 if [[ ${update_test} == good ]]; then
 	grep -a -m 1 -o 'DAWOS-UPDATE-TEST result=[a-z]*' "${log}" || true
 	echo "PASS: the machine installed the release in its free slot and booted it: ${expectations[*]}"
+	exit 0
+fi
+
+if [[ -n ${audio_test} ]]; then
+	tr -d '\r' < "${log}" | grep -a -E '^(plain|card-xrun|card-lost|stuck-node) +(PASS|FAIL)' || true
+	echo "PASS: the engine played a tone on the software sound card, heard it back, and recovered from every fault"
 	exit 0
 fi
 

@@ -182,6 +182,8 @@ check_profile() {
 		[[ -n $(profile_get "${file}" "${key}") ]] || die "profile ${name}: '${key}' is missing"
 	done
 	[[ $(profile_get "${file}" title) != *[\"\\]* ]] || die "profile ${name}: the title must not contain quotes or backslashes"
+	[[ $(profile_get "${file}" kernel_arguments) =~ ^[A-Za-z0-9_.=,:\ -]*$ ]] ||
+		die "profile ${name}: kernel_arguments may hold letters, digits, spaces and the characters _ . = , : - only"
 	cpus=$(profile_get "${file}" cpus)
 	# The four domains must cover CPUs 0..cpus-1, each exactly once.
 	domains=$(for key in live preemptive system io; do expand_cpus "$(profile_get "${file}" "${key}")"; done | sort -n)
@@ -206,12 +208,17 @@ check_profile() {
 #   irqaffinity           CPUs that take interrupts by default.
 profile_params() {
 	local file=$1
-	printf '%s isolcpus=domain,managed_irq,%s nohz_full=%s rcu_nocbs=%s irqaffinity=%s dawos.profile=%s' \
+	local extra
+	# Further kernel parameters of the machine, if the profile names any
+	# (key "kernel_arguments").
+	extra=$(profile_get "${file}" kernel_arguments)
+	printf '%s isolcpus=domain,managed_irq,%s nohz_full=%s rcu_nocbs=%s irqaffinity=%s dawos.profile=%s%s' \
 		"$(read_cmdline "${board_dir}/cmdline/profile-tuned.txt")" \
 		"$(profile_get "${file}" live)" \
 		"$(profile_get "${file}" tickless)" "$(profile_get "${file}" tickless)" \
 		"$(profile_get "${file}" io)" \
-		"$(basename "${file}" .conf)"
+		"$(basename "${file}" .conf)" \
+		"${extra:+ ${extra}}"
 }
 
 for profile_file in "${profile_files[@]}"; do

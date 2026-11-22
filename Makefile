@@ -163,6 +163,10 @@ qemu-ab-test: ## Two system images on one disk. WHAT=bad (default): slot B damag
 qemu-update-test: ## The machine updates itself from a local server. WHAT=good (default): the new image must boot; WHAT=tampered: the update must be refused
 	@tools/run-qemu.sh --test --update-test $(or $(WHAT),good)
 
+.PHONY: qemu-audio-test
+qemu-audio-test: ## The audio engine on a software sound card in a virtual machine: tone out and back, xrun, card lost, stuck thread
+	@tools/run-qemu.sh --test --audio-test --profile $(or $(PROFILE),285k)
+
 .PHONY: qemu-installer
 qemu-installer: ## Rehearse the installation: boot the stick image with a blank NVMe disk
 	@tools/run-qemu.sh --installer

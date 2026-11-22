@@ -1,0 +1,74 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 128
+period_us: 2666.666
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 12
+load_percent: 0
+margin_us: 150
+fault: stuck-node on thread 0 after 4 s
+watchdog_rounds: 4504
+systemd_listening: no
+kernel_work_ms: 2358 rounds, mean 0.04, longest 8.43
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      spare  stopped      2997       5          0        0      1.92      3.66        1.86        2.85      2660.15
+0      first  never came back: stuck, moved off its CPU by the watchdog
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 48000 Hz, 18 inputs, 20 outputs
+card_period_frames: 128 (buffer: capture 256, playback 256)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 4499 with the card, 0 without
+card_xruns: 1
+card_recoveries: 1 (longest 0.18 ms)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_xrun_1: at 4.016 s; capture xrun, 159 frames to read (most ever 175); playback xrun, 130 frames of room (most ever 252), delay 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: output 3, 1000 Hz, peak 12 dB below full scale
+routes: 3:5
+
+inputs listened to (dB relative to full scale; the first second and the last, incomplete one left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            10    -17.7      -21.9      -21.8     -25.9     -18.8     0.1977
+5            10    -17.7      -21.9      -21.8     -23.3     -18.8     0.3573
+
+second by second (second 1 is not in the table above):
+second  input    level     tone    share
+1           3    -21.9    -19.0   0.9712
+1           5    -21.9    -19.2   0.9403
+2           3    -21.8    -18.8   1.0000
+2           5    -21.8    -18.8   1.0000
+3           3    -21.8    -18.8   1.0000
+3           5    -21.8    -18.8   1.0000
+4           3    -21.8    -18.8   1.0000
+4           5    -21.8    -18.8   1.0000
+5           3    -21.9    -25.9   0.1977
+5           5    -21.9    -23.3   0.3573
+6           3    -21.8    -18.8   1.0000
+6           5    -21.8    -18.8   1.0000
+7           3    -21.8    -18.8   1.0000
+7           5    -21.8    -18.8   1.0000
+8           3    -21.8    -18.8   0.9975
+8           5    -21.8    -18.9   0.9900
+9           3    -21.8    -18.8   1.0000
+9           5    -21.8    -18.8   1.0000
+10          3    -21.8    -18.8   1.0000
+10          5    -21.8    -18.8   1.0000
+11          3    -21.8    -18.8   1.0000
+11          5    -21.8    -18.8   1.0000
+
+watchdog events (milliseconds from the start of the compute phase the thread never left):
+slot 0 cycle 1500 node 0 thread 2773: noticed after 10.55, live CPU free after 10.58, spare thread at work after 16.00
+k04: PASS (limits: noticed within 11.2 ms, live CPU free within 15 ms, spare thread at work within 50 ms, kernel work on every CPU within 20 ms)
+audio: PASS (1 xruns after the stuck thread; the tone is on input 3; the tone is on input 5)
