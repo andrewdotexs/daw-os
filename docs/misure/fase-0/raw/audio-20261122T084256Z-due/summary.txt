@@ -1,0 +1,10 @@
+case               result figures
+settle-48000       -     xruns 0, restarts after a pause 0; the tone is clean from second 2
+plain-48000        PASS  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.22 max 3.81 us; compute avg 2.97 max 4.21 us; input 3 tone -18.8 to -18.8 dB share 1.0000; input 5 tone -18.8 to -18.8 dB share 1.0000; slips 0 and 0
+settle-96000       -     xruns 2, restarts after a pause 1; the tone is clean from second 5
+plain-96000        PASS  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.25 max 8.28 us; compute avg 4.50 max 5.64 us; input 3 tone -18.8 to -18.8 dB share 1.0000; input 5 tone -18.8 to -18.8 dB share 1.0000; slips 0 and 0
+settle-192000      -     xruns 15, restarts after a pause 14; the tone is clean from second 5
+plain-192000       FAIL  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.20 max 3.77 us; compute avg 6.68 max 8.52 us; input 3 tone -20.8 to -18.8 dB share 0.6404; input 5 tone -19.1 to -18.8 dB share 0.9410; slips 3 and 5; audio: FAIL (the tone is not on input 3; 5 slips of the signal on input 5)
+
+verdict: FAIL (2 of 3 cases)
+finished_utc: 2026-11-22T08:44:54Z
