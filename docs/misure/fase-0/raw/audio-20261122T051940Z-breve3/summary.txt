@@ -1,0 +1,9 @@
+case               result figures
+plain-48000        PASS  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.20 max 4.09 us; compute avg 2.84 max 3.91 us; input 3 tone -18.8 to -18.8 dB share 1.0000; input 5 tone -18.8 to -18.8 dB share 1.0000
+plain-96000        FAIL  xruns 2, recoveries 2 (longest 2.03 ms), lost 0; wake-up avg 3.33 max 3.89 us; compute avg 4.29 max 5.49 us; input 3 tone - to -18.8 dB share 0.0000; input 5 tone - to -18.8 dB share 0.0000; audio: FAIL (2 xruns, 0 waits without a period, card lost 0 times, 0 short writes; the tone is not on input 3; the tone is not on input 5)
+plain-192000       FAIL  xruns 90, recoveries 90 (longest 2.16 ms), lost 0; wake-up avg 3.19 max 4.89 us; compute avg 6.24 max 7.56 us; input 3 tone - to -18.8 dB share 0.0000; input 5 tone - to -18.8 dB share 0.0000; audio: FAIL (90 xruns, 0 waits without a period, card lost 0 times, 0 short writes; the tone is not on input 3; the tone is not on input 5)
+card-xrun-48000    PASS  xruns 1, recoveries 1 (longest 0.18 ms), lost 0; wake-up avg 3.27 max 3.80 us; compute avg 2.83 max 3.81 us; input 3 tone - to -18.8 dB share 0.0000; input 5 tone - to -18.8 dB share 0.0000
+stuck-node-48000   PASS  xruns 1, recoveries 1 (longest 0.18 ms), lost 0; wake-up avg 1.92 max 3.66 us; compute avg 1.86 max 2.85 us; input 3 tone -25.9 to -18.8 dB share 0.1977; input 5 tone -23.3 to -18.8 dB share 0.3573; k04 PASS
+
+verdict: FAIL (3 of 5 cases)
+finished_utc: 2026-11-22T05:21:06Z

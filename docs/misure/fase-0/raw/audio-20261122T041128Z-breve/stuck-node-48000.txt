@@ -1,0 +1,48 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 128
+period_us: 2666.666
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 12
+load_percent: 0
+margin_us: 150
+fault: stuck-node on thread 0 after 4 s
+watchdog_rounds: 4504
+systemd_listening: no
+kernel_work_ms: 2348 rounds, mean 0.06, longest 6.98
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      spare  stopped      2998       4          0        0      1.92      3.34        1.83        2.76      2660.64
+0      first  never came back: stuck, moved off its CPU by the watchdog
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 48000 Hz, 18 inputs, 20 outputs
+card_period_frames: 128 (buffer: capture 256, playback 256)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 4500 with the card, 0 without
+card_xruns: 1
+card_recoveries: 1 (longest 0.18 ms)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: output 3, 1000 Hz, peak 12 dB below full scale
+routes: 3:5
+
+inputs listened to (dB relative to full scale; the first second and the last, incomplete one left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            10    -66.8      -77.2      -74.4     -87.8     -81.7     0.0237
+5            10    -66.8      -77.2      -74.4     -86.0     -81.7     0.0358
+
+watchdog events (milliseconds from the start of the compute phase the thread never left):
+slot 0 cycle 1500 node 0 thread 2281: noticed after 8.31, live CPU free after 8.33, spare thread at work after 13.00
+k04: PASS (limits: noticed within 11.2 ms, live CPU free within 15 ms, spare thread at work within 50 ms, kernel work on every CPU within 20 ms)
+audio: FAIL (the tone is not on input 3; the tone is not on input 5)

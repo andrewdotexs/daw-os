@@ -1,0 +1,64 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 128
+period_us: 2666.666
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 10
+load_percent: 0
+margin_us: 150
+fault: card-xrun after 3 s
+watchdog_rounds: 3754
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      3748       5          0        0      3.27      3.80        2.83        3.81      2659.23
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 48000 Hz, 18 inputs, 20 outputs
+card_period_frames: 128 (buffer: capture 256, playback 256)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 3749 with the card, 0 without
+card_xruns: 1
+card_recoveries: 1 (longest 0.18 ms)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_xrun_1: at 3.016 s; capture xrun, 265 frames to read (most ever 265); playback xrun, 128 frames of room (most ever 252), delay 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: output 3, 1000 Hz, peak 12 dB below full scale
+routes: 3:5
+
+inputs listened to (dB relative to full scale; the first second and the last, incomplete one left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3             8    -18.6          -      -21.8         -     -18.8     0.0000
+5             8    -18.6          -      -21.8         -     -18.8     0.0000
+
+second by second (second 1 is not in the table above):
+second  input    level     tone    share
+1           3        -        -   0.0000
+1           5        -        -   0.0000
+2           3        -        -   0.0000
+2           5        -        -   0.0000
+3           3        -        -   0.0000
+3           5        -        -   0.0000
+4           3        -        -   0.0000
+4           5        -        -   0.0000
+5           3    -22.2    -19.6   0.9148
+5           5    -22.2    -19.7   0.9089
+6           3    -21.8    -19.0   0.9535
+6           5    -21.8    -19.1   0.9441
+7           3    -21.8    -18.8   1.0000
+7           5    -21.8    -18.8   1.0000
+8           3    -21.8    -18.8   1.0000
+8           5    -21.8    -18.8   1.0000
+9           3    -21.8    -18.8   1.0000
+9           5    -21.8    -18.8   1.0000
+audio: PASS (the xrun asked for was recovered in 0.18 ms; the tone is on input 3; the tone is on input 5)

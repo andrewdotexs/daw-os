@@ -1,0 +1,202 @@
+== when and what ==
+read_utc: 2026-11-22T04:53:05Z
+uptime_s: 2730
+image: 0.0.1
+card: 0 (USB, usb_id 1235:8201)
+engine: dawos-engine 0.1.0
+
+== 1. the router of the interface ==
+card 0: as /usr/share/dawos/cards/1235-8201.conf says
+
+== 2. the level meters at rest (0 to 4095) ==
+all 56: 
+
+== 3. the tone of the engine on each line output, six seconds each ==
+(levels in dB relative to full scale; the tone leaves at -12)
+
+-- tone on output 1 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -90.9, level -107.9 to -102.4, tone -146.6 to -142.6, share at least 0.0000
+  input 2: seconds 5, peak -91.2, level -107.9 to -103.0, tone -144.7 to -139.1, share at least 0.0000
+  input 3: seconds 5, peak -67.8, level -77.0 to -74.4, tone -82.8 to -82.8, share at least 0.0723
+  input 4: seconds 5, peak -91.6, level -107.0 to -102.0, tone -139.8 to -134.5, share at least 0.0001
+  input 5: seconds 5, peak -91.2, level -106.3 to -101.9, tone -134.0 to -131.8, share at least 0.0004
+  input 6: seconds 5, peak -90.8, level -106.9 to -101.7, tone -130.7 to -129.6, share at least 0.0007
+  input 7: seconds 5, peak -91.6, level -107.6 to -102.4, tone -132.0 to -129.1, share at least 0.0005
+  input 8: seconds 5, peak -91.6, level -107.4 to -102.5, tone -128.5 to -127.8, share at least 0.0013
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 2 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -90.5, level -105.1 to -98.2, tone -139.6 to -137.4, share at least 0.0001
+  input 2: seconds 5, peak -90.2, level -105.5 to -98.5, tone -140.5 to -136.5, share at least 0.0000
+  input 3: seconds 5, peak -67.9, level -77.1 to -74.5, tone -83.0 to -82.9, share at least 0.0708
+  input 4: seconds 5, peak -89.6, level -104.7 to -98.2, tone -121.1 to -120.3, share at least 0.0027
+  input 5: seconds 5, peak -90.3, level -105.1 to -98.3, tone -131.2 to -130.0, share at least 0.0003
+  input 6: seconds 5, peak -90.4, level -104.2 to -98.2, tone -133.7 to -131.5, share at least 0.0002
+  input 7: seconds 5, peak -90.3, level -104.6 to -98.3, tone -135.8 to -133.4, share at least 0.0001
+  input 8: seconds 5, peak -90.7, level -105.8 to -98.5, tone -133.3 to -131.8, share at least 0.0002
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 3 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -92.3, level -104.5 to -102.8, tone -137.9 to -135.6, share at least 0.0002
+  input 2: seconds 5, peak -92.6, level -104.6 to -103.0, tone -138.3 to -136.1, share at least 0.0001
+  input 3: seconds 5, peak -67.4, level -76.7 to -74.3, tone -81.9 to -81.8, share at least 0.0887
+  input 4: seconds 5, peak -18.8, level -22.0 to -22.0, tone -19.0 to -19.0, share at least 0.9978
+  input 5: seconds 5, peak -91.5, level -104.0 to -102.2, tone -138.2 to -136.2, share at least 0.0001
+  input 6: seconds 5, peak -91.2, level -103.5 to -101.4, tone -138.7 to -134.7, share at least 0.0001
+  input 7: seconds 5, peak -92.4, level -103.8 to -102.3, tone -142.3 to -138.1, share at least 0.0001
+  input 8: seconds 5, peak -86.5, level -103.9 to -102.4, tone -140.4 to -136.7, share at least 0.0001
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 4 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -91.5, level -102.5 to -100.2, tone -150.3 to -143.0, share at least 0.0000
+  input 2: seconds 5, peak -91.1, level -102.7 to -100.2, tone -142.2 to -136.8, share at least 0.0000
+  input 3: seconds 5, peak -67.6, level -77.7 to -74.8, tone -97.0 to -96.9, share at least 0.0030
+  input 4: seconds 5, peak -90.3, level -102.3 to -99.6, tone -142.6 to -137.1, share at least 0.0000
+  input 5: seconds 5, peak -91.5, level -102.5 to -100.1, tone -149.7 to -143.6, share at least 0.0000
+  input 6: seconds 5, peak -90.6, level -102.1 to -99.9, tone -145.2 to -138.4, share at least 0.0000
+  input 7: seconds 5, peak -90.9, level -102.4 to -100.0, tone -144.5 to -140.1, share at least 0.0000
+  input 8: seconds 5, peak -91.2, level -102.8 to -100.1, tone -159.1 to -142.7, share at least 0.0000
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 5 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -90.7, level -102.3 to -98.9, tone -154.5 to -145.0, share at least 0.0000
+  input 2: seconds 5, peak -90.5, level -102.5 to -98.9, tone -152.3 to -143.0, share at least 0.0000
+  input 3: seconds 5, peak -69.3, level -77.3 to -74.8, tone -122.9 to -120.1, share at least 0.0000
+  input 4: seconds 5, peak -90.4, level -102.2 to -98.9, tone -159.2 to -146.8, share at least 0.0000
+  input 5: seconds 5, peak -90.9, level -102.2 to -99.0, tone -160.0 to -148.4, share at least 0.0000
+  input 6: seconds 5, peak -90.7, level -102.2 to -98.9, tone -159.4 to -146.2, share at least 0.0000
+  input 7: seconds 5, peak -90.4, level -102.6 to -98.9, tone -159.2 to -146.5, share at least 0.0000
+  input 8: seconds 5, peak -90.8, level -102.5 to -99.0, tone -154.4 to -141.5, share at least 0.0000
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 6 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -92.1, level -104.7 to -101.8, tone -151.8 to -143.1, share at least 0.0000
+  input 2: seconds 5, peak -92.3, level -104.4 to -102.1, tone -154.0 to -142.9, share at least 0.0000
+  input 3: seconds 5, peak -69.2, level -77.7 to -74.9, tone -122.7 to -120.9, share at least 0.0000
+  input 4: seconds 5, peak -92.2, level -103.7 to -101.6, tone -157.5 to -144.8, share at least 0.0000
+  input 5: seconds 5, peak -91.9, level -103.6 to -101.7, tone -158.5 to -146.0, share at least 0.0000
+  input 6: seconds 5, peak -91.0, level -103.3 to -101.3, tone -157.6 to -145.0, share at least 0.0000
+  input 7: seconds 5, peak -91.9, level -104.2 to -102.1, tone -162.5 to -149.0, share at least 0.0000
+  input 8: seconds 5, peak -91.9, level -104.6 to -102.2, tone -158.3 to -145.2, share at least 0.0000
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 7 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -91.1, level -104.0 to -98.8, tone -154.6 to -144.1, share at least 0.0000
+  input 2: seconds 5, peak -90.8, level -104.0 to -98.9, tone -157.9 to -146.9, share at least 0.0000
+  input 3: seconds 5, peak -69.5, level -77.7 to -75.0, tone -124.4 to -121.0, share at least 0.0000
+  input 4: seconds 5, peak -90.5, level -103.9 to -98.8, tone -153.4 to -147.4, share at least 0.0000
+  input 5: seconds 5, peak -90.3, level -104.3 to -98.8, tone -156.3 to -142.1, share at least 0.0000
+  input 6: seconds 5, peak -90.5, level -103.8 to -98.9, tone -153.9 to -147.6, share at least 0.0000
+  input 7: seconds 5, peak -89.7, level -103.9 to -98.9, tone -156.5 to -143.7, share at least 0.0000
+  input 8: seconds 5, peak -90.9, level -104.3 to -98.9, tone -164.1 to -150.9, share at least 0.0000
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 8 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -91.7, level -103.3 to -101.8, tone -166.2 to -148.5, share at least 0.0000
+  input 2: seconds 5, peak -92.1, level -103.4 to -101.8, tone -156.8 to -142.0, share at least 0.0000
+  input 3: seconds 5, peak -69.3, level -77.7 to -75.0, tone -124.8 to -121.2, share at least 0.0000
+  input 4: seconds 5, peak -91.6, level -102.8 to -101.6, tone -151.5 to -142.7, share at least 0.0000
+  input 5: seconds 5, peak -91.5, level -103.1 to -101.6, tone -155.8 to -149.1, share at least 0.0000
+  input 6: seconds 5, peak -91.4, level -102.3 to -101.7, tone -155.1 to -147.8, share at least 0.0000
+  input 7: seconds 5, peak -91.5, level -102.8 to -101.8, tone -161.7 to -148.2, share at least 0.0000
+  input 8: seconds 5, peak -92.1, level -103.4 to -101.6, tone -154.3 to -144.6, share at least 0.0000
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 9 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -90.8, level -102.9 to -100.3, tone -159.6 to -143.9, share at least 0.0000
+  input 2: seconds 5, peak -91.5, level -103.0 to -100.0, tone -154.6 to -146.2, share at least 0.0000
+  input 3: seconds 5, peak -68.8, level -77.7 to -75.0, tone -121.4 to -118.9, share at least 0.0000
+  input 4: seconds 5, peak -89.6, level -102.8 to -99.8, tone -159.0 to -143.2, share at least 0.0000
+  input 5: seconds 5, peak -90.4, level -103.0 to -100.0, tone -157.3 to -149.7, share at least 0.0000
+  input 6: seconds 5, peak -90.9, level -102.3 to -100.3, tone -158.8 to -148.5, share at least 0.0000
+  input 7: seconds 5, peak -90.4, level -102.9 to -100.1, tone -155.9 to -143.3, share at least 0.0000
+  input 8: seconds 5, peak -90.9, level -103.2 to -100.0, tone -176.0 to -141.7, share at least 0.0000
+  stderr: dawos-engine: the sound card did not do what was asked
+
+-- tone on output 10 --
+  engine: exit status 1, xruns 0, linked yes, 2253 with the card, 0 without
+  input 1: seconds 5, peak -91.5, level -103.2 to -99.1, tone -157.9 to -143.1, share at least 0.0000
+  input 2: seconds 5, peak -91.2, level -103.2 to -99.0, tone -152.1 to -145.4, share at least 0.0000
+  input 3: seconds 5, peak -69.4, level -77.5 to -75.0, tone -122.5 to -119.9, share at least 0.0000
+  input 4: seconds 5, peak -90.2, level -103.1 to -98.9, tone -155.1 to -145.1, share at least 0.0000
+  input 5: seconds 5, peak -91.1, level -103.4 to -98.9, tone -150.2 to -144.2, share at least 0.0000
+  input 6: seconds 5, peak -90.5, level -102.6 to -99.0, tone -154.5 to -145.2, share at least 0.0000
+  input 7: seconds 5, peak -90.5, level -103.1 to -98.9, tone -161.4 to -142.1, share at least 0.0000
+  input 8: seconds 5, peak -90.8, level -103.5 to -98.9, tone -163.6 to -142.6, share at least 0.0000
+  stderr: dawos-engine: the sound card did not do what was asked
+
+== 4. the same tone on output 3 from speaker-test ==
+  speaker-test said:
+    speaker-test 1.2.15.2
+    Playback device is hw:USB,0
+    Stream parameters are 48000Hz, S32_LE, 20 channels
+    Sine wave rate is 1000.0000Hz
+    Rate set to 48000Hz (requested 48000Hz)
+    Buffer size range from 12 to 96000
+    Period size range from 6 to 48000
+    Periods = 4
+    was set period_size = 12000
+    was set buffer_size = 48000
+      - Rear Left
+
+== the whole report of the engine with the tone on output 3 ==
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 128
+period_us: 2666.666
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 6
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 2253
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      2252       0          0        0      3.22      3.92        3.55        4.66      2658.09
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 48000 Hz, 18 inputs, 20 outputs
+card_period_frames: 128 (buffer: capture 256, playback 256)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 2253 with the card, 0 without
+card_xruns: 0
+card_recoveries: 0 (longest 0.00 ms)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: output 3, 1000 Hz, peak 12 dB below full scale
+routes: none
+
+inputs listened to (dB relative to full scale; the first second and the last, incomplete one left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+1             5    -92.3     -104.5     -102.8    -137.9    -135.6     0.0002
+2             5    -92.6     -104.6     -103.0    -138.3    -136.1     0.0001
+3             5    -67.4      -76.7      -74.3     -81.9     -81.8     0.0887
+4             5    -18.8      -22.0      -22.0     -19.0     -19.0     0.9978
+5             5    -91.5     -104.0     -102.2    -138.2    -136.2     0.0001
+6             5    -91.2     -103.5     -101.4    -138.7    -134.7     0.0001
+7             5    -92.4     -103.8     -102.3    -142.3    -138.1     0.0001
+8             5    -86.5     -103.9     -102.4    -140.4    -136.7     0.0001
+audio: FAIL (the tone is not on input 1; the tone is not on input 2; the tone is not on input 3; the tone is not on input 5; the tone is not on input 6; the tone is not on input 7; the tone is not on input 8)
+
+== kernel messages about sound and USB in the last three minutes ==
+(none)
