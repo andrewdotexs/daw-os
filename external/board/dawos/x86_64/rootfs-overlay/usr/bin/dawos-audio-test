@@ -6,7 +6,10 @@
 # sample for sample, and measures inputs 3 and 5 second by second. The
 # tone is at 1125 Hz, three cycles in a quantum of 2.667 ms: with it the
 # engine also finds every slip of the signal (samples lost or made up on
-# the way round, with no xrun to tell), to the sample. For
+# the way round, with no xrun to tell), to the sample. A slip of more
+# than two samples fails a run; smaller ones are counted and reported
+# (the Scarlett 18i20 of the second generation has them, open point
+# A-58). For
 # the tone to be on both, output 3 must reach input 3 and output 5 must
 # reach input 5:
 #

@@ -85,6 +85,14 @@ pub struct CardOutcome {
 const TONE_HEARD_DB: f64 = -60.0;
 const TONE_CLEAN_SHARE: f64 = 0.9;
 
+/// The largest slip of the signal a run may have and still pass, in
+/// samples. The Scarlett 18i20 of the second generation slips by one or
+/// two samples now and then, with any buffer and in either mode of the
+/// USB driver: an open point (A-58), counted and reported, not a failure
+/// of the engine. Anything larger is. The quarter of a sample on top is
+/// the error of the measure on a slip that falls across two quanta.
+const SLIP_LIMIT_SAMPLES: f64 = 2.25;
+
 /// What a run produced.
 pub struct Outcome {
     pub format: Format,
@@ -803,12 +811,18 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
             if found {
                 good.push(format!("the tone is on input {input}"));
                 // A slip is a fault of its own kind: no xrun, and the
-                // signal is not what was played. Only in a run that was
-                // not disturbed on purpose.
-                if !disturbed && heard.slip_count > 0 {
+                // signal is not what was played. Judged only in a run
+                // that was not disturbed on purpose.
+                if !disturbed && heard.largest_slip > SLIP_LIMIT_SAMPLES {
                     bad.push(format!(
-                        "{} slips of the signal on input {input}",
-                        heard.slip_count
+                        "a slip of {:.0} samples on input {input}",
+                        heard.largest_slip
+                    ));
+                } else if !disturbed && heard.slip_count > 0 {
+                    good.push(format!(
+                        "{} slips of at most {:.0} samples on input {input} (open point A-58)",
+                        heard.slip_count,
+                        heard.largest_slip.round()
                     ));
                 }
             } else {
@@ -1104,7 +1118,12 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         );
     }
     for heard in &card.heard {
-        println!("slips_on_input_{}: {}", heard.channel + 1, heard.slip_count);
+        println!(
+            "slips_on_input_{}: {} (largest {:.2} samples)",
+            heard.channel + 1,
+            heard.slip_count,
+            heard.largest_slip
+        );
         for slip in &heard.slips {
             println!(
                 "  slip on input {} at {:.3} s: {:+.2} samples",

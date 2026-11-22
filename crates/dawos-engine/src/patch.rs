@@ -85,8 +85,10 @@ pub struct Heard {
     /// Second by second, from the first one: effective level, level of
     /// the tone, share. As many as were asked to be kept.
     pub each_second: Vec<(f64, f64, f64)>,
-    /// Slips after the first second: how many, and the first ones.
+    /// Slips after the first second: how many, the largest (in samples,
+    /// without its sign), and the first ones.
     pub slip_count: u32,
+    pub largest_slip: f64,
     pub slips: Vec<Slip>,
 }
 
@@ -215,6 +217,7 @@ impl Patch {
                         // Room for all of them now: nothing grows later.
                         each_second: Vec::with_capacity(config.keep_seconds),
                         slip_count: 0,
+                        largest_slip: 0.0,
                         slips: Vec::with_capacity(SLIPS_KEPT),
                     },
                     in_phase: 0.0,
@@ -340,6 +343,7 @@ impl Patch {
                 if counted && samples.abs() >= SLIP_SAMPLES {
                     let heard = &mut listener.heard;
                     heard.slip_count += 1;
+                    heard.largest_slip = heard.largest_slip.max(samples.abs());
                     if heard.slips.len() < heard.slips.capacity() {
                         heard.slips.push(Slip { second, samples });
                     }
@@ -489,6 +493,7 @@ mod tests {
         }
         let heard = &patch.heard()[0];
         assert_eq!(heard.slip_count, 2, "{:?}", heard.slips);
+        assert!((heard.largest_slip - 5.0).abs() < 0.05, "{heard:?}");
         assert!(
             (heard.slips[0].samples - 3.0).abs() < 0.05,
             "{:?}",

@@ -46,8 +46,8 @@ const PAUSE_BEFORE_RESTART_NS: u64 = 50_000_000;
 const XRUNS_KEPT: usize = 12;
 
 /// Periods the live thread sleeps through, away from the card, to
-/// provoke an xrun on purpose: the buffers hold two.
-const PERIODS_TO_SKIP: u64 = 4;
+/// provoke an xrun on purpose, on top of those the buffers hold.
+const PERIODS_TO_SKIP: u64 = 2;
 
 /// What happened to the card during a run. Written by the live thread
 /// and by the keeper, read at the end.
@@ -551,7 +551,8 @@ impl Backend for AlsaBackend {
         };
         match disturbance {
             Disturbance::Xrun => {
-                guard.skip_until = clock::now() + PERIODS_TO_SKIP * self.period_ns;
+                let periods = u64::from(self.shared.config.periods) + PERIODS_TO_SKIP;
+                guard.skip_until = clock::now() + periods * self.period_ns;
             }
             Disturbance::CardLost => {
                 if guard.card.is_some() {
