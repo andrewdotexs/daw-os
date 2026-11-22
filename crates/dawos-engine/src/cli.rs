@@ -30,6 +30,8 @@ pub struct RunOptions {
     pub routes: Vec<(usize, usize)>,
     /// Inputs to measure, from 0.
     pub listen: Vec<usize>,
+    /// Periods in the buffers of the card.
+    pub periods: u32,
     /// Print what was heard second by second, not only summed up.
     pub each_second: bool,
     /// Do not count xruns against the run (a virtual machine has them).
@@ -102,7 +104,9 @@ Options of run:
                      with alsa: the capture side, when it is another
                      device (default: the same as --device)
   --tone OUT         with alsa: a test tone on this output, from 1
-  --tone-hz HZ       its frequency (default 1000)
+  --tone-hz HZ       its frequency (default 1000; with 1125, a whole
+                     number of cycles per quantum, --listen also finds
+                     every slip of the signal, to the sample)
   --tone-level DB    its peak level in dB below full scale (default 12)
   --route IN:OUT[,IN:OUT...]
                      with alsa: copy these inputs to these outputs,
@@ -110,6 +114,9 @@ Options of run:
   --listen IN[,IN...]
                      with alsa: measure these inputs, second by second:
                      level, level of the test tone, share of the tone
+  --periods N        with alsa: periods in the buffers of the card, 2 to 8
+                     (default 2: the output plays two quanta after the
+                     input)
   --each-second      with --listen: also print every second by itself
                      (the first hour at most)
   --allow-xruns      with alsa: do not fail the run for xruns, as long as
@@ -175,6 +182,7 @@ impl Default for RunOptions {
             tone_below_db: 12,
             routes: Vec::new(),
             listen: Vec::new(),
+            periods: 2,
             each_second: false,
             allow_xruns: false,
             rate: 48_000,
@@ -231,6 +239,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                     options.listen.push(channel(input, "--listen")?);
                 }
             }
+            "--periods" => options.periods = number(value("--periods")?, "--periods", 2, 8)?,
             "--each-second" => options.each_second = true,
             "--allow-xruns" => options.allow_xruns = true,
             "--rate" => options.rate = number(value("--rate")?, "--rate", 8_000, 768_000)?,
@@ -286,6 +295,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             || !options.routes.is_empty()
             || !options.listen.is_empty()
             || options.each_second
+            || options.periods != 2
             || options.allow_xruns
             || matches!(options.fault, Fault::CardXrun | Fault::CardLost);
         if sound {

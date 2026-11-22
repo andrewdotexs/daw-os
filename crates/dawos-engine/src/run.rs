@@ -266,6 +266,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 .unwrap_or_else(|| device.clone()),
             playback: device.clone(),
             format,
+            periods: options.periods,
         })?),
         _ => None,
     };
@@ -801,6 +802,15 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
             };
             if found {
                 good.push(format!("the tone is on input {input}"));
+                // A slip is a fault of its own kind: no xrun, and the
+                // signal is not what was played. Only in a run that was
+                // not disturbed on purpose.
+                if !disturbed && heard.slip_count > 0 {
+                    bad.push(format!(
+                        "{} slips of the signal on input {input}",
+                        heard.slip_count
+                    ));
+                }
             } else {
                 bad.push(format!("the tone is not on input {input}"));
             }
@@ -1092,6 +1102,17 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
                 format!("{:.4}", heard.share_min)
             },
         );
+    }
+    for heard in &card.heard {
+        println!("slips_on_input_{}: {}", heard.channel + 1, heard.slip_count);
+        for slip in &heard.slips {
+            println!(
+                "  slip on input {} at {:.3} s: {:+.2} samples",
+                heard.channel + 1,
+                slip.second,
+                slip.samples
+            );
+        }
     }
     if card.heard.iter().all(|heard| heard.each_second.is_empty()) {
         return;

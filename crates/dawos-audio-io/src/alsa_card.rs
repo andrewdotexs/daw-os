@@ -21,6 +21,9 @@ pub struct CardConfig {
     pub playback: String,
     /// Sample rate and frames per period.
     pub format: Format,
+    /// Periods in each buffer: two is the engine's own number; more is
+    /// for measuring what the second one costs.
+    pub periods: u32,
 }
 
 /// What the driver accepted.
@@ -146,10 +149,12 @@ fn open_stream(
     device: &str,
     direction: Direction,
     format: Format,
+    periods: u32,
 ) -> Result<(PCM, usize, usize, bool), String> {
     let pcm = PCM::new(device, direction, false)
         .map_err(|error| describe("cannot open the device", device, error))?;
     let frames = i64::from(format.frames);
+    let whole = i64::from(periods) * frames;
     let channels;
     {
         let hardware =
@@ -181,8 +186,8 @@ fn open_stream(
             .set_period_size(frames, ValueOr::Nearest)
             .map_err(|error| refuse(&format!("no period of {frames} frames"), error))?;
         hardware
-            .set_buffer_size(2 * frames)
-            .map_err(|error| refuse(&format!("no buffer of {} frames", 2 * frames), error))?;
+            .set_buffer_size(whole)
+            .map_err(|error| refuse(&format!("no buffer of {whole} frames"), error))?;
         pcm.hw_params(&hardware)
             .map_err(|error| refuse("the parameters were refused", error))?;
         channels = most as usize;
@@ -204,11 +209,10 @@ fn open_stream(
                 .map_err(|error| describe("cannot read the rate back", device, error))?,
         )
     };
-    if period != frames || buffer != 2 * frames || rate != format.rate {
+    if period != frames || buffer != whole || rate != format.rate {
         return Err(format!(
             "{device}: asked for {} Hz, a period of {frames} frames and a buffer of {}; the driver set {rate} Hz, {period} and {buffer}",
-            format.rate,
-            2 * frames
+            format.rate, whole
         ));
     }
 
@@ -231,7 +235,7 @@ fn open_stream(
             .map_err(|error| refuse("cannot set the start threshold", error))?;
         // Stop when the whole buffer went by unserved: that is an xrun.
         software
-            .set_stop_threshold(2 * frames)
+            .set_stop_threshold(whole)
             .map_err(|error| refuse("cannot set the stop threshold", error))?;
         // The time of every period, on the clock the engine reads.
         timestamps = software.set_tstamp_mode(true).is_ok()
@@ -246,10 +250,18 @@ impl Card {
     /// Open the two streams, link them and fill the output with silence.
     /// The card does not run yet: see [`Card::start`].
     pub fn open(config: &CardConfig) -> Result<Self, String> {
-        let (playback, outputs, playback_buffer, _) =
-            open_stream(&config.playback, Direction::Playback, config.format)?;
-        let (capture, inputs, capture_buffer, timestamps) =
-            open_stream(&config.capture, Direction::Capture, config.format)?;
+        let (playback, outputs, playback_buffer, _) = open_stream(
+            &config.playback,
+            Direction::Playback,
+            config.format,
+            config.periods,
+        )?;
+        let (capture, inputs, capture_buffer, timestamps) = open_stream(
+            &config.capture,
+            Direction::Capture,
+            config.format,
+            config.periods,
+        )?;
         // One trigger for both: they start on the same frame, and an
         // xrun of one stops the other.
         let linked = capture.link(&playback).is_ok();

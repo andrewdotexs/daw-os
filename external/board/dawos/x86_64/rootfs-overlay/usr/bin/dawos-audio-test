@@ -3,7 +3,10 @@
 # tone back in, and what happens when the card stops (step P1.4).
 #
 # The engine plays a test tone on output 3, copies input 3 to output 5
-# sample for sample, and measures inputs 3 and 5 second by second. For
+# sample for sample, and measures inputs 3 and 5 second by second. The
+# tone is at 1125 Hz, three cycles in a quantum of 2.667 ms: with it the
+# engine also finds every slip of the signal (samples lost or made up on
+# the way round, with no xrun to tell), to the sample. For
 # the tone to be on both, output 3 must reach input 3 and output 5 must
 # reach input 5:
 #
@@ -44,13 +47,14 @@ usage() {
 	cat << USAGE
 Usage:
   ${PROG} loopback [--seconds N] [LABEL]
-  ${PROG} card [--card N] [--rates "HZ ..."] [--seconds N] [--no-faults] [LABEL]
+  ${PROG} card [--card N] [--rates "HZ ..."] [--seconds N] [--periods N] [--no-faults] [LABEL]
 
   --seconds N    length of every plain run (default: 10 for loopback,
                  600 for card)
   --rates LIST   sample rates of the plain runs of "card" (default
                  "48000 96000 192000")
   --card N       the sound card (default: the first USB one)
+  --periods N    "card": periods in the buffers of the card (default 2)
   --no-faults    "card": the plain runs only
 USAGE
 }
@@ -90,7 +94,7 @@ run_case() {
 	shift
 	cases=$((cases + 1))
 	# shellcheck disable=SC2086  # device_options is several words
-	"${ENGINE}" run --backend alsa ${device_options} --tone 3 --route 3:5 --listen 3,5 --each-second "$@" \
+	"${ENGINE}" run --backend alsa ${device_options} --tone 3 --tone-hz 1125 --route 3:5 --listen 3,5 --each-second "$@" \
 		> "${dir}/${name}.txt" 2> "${dir}/${name}.err"
 	audio=$(field "${dir}/${name}.txt" audio)
 	k04=$(field "${dir}/${name}.txt" k04)
@@ -116,6 +120,8 @@ run_case() {
 			"$(thread_column "${dir}/${name}.txt" 8)" "$(thread_column "${dir}/${name}.txt" 9)" \
 			"$(thread_column "${dir}/${name}.txt" 10)" "$(thread_column "${dir}/${name}.txt" 11)" \
 			"$(heard "${dir}/${name}.txt" 3)" "$(heard "${dir}/${name}.txt" 5)"
+		printf '; slips %s and %s' "$(field "${dir}/${name}.txt" slips_on_input_3)" \
+			"$(field "${dir}/${name}.txt" slips_on_input_5)"
 		[ -n "${k04}" ] && printf '; k04 %s' "${k04%% *}"
 		# Why, in the engine's own words.
 		[ "${result}" = FAIL ] && printf '; audio: %s' "${audio:-no verdict: $(tail -n 1 "${dir}/${name}.err")}"
@@ -130,7 +136,7 @@ settle() {
 	[ "$1" = "${current_rate}" ] && return 0
 	current_rate=$1
 	# shellcheck disable=SC2086  # device_options is several words
-	"${ENGINE}" run --backend alsa ${device_options} --rate "$1" --seconds 8 --tone 3 --listen 3 \
+	"${ENGINE}" run --backend alsa ${device_options} --rate "$1" --seconds 8 --tone 3 --tone-hz 1125 --listen 3 \
 		--each-second --allow-xruns --require-rt > "${dir}/settle-$1.txt" 2> "${dir}/settle-$1.err"
 	clean=$(awk '
 		/^second +input/ { inside = 1; next }
@@ -168,6 +174,7 @@ esac
 seconds=
 rates="48000 96000 192000"
 card=
+periods=2
 faults=yes
 label=
 while [ $# -gt 0 ]; do
@@ -182,6 +189,10 @@ while [ $# -gt 0 ]; do
 		;;
 	--card)
 		card=${2:-}
+		shift 2
+		;;
+	--periods)
+		periods=${2:-}
 		shift 2
 		;;
 	--no-faults)
@@ -244,10 +255,11 @@ else
 	[ -d "/proc/asound/card${card}" ] || die "there is no sound card ${card}"
 	identifier=$(cat "/proc/asound/card${card}/id")
 	model=$(tr ':' '-' < "/proc/asound/card${card}/usbid" 2> /dev/null)
-	device_options="--device hw:${identifier},0"
+	device_options="--device hw:${identifier},0 --periods ${periods}"
 	{
 		echo "card: ${identifier} (${model:-not a USB card})"
 		echo "rates: ${rates}"
+		echo "periods: ${periods}"
 	} >> "${dir}/meta.txt"
 	seconds=${seconds:-600}
 

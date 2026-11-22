@@ -11,6 +11,18 @@ use std::f64::consts::TAU;
 /// Full scale of a 32-bit sample.
 const FULL_SCALE: f64 = 2_147_483_648.0;
 
+/// The tone is followed quantum by quantum only above this amplitude
+/// (-60 dB): below it there is no phase to speak of.
+const TONE_FLOOR: f64 = 1.0e-3;
+
+/// A change of the way round counts as a slip from a quarter of a
+/// sample: the noise of a measure on a clean tone is a hundred times
+/// smaller.
+const SLIP_SAMPLES: f64 = 0.25;
+
+/// How many slips are kept one by one, per input.
+const SLIPS_KEPT: usize = 64;
+
 /// What to play, copy and measure. Channels are counted from 0 here and
 /// from 1 on the command line.
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -27,6 +39,17 @@ pub struct PatchConfig {
     pub listen: Vec<usize>,
     /// How many seconds to keep one by one, from the first (0: none).
     pub keep_seconds: usize,
+}
+
+/// A sudden change in the time the tone takes to come back: samples were
+/// lost or made up somewhere on the way round.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Slip {
+    /// When, in seconds from the first sample.
+    pub second: f64,
+    /// By how many samples the way round got longer (negative:
+    /// shorter). Known only up to a whole cycle of the tone.
+    pub samples: f64,
 }
 
 /// One second of one input, summed up.
@@ -62,12 +85,27 @@ pub struct Heard {
     /// Second by second, from the first one: effective level, level of
     /// the tone, share. As many as were asked to be kept.
     pub each_second: Vec<(f64, f64, f64)>,
+    /// Slips after the first second: how many, and the first ones.
+    pub slip_count: u32,
+    pub slips: Vec<Slip>,
 }
 
 struct Listener {
     channel: usize,
     block: Block,
     heard: Heard,
+    /// The quantum being read: the two sums that give the phase of the
+    /// tone.
+    in_phase: f64,
+    quadrature: f64,
+    /// The phase of the tone in the quantum before, once it has been
+    /// there for two quanta.
+    last_phase: Option<f64>,
+    steady: u32,
+    /// A slip being followed: it shows in two quanta, the one it falls
+    /// in and the next.
+    slipping: f64,
+    slip_started: Option<f64>,
 }
 
 /// The state of the patch.
@@ -90,6 +128,10 @@ pub struct Patch {
     block_frames: usize,
     position: usize,
     blocks: u32,
+    /// Radians of the tone per sample, the rate, and frames done.
+    angle: f64,
+    rate: f64,
+    done: u64,
     input: Vec<i32>,
     output: Vec<i32>,
 }
@@ -172,7 +214,15 @@ impl Patch {
                         share_min: f64::INFINITY,
                         // Room for all of them now: nothing grows later.
                         each_second: Vec::with_capacity(config.keep_seconds),
+                        slip_count: 0,
+                        slips: Vec::with_capacity(SLIPS_KEPT),
                     },
+                    in_phase: 0.0,
+                    quadrature: 0.0,
+                    last_phase: None,
+                    steady: 0,
+                    slipping: 0.0,
+                    slip_started: None,
                 })
                 .collect(),
             cosine: 1.0,
@@ -182,6 +232,9 @@ impl Patch {
             block_frames: rate as usize,
             position: 0,
             blocks: 0,
+            angle,
+            rate: f64::from(rate),
+            done: 0,
             input: vec![0; inputs * frames],
             output: vec![0; outputs * frames],
         })
@@ -221,6 +274,8 @@ impl Patch {
                 block.in_phase += sample * self.cosine;
                 block.quadrature += sample * self.sine;
                 block.peak = block.peak.max(sample.abs());
+                listener.in_phase += sample * self.cosine;
+                listener.quadrature += sample * self.sine;
             }
 
             // Turn the oscillator by one sample.
@@ -233,6 +288,65 @@ impl Patch {
             if self.position == self.block_frames {
                 self.close_block();
             }
+        }
+        self.done += self.frames as u64;
+        self.follow_the_tone();
+    }
+
+    /// A quantum is over: where is the phase of the tone, on every input
+    /// listened to, against the quantum before? A tone that comes back
+    /// after the same number of samples keeps its phase; one sample more
+    /// on the way turns it by the angle of one sample.
+    ///
+    /// Exact when the tone has a whole number of cycles in a quantum
+    /// (1125 Hz with the quanta of 2.667 ms); with any other tone the
+    /// phase of a clean signal wobbles, and slips are reported that are
+    /// not there.
+    fn follow_the_tone(&mut self) {
+        let count = self.frames as f64;
+        let now = self.done as f64 / self.rate;
+        let counted = self.blocks > 0;
+        for listener in &mut self.listeners {
+            let in_phase = std::mem::take(&mut listener.in_phase);
+            let quadrature = std::mem::take(&mut listener.quadrature);
+            let amplitude = 2.0 * in_phase.hypot(quadrature) / count;
+            if amplitude < TONE_FLOOR {
+                listener.last_phase = None;
+                listener.steady = 0;
+                listener.slipping = 0.0;
+                listener.slip_started = None;
+                continue;
+            }
+            // With the tone sin(a) coming back as sin(a - delay), the
+            // two sums are -sin(delay) and cos(delay): this angle grows
+            // with the delay.
+            let phase = quadrature.atan2(in_phase);
+            let mut moved = 0.0;
+            if let (Some(last), true) = (listener.last_phase, listener.steady >= 2) {
+                moved = phase - last;
+                if moved > std::f64::consts::PI {
+                    moved -= TAU;
+                } else if moved < -std::f64::consts::PI {
+                    moved += TAU;
+                }
+            }
+            if moved.abs() > SLIP_SAMPLES * self.angle {
+                listener.slipping += moved;
+                listener.slip_started.get_or_insert(now);
+            } else if let Some(second) = listener.slip_started.take() {
+                // The little that is left in this quantum belongs to
+                // the slip too.
+                let samples = (std::mem::take(&mut listener.slipping) + moved) / self.angle;
+                if counted && samples.abs() >= SLIP_SAMPLES {
+                    let heard = &mut listener.heard;
+                    heard.slip_count += 1;
+                    if heard.slips.len() < heard.slips.capacity() {
+                        heard.slips.push(Slip { second, samples });
+                    }
+                }
+            }
+            listener.last_phase = Some(phase);
+            listener.steady += 1;
         }
     }
 
@@ -342,6 +456,70 @@ mod tests {
         assert_eq!(silent.seconds, 3);
         assert_eq!(silent.peak_db, f64::NEG_INFINITY);
         assert_eq!(silent.share_min, 0.0);
+    }
+
+    #[test]
+    fn a_change_of_delay_is_a_slip() {
+        // A tone with a whole number of cycles per quantum, and a cable
+        // a little longer than a quantum; then three samples longer,
+        // then five samples shorter than that.
+        let config = PatchConfig {
+            tone_output: Some(0),
+            tone_hz: 1125.0,
+            tone_db: -12.0,
+            listen: vec![0],
+            ..PatchConfig::default()
+        };
+        let mut patch = Patch::new(&config, 1, 1, FRAMES, RATE).expect("a valid patch");
+        let mut line: std::collections::VecDeque<i32> =
+            std::iter::repeat_n(0, FRAMES + 16).collect();
+        for cycle in 0..5 * 375 {
+            match cycle {
+                // Two seconds in: three samples made up.
+                750 => line.extend([0, 0, 0]),
+                // Three and a half seconds in: five samples lost.
+                1312 => drop(line.drain(..5)),
+                _ => {}
+            }
+            for sample in patch.input_mut() {
+                *sample = line.pop_front().unwrap_or(0);
+            }
+            patch.process();
+            line.extend(patch.output().iter().copied());
+        }
+        let heard = &patch.heard()[0];
+        assert_eq!(heard.slip_count, 2, "{:?}", heard.slips);
+        assert!(
+            (heard.slips[0].samples - 3.0).abs() < 0.05,
+            "{:?}",
+            heard.slips
+        );
+        assert!(
+            (heard.slips[0].second - 2.0).abs() < 0.01,
+            "{:?}",
+            heard.slips
+        );
+        assert!(
+            (heard.slips[1].samples + 5.0).abs() < 0.05,
+            "{:?}",
+            heard.slips
+        );
+        assert!(
+            (heard.slips[1].second - 3.5).abs() < 0.01,
+            "{:?}",
+            heard.slips
+        );
+    }
+
+    #[test]
+    fn a_steady_tone_does_not_slip() {
+        let mut config = config();
+        config.tone_hz = 1125.0;
+        let mut patch = Patch::new(&config, 8, 8, FRAMES, RATE).expect("a valid patch");
+        run_with_cables(&mut patch, 4 * 375, 8);
+        for heard in patch.heard() {
+            assert_eq!(heard.slip_count, 0, "{:?}", heard.slips);
+        }
     }
 
     #[test]
