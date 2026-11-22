@@ -16,6 +16,7 @@ mod live;
 mod notify;
 mod patch;
 mod plan;
+mod probe;
 mod run;
 mod watchdog;
 

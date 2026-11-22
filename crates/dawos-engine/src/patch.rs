@@ -8,6 +8,8 @@
 
 use std::f64::consts::TAU;
 
+use crate::probe::{BurstKind, Bursts, Counted, Counter, Timed};
+
 /// Full scale of a 32-bit sample.
 const FULL_SCALE: f64 = 2_147_483_648.0;
 
@@ -43,6 +45,16 @@ pub struct PatchConfig {
     /// still settling. What happens there is counted apart. The first
     /// second is never judged.
     pub warm_up_seconds: u32,
+    /// A count played on an output and checked on an input, sample for
+    /// sample: (output, input). For a way round that keeps the samples
+    /// as they are.
+    pub count: Option<(usize, usize)>,
+    /// Bursts played on an output and timed on an input: (output,
+    /// input, what they are made of). For a way round through the
+    /// converters.
+    pub bursts: Option<(usize, usize, BurstKind)>,
+    /// How long the run lasts, in seconds: the room for the bursts.
+    pub seconds: u64,
 }
 
 /// A sudden change in the time the tone takes to come back: samples were
@@ -126,6 +138,8 @@ pub struct Patch {
     amplitude: f64,
     routes: Vec<(usize, usize)>,
     listeners: Vec<Listener>,
+    counter: Option<Counter>,
+    bursts: Option<Bursts>,
     /// The oscillator: a point on the unit circle, turned by a fixed
     /// angle at every sample. Its two coordinates are the tone and the
     /// reference the measure needs.
@@ -200,6 +214,24 @@ impl Patch {
         for &channel in &config.listen {
             input_exists(channel, "--listen")?;
         }
+        // One thing per output.
+        let mut taken: Vec<usize> = config.routes.iter().map(|route| route.1).collect();
+        taken.extend(config.tone_output);
+        if let Some((output, input)) = config.count {
+            output_exists(output, "--count")?;
+            input_exists(input, "--count")?;
+            if taken.contains(&output) {
+                return Err(format!("--count: output {} is already in use", output + 1));
+            }
+            taken.push(output);
+        }
+        if let Some((output, input, _)) = config.bursts {
+            output_exists(output, "--burst")?;
+            input_exists(input, "--burst")?;
+            if taken.contains(&output) {
+                return Err(format!("--burst: output {} is already in use", output + 1));
+            }
+        }
         let angle = TAU * config.tone_hz / f64::from(rate);
         Ok(Self {
             inputs,
@@ -208,6 +240,22 @@ impl Patch {
             tone_output: config.tone_output,
             amplitude: 10.0_f64.powf(config.tone_db / 20.0),
             routes: config.routes.clone(),
+            counter: config
+                .count
+                .map(|(output, input)| Counter::new(output, input, rate, config.warm_up_seconds)),
+            bursts: config.bursts.map(|(output, input, kind)| {
+                Bursts::new(
+                    output,
+                    input,
+                    kind,
+                    rate,
+                    config.seconds,
+                    10.0_f64.powf(config.tone_db / 20.0),
+                    // Twenty milliseconds, or the largest buffers the
+                    // card can be given (eight periods) and one more.
+                    (rate as usize / 50).max(9 * frames),
+                )
+            }),
             listeners: config
                 .listen
                 .iter()
@@ -281,6 +329,15 @@ impl Patch {
                 let sample =
                     (self.amplitude * self.sine * FULL_SCALE).clamp(-FULL_SCALE, FULL_SCALE - 1.0);
                 output[channel] = sample as i32;
+            }
+            let number = self.done + frame as u64;
+            if let Some(counter) = &mut self.counter {
+                output[counter.output()] = Counter::sample(number);
+                counter.read(number, input[counter.input()]);
+            }
+            if let Some(bursts) = &mut self.bursts {
+                output[bursts.output()] = bursts.sample(number);
+                bursts.read(number, input[bursts.input()]);
             }
             for listener in &mut self.listeners {
                 let sample = f64::from(input[listener.channel]) / FULL_SCALE;
@@ -415,6 +472,19 @@ impl Patch {
         self.sine /= length;
     }
 
+    /// What the count found, when one was asked for.
+    #[must_use]
+    pub fn counted(&self) -> Option<Counted> {
+        self.counter.as_ref().map(Counter::counted)
+    }
+
+    /// What the bursts found, when they were asked for. Heavy: compares
+    /// every burst with what came in after it.
+    #[must_use]
+    pub fn timed(&self) -> Option<Timed> {
+        self.bursts.as_ref().map(|bursts| bursts.timed(self.done))
+    }
+
     /// What was heard on every input listened to.
     #[must_use]
     pub fn heard(&self) -> Vec<Heard> {
@@ -441,6 +511,9 @@ mod tests {
             listen: vec![2, 4, 0],
             keep_seconds: 2,
             warm_up_seconds: 0,
+            count: None,
+            bursts: None,
+            seconds: 0,
         }
     }
 
@@ -584,6 +657,58 @@ mod tests {
         for heard in patch.heard() {
             assert_eq!(heard.slip_count, 0, "{:?}", heard.slips);
         }
+    }
+
+    #[test]
+    fn the_count_and_the_bursts_go_round_with_the_tone() {
+        let config = PatchConfig {
+            tone_output: Some(0),
+            tone_hz: 1125.0,
+            tone_db: -12.0,
+            listen: vec![0],
+            count: Some((4, 4)),
+            bursts: Some((2, 2, BurstKind::Noise)),
+            seconds: 3,
+            ..PatchConfig::default()
+        };
+        let mut patch = Patch::new(&config, 8, 8, FRAMES, RATE).expect("a valid patch");
+        run_with_cables(&mut patch, 3 * 375, 8);
+        // The cable is one quantum long.
+        let counted = patch.counted().expect("a count");
+        assert_eq!(counted.first, FRAMES as i64);
+        assert_eq!(counted.slips, 0);
+        let timed = patch.timed().expect("bursts");
+        assert!(!timed.each_burst.is_empty());
+        for length in &timed.each_burst {
+            assert!((length - FRAMES as f64).abs() < 0.01, "{timed:?}");
+        }
+        assert_eq!(patch.heard()[0].slip_count, 0);
+    }
+
+    #[test]
+    fn two_things_on_one_output_are_refused() {
+        let mut config = config();
+        config.count = Some((2, 0));
+        let error = Patch::new(&config, 8, 8, FRAMES, RATE)
+            .err()
+            .expect("an error");
+        assert!(
+            error.contains("--count: output 3 is already in use"),
+            "'{error}'"
+        );
+        let mut config = PatchConfig {
+            count: Some((1, 1)),
+            bursts: Some((1, 1, BurstKind::Impulse)),
+            ..PatchConfig::default()
+        };
+        config.tone_hz = 1000.0;
+        let error = Patch::new(&config, 8, 8, FRAMES, RATE)
+            .err()
+            .expect("an error");
+        assert!(
+            error.contains("--burst: output 2 is already in use"),
+            "'{error}'"
+        );
     }
 
     #[test]

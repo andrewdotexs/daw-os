@@ -1,0 +1,283 @@
+#!/bin/sh
+# dawos-latency-test — how long is the way round of the sound card, from
+# what the engine writes back to what it reads? (step P1.5, requirement
+# R-01: under 10 ms.)
+#
+# Two ways round are measured at once, by the engine itself:
+#
+#   inside   output 5 back to input 5 inside the interface, through its
+#            router (the file MODEL.test-loop.conf, set for the test and
+#            undone after it). No converter on the way: every sample
+#            comes back as it left, carrying its own number, and the
+#            length is exact. It is the part that belongs to the engine,
+#            the driver and USB.
+#   cable    output 3 back to input 3 through a cable: converters
+#            included, as a musician hears it. Bursts of noise, timed by
+#            comparing; the length comes with a fraction of a sample.
+#
+# For every sample rate and every shape of the buffers (frames in a
+# period, periods in a buffer):
+#
+#   - RUNS short runs, each one a fresh start of the streams: the way
+#     round is not the same at every start, and how much it moves is
+#     part of the answer;
+#   - one long run with a tone on output 3 and the count on output 5,
+#     for the slips of the signal (open point A-58).
+#
+# A shape is "FRAMES:PERIODS", with the frames of a period at 44.1 and
+# 48 kHz: twice as many are used at 88.2 and 96 kHz, four times at 176.4
+# and 192 kHz, so that a period lasts the same.
+#
+# Results go to /var/lib/dawos/measure/latency-<time>[-LABEL].
+
+set -u
+
+PROG=dawos-latency-test
+BASE=/var/lib/dawos/measure
+ENGINE=${DAWOS_ENGINE:-dawos-engine}
+SETUP=${DAWOS_CARD_SETUP:-dawos-card-setup}
+CARDS_DIR=${DAWOS_CARDS_DIR:-/usr/share/dawos/cards}
+# Milliseconds of way round through the cable that R-01 allows.
+LIMIT_MS=10
+
+usage() {
+	cat << USAGE
+Usage:
+  ${PROG} [--card N] [--rates "HZ ..."] [--shapes "FRAMES:PERIODS ..."]
+          [--runs N] [--long SECONDS] [LABEL]
+
+  --rates LIST    sample rates (default "44100 48000 96000 192000")
+  --shapes LIST   shapes of the buffers (default "128:2 128:3 96:3 64:2 64:3")
+  --runs N        short runs per shape, each a fresh start (default 10)
+  --long SECONDS  length of the long run per shape; 0: none (default 60)
+  --card N        the sound card (default: the first USB one)
+USAGE
+}
+
+die() {
+	echo "${PROG}: $*" >&2
+	exit 1
+}
+
+field() {
+	sed -n "s/^$2: //p" "$1" | head -n 1
+}
+
+first_usb_card() {
+	for directory in /proc/asound/card[0-9]*; do
+		[ -r "${directory}/usbid" ] || continue
+		echo "${directory##*/card}"
+		return 0
+	done
+	return 1
+}
+
+rates="44100 48000 96000 192000"
+shapes="128:2 128:3 96:3 64:2 64:3"
+runs=10
+long=60
+card=
+label=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--rates)
+		rates=${2:-}
+		shift 2
+		;;
+	--shapes)
+		shapes=${2:-}
+		shift 2
+		;;
+	--runs)
+		runs=${2:-}
+		shift 2
+		;;
+	--long)
+		long=${2:-}
+		shift 2
+		;;
+	--card)
+		card=${2:-}
+		shift 2
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-*) die "unknown option '$1'" ;;
+	*)
+		label=$1
+		shift
+		;;
+	esac
+done
+case "${runs}${long}" in
+'' | *[!0-9]*) die "--runs and --long take a number" ;;
+esac
+[ "$(id -u)" = 0 ] || die "must run as root"
+if [ -z "${card}" ]; then
+	card=$(first_usb_card) || die "no USB sound card: is the interface connected?"
+fi
+[ -d "/proc/asound/card${card}" ] || die "there is no sound card ${card}"
+identifier=$(cat "/proc/asound/card${card}/id")
+model=
+if [ -r "/proc/asound/card${card}/usbid" ]; then
+	model=$(tr ':' '-' < "/proc/asound/card${card}/usbid")
+fi
+if [ -n "${DAWOS_CAPTURE_DEVICE:-}" ]; then
+	# A card made of software, whose two sides are two devices.
+	device_options="--device hw:${identifier},0,0 --capture-device ${DAWOS_CAPTURE_DEVICE}"
+else
+	device_options="--device hw:${identifier},0"
+fi
+
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+dir="${BASE}/latency-${stamp}${label:+-${label}}"
+mkdir -p "${dir}" || die "cannot create ${dir}"
+{
+	echo "started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+	echo "label: ${label:-none}"
+	echo "kernel: $(uname -a | cut -d' ' -f1,3-)"
+	# shellcheck source=/dev/null
+	echo "image: $(. /etc/os-release && echo "${VERSION_ID:-unknown}")"
+	echo "engine: $("${ENGINE}" --version 2> /dev/null)"
+	echo "card: ${identifier} (${model:-not a USB card})"
+	echo "lowlatency: $(cat /sys/module/snd_usb_audio/parameters/lowlatency 2> /dev/null)"
+	echo "implicit_fb: $(cat /sys/module/snd_usb_audio/parameters/implicit_fb 2> /dev/null)"
+	echo "rates: ${rates}"
+	echo "shapes: ${shapes}"
+	echo "runs: ${runs}"
+	echo "long_s: ${long}"
+} > "${dir}/meta.txt"
+echo "directory: ${dir}"
+
+# The router of the interface: the known state, then the loop inside.
+loop="${CARDS_DIR}/${model}.test-loop.conf"
+if [ -r "${CARDS_DIR}/${model}.conf" ]; then
+	{
+		"${SETUP}" apply --card "${card}"
+		[ -r "${loop}" ] && "${SETUP}" apply --card "${card}" "${loop}"
+	} > "${dir}/routing-before.txt" 2>&1
+	grep -E '^(set|failed|differs|missing|bad value|read-only)' "${dir}/routing-before.txt"
+fi
+
+# One line per short run: what a later look needs.
+echo "rate frames periods run xruns inside_first inside_last inside_slips cable_least cable_median cable_most cable_match" > "${dir}/runs.txt"
+: > "${dir}/summary.txt"
+
+say() {
+	echo "$*" | tee -a "${dir}/summary.txt"
+}
+
+# The engine, never judged here by its own verdict: the figures are.
+engine() {
+	# shellcheck disable=SC2086  # device_options is several words
+	"${ENGINE}" run --backend alsa ${device_options} --require-rt --allow-xruns "$@"
+}
+
+failures=0
+current_rate=
+for rate in ${rates}; do
+	case "${rate}" in
+	44100 | 48000) factor=1 ;;
+	88200 | 96000) factor=2 ;;
+	176400 | 192000) factor=4 ;;
+	*) die "rate ${rate}: one of 44100, 48000, 88200, 96000, 176400, 192000" ;;
+	esac
+	for shape in ${shapes}; do
+		frames=$((${shape%%:*} * factor))
+		periods=${shape#*:}
+		if [ "${rate}" != "${current_rate}" ]; then
+			# The interface needs some seconds after a change of rate.
+			engine --rate "${rate}" --seconds 8 --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
+			current_rate=${rate}
+		fi
+		name="${rate}-${frames}x${periods}"
+		say ""
+		say "-- ${rate} Hz, ${frames} frames x ${periods} periods ($(awk -v f="${frames}" -v p="${periods}" -v r="${rate}" 'BEGIN { printf "%.2f", f * p * 1000 / r }') ms of buffer) --"
+
+		run=1
+		while [ "${run}" -le "${runs}" ]; do
+			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
+				--count 5:5 --burst 3:3 > "${dir}/run.txt" 2> "${dir}/run.err"
+			inside=$(field "${dir}/run.txt" count_on_input_5)
+			cable=$(field "${dir}/run.txt" bursts_3_to_3)
+			echo "${rate} ${frames} ${periods} ${run}" \
+				"$(field "${dir}/run.txt" card_xruns | sed 's/ .*//')" \
+				"$(echo "${inside}" | sed -n 's/^way round \([0-9]*\) samples.*at the end \([0-9]*\) samples.*/\1 \2/p' | grep . || echo "- -")" \
+				"$(field "${dir}/run.txt" count_slips_on_input_5 | sed 's/ .*//' | grep . || echo -)" \
+				"$(echo "${cable}" | sed -n 's/.*way round \([0-9.]*\) to \([0-9.]*\) samples, median \([0-9.]*\) .* at least \([0-9.]*\)$/\1 \3 \2 \4/p' | grep . || echo "- - - -")" \
+				>> "${dir}/runs.txt"
+			# The first run of a shape is kept whole, as an example.
+			[ "${run}" = 1 ] && cp "${dir}/run.txt" "${dir}/first-${name}.txt"
+			run=$((run + 1))
+		done
+		rm -f "${dir}/run.txt" "${dir}/run.err"
+
+		# What the short runs of this shape say, together.
+		verdict=$(awk -v rate="${rate}" -v frames="${frames}" -v periods="${periods}" -v limit="${LIMIT_MS}" '
+			function ms(samples) { return samples * 1000 / rate }
+			$1 == rate && $2 == frames && $3 == periods {
+				runs++
+				xruns += $5
+				if ($6 != "-") {
+					found++
+					seen[$6]++
+					if (least == "" || $6 < least) least = $6
+					if ($6 > most) most = $6
+					if ($7 != $6) moved++
+					slips += $8
+				}
+				if ($10 != "-" && $12 >= 0.5) {
+					timed++
+					if (cable_least == "" || $10 < cable_least) cable_least = $10
+					if ($10 > cable_most) cable_most = $10
+					if ($6 != "-") {
+						both++
+						more += $10 - $6
+					}
+				}
+			}
+			END {
+				if (found == 0) {
+					printf "  inside: the count never came back in %d runs\n", runs
+				} else {
+					printf "  inside: %d runs, %d to %d samples (%.3f to %.3f ms); lengths seen:", found, least, most, ms(least), ms(most)
+					for (size in seen) printf " %d (%d times)", size, seen[size]
+					printf "; runs that ended with another length: %d; slips: %d\n", moved, slips
+				}
+				if (timed == 0) {
+					printf "  cable: the bursts never came back in %d runs\n", runs
+					print "VERDICT unknown"
+				} else {
+					printf "  cable: %d runs, %.2f to %.2f samples (%.3f to %.3f ms)\n", timed, cable_least, cable_most, ms(cable_least), ms(cable_most)
+					if (both > 0) printf "  converters and cable alone: %.2f samples (%.3f ms) more than inside, on average\n", more / both, ms(more / both)
+					spread = cable_most - cable_least
+					printf "  R-01, under %d ms through the cable: %s (%.3f ms at the most); from start to start it moves by %.2f samples\n", limit, (ms(cable_most) < limit) ? "yes" : "NO", ms(cable_most), spread
+					print (ms(cable_most) < limit) ? "VERDICT yes" : "VERDICT no"
+				}
+				printf "  xruns in the short runs: %d\n", xruns
+			}' "${dir}/runs.txt")
+		echo "${verdict}" | grep -v '^VERDICT' | tee -a "${dir}/summary.txt"
+		case "${verdict}" in
+		*"VERDICT yes"*) ;;
+		*) failures=$((failures + 1)) ;;
+		esac
+
+		if [ "${long}" -gt 0 ]; then
+			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds "${long}" \
+				--tone 3 --tone-cycles 3 --listen 3 --count 5:5 > "${dir}/long-${name}.txt" 2>&1
+			say "  long run, ${long} s: xruns $(field "${dir}/long-${name}.txt" card_xruns | sed 's/ .*//'); count slips $(field "${dir}/long-${name}.txt" count_slips_on_input_5 | sed 's/ .*//'); slips of the tone $(field "${dir}/long-${name}.txt" slips_on_input_3 | sed 's/ .*//')"
+			grep 'count slip on input' "${dir}/long-${name}.txt" | sed 's/^ */    /' | tee -a "${dir}/summary.txt"
+		fi
+	done
+done
+
+if [ -r "${CARDS_DIR}/${model}.conf" ]; then
+	"${SETUP}" apply --card "${card}" > "${dir}/routing-after.txt" 2>&1
+	grep -E '^(set|failed|differs|missing|bad value|read-only)' "${dir}/routing-after.txt"
+fi
+
+say ""
+say "shapes over ${LIMIT_MS} ms through the cable, or not measured: ${failures}"
+say "finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

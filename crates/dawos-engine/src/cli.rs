@@ -26,6 +26,15 @@ pub struct RunOptions {
     pub tone: Option<usize>,
     pub tone_hz: u32,
     pub tone_below_db: u32,
+    /// The tone as whole cycles in a quantum, instead of hertz.
+    pub tone_cycles: Option<u32>,
+    /// A count played and checked sample for sample: (output, input),
+    /// from 0.
+    pub count: Option<(usize, usize)>,
+    /// Bursts played and timed: (output, input), from 0; and whether
+    /// they are single impulses instead of noise.
+    pub bursts: Option<(usize, usize)>,
+    pub impulses: bool,
     /// Inputs copied to outputs, (input, output), from 0.
     pub routes: Vec<(usize, usize)>,
     /// Inputs to measure, from 0.
@@ -109,7 +118,20 @@ Options of run:
   --tone-hz HZ       its frequency (default 1000; with 1125, a whole
                      number of cycles per quantum, --listen also finds
                      every slip of the signal, to the sample)
-  --tone-level DB    its peak level in dB below full scale (default 12)
+  --tone-cycles N    its frequency as whole cycles in a quantum, at any
+                     rate (3 is 1125 Hz with the quanta of 2.667 ms)
+  --tone-level DB    its peak level in dB below full scale (default 12);
+                     also the level of the bursts
+  --count OUT:IN     with alsa: play a count on an output, every sample
+                     carrying its own number, and check it on an input:
+                     the length of the way round to the sample, every
+                     slip, every sample that comes back changed. For a
+                     way round that keeps the samples as they are (a
+                     loop inside the interface)
+  --burst OUT:IN     with alsa: play bursts of noise on an output, four a
+                     second, and time them on an input: the length of
+                     the way round through converters and a cable
+  --impulse OUT:IN   the same with single impulses
   --route IN:OUT[,IN:OUT...]
                      with alsa: copy these inputs to these outputs,
                      sample for sample; every other output is silent
@@ -186,6 +208,10 @@ impl Default for RunOptions {
             tone: None,
             tone_hz: 1000,
             tone_below_db: 12,
+            tone_cycles: None,
+            count: None,
+            bursts: None,
+            impulses: false,
             routes: Vec::new(),
             listen: Vec::new(),
             periods: 2,
@@ -230,6 +256,19 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             "--tone-hz" => options.tone_hz = number(value("--tone-hz")?, "--tone-hz", 20, 20_000)?,
             "--tone-level" => {
                 options.tone_below_db = number(value("--tone-level")?, "--tone-level", 0, 120)?
+            }
+            "--tone-cycles" => {
+                options.tone_cycles =
+                    Some(number(value("--tone-cycles")?, "--tone-cycles", 1, 64)?);
+            }
+            "--count" => options.count = Some(pair(value("--count")?, "--count")?),
+            "--burst" => {
+                options.bursts = Some(pair(value("--burst")?, "--burst")?);
+                options.impulses = false;
+            }
+            "--impulse" => {
+                options.bursts = Some(pair(value("--impulse")?, "--impulse")?);
+                options.impulses = true;
             }
             "--route" => {
                 for pair in value("--route")?.split(',') {
@@ -305,6 +344,9 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             || options.tone.is_some()
             || !options.routes.is_empty()
             || !options.listen.is_empty()
+            || options.tone_cycles.is_some()
+            || options.count.is_some()
+            || options.bursts.is_some()
             || options.each_second
             || options.periods != 2
             || options.warm_up_s != 0
@@ -315,6 +357,15 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
         }
     }
     Ok(options)
+}
+
+/// An output and an input, written OUT:IN and counted from 1; returned
+/// from 0.
+fn pair(text: &str, name: &str) -> Result<(usize, usize), String> {
+    let Some((output, input)) = text.split_once(':') else {
+        return Err(format!("{name}: '{text}' is not OUT:IN"));
+    };
+    Ok((channel(output, name)?, channel(input, name)?))
 }
 
 /// A channel as people count them, from 1; returned from 0.
@@ -391,7 +442,7 @@ mod tests {
     #[test]
     fn run_takes_the_options_about_sound() {
         let text = "run --backend alsa --device hw:USB,0 --capture-device hw:Loopback,1 --tone 3 \
-                    --tone-hz 440 --tone-level 20 --route 3:5,4:6 --listen 3,5 --each-second --allow-xruns \
+                    --tone-hz 440 --tone-level 20 --route 3:5,4:6 --listen 3,5 --each-second --allow-xruns --tone-cycles 3 --count 5:5 --impulse 3:4 \
                     --fault card-xrun";
         let Ok(Command::Run(options)) = parse(&arguments(text)) else {
             panic!("run was not understood");
@@ -405,6 +456,10 @@ mod tests {
         assert_eq!(options.routes, vec![(2, 4), (3, 5)]);
         assert_eq!(options.listen, vec![2, 4]);
         assert!(options.each_second);
+        assert_eq!(options.tone_cycles, Some(3));
+        assert_eq!(options.count, Some((4, 4)));
+        assert_eq!(options.bursts, Some((2, 3)));
+        assert!(options.impulses);
         assert!(options.allow_xruns);
         assert_eq!(options.fault, Fault::CardXrun);
     }

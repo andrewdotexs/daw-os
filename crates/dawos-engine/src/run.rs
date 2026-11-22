@@ -20,6 +20,7 @@ use crate::live::{live_loop, End, Shared, ThreadReport};
 use crate::notify::Notifier;
 use crate::patch::{Heard, Patch, PatchConfig};
 use crate::plan::{Fault, Plan};
+use crate::probe::{BurstKind, Counted, Timed};
 use crate::watchdog::{watchdog_loop, Event, Spare, Watch, STUCK_PERIODS};
 
 /// Priority of the watchdog: above the live threads and above anything
@@ -77,6 +78,9 @@ pub struct CardOutcome {
     pub in_use_at_the_end: bool,
     /// What was heard on the inputs listened to.
     pub heard: Vec<Heard>,
+    /// What the count found, and what the bursts found.
+    pub counted: Option<Counted>,
+    pub timed: Option<Timed>,
     /// The first xruns: seconds from the start, and how the streams
     /// stood.
     pub xrun_log: Vec<(f64, XrunView)>,
@@ -284,8 +288,18 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         Some(card) => Some(Mutex::new(Patch::new(
             &PatchConfig {
                 tone_output: options.tone,
-                tone_hz: f64::from(options.tone_hz),
+                tone_hz: tone_hz(options, format),
                 tone_db: -f64::from(options.tone_below_db),
+                count: options.count,
+                bursts: options.bursts.map(|(output, input)| {
+                    let kind = if options.impulses {
+                        BurstKind::Impulse
+                    } else {
+                        BurstKind::Noise
+                    };
+                    (output, input, kind)
+                }),
+                seconds: options.seconds,
                 routes: options.routes.clone(),
                 listen: options.listen.clone(),
                 keep_seconds: if options.each_second {
@@ -522,6 +536,16 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 .as_ref()
                 .and_then(|patch| patch.try_lock().ok().map(|patch| patch.heard()))
                 .unwrap_or_default(),
+            counted: shared
+                .patch
+                .as_ref()
+                .and_then(|patch| patch.try_lock().ok().and_then(|patch| patch.counted())),
+            // The run is over: the comparing of the bursts is done here,
+            // on the thread that only kept time.
+            timed: shared
+                .patch
+                .as_ref()
+                .and_then(|patch| patch.try_lock().ok().and_then(|patch| patch.timed())),
         }
     });
 
@@ -745,6 +769,27 @@ fn verdict(outcome: &Outcome) -> Verdict {
     }
 }
 
+/// The frequency of the tone: so many whole cycles in a quantum when
+/// asked that way, hertz otherwise.
+fn tone_hz(options: &RunOptions, format: Format) -> f64 {
+    match options.tone_cycles {
+        Some(cycles) => f64::from(cycles) * f64::from(format.rate) / f64::from(format.frames),
+        None => f64::from(options.tone_hz),
+    }
+}
+
+/// Milliseconds a number of frames lasts.
+fn frames_ms(frames: f64, rate: u32) -> f64 {
+    frames * 1000.0 / f64::from(rate)
+}
+
+/// The middle value of a list (0 for an empty one).
+fn median(values: &[f64]) -> f64 {
+    let mut sorted = values.to_vec();
+    sorted.sort_by(f64::total_cmp);
+    sorted.get(sorted.len() / 2).copied().unwrap_or(0.0)
+}
+
 /// The answer to "did the sound card do what was asked?".
 fn audio_verdict(outcome: &Outcome) -> Verdict {
     let Some(card) = &outcome.card else {
@@ -843,6 +888,51 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
             } else {
                 bad.push(format!("the tone is not on input {input}"));
             }
+        }
+    }
+
+    // The count: found, and whole after the warm-up.
+    if let Some(counted) = &card.counted {
+        let input = counted.input + 1;
+        if counted.locked_at.is_none() {
+            bad.push(format!("the count never came back on input {input}"));
+        } else if !disturbed && counted.largest_slip as f64 > SLIP_LIMIT_SAMPLES {
+            bad.push(format!(
+                "a slip of {} samples in the count on input {input}",
+                counted.largest_slip
+            ));
+        } else if !disturbed && counted.slips > 0 {
+            good.push(format!(
+                "{} slips of at most {} samples in the count on input {input} (open point A-58)",
+                counted.slips, counted.largest_slip
+            ));
+        } else {
+            good.push(format!(
+                "the count comes back on input {input} after {} samples",
+                counted.last
+            ));
+        }
+    }
+    // The bursts: some, and all of them recognised.
+    if let Some(timed) = &card.timed {
+        let recognised = timed
+            .each_match
+            .iter()
+            .fold(f64::INFINITY, |least, &likeness| least.min(likeness));
+        let floor = if options.impulses { 0.001 } else { 0.5 };
+        if timed.each_burst.is_empty() {
+            bad.push("no burst was played whole".to_string());
+        } else if recognised < floor {
+            bad.push(format!(
+                "the bursts do not come back on input {}",
+                timed.input + 1
+            ));
+        } else {
+            good.push(format!(
+                "the bursts come back on input {} after {:.2} samples",
+                timed.input + 1,
+                median(&timed.each_burst)
+            ));
         }
     }
 
@@ -1028,6 +1118,70 @@ fn decibels(value: f64) -> String {
     }
 }
 
+fn print_counted(counted: &Counted, rate: u32) {
+    let input = counted.input + 1;
+    match counted.locked_at {
+        None => println!(
+            "count_on_input_{input}: never found ({} samples read)",
+            counted.out_of_place + counted.in_place
+        ),
+        Some(second) => {
+            println!(
+                "count_on_input_{input}: way round {} samples ({:.3} ms), found at {second:.3} s; at the end {} samples ({:.3} ms)",
+                counted.first,
+                frames_ms(counted.first as f64, rate),
+                counted.last,
+                frames_ms(counted.last as f64, rate),
+            );
+            println!(
+                "count_slips_on_input_{input}: {} (largest {} samples); in the warm-up {} (largest {})",
+                counted.slips,
+                counted.largest_slip,
+                counted.early_slips,
+                counted.largest_early_slip
+            );
+            println!(
+                "count_samples_on_input_{input}: {} in place, {} out of place",
+                counted.in_place, counted.out_of_place
+            );
+        }
+    }
+    for (second, change) in &counted.each_slip {
+        println!("  count slip on input {input} at {second:.3} s: {change:+} samples");
+    }
+}
+
+fn print_timed(timed: &Timed, rate: u32, impulses: bool) {
+    let name = format!("bursts_{}_to_{}", timed.output + 1, timed.input + 1);
+    if timed.each_burst.is_empty() {
+        println!("{name}: none played whole");
+        return;
+    }
+    let least = timed
+        .each_burst
+        .iter()
+        .copied()
+        .fold(f64::INFINITY, f64::min);
+    let most = timed
+        .each_burst
+        .iter()
+        .copied()
+        .fold(f64::NEG_INFINITY, f64::max);
+    let middle = median(&timed.each_burst);
+    let recognised = timed
+        .each_match
+        .iter()
+        .copied()
+        .fold(f64::INFINITY, f64::min);
+    println!(
+        "{name}: {} {}; way round {least:.2} to {most:.2} samples, median {middle:.2} ({:.3} ms); {} at least {recognised:.4}",
+        timed.each_burst.len(),
+        if impulses { "impulses" } else { "bursts of noise" },
+        frames_ms(middle, rate),
+        if impulses { "peak" } else { "match" },
+    );
+}
+
 fn print_card(card: &CardOutcome, options: &RunOptions) {
     let info = &card.info;
     println!();
@@ -1090,12 +1244,24 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
     println!("card_stamps_not_believed: {}", card.bad_stamps);
     match options.tone {
         Some(output) => println!(
-            "tone: output {}, {} Hz, peak {} dB below full scale",
+            "tone: output {}, {:.2} Hz, peak {} dB below full scale",
             output + 1,
-            options.tone_hz,
+            tone_hz(
+                options,
+                Format {
+                    rate: info.rate,
+                    frames: info.period as u32
+                }
+            ),
             options.tone_below_db
         ),
         None => println!("tone: none"),
+    }
+    if let Some(counted) = &card.counted {
+        print_counted(counted, info.rate);
+    }
+    if let Some(timed) = &card.timed {
+        print_timed(timed, info.rate, options.impulses);
     }
     println!(
         "routes: {}",
