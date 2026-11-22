@@ -49,6 +49,9 @@ pub struct PatchConfig {
     /// sample: (output, input). For a way round that keeps the samples
     /// as they are.
     pub count: Option<(usize, usize)>,
+    /// The key of the count: it should differ from one run to the next
+    /// (see [`Counter::new`]).
+    pub count_key: u16,
     /// Bursts played on an output and timed on an input: (output,
     /// input, what they are made of). For a way round through the
     /// converters.
@@ -240,9 +243,15 @@ impl Patch {
             tone_output: config.tone_output,
             amplitude: 10.0_f64.powf(config.tone_db / 20.0),
             routes: config.routes.clone(),
-            counter: config
-                .count
-                .map(|(output, input)| Counter::new(output, input, rate, config.warm_up_seconds)),
+            counter: config.count.map(|(output, input)| {
+                Counter::new(
+                    output,
+                    input,
+                    rate,
+                    config.warm_up_seconds,
+                    config.count_key,
+                )
+            }),
             bursts: config.bursts.map(|(output, input, kind)| {
                 Bursts::new(
                     output,
@@ -332,7 +341,7 @@ impl Patch {
             }
             let number = self.done + frame as u64;
             if let Some(counter) = &mut self.counter {
-                output[counter.output()] = Counter::sample(number);
+                output[counter.output()] = counter.sample(number);
                 counter.read(number, input[counter.input()]);
             }
             if let Some(bursts) = &mut self.bursts {
@@ -512,6 +521,7 @@ mod tests {
             keep_seconds: 2,
             warm_up_seconds: 0,
             count: None,
+            count_key: 0x5a5a,
             bursts: None,
             seconds: 0,
         }

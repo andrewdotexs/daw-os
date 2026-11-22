@@ -21,6 +21,8 @@
 #   - RUNS short runs, each one a fresh start of the streams: the way
 #     round is not the same at every start, and how much it moves is
 #     part of the answer;
+#   - one short run with impulses instead of noise, as a check of the
+#     two against each other;
 #   - one long run with a tone on output 3 and the count on output 5,
 #     for the slips of the signal (open point A-58).
 #
@@ -139,7 +141,7 @@ mkdir -p "${dir}" || die "cannot create ${dir}"
 	echo "label: ${label:-none}"
 	echo "kernel: $(uname -a | cut -d' ' -f1,3-)"
 	# shellcheck source=/dev/null
-	echo "image: $(. /etc/os-release && echo "${VERSION_ID:-unknown}")"
+	echo "image: $(. /etc/os-release && echo "${IMAGE_VERSION:-unknown}")"
 	echo "engine: $("${ENGINE}" --version 2> /dev/null)"
 	echo "card: ${identifier} (${model:-not a USB card})"
 	echo "lowlatency: $(cat /sys/module/snd_usb_audio/parameters/lowlatency 2> /dev/null)"
@@ -214,27 +216,47 @@ for rate in ${rates}; do
 		done
 		rm -f "${dir}/run.txt" "${dir}/run.err"
 
-		# What the short runs of this shape say, together.
+		# What the short runs of this shape say, together. The length
+		# inside is the one at the end of each run: the first one found
+		# comes before the slips of the start.
 		verdict=$(awk -v rate="${rate}" -v frames="${frames}" -v periods="${periods}" -v limit="${LIMIT_MS}" '
 			function ms(samples) { return samples * 1000 / rate }
+			# The keys of a table as numbers in order, in list[1..n].
+			function in_order(table, list,    key, n, i, j, held) {
+				n = 0
+				for (key in table) list[++n] = key
+				for (i = 2; i <= n; i++) {
+					held = list[i]
+					for (j = i - 1; j >= 1 && list[j] + 0 > held + 0; j--) list[j + 1] = list[j]
+					list[j + 1] = held
+				}
+				return n
+			}
+			function seen(table,    list, n, i, text) {
+				n = in_order(table, list)
+				text = ""
+				for (i = 1; i <= n; i++) text = text " " list[i] " (" table[list[i]] ")"
+				return text
+			}
 			$1 == rate && $2 == frames && $3 == periods {
 				runs++
 				xruns += $5
-				if ($6 != "-") {
+				if ($7 != "-") {
 					found++
-					seen[$6]++
-					if (least == "" || $6 < least) least = $6
-					if ($6 > most) most = $6
-					if ($7 != $6) moved++
-					slips += $8
+					inside[$7]++
+					if (least == "" || $7 < least) least = $7
+					if ($7 > most) most = $7
+					if ($8 > 0) slipped++
 				}
 				if ($10 != "-" && $12 >= 0.5) {
 					timed++
+					cable[$10]++
 					if (cable_least == "" || $10 < cable_least) cable_least = $10
 					if ($10 > cable_most) cable_most = $10
-					if ($6 != "-") {
+					if ($11 - $9 > within) within = $11 - $9
+					if ($7 != "-") {
 						both++
-						more += $10 - $6
+						more[sprintf("%.2f", $10 - $7)]++
 					}
 				}
 			}
@@ -242,18 +264,21 @@ for rate in ${rates}; do
 				if (found == 0) {
 					printf "  inside: the count never came back in %d runs\n", runs
 				} else {
-					printf "  inside: %d runs, %d to %d samples (%.3f to %.3f ms); lengths seen:", found, least, most, ms(least), ms(most)
-					for (size in seen) printf " %d (%d times)", size, seen[size]
-					printf "; runs that ended with another length: %d; slips: %d\n", moved, slips
+					printf "  inside, at the end of each run: %d runs, %d to %d samples (%.3f to %.3f ms); runs with slips: %d\n", found, least, most, ms(least), ms(most), slipped
+					printf "    lengths (times):%s\n", seen(inside)
 				}
 				if (timed == 0) {
 					printf "  cable: the bursts never came back in %d runs\n", runs
 					print "VERDICT unknown"
 				} else {
-					printf "  cable: %d runs, %.2f to %.2f samples (%.3f to %.3f ms)\n", timed, cable_least, cable_most, ms(cable_least), ms(cable_most)
-					if (both > 0) printf "  converters and cable alone: %.2f samples (%.3f ms) more than inside, on average\n", more / both, ms(more / both)
-					spread = cable_most - cable_least
-					printf "  R-01, under %d ms through the cable: %s (%.3f ms at the most); from start to start it moves by %.2f samples\n", limit, (ms(cable_most) < limit) ? "yes" : "NO", ms(cable_most), spread
+					printf "  cable: %d runs, %.2f to %.2f samples (%.3f to %.3f ms); from start to start it moves by %.2f samples; inside a run the bursts differ by %.2f at the most\n", timed, cable_least, cable_most, ms(cable_least), ms(cable_most), cable_most - cable_least, within
+					printf "    lengths (times):%s\n", seen(cable)
+					if (both > 0) {
+						best = ""
+						for (key in more) if (best == "" || more[key] > more[best]) best = key
+						printf "  converters and cable alone: %s samples (%.3f ms) more than inside, in %d runs of %d\n", best, ms(best), more[best], both
+					}
+					printf "  R-01, under %d ms through the cable: %s (%.3f ms at the most)\n", limit, (ms(cable_most) < limit) ? "yes" : "NO", ms(cable_most)
 					print (ms(cable_most) < limit) ? "VERDICT yes" : "VERDICT no"
 				}
 				printf "  xruns in the short runs: %d\n", xruns
@@ -263,6 +288,19 @@ for rate in ${rates}; do
 		*"VERDICT yes"*) ;;
 		*) failures=$((failures + 1)) ;;
 		esac
+
+		# The same way round with impulses instead of noise: the two
+		# must agree, once the length inside is taken away from each.
+		engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
+			--count 5:5 --impulse 3:3 > "${dir}/impulse-${name}.txt" 2>&1
+		inside=$(field "${dir}/impulse-${name}.txt" count_on_input_5 | sed -n 's/.*at the end \([0-9]*\) samples.*/\1/p')
+		cable=$(field "${dir}/impulse-${name}.txt" bursts_3_to_3)
+		peak=$(echo "${cable}" | sed -n 's/.*median \([0-9.]*\) .* at least \([0-9.]*\)$/\1 \2/p')
+		if [ -n "${inside}" ] && [ -n "${peak}" ]; then
+			say "  with impulses, one run: $(echo "${inside} ${peak}" | awk '{ printf "%.2f samples more than inside (peak %s of full scale)", $2 - $1, $3 }')"
+		else
+			say "  with impulses, one run: not measured"
+		fi
 
 		if [ "${long}" -gt 0 ]; then
 			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds "${long}" \

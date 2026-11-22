@@ -235,7 +235,7 @@ passed=0
 	echo "label: ${label:-none}"
 	echo "kernel: $(uname -a | cut -d' ' -f1,3-)"
 	# shellcheck source=/dev/null
-	echo "image: $(. /etc/os-release && echo "${VERSION_ID:-unknown}")"
+	echo "image: $(. /etc/os-release && echo "${IMAGE_VERSION:-unknown}")"
 	virtual=$(systemd-detect-virt 2> /dev/null)
 	echo "virtual: ${virtual:-unknown}"
 	echo "engine: $("${ENGINE}" --version 2> /dev/null)"

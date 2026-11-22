@@ -291,6 +291,9 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 tone_hz: tone_hz(options, format),
                 tone_db: -f64::from(options.tone_below_db),
                 count: options.count,
+                // The time of the start, in steps of a microsecond: no
+                // two runs in a row have the same.
+                count_key: (clock::now() >> 10) as u16,
                 bursts: options.bursts.map(|(output, input)| {
                     let kind = if options.impulses {
                         BurstKind::Impulse

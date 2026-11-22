@@ -6,7 +6,9 @@
 //!   interface, or a card made of software), every sample that comes
 //!   back says exactly how long it took: the length of the way round to
 //!   the sample, every slip with its size and its sign, and every sample
-//!   that came back changed.
+//!   that came back changed. The numbers are written with a key of the
+//!   run, so that samples of another run, left in the interface, are not
+//!   taken for the ones of this run.
 //! - [`Bursts`]: short bursts of noise, or single impulses, for a way
 //!   round that goes through the converters and a cable, where no sample
 //!   comes back as it left. The input after each burst is kept, and
@@ -66,6 +68,12 @@ pub struct Counted {
 /// Plays a count on one output and reads it back on one input.
 pub struct Counter {
     output: usize,
+    /// The number of a sample is multiplied by this before it is played,
+    /// and what comes back by the other: an odd number and its inverse,
+    /// modulo the wrap. A run with another key reads these samples as
+    /// numbers in no order, and never finds a delay in them.
+    multiplier: i64,
+    inverse: i64,
     rate: f64,
     warm_up_frames: u64,
     locked: Option<i64>,
@@ -77,10 +85,23 @@ pub struct Counter {
 impl Counter {
     /// A counter from `output` to `input`, at `rate` frames a second;
     /// what happens in the first `warm_up_seconds` is counted apart.
+    /// `key` should differ from one run to the next: an interface can
+    /// give back, when its streams start, the last samples of the run
+    /// before (seen at 192 kHz on the Scarlett 18i20, step P1.5).
     #[must_use]
-    pub fn new(output: usize, input: usize, rate: u32, warm_up_seconds: u32) -> Self {
+    pub fn new(output: usize, input: usize, rate: u32, warm_up_seconds: u32, key: u16) -> Self {
+        let multiplier = i64::from(key | 1);
+        // Newton's steps double the bits that are right: three are
+        // right to begin with (every odd number is its own inverse
+        // modulo 8), sixteen are needed.
+        let mut inverse = multiplier;
+        for _ in 0..3 {
+            inverse = (inverse * (2 - multiplier * inverse)) & (COUNTER_WRAP - 1);
+        }
         Self {
             output,
+            multiplier,
+            inverse,
             rate: f64::from(rate),
             warm_up_frames: u64::from(warm_up_seconds) * u64::from(rate),
             locked: None,
@@ -116,14 +137,16 @@ impl Counter {
 
     /// The sample to play at frame `number`.
     #[must_use]
-    pub const fn sample(number: u64) -> i32 {
-        ((number as i64 & (COUNTER_WRAP - 1)) << COUNTER_SHIFT) as i32
+    pub const fn sample(&self, number: u64) -> i32 {
+        let carried = ((number as i64 & (COUNTER_WRAP - 1)) * self.multiplier) & (COUNTER_WRAP - 1);
+        (carried << COUNTER_SHIFT) as i32
     }
 
     /// The sample that came back at frame `number`.
     pub fn read(&mut self, number: u64, sample: i32) {
         let carried = i64::from(sample >> COUNTER_SHIFT) & (COUNTER_WRAP - 1);
-        let delay = (number as i64 - carried) & (COUNTER_WRAP - 1);
+        let played = (carried * self.inverse) & (COUNTER_WRAP - 1);
+        let delay = (number as i64 - played) & (COUNTER_WRAP - 1);
         if self.locked == Some(delay) {
             self.counted.in_place += 1;
             self.run = 0;
@@ -394,10 +417,13 @@ mod tests {
 
     const RATE: u32 = 48_000;
 
+    /// A key like any other.
+    const KEY: u16 = 0x9e37;
+
     /// Play the counter into a line `delay` samples long, with changes
     /// of length on the way, and read it back.
     fn count(frames: u64, delay: usize, changes: &[(u64, i64)], warm_up: u32) -> Counted {
-        let mut counter = Counter::new(0, 0, RATE, warm_up);
+        let mut counter = Counter::new(0, 0, RATE, warm_up, KEY);
         let mut line: std::collections::VecDeque<i32> = std::iter::repeat_n(0, delay).collect();
         for number in 0..frames {
             for &(at, change) in changes {
@@ -409,7 +435,7 @@ mod tests {
                     }
                 }
             }
-            line.push_back(Counter::sample(number));
+            line.push_back(counter.sample(number));
             let back = line.pop_front().unwrap_or(0);
             counter.read(number, back);
         }
@@ -455,14 +481,50 @@ mod tests {
 
     #[test]
     fn a_way_that_changes_the_samples_is_never_found() {
-        let mut counter = Counter::new(0, 0, RATE, 0);
+        let mut counter = Counter::new(0, 0, RATE, 0, KEY);
         for number in 0..48_000_u64 {
             // Half the level: the numbers no longer mean anything.
-            counter.read(number, Counter::sample(number) / 2 + 77);
+            counter.read(number, counter.sample(number) / 2 + 77);
         }
         let counted = counter.counted();
         assert_eq!(counted.locked_at, None);
         assert_eq!(counted.in_place, 0);
+    }
+
+    #[test]
+    fn every_key_reads_its_own_count() {
+        for key in [0, 1, 2, 0x00ff, 0x9e37, 0xfffe, 0xffff] {
+            let mut counter = Counter::new(0, 0, RATE, 0, key);
+            for number in 0..200_000_u64 {
+                // Straight back, 7 samples late.
+                counter.read(number + 7, counter.sample(number));
+            }
+            let counted = counter.counted();
+            assert_eq!(counted.first, 7, "key {key}");
+            assert_eq!(counted.out_of_place, 0, "key {key}");
+        }
+    }
+
+    #[test]
+    fn the_samples_of_another_run_are_not_taken_for_these() {
+        // What the Scarlett did at 192 kHz: the streams start, and the
+        // first thing to come back is the end of the run before.
+        let before = Counter::new(0, 0, RATE, 0, 0x1234);
+        let mut counter = Counter::new(0, 0, RATE, 0, KEY);
+        let mut number = 0_u64;
+        for old in 50_000..50_500_u64 {
+            counter.read(number, before.sample(old));
+            number += 1;
+        }
+        assert_eq!(counter.counted().locked_at, None);
+        // Then its own samples, 300 late.
+        for _ in 0..10_000 {
+            counter.read(number, counter.sample(number - 300));
+            number += 1;
+        }
+        let counted = counter.counted();
+        assert_eq!(counted.first, 300);
+        assert_eq!(counted.slips, 0);
     }
 
     /// Play bursts into a line and read them back, quieter and with a
