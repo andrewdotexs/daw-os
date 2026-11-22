@@ -24,11 +24,24 @@
 #   - one short run with impulses instead of noise, as a check of the
 #     two against each other;
 #   - one long run with a tone on output 3 and the count on output 5,
-#     for the slips of the signal (open point A-58).
+#     for the slips of the signal (open point A-58). From two minutes
+#     up it is judged as the runs of dawos-audio-test are: its first
+#     minute is a warm-up, and after it no xrun and no slip of more
+#     than two samples.
+#
+# A shape passes when every short run was measured, every one of them is
+# under the limit, the bursts of a run agree within one sample, and the
+# long run, if judged, passed. The way round is allowed to change from
+# one start to the next (it does, in steps of a USB microframe: step
+# P1.5): the lengths seen are listed with how often.
 #
 # A shape is "FRAMES:PERIODS", with the frames of a period at 44.1 and
 # 48 kHz: twice as many are used at 88.2 and 96 kHz, four times at 176.4
-# and 192 kHz, so that a period lasts the same.
+# and 192 kHz, so that a period lasts the same. The default is the shape
+# of the engine, 96:3 (decision D-14).
+#
+#   dawos-latency-test                          a quick look, 6 minutes
+#   dawos-latency-test --runs 100 --long 600    the acceptance, an hour
 #
 # Results go to /var/lib/dawos/measure/latency-<time>[-LABEL].
 
@@ -49,9 +62,10 @@ Usage:
           [--runs N] [--long SECONDS] [LABEL]
 
   --rates LIST    sample rates (default "44100 48000 96000 192000")
-  --shapes LIST   shapes of the buffers (default "128:2 128:3 96:3 64:2 64:3")
+  --shapes LIST   shapes of the buffers (default "96:3", the engine's own)
   --runs N        short runs per shape, each a fresh start (default 10)
-  --long SECONDS  length of the long run per shape; 0: none (default 60)
+  --long SECONDS  length of the long run per shape; 0: none; from 120 up
+                  it is judged, after a minute of warm-up (default 60)
   --card N        the sound card (default: the first USB one)
 USAGE
 }
@@ -75,7 +89,7 @@ first_usb_card() {
 }
 
 rates="44100 48000 96000 192000"
-shapes="128:2 128:3 96:3 64:2 64:3"
+shapes="96:3"
 runs=10
 long=60
 card=
@@ -171,13 +185,15 @@ say() {
 	echo "$*" | tee -a "${dir}/summary.txt"
 }
 
-# The engine, never judged here by its own verdict: the figures are.
+# The engine. The short runs are never judged by its own verdict (they
+# are given --allow-xruns): their figures are.
 engine() {
 	# shellcheck disable=SC2086  # device_options is several words
-	"${ENGINE}" run --backend alsa ${device_options} --require-rt --allow-xruns "$@"
+	"${ENGINE}" run --backend alsa ${device_options} --require-rt "$@"
 }
 
 failures=0
+shapes_done=0
 current_rate=
 for rate in ${rates}; do
 	case "${rate}" in
@@ -191,7 +207,7 @@ for rate in ${rates}; do
 		periods=${shape#*:}
 		if [ "${rate}" != "${current_rate}" ]; then
 			# The interface needs some seconds after a change of rate.
-			engine --rate "${rate}" --seconds 8 --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
+			engine --allow-xruns --rate "${rate}" --seconds 8 --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
 			current_rate=${rate}
 		fi
 		name="${rate}-${frames}x${periods}"
@@ -200,7 +216,7 @@ for rate in ${rates}; do
 
 		run=1
 		while [ "${run}" -le "${runs}" ]; do
-			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
+			engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
 				--count 5:5 --burst 3:3 > "${dir}/run.txt" 2> "${dir}/run.err"
 			inside=$(field "${dir}/run.txt" count_on_input_5)
 			cable=$(field "${dir}/run.txt" bursts_3_to_3)
@@ -279,19 +295,19 @@ for rate in ${rates}; do
 						printf "  converters and cable alone: %s samples (%.3f ms) more than inside, in %d runs of %d\n", best, ms(best), more[best], both
 					}
 					printf "  R-01, under %d ms through the cable: %s (%.3f ms at the most)\n", limit, (ms(cable_most) < limit) ? "yes" : "NO", ms(cable_most)
-					print (ms(cable_most) < limit) ? "VERDICT yes" : "VERDICT no"
+					# One sample, and the hundredths the timing of a burst
+					# can be off by.
+					good = (timed == runs && ms(cable_most) < limit && within <= 1.05)
+					printf "  calibrations: %s (%d of %d measured; %s under %d ms; inside a run within %s)\n", good ? "PASS" : "FAIL", timed, runs, (ms(cable_most) < limit) ? "all" : "NOT all", limit, (within <= 1.05) ? "one sample" : "MORE than one sample"
+					print good ? "VERDICT yes" : "VERDICT no"
 				}
 				printf "  xruns in the short runs: %d\n", xruns
 			}' "${dir}/runs.txt")
 		echo "${verdict}" | grep -v '^VERDICT' | tee -a "${dir}/summary.txt"
-		case "${verdict}" in
-		*"VERDICT yes"*) ;;
-		*) failures=$((failures + 1)) ;;
-		esac
 
 		# The same way round with impulses instead of noise: the two
 		# must agree, once the length inside is taken away from each.
-		engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
+		engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
 			--count 5:5 --impulse 3:3 > "${dir}/impulse-${name}.txt" 2>&1
 		inside=$(field "${dir}/impulse-${name}.txt" count_on_input_5 | sed -n 's/.*at the end \([0-9]*\) samples.*/\1/p')
 		cable=$(field "${dir}/impulse-${name}.txt" bursts_3_to_3)
@@ -302,12 +318,32 @@ for rate in ${rates}; do
 			say "  with impulses, one run: not measured"
 		fi
 
-		if [ "${long}" -gt 0 ]; then
-			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds "${long}" \
+		shape_failed=0
+		case "${verdict}" in
+		*"VERDICT yes"*) ;;
+		*) shape_failed=1 ;;
+		esac
+
+		if [ "${long}" -ge 120 ]; then
+			# Judged by the engine itself, as in dawos-audio-test.
+			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds "${long}" --warm-up 60 \
 				--tone 3 --tone-cycles 3 --listen 3 --count 5:5 > "${dir}/long-${name}.txt" 2>&1
-			say "  long run, ${long} s: xruns $(field "${dir}/long-${name}.txt" card_xruns | sed 's/ .*//'); count slips $(field "${dir}/long-${name}.txt" count_slips_on_input_5 | sed 's/ .*//'); slips of the tone $(field "${dir}/long-${name}.txt" slips_on_input_3 | sed 's/ .*//')"
+			audio=$(field "${dir}/long-${name}.txt" audio)
+			say "  long run, ${long} s, the first 60 not judged: ${audio:-no verdict}"
+			case "${audio}" in
+			PASS*) ;;
+			*) shape_failed=1 ;;
+			esac
+		elif [ "${long}" -gt 0 ]; then
+			engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds "${long}" \
+				--tone 3 --tone-cycles 3 --listen 3 --count 5:5 > "${dir}/long-${name}.txt" 2>&1
+		fi
+		if [ "${long}" -gt 0 ]; then
+			say "  long run, ${long} s: xruns $(field "${dir}/long-${name}.txt" card_xruns); count slips $(field "${dir}/long-${name}.txt" count_slips_on_input_5); slips of the tone $(field "${dir}/long-${name}.txt" slips_on_input_3)"
 			grep 'count slip on input' "${dir}/long-${name}.txt" | sed 's/^ */    /' | tee -a "${dir}/summary.txt"
 		fi
+		shapes_done=$((shapes_done + 1))
+		failures=$((failures + shape_failed))
 	done
 done
 
@@ -317,5 +353,10 @@ if [ -r "${CARDS_DIR}/${model}.conf" ]; then
 fi
 
 say ""
-say "shapes over ${LIMIT_MS} ms through the cable, or not measured: ${failures}"
 say "finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+if [ "${failures}" -eq 0 ]; then
+	say "verdict: PASS (${shapes_done} of ${shapes_done} shapes and rates)"
+else
+	say "verdict: FAIL ($((shapes_done - failures)) of ${shapes_done} shapes and rates)"
+	exit 1
+fi

@@ -380,7 +380,7 @@ impl Patch {
     /// on the way turns it by the angle of one sample.
     ///
     /// Exact when the tone has a whole number of cycles in a quantum
-    /// (1125 Hz with the quanta of 2.667 ms); with any other tone the
+    /// (1500 Hz with three cycles in a quantum of 2 ms); with any other tone the
     /// phase of a clean signal wobbles, and slips are reported that are
     /// not there.
     fn follow_the_tone(&mut self) {

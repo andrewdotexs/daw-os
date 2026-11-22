@@ -2,6 +2,7 @@
 //! dependency (question D-18).
 
 use crate::plan::Fault;
+use dawos_audio_io::Format;
 
 /// What the user asked for.
 #[derive(Debug, PartialEq, Eq)]
@@ -49,7 +50,7 @@ pub struct RunOptions {
     pub allow_xruns: bool,
     /// Sample rate in hertz.
     pub rate: u32,
-    /// Samples per period; `None`: the quantum of 2.667 ms for the rate.
+    /// Samples per period; `None`: the quantum of 2 ms for the rate.
     pub frames: Option<u32>,
     /// How long to run.
     pub seconds: u64,
@@ -115,11 +116,11 @@ Options of run:
                      with alsa: the capture side, when it is another
                      device (default: the same as --device)
   --tone OUT         with alsa: a test tone on this output, from 1
-  --tone-hz HZ       its frequency (default 1000; with 1125, a whole
-                     number of cycles per quantum, --listen also finds
-                     every slip of the signal, to the sample)
+  --tone-hz HZ       its frequency (default 1000; with a whole number
+                     of cycles per quantum, see --tone-cycles, --listen
+                     also finds every slip of the signal, to the sample)
   --tone-cycles N    its frequency as whole cycles in a quantum, at any
-                     rate (3 is 1125 Hz with the quanta of 2.667 ms)
+                     rate (3 is 1500 Hz with the quanta of 2 ms)
   --tone-level DB    its peak level in dB below full scale (default 12);
                      also the level of the bursts
   --count OUT:IN     with alsa: play a count on an output, every sample
@@ -139,8 +140,8 @@ Options of run:
                      with alsa: measure these inputs, second by second:
                      level, level of the test tone, share of the tone
   --periods N        with alsa: periods in the buffers of the card, 2 to 8
-                     (default 2: the output plays two quanta after the
-                     input)
+                     (default 3: the output plays three quanta after
+                     the input; with 2 the signal slips on USB)
   --warm-up N        with alsa: do not judge the first N seconds of the
                      run (an interface settles for some seconds after
                      its streams start); what happens there is counted
@@ -150,8 +151,8 @@ Options of run:
   --allow-xruns      with alsa: do not fail the run for xruns, as long as
                      the card comes back every time
   --rate HZ          sample rate (default 48000)
-  --quantum N        samples per period (default: 128 up to 48 kHz, 256 up
-                     to 96 kHz, 512 above: always 2.667 ms)
+  --quantum N        samples per period (default: 96 up to 48 kHz, 192 up
+                     to 96 kHz, 384 above: 2 ms at 48, 96 and 192 kHz)
   --seconds N        how long to run (default 10)
   --live LIST        CPUs of the live threads, like 4-7 (default: the live
                      domain of the boot profile; none without a profile)
@@ -214,7 +215,7 @@ impl Default for RunOptions {
             impulses: false,
             routes: Vec::new(),
             listen: Vec::new(),
-            periods: 2,
+            periods: Format::DEFAULT_PERIODS,
             warm_up_s: 0,
             each_second: false,
             allow_xruns: false,
@@ -348,7 +349,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             || options.count.is_some()
             || options.bursts.is_some()
             || options.each_second
-            || options.periods != 2
+            || options.periods != Format::DEFAULT_PERIODS
             || options.warm_up_s != 0
             || options.allow_xruns
             || matches!(options.fault, Fault::CardXrun | Fault::CardLost);

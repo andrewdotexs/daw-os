@@ -1,6 +1,7 @@
 //! One ALSA sound card, opened the way the engine uses it (step P1.4):
 //! the `hw` device itself, memory-mapped, capture and playback started
-//! together, a buffer of two periods of one quantum each.
+//! together, a buffer of a few periods of one quantum each (three,
+//! unless something else is asked: step P1.5).
 //!
 //! Nothing here knows about threads. Every function may enter the
 //! kernel: the live thread calls them in the wait phase of its cycle, or
@@ -21,8 +22,9 @@ pub struct CardConfig {
     pub playback: String,
     /// Sample rate and frames per period.
     pub format: Format,
-    /// Periods in each buffer: two is the engine's own number; more is
-    /// for measuring what the second one costs.
+    /// Periods in each buffer: three is the engine's own number
+    /// ([`Format::DEFAULT_PERIODS`]); with two the signal slips on a USB
+    /// interface, and with more the way round only gets longer.
     pub periods: u32,
 }
 
@@ -310,8 +312,8 @@ impl Card {
         self.started
     }
 
-    /// Two periods of silence in the output: the distance between what
-    /// the engine writes and what the converters play (two quanta).
+    /// A whole buffer of silence in the output: the distance between
+    /// what the engine writes and what the converters play.
     fn fill_with_silence(&mut self) -> Result<(), CardError> {
         let mut left = self.info.playback_buffer;
         let mut rounds = 0;

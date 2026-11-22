@@ -40,18 +40,25 @@ pub struct Format {
 }
 
 impl Format {
-    /// The quantum that lasts 2.667 ms at `rate`: 128 samples up to
-    /// 48 kHz, 256 up to 96 kHz, 512 above (requirement R-01).
+    /// The quantum that lasts 2 ms at 48, 96 and 192 kHz (2.177 ms at
+    /// 44.1, 88.2 and 176.4 kHz): 96 samples up to 48 kHz, 192 up to
+    /// 96 kHz, 384 above. With three periods in the buffers of the card
+    /// it keeps the way round under the 10 ms of requirement R-01 at
+    /// every rate (decision D-14, step P1.5; it was 128, 256 and 512).
     #[must_use]
     pub const fn default_frames(rate: u32) -> u32 {
         if rate <= 48_000 {
-            128
+            96
         } else if rate <= 96_000 {
-            256
+            192
         } else {
-            512
+            384
         }
     }
+
+    /// Periods in the buffers of a card, when nothing else is asked:
+    /// with two the signal slips on a USB interface (step P1.5).
+    pub const DEFAULT_PERIODS: u32 = 3;
 
     /// Length of one period in nanoseconds, rounded down.
     #[must_use]

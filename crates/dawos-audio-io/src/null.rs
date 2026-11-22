@@ -161,11 +161,11 @@ mod tests {
     #[test]
     fn the_default_quantum_lasts_the_same_at_every_rate() {
         for (rate, frames) in [
-            (44_100, 128),
-            (48_000, 128),
-            (88_200, 256),
-            (96_000, 256),
-            (192_000, 512),
+            (44_100, 96),
+            (48_000, 96),
+            (88_200, 192),
+            (96_000, 192),
+            (192_000, 384),
         ] {
             assert_eq!(Format::default_frames(rate), frames);
         }

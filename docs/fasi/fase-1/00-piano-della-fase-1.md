@@ -48,10 +48,10 @@ Un passo non si considera chiuso finché il suo criterio non è stato eseguito e
 | P1.2 | Scheletro: spazio di lavoro Rust, costruzione sul PC e nell'immagine, motore con il backend `null`, riga di comando. **Superato.** | — |
 | P1.3 | Il ciclo e la protezione di K-04 con il backend `null`: bilancio di calcolo, sorvegliante, prova d'urto. **Superato**; il margine del bilancio si misura in P1.6 | 6 |
 | P1.4 | La scheda: ALSA in `mmap`, ingresso e uscita collegati, due periodi; passthrough; routing della Scarlett. **Superato**, con tre periodi e un minuto di avviamento non giudicato ([esito](P1.4-la-scheda.md)). Con la scheda un thread live solo (A-56); slittamenti all'avvio non spiegati (A-58) | — |
-| P1.5 | Calibrazione della latenza in loopback; verifica del segnale campione per campione. Prima domanda, da P1.4: con due periodi corti il segnale salta di mezzo millisecondo ogni mezzo minuto (A-58). **In corso**: strumenti ed esplorazione delle forme del buffer consegnati ([guida](P1.5-latenza-in-loopback.md)) | 1 |
+| P1.5 | Calibrazione della latenza in loopback; verifica del segnale campione per campione. Prima domanda, da P1.4: con due periodi corti il segnale salta di mezzo millisecondo ogni mezzo minuto (A-58). **In corso**: esplorazione fatta; decisi tre periodi da 96 campioni (D-14) e la ripetibilità dentro un avvio (A-59); resta l'accettazione ([guida](P1.5-latenza-in-loopback.md)) | 1 |
 | P1.6 | La misura a ogni ciclo: margine, ritardo di risveglio, syscall e ingressi nel kernel, cause degli xrun | 4, 5 |
 | P1.7 | Il grafo: compilazione, scambio atomico, un thread per core live, nodi nativi, carico sintetico | 7 |
-| P1.8 | Il driver audio (Q-14, A-50): le configurazioni misurate con il motore; decisione su `dawos-uac` | 8 |
+| P1.8 | Il driver audio (Q-14, A-50): le configurazioni misurate con il motore; decisione su `dawos-uac`. Da P1.5: i gradini del giro tra un avvio e l'altro (A-59) e il pavimento di 5,4 ms (A-60) | 8 |
 | P1.9 | Il kernel (Q-13, A-49): stima e piano sottoposti all'utente, poi la prova della serie sul rinvio degli interrupt tra core | 8 |
 | P1.10 | La campagna: 24 ore a 96 kHz, un'ora a 48 e una a 192 kHz, prova d'urto finale | 2, 3, 4, 5, 6 |
 | P1.11 | Chiusura: rapporto, ADR, elenco degli aperti per la Fase 2 | 9 |
@@ -109,6 +109,8 @@ Perché quest'ordine:
 **Cosa**: calibrazione con un impulso e con una sequenza nota; latenza di andata e ritorno in campioni e in millisecondi; verifica del segnale campione per campione, per trovare i difetti che ALSA non segnala (rischio K-08).
 
 **Accettazione**: criterio 1 della fase. Cento calibrazioni a 48, 96 e 192 kHz, due periodi: latenza sotto i 10 ms a ogni frequenza, ripetibilità entro un campione. In più, non richiesto dal criterio ma necessario a D-14: la stessa misura a 44,1 kHz.
+
+**Scostamenti decisi il 22 novembre 2026**, sulle misure: tre periodi da 96 campioni invece di due da 128 (due non reggono); la ripetibilità entro un campione vale dentro un avvio dei flussi, e tra gli avvii si riporta la distribuzione (A-59). Da questo passo il quanto predefinito del motore è 96, 192 e 384 campioni e i periodi sono tre: dove i passi precedenti scrivono 128 campioni e 2,667 ms, oggi sono 96 e 2 ms.
 
 ### P1.6 — La misura a ogni ciclo
 

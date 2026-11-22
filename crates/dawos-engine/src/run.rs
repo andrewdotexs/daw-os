@@ -721,7 +721,7 @@ enum Verdict {
 fn verdict(outcome: &Outcome) -> Verdict {
     let period_ms = outcome.format.period_ns() as f64 / 1e6;
     // Three periods stuck, one of grain of the watchdog, half a
-    // millisecond of slack: 11 ms at 2.667 ms.
+    // millisecond of slack: 8.5 ms with periods of 2 ms.
     let detect_limit_ms = (STUCK_PERIODS + 1) as f64 * period_ms + 0.5;
     match outcome.options.fault {
         // The faults of the card are judged with the sound.
