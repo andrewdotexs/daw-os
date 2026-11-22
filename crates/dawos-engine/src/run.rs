@@ -1369,8 +1369,8 @@ mod tests {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    // Periods of one millisecond and no real-time priority: the logic,
-    // on whatever machine runs the tests. Times are not judged here.
+    // No real-time priority: the logic, on whatever machine runs the
+    // tests. Times are not judged here.
     fn options(fault: Fault) -> RunOptions {
         RunOptions {
             // A period of 5 ms: without a real-time priority a shorter one
@@ -1397,9 +1397,12 @@ mod tests {
         for report in &outcome.reports {
             assert!(!report.spare);
             assert_eq!(report.end, End::Stopped);
+            // The run is ended by a thread that looks at the clock every
+            // 100 ms, with sleeps that last a little longer each: up to
+            // one step more than the two seconds, and some slack.
             let cycles = report.cycles + report.missed;
             assert!(
-                (380..=402).contains(&cycles),
+                (380..=440).contains(&cycles),
                 "{cycles} cycles in two seconds"
             );
         }
