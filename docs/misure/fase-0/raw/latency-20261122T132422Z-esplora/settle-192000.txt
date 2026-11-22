@@ -1,0 +1,58 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 192000
+quantum_frames: 512
+period_us: 2666.666
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 8
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 3003
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      2679     323          0        0      3.15      5.00        5.26        6.35      2656.80
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 192000 Hz, 10 inputs, 10 outputs
+card_period_frames: 512 (buffer: capture 1024, playback 1024)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 2678 with the card, 2 without
+warm_up_seconds: 0
+card_xruns: 16 (0 of them in the warm-up)
+card_recoveries: 16 (longest 1.40 ms)
+card_restarts_after_a_pause: 15 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_xrun_1: at 1.155 s; capture xrun, 62 frames to read (most ever 703); playback xrun, 518 frames of room (most ever 1008), delay 0
+card_xrun_2: at 1.214 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_3: at 1.271 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_4: at 1.328 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_5: at 1.385 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_6: at 1.442 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_7: at 1.499 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_8: at 1.557 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_9: at 1.614 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_10: at 1.671 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_11: at 1.728 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_xrun_12: at 1.785 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1007 frames of room (most ever 1007), delay 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: none
+count_on_input_5: way round 1095 samples (5.703 ms), found at 0.006 s; at the end 1191 samples (6.203 ms)
+count_slips_on_input_5: 4 (largest 120 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 1367939 in place, 2543 out of place
+  count slip on input 5 at 0.108 s: +72 samples
+  count slip on input 5 at 1.158 s: -120 samples
+  count slip on input 5 at 1.161 s: +48 samples
+  count slip on input 5 at 1.164 s: +96 samples
+routes: none
+audio: PASS (16 xruns, allowed; the count comes back on input 5 after 1191 samples)

@@ -1,0 +1,10 @@
+
+-- 48000 Hz, 128 frames x 3 periods (8.00 ms of buffer) --
+  inside: 3 runs, 362 to 408 samples (7.542 to 8.500 ms); lengths seen: 403 (1 times) 408 (1 times) 362 (1 times); runs that ended with another length: 2; slips: 2
+  cable: 3 runs, 390.92 to 437.92 samples (8.144 to 9.123 ms)
+  converters and cable alone: 29.59 samples (0.616 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (9.123 ms at the most); from start to start it moves by 47.00 samples
+  xruns in the short runs: 0
+
+shapes over 10 ms through the cable, or not measured: 0
+finished_utc: 2026-11-22T13:21:52Z

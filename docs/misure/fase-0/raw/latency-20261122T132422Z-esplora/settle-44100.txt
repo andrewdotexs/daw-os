@@ -1,0 +1,62 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 44100
+quantum_frames: 128
+period_us: 2902.494
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 8
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 2759
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      2758       0          0        0      3.28      4.26        2.55        3.37      2894.86
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 44100 Hz, 18 inputs, 20 outputs
+card_period_frames: 128 (buffer: capture 256, playback 256)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 2759 with the card, 0 without
+warm_up_seconds: 0
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: none
+count_on_input_5: way round 287 samples (6.508 ms), found at 0.009 s; at the end 342 samples (7.755 ms)
+count_slips_on_input_5: 20 (largest 18 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 350973 in place, 1659 out of place
+  count slip on input 5 at 0.014 s: +11 samples
+  count slip on input 5 at 0.023 s: +11 samples
+  count slip on input 5 at 0.030 s: +11 samples
+  count slip on input 5 at 0.038 s: +11 samples
+  count slip on input 5 at 1.149 s: +18 samples
+  count slip on input 5 at 1.151 s: +6 samples
+  count slip on input 5 at 1.153 s: +6 samples
+  count slip on input 5 at 1.154 s: +6 samples
+  count slip on input 5 at 1.156 s: +6 samples
+  count slip on input 5 at 1.158 s: +6 samples
+  count slip on input 5 at 1.159 s: +6 samples
+  count slip on input 5 at 1.161 s: +6 samples
+  count slip on input 5 at 1.163 s: +6 samples
+  count slip on input 5 at 1.167 s: +6 samples
+  count slip on input 5 at 1.187 s: -5 samples
+  count slip on input 5 at 1.963 s: -4 samples
+  count slip on input 5 at 1.967 s: -17 samples
+  count slip on input 5 at 1.971 s: -17 samples
+  count slip on input 5 at 1.975 s: -12 samples
+  count slip on input 5 at 1.997 s: -6 samples
+routes: none
+audio: PASS (0 xruns, allowed; the count comes back on input 5 after 342 samples)

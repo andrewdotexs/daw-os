@@ -1,0 +1,175 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 96000
+quantum_frames: 128
+period_us: 1333.333
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 60
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 45032
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     45029    3756          0        0      3.23      4.12        2.76        3.63      1325.58
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 96000 Hz, 14 inputs, 16 outputs
+card_period_frames: 128 (buffer: capture 256, playback 256)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 45030 with the card, 0 without
+warm_up_seconds: 0
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 11277
+card_stamps_not_believed: 0
+tone: output 3, 2250.00 Hz, peak 12 dB below full scale
+count_on_input_5: way round 521 samples (5.427 ms), found at 0.006 s; at the end 606 samples (6.312 ms)
+count_slips_on_input_5: 20697 (largest 121 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 3544049 in place, 2219071 out of place
+  count slip on input 5 at 0.008 s: +60 samples
+  count slip on input 5 at 0.009 s: +24 samples
+  count slip on input 5 at 0.010 s: -121 samples
+  count slip on input 5 at 0.012 s: +36 samples
+  count slip on input 5 at 0.013 s: -4 samples
+  count slip on input 5 at 0.015 s: +96 samples
+  count slip on input 5 at 0.018 s: -92 samples
+  count slip on input 5 at 0.020 s: +60 samples
+  count slip on input 5 at 0.023 s: +24 samples
+  count slip on input 5 at 0.026 s: -84 samples
+  count slip on input 5 at 0.029 s: +32 samples
+  count slip on input 5 at 0.032 s: +20 samples
+  count slip on input 5 at 0.035 s: +36 samples
+  count slip on input 5 at 0.038 s: -88 samples
+  count slip on input 5 at 0.041 s: +20 samples
+  count slip on input 5 at 0.044 s: +36 samples
+  count slip on input 5 at 0.047 s: +36 samples
+  count slip on input 5 at 0.050 s: -92 samples
+  count slip on input 5 at 0.052 s: +60 samples
+  count slip on input 5 at 0.055 s: +24 samples
+  count slip on input 5 at 0.058 s: -84 samples
+  count slip on input 5 at 0.061 s: +32 samples
+  count slip on input 5 at 0.064 s: +20 samples
+  count slip on input 5 at 0.067 s: +36 samples
+  count slip on input 5 at 0.070 s: -88 samples
+  count slip on input 5 at 0.073 s: +20 samples
+  count slip on input 5 at 0.076 s: +36 samples
+  count slip on input 5 at 0.079 s: +36 samples
+  count slip on input 5 at 0.082 s: -92 samples
+  count slip on input 5 at 0.084 s: +60 samples
+  count slip on input 5 at 0.087 s: +24 samples
+  count slip on input 5 at 0.090 s: -84 samples
+  count slip on input 5 at 0.093 s: +32 samples
+  count slip on input 5 at 0.096 s: +20 samples
+  count slip on input 5 at 0.099 s: +36 samples
+  count slip on input 5 at 0.102 s: -88 samples
+  count slip on input 5 at 0.105 s: +20 samples
+  count slip on input 5 at 0.108 s: +36 samples
+  count slip on input 5 at 0.111 s: +36 samples
+  count slip on input 5 at 0.114 s: -92 samples
+  count slip on input 5 at 0.116 s: +60 samples
+  count slip on input 5 at 0.119 s: +24 samples
+  count slip on input 5 at 0.122 s: -84 samples
+  count slip on input 5 at 0.125 s: +32 samples
+  count slip on input 5 at 0.128 s: +20 samples
+  count slip on input 5 at 0.131 s: +36 samples
+  count slip on input 5 at 0.134 s: -88 samples
+  count slip on input 5 at 0.137 s: +20 samples
+  count slip on input 5 at 0.140 s: +36 samples
+  count slip on input 5 at 0.143 s: +36 samples
+  count slip on input 5 at 0.146 s: -92 samples
+  count slip on input 5 at 0.148 s: +60 samples
+  count slip on input 5 at 0.151 s: +24 samples
+  count slip on input 5 at 0.154 s: -84 samples
+  count slip on input 5 at 0.157 s: +32 samples
+  count slip on input 5 at 0.160 s: +20 samples
+  count slip on input 5 at 0.163 s: +36 samples
+  count slip on input 5 at 0.166 s: -88 samples
+  count slip on input 5 at 0.169 s: +20 samples
+  count slip on input 5 at 0.172 s: +36 samples
+  count slip on input 5 at 0.175 s: +36 samples
+  count slip on input 5 at 0.178 s: -92 samples
+  count slip on input 5 at 0.180 s: +60 samples
+  count slip on input 5 at 0.183 s: +24 samples
+routes: none
+
+inputs listened to (dB relative to full scale; the first 1 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            59    -17.0      -22.4      -22.4     -32.5     -29.5     0.0491
+slips_on_input_3: 8713 (largest 151.99 samples); in the warm-up 78 (largest 51.86)
+  slip on input 3 at 0.009 s: -6.87 samples
+  slip on input 3 at 0.019 s: -50.80 samples
+  slip on input 3 at 0.027 s: -9.59 samples
+  slip on input 3 at 0.033 s: +17.72 samples
+  slip on input 3 at 0.051 s: -50.80 samples
+  slip on input 3 at 0.059 s: -9.59 samples
+  slip on input 3 at 0.065 s: +17.72 samples
+  slip on input 3 at 0.083 s: -50.80 samples
+  slip on input 3 at 0.091 s: -9.59 samples
+  slip on input 3 at 0.097 s: +17.72 samples
+  slip on input 3 at 0.115 s: -50.80 samples
+  slip on input 3 at 0.123 s: -9.59 samples
+  slip on input 3 at 0.129 s: +17.72 samples
+  slip on input 3 at 0.147 s: -50.80 samples
+  slip on input 3 at 0.155 s: -9.59 samples
+  slip on input 3 at 0.161 s: +17.72 samples
+  slip on input 3 at 0.179 s: -50.80 samples
+  slip on input 3 at 0.187 s: -9.59 samples
+  slip on input 3 at 0.193 s: +17.72 samples
+  slip on input 3 at 0.211 s: -50.80 samples
+  slip on input 3 at 0.219 s: -9.59 samples
+  slip on input 3 at 0.225 s: +17.72 samples
+  slip on input 3 at 0.243 s: -50.80 samples
+  slip on input 3 at 0.251 s: -9.59 samples
+  slip on input 3 at 0.257 s: +17.72 samples
+  slip on input 3 at 0.275 s: -50.80 samples
+  slip on input 3 at 0.283 s: -9.59 samples
+  slip on input 3 at 0.289 s: +17.72 samples
+  slip on input 3 at 0.307 s: -50.80 samples
+  slip on input 3 at 0.315 s: -9.59 samples
+  slip on input 3 at 0.321 s: +17.72 samples
+  slip on input 3 at 0.339 s: -50.80 samples
+  slip on input 3 at 0.347 s: -9.59 samples
+  slip on input 3 at 0.353 s: +17.72 samples
+  slip on input 3 at 0.371 s: -50.80 samples
+  slip on input 3 at 0.379 s: -9.59 samples
+  slip on input 3 at 0.385 s: +17.72 samples
+  slip on input 3 at 0.403 s: -50.80 samples
+  slip on input 3 at 0.411 s: -9.59 samples
+  slip on input 3 at 0.417 s: +17.72 samples
+  slip on input 3 at 0.435 s: -50.80 samples
+  slip on input 3 at 0.443 s: -9.59 samples
+  slip on input 3 at 0.449 s: +17.72 samples
+  slip on input 3 at 0.467 s: -50.80 samples
+  slip on input 3 at 0.475 s: -9.59 samples
+  slip on input 3 at 0.481 s: +17.72 samples
+  slip on input 3 at 0.499 s: -50.80 samples
+  slip on input 3 at 0.507 s: -9.59 samples
+  slip on input 3 at 0.513 s: +17.72 samples
+  slip on input 3 at 0.531 s: -51.86 samples
+  slip on input 3 at 0.539 s: +8.22 samples
+  slip on input 3 at 0.563 s: -50.88 samples
+  slip on input 3 at 0.571 s: +8.22 samples
+  slip on input 3 at 0.595 s: -50.88 samples
+  slip on input 3 at 0.603 s: +8.22 samples
+  slip on input 3 at 0.627 s: -50.88 samples
+  slip on input 3 at 0.635 s: +8.22 samples
+  slip on input 3 at 0.659 s: -50.88 samples
+  slip on input 3 at 0.667 s: +8.22 samples
+  slip on input 3 at 0.691 s: -50.88 samples
+  slip on input 3 at 0.699 s: +8.22 samples
+  slip on input 3 at 0.723 s: -50.88 samples
+  slip on input 3 at 0.731 s: +8.22 samples
+  slip on input 3 at 0.755 s: -50.88 samples
+audio: PASS (0 xruns, allowed; the tone is on input 3; the count comes back on input 5 after 606 samples)
