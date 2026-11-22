@@ -48,7 +48,7 @@ first_usb_card() {
 # The level meters, as the driver gives them: numbers separated by
 # commas.
 meters() {
-	amixer -c "${card}" cget name='Level Meter' 2> /dev/null | sed -n 's/^  : values=//p'
+	amixer -c "${card}" cget iface=PCM,name='Level Meter' 2> /dev/null | sed -n 's/^  : values=//p'
 }
 
 # One line: the meters of the ten line outputs and of the capture
