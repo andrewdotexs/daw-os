@@ -63,6 +63,9 @@ echo "image: $(. /etc/os-release && echo "${VERSION_ID:-unknown}")"
 echo "card: ${card} (${identifier})"
 echo "seconds per shape: ${seconds}"
 echo "lowlatency: $(cat /sys/module/snd_usb_audio/parameters/lowlatency 2> /dev/null)"
+echo "implicit_fb: $(cat /sys/module/snd_usb_audio/parameters/implicit_fb 2> /dev/null)"
+echo "playback, as the driver describes it: $(grep -m 1 'Implicit Feedback Mode' "/proc/asound/card${card}/stream0" 2> /dev/null | sed 's/^ *//')"
+echo "kernel command line: $(tr ' ' '\n' < /proc/cmdline | grep '^snd_usb_audio' | tr '\n' ' ')"
 
 current_rate=
 for shape in ${SHAPES}; do
