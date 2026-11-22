@@ -1,0 +1,77 @@
+== when and what ==
+read_utc: 2026-11-22T09:46:13Z
+image: 0.0.1
+card: 0 (USB)
+seconds per shape: 60
+lowlatency: Y
+implicit_fb: Y,N,N,N,N,N,N,N
+playback, as the driver describes it: Implicit Feedback Mode: Yes
+kernel command line: snd_usb_audio.implicit_fb=1 
+
+-- rate 192000, period 512 frames, 2 periods (5 ms of buffer) --
+xruns: 0; slips: 2; 22517 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22516       0          0        0      3.15      9.24        5.93        7.83      2651.84
+  slip on input 3 at 3.059 s: +0.78 samples
+  slip on input 3 at 12.696 s: +1.00 samples
+  second 4: level -21.8, tone -18.8, share 0.9999
+  second 13: level -21.8, tone -18.8, share 0.9997
+stderr: dawos-engine: the sound card did not do what was asked
+
+-- rate 192000, period 512 frames, 3 periods (8 ms of buffer) --
+xruns: 0; slips: 0; 22516 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22515       0          0        0      3.16      3.80        5.95        7.76      2655.31
+
+-- rate 192000, period 512 frames, 4 periods (10 ms of buffer) --
+xruns: 0; slips: 1; 22514 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22513       0          0        0      3.18      9.04        5.88        9.34      2651.83
+  slip on input 3 at 6.456 s: +1.00 samples
+  second 7: level -21.8, tone -18.8, share 0.9996
+stderr: dawos-engine: the sound card did not do what was asked
+
+-- rate 192000, period 512 frames, 8 periods (21 ms of buffer) --
+xruns: 0; slips: 1; 22517 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22516       0          0        0      3.15      3.79        5.90        7.59      2655.91
+  slip on input 3 at 22.931 s: +0.78 samples
+  second 23: level -21.8, tone -18.8, share 0.9999
+stderr: dawos-engine: the sound card did not do what was asked
+
+-- rate 192000, period 2048 frames, 2 periods (21 ms of buffer) --
+xruns: 0; slips: 1; 5630 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      5629       0          0        0      3.23      8.80       20.71       26.36     10636.12
+  slip on input 3 at 4.128 s: +1.00 samples
+  second 5: level -21.8, tone -18.8, share 0.9998
+stderr: dawos-engine: the sound card did not do what was asked
+
+-- rate 192000, period 2048 frames, 4 periods (42 ms of buffer) --
+xruns: 0; slips: 1; 5629 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      5628       0          0        0      3.26      3.74       20.65       26.43     10636.85
+  slip on input 3 at 2.784 s: +23.00 samples
+  second 3: level -21.8, tone -19.4, share 0.8844
+stderr: dawos-engine: the sound card did not do what was asked
+
+-- rate 48000, period 128 frames, 2 periods (5 ms of buffer) --
+xruns: 0; slips: 0; 22517 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22516       0          0        0      3.17      3.74        2.80        3.85      2659.39
+
+-- rate 48000, period 128 frames, 4 periods (10 ms of buffer) --
+xruns: 0; slips: 0; 22515 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22514       0          0        0      3.22      3.83        2.88        3.94      2659.17
+
+-- rate 48000, period 1024 frames, 4 periods (85 ms of buffer) --
+xruns: 0; slips: 1; 2815 with the card, 0 without
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      2814       0          0        0      3.24      3.93       15.41       20.85     21308.56
+  slip on input 3 at 1.941 s: +1.00 samples
+  second 2: level -21.8, tone -18.8, share 0.9987
+stderr: dawos-engine: the sound card did not do what was asked
+
+== kernel messages about sound and USB during the runs ==
+(none)
