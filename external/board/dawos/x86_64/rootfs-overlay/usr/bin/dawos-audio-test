@@ -16,6 +16,13 @@
 #              through its router (the file MODEL.test-loop.conf, set
 #              for the test and undone after it). No xrun is allowed.
 #
+# An interface needs some seconds after a change of sample rate: on the
+# Scarlett 18i20 the input stops a second after the start, then is
+# silent, and is back after four or five seconds (step P1.4). So before
+# the runs at a new rate "card" runs the engine once for eight seconds,
+# without judging it: the line "settle-RATE" says how many xruns that
+# cost and from which second the tone was clean.
+#
 # Cases of "loopback": the plain run, an xrun made on purpose, the card
 # taken away and given back, a live thread that never yields.
 #
@@ -115,6 +122,25 @@ run_case() {
 		printf '\n'
 	} >> "${dir}/summary.txt"
 	tail -n 1 "${dir}/summary.txt"
+}
+
+# Bring the interface to the rate $1 and let it settle, unless it is
+# there already: eight seconds of the engine, not a case of the test.
+settle() {
+	[ "$1" = "${current_rate}" ] && return 0
+	current_rate=$1
+	# shellcheck disable=SC2086  # device_options is several words
+	"${ENGINE}" run --backend alsa ${device_options} --rate "$1" --seconds 8 --tone 3 --listen 3 \
+		--each-second --allow-xruns --require-rt > "${dir}/settle-$1.txt" 2> "${dir}/settle-$1.err"
+	clean=$(awk '
+		/^second +input/ { inside = 1; next }
+		inside && $1 !~ /^[0-9]+$/ { inside = 0 }
+		inside { last = $1; if ($5 < 0.99) bad = $1 }
+		END { if (last == "") print "never"; else if (bad == last) print "never"; else print bad + 1 }' "${dir}/settle-$1.txt")
+	printf '%-18s %-5s xruns %s, restarts after a pause %s; the tone is clean from second %s\n' \
+		"settle-$1" "-" "$(field "${dir}/settle-$1.txt" card_xruns)" \
+		"$(field "${dir}/settle-$1.txt" card_restarts_after_a_pause | sed 's/ .*//')" "${clean}" |
+		tee -a "${dir}/summary.txt"
 }
 
 first_usb_card() {
@@ -239,11 +265,14 @@ else
 	fi
 
 	first=
+	current_rate=
 	for rate in ${rates}; do
 		first=${first:-${rate}}
+		settle "${rate}"
 		run_case "plain-${rate}" --rate "${rate}" --seconds "${seconds}" --require-rt
 	done
 	if [ "${faults}" = yes ]; then
+		settle "${first}"
 		run_case "card-xrun-${first}" --rate "${first}" --seconds 10 --require-rt --fault card-xrun
 		run_case "stuck-node-${first}" --rate "${first}" --seconds 12 --require-rt --kernel-probe \
 			--fault stuck-node --fault-thread 0 --fault-after 4

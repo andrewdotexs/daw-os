@@ -66,6 +66,7 @@ pub struct CardOutcome {
     pub lost: u64,
     pub back: u64,
     pub reopen_attempts: u64,
+    pub paused_restarts: u64,
     pub short_writes: u64,
     pub bad_stamps: u64,
     /// Error number that made the card be given up, the last time.
@@ -492,6 +493,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             lost: count(&stats.lost),
             back: count(&stats.back),
             reopen_attempts: count(&stats.reopen_attempts),
+            paused_restarts: count(&stats.paused_restarts),
             short_writes: count(&stats.short_writes),
             bad_stamps: count(&stats.bad_stamps),
             last_error: stats.last_error.load(Ordering::Acquire),
@@ -1017,6 +1019,10 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
     println!(
         "card_recoveries: {} (longest {:.2} ms)",
         card.recoveries, card.longest_recovery_ms
+    );
+    println!(
+        "card_restarts_after_a_pause: {} (the start before had given no input)",
+        card.paused_restarts
     );
     println!("card_waits_without_period: {}", card.stalls);
     println!(

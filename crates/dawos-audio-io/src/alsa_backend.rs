@@ -35,6 +35,13 @@ use crate::{Backend, Disturbance, Format, Wake};
 /// for gone.
 const STALLS_BEFORE_GONE: u32 = 3;
 
+/// How long to leave the card alone before starting it again, when the
+/// last start gave not one period of input. An interface that is
+/// changing its clock stops sending for a second or so: starting it
+/// again at once, to see it stop two periods later, is a storm of xruns
+/// (ninety in 0.8 s on the Scarlett 18i20 at 192 kHz, step P1.4).
+const PAUSE_BEFORE_RESTART_NS: u64 = 50_000_000;
+
 /// How many xruns are kept one by one, from the first.
 const XRUNS_KEPT: usize = 12;
 
@@ -64,6 +71,9 @@ pub struct CardStats {
     pub back: AtomicU64,
     /// Attempts of the keeper to open the card again.
     pub reopen_attempts: AtomicU64,
+    /// Restarts made after a pause, because the start before had given
+    /// no input at all.
+    pub paused_restarts: AtomicU64,
     /// Periods of output that did not fit in the buffer whole.
     pub short_writes: AtomicU64,
     /// Cycles with a period stamp that could not be believed.
@@ -85,6 +95,8 @@ struct Seat {
     /// next wait, where system calls are allowed.
     pending: Option<CardError>,
     stalls: u32,
+    /// Periods of input since the card was last started.
+    served: u64,
     /// Until when to stay away from the card, to provoke an xrun (a
     /// test); 0: not asked.
     skip_until: Instant,
@@ -135,6 +147,7 @@ impl AlsaShared {
                 dead: None,
                 pending: None,
                 stalls: 0,
+                served: 0,
                 skip_until: 0,
                 silent: true,
             }),
@@ -345,6 +358,13 @@ impl AlsaBackend {
         let stats = &self.shared.stats;
         stats.xruns.fetch_add(1, Ordering::AcqRel);
         seat.skip_until = 0;
+        // The start before this xrun gave nothing: the card is not
+        // ready. Give it time, asleep, before the next start.
+        if seat.served == 0 && stats.recoveries.load(Ordering::Acquire) > 0 {
+            stats.paused_restarts.fetch_add(1, Ordering::AcqRel);
+            clock::sleep_until(clock::now() + PAUSE_BEFORE_RESTART_NS);
+        }
+        seat.served = 0;
         let before = clock::now();
         let result = match seat.card.as_mut() {
             Some(card) => {
@@ -432,6 +452,7 @@ impl Backend for AlsaBackend {
                 Ok(Ready::Period(stamp)) => {
                     let woke = clock::now();
                     seat.stalls = 0;
+                    seat.served += 1;
                     seat.silent = false;
                     // The stamp is believed when it is in the past and
                     // not older than the wait itself.
