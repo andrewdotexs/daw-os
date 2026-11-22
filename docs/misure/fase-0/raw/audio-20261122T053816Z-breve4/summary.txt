@@ -1,0 +1,13 @@
+case               result figures
+settle-48000       -     xruns 0, restarts after a pause 0; the tone is clean from second 4
+plain-48000        FAIL  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.25 max 10.82 us; compute avg 2.79 max 3.92 us; input 3 tone -24.5 to -18.8 dB share 0.2738; input 5 tone -19.0 to -18.8 dB share 0.9729; audio: FAIL (the tone is not on input 3)
+settle-96000       -     xruns 2, restarts after a pause 1; the tone is clean from second 5
+plain-96000        PASS  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.18 max 3.81 us; compute avg 4.19 max 5.06 us; input 3 tone -18.8 to -18.8 dB share 1.0000; input 5 tone -18.8 to -18.8 dB share 1.0000
+settle-192000      -     xruns 16, restarts after a pause 15; the tone is clean from second 5
+plain-192000       FAIL  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.17 max 3.79 us; compute avg 6.26 max 7.74 us; input 3 tone -19.8 to -18.8 dB share 0.7961; input 5 tone -19.4 to -18.8 dB share 0.8796; audio: FAIL (the tone is not on input 3; the tone is not on input 5)
+settle-48000       -     xruns 0, restarts after a pause 0; the tone is clean from second 6
+card-xrun-48000    PASS  xruns 1, recoveries 1 (longest 0.18 ms), lost 0; wake-up avg 3.28 max 4.05 us; compute avg 2.81 max 3.49 us; input 3 tone -23.4 to -18.8 dB share 0.3483; input 5 tone -21.1 to -18.8 dB share 0.5980
+stuck-node-48000   PASS  xruns 1, recoveries 1 (longest 0.18 ms), lost 0; wake-up avg 1.90 max 3.21 us; compute avg 1.86 max 2.68 us; input 3 tone -23.5 to -18.8 dB share 0.3446; input 5 tone -21.4 to -18.8 dB share 0.5566; k04 PASS
+
+verdict: FAIL (3 of 5 cases)
+finished_utc: 2026-11-22T05:40:16Z
