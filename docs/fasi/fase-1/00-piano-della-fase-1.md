@@ -47,7 +47,7 @@ Un passo non si considera chiuso finché il suo criterio non è stato eseguito e
 | P1.1 | Progetto: ciclo a due fasi, protezione di K-04, domande aperte. Nessun codice. **Chiuso.** | 5, 6 |
 | P1.2 | Scheletro: spazio di lavoro Rust, costruzione sul PC e nell'immagine, motore con il backend `null`, riga di comando. **Superato.** | — |
 | P1.3 | Il ciclo e la protezione di K-04 con il backend `null`: bilancio di calcolo, sorvegliante, prova d'urto. **Superato**; il margine del bilancio si misura in P1.6 | 6 |
-| P1.4 | La scheda: ALSA in `mmap`, ingresso e uscita collegati, due periodi; passthrough; routing della Scarlett. **In corso**: il motore gira sulla Scarlett; resta l'[accettazione](P1.4-la-scheda.md) con tre periodi. Con la scheda un thread live solo (A-56); slittamenti di un campione non spiegati (A-58) | — |
+| P1.4 | La scheda: ALSA in `mmap`, ingresso e uscita collegati, due periodi; passthrough; routing della Scarlett. **Superato**, con tre periodi e un minuto di avviamento non giudicato ([esito](P1.4-la-scheda.md)). Con la scheda un thread live solo (A-56); slittamenti all'avvio non spiegati (A-58) | — |
 | P1.5 | Calibrazione della latenza in loopback; verifica del segnale campione per campione. Prima domanda, da P1.4: con due periodi corti il segnale salta di mezzo millisecondo ogni mezzo minuto (A-58) | 1 |
 | P1.6 | La misura a ogni ciclo: margine, ritardo di risveglio, syscall e ingressi nel kernel, cause degli xrun | 4, 5 |
 | P1.7 | Il grafo: compilazione, scambio atomico, un thread per core live, nodi nativi, carico sintetico | 7 |
