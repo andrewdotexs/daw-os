@@ -60,6 +60,8 @@ pub struct CardOutcome {
     pub card_cycles: u64,
     pub silent_cycles: u64,
     pub xruns: u64,
+    /// Those of the xruns that fell in the warm-up.
+    pub early_xruns: u64,
     pub recoveries: u64,
     pub longest_recovery_ms: f64,
     pub stalls: u64,
@@ -291,6 +293,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 } else {
                     0
                 },
+                warm_up_seconds: u32::try_from(options.warm_up_s).unwrap_or(u32::MAX),
             },
             card.info().inputs,
             card.info().outputs,
@@ -328,6 +331,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     let start_ns = clock::now() + 300_000_000;
     if let Some(card) = &card {
         card.set_start(start_ns);
+        card.set_warm_up(options.warm_up_s * 1_000_000_000);
     }
     let common = Arc::new(Common {
         shared: Arc::clone(&shared),
@@ -496,6 +500,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             card_cycles: count(&stats.card_cycles),
             silent_cycles: count(&stats.silent_cycles),
             xruns: count(&stats.xruns),
+            early_xruns: count(&stats.early_xruns),
             recoveries: count(&stats.recoveries),
             longest_recovery_ms: count(&stats.longest_recovery_ns) as f64 / 1e6,
             stalls: count(&stats.stalls),
@@ -783,12 +788,19 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
         }
         _ if options.allow_xruns => good.push(format!("{} xruns, allowed", card.xruns)),
         _ => {
-            if card.xruns == 0 && card.stalls == 0 && card.lost == 0 && card.short_writes == 0 {
-                good.push("no xrun".to_string());
+            // The xruns of the warm-up are those of an interface that is
+            // settling: reported, not judged.
+            let judged = card.xruns - card.early_xruns.min(card.xruns);
+            if judged == 0 && card.stalls == 0 && card.lost == 0 && card.short_writes == 0 {
+                good.push(if card.early_xruns == 0 {
+                    "no xrun".to_string()
+                } else {
+                    format!("no xrun after the warm-up ({} in it)", card.early_xruns)
+                });
             } else {
                 bad.push(format!(
-                    "{} xruns, {} waits without a period, card lost {} times, {} short writes",
-                    card.xruns, card.stalls, card.lost, card.short_writes
+                    "{judged} xruns after the warm-up, {} waits without a period, card lost {} times, {} short writes",
+                    card.stalls, card.lost, card.short_writes
                 ));
             }
         }
@@ -801,6 +813,17 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
     if options.tone.is_some() {
         for heard in &card.heard {
             let input = heard.channel + 1;
+            // A slip is a fault of its own kind: no xrun, and the signal
+            // is not what was played. Judged only in a run that was not
+            // disturbed on purpose, and said first: the second it falls
+            // in is not a clean one, and that is the same fault.
+            if !disturbed && heard.largest_slip > SLIP_LIMIT_SAMPLES {
+                bad.push(format!(
+                    "a slip of {:.0} samples on input {input}",
+                    heard.largest_slip
+                ));
+                continue;
+            }
             let found = if disturbed {
                 heard.seconds > 0 && heard.tone_max_db >= TONE_HEARD_DB
             } else {
@@ -810,15 +833,7 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
             };
             if found {
                 good.push(format!("the tone is on input {input}"));
-                // A slip is a fault of its own kind: no xrun, and the
-                // signal is not what was played. Judged only in a run
-                // that was not disturbed on purpose.
-                if !disturbed && heard.largest_slip > SLIP_LIMIT_SAMPLES {
-                    bad.push(format!(
-                        "a slip of {:.0} samples on input {input}",
-                        heard.largest_slip
-                    ));
-                } else if !disturbed && heard.slip_count > 0 {
+                if !disturbed && heard.slip_count > 0 {
                     good.push(format!(
                         "{} slips of at most {:.0} samples on input {input} (open point A-58)",
                         heard.slip_count,
@@ -1039,7 +1054,11 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         "card_cycles: {} with the card, {} without",
         card.card_cycles, card.silent_cycles
     );
-    println!("card_xruns: {}", card.xruns);
+    println!("warm_up_seconds: {}", options.warm_up_s);
+    println!(
+        "card_xruns: {} ({} of them in the warm-up)",
+        card.xruns, card.early_xruns
+    );
     println!(
         "card_recoveries: {} (longest {:.2} ms)",
         card.recoveries, card.longest_recovery_ms
@@ -1095,7 +1114,10 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         return;
     }
     println!();
-    println!("inputs listened to (dB relative to full scale; the first second and the last, incomplete one left out):");
+    println!(
+        "inputs listened to (dB relative to full scale; the first {} s and the last, incomplete second left out):",
+        options.warm_up_s.max(1)
+    );
     println!(
         "{:<6} {:>8} {:>8} {:>10} {:>10} {:>9} {:>9} {:>10}",
         "input", "seconds", "peak", "level_min", "level_max", "tone_min", "tone_max", "share_min"
@@ -1119,10 +1141,12 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
     }
     for heard in &card.heard {
         println!(
-            "slips_on_input_{}: {} (largest {:.2} samples)",
+            "slips_on_input_{}: {} (largest {:.2} samples); in the warm-up {} (largest {:.2})",
             heard.channel + 1,
             heard.slip_count,
-            heard.largest_slip
+            heard.largest_slip,
+            heard.early_slip_count,
+            heard.largest_early_slip
         );
         for slip in &heard.slips {
             println!(
@@ -1137,7 +1161,7 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         return;
     }
     println!();
-    println!("second by second (second 1 is not in the table above):");
+    println!("second by second (the warm-up is not in the table above):");
     println!(
         "{:<6} {:>6} {:>8} {:>8} {:>8}",
         "second", "input", "level", "tone", "share"

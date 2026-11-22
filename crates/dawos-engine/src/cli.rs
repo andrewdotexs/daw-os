@@ -32,6 +32,8 @@ pub struct RunOptions {
     pub listen: Vec<usize>,
     /// Periods in the buffers of the card.
     pub periods: u32,
+    /// Seconds at the beginning of the run that are not judged.
+    pub warm_up_s: u64,
     /// Print what was heard second by second, not only summed up.
     pub each_second: bool,
     /// Do not count xruns against the run (a virtual machine has them).
@@ -117,6 +119,10 @@ Options of run:
   --periods N        with alsa: periods in the buffers of the card, 2 to 8
                      (default 2: the output plays two quanta after the
                      input)
+  --warm-up N        with alsa: do not judge the first N seconds of the
+                     run (an interface settles for some seconds after
+                     its streams start); what happens there is counted
+                     apart (default 0)
   --each-second      with --listen: also print every second by itself
                      (the first hour at most)
   --allow-xruns      with alsa: do not fail the run for xruns, as long as
@@ -183,6 +189,7 @@ impl Default for RunOptions {
             routes: Vec::new(),
             listen: Vec::new(),
             periods: 2,
+            warm_up_s: 0,
             each_second: false,
             allow_xruns: false,
             rate: 48_000,
@@ -240,6 +247,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                 }
             }
             "--periods" => options.periods = number(value("--periods")?, "--periods", 2, 8)?,
+            "--warm-up" => options.warm_up_s = number(value("--warm-up")?, "--warm-up", 0, 3600)?,
             "--each-second" => options.each_second = true,
             "--allow-xruns" => options.allow_xruns = true,
             "--rate" => options.rate = number(value("--rate")?, "--rate", 8_000, 768_000)?,
@@ -288,6 +296,9 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
         if options.device.is_none() {
             return Err("--backend alsa needs --device, like hw:USB,0".to_string());
         }
+        if options.warm_up_s >= options.seconds {
+            return Err("--warm-up must be less than --seconds".to_string());
+        }
     } else {
         let sound = options.device.is_some()
             || options.capture_device.is_some()
@@ -296,6 +307,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             || !options.listen.is_empty()
             || options.each_second
             || options.periods != 2
+            || options.warm_up_s != 0
             || options.allow_xruns
             || matches!(options.fault, Fault::CardXrun | Fault::CardLost);
         if sound {
@@ -414,6 +426,10 @@ mod tests {
             (
                 "run --backend alsa --device hw:0 --route 3:x",
                 "not a number",
+            ),
+            (
+                "run --backend alsa --device hw:0 --warm-up 10",
+                "less than --seconds",
             ),
             ("run --fault explode", "unknown fault"),
             ("run --loud", "unknown option"),

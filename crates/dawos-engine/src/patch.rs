@@ -39,6 +39,10 @@ pub struct PatchConfig {
     pub listen: Vec<usize>,
     /// How many seconds to keep one by one, from the first (0: none).
     pub keep_seconds: usize,
+    /// Seconds at the beginning that are not judged: the interface is
+    /// still settling. What happens there is counted apart. The first
+    /// second is never judged.
+    pub warm_up_seconds: u32,
 }
 
 /// A sudden change in the time the tone takes to come back: samples were
@@ -90,6 +94,9 @@ pub struct Heard {
     pub slip_count: u32,
     pub largest_slip: f64,
     pub slips: Vec<Slip>,
+    /// Slips during the warm-up: how many, and the largest.
+    pub early_slip_count: u32,
+    pub largest_early_slip: f64,
 }
 
 struct Listener {
@@ -130,6 +137,8 @@ pub struct Patch {
     block_frames: usize,
     position: usize,
     blocks: u32,
+    /// Seconds at the beginning that are not judged: one at least.
+    warm_up: u32,
     /// Radians of the tone per sample, the rate, and frames done.
     angle: f64,
     rate: f64,
@@ -219,6 +228,8 @@ impl Patch {
                         slip_count: 0,
                         largest_slip: 0.0,
                         slips: Vec::with_capacity(SLIPS_KEPT),
+                        early_slip_count: 0,
+                        largest_early_slip: 0.0,
                     },
                     in_phase: 0.0,
                     quadrature: 0.0,
@@ -235,6 +246,7 @@ impl Patch {
             block_frames: rate as usize,
             position: 0,
             blocks: 0,
+            warm_up: config.warm_up_seconds.max(1),
             angle,
             rate: f64::from(rate),
             done: 0,
@@ -308,7 +320,7 @@ impl Patch {
     fn follow_the_tone(&mut self) {
         let count = self.frames as f64;
         let now = self.done as f64 / self.rate;
-        let counted = self.blocks > 0;
+        let counted = self.blocks >= self.warm_up;
         for listener in &mut self.listeners {
             let in_phase = std::mem::take(&mut listener.in_phase);
             let quadrature = std::mem::take(&mut listener.quadrature);
@@ -340,13 +352,20 @@ impl Patch {
                 // The little that is left in this quantum belongs to
                 // the slip too.
                 let samples = (std::mem::take(&mut listener.slipping) + moved) / self.angle;
-                if counted && samples.abs() >= SLIP_SAMPLES {
-                    let heard = &mut listener.heard;
+                let heard = &mut listener.heard;
+                if samples.abs() < SLIP_SAMPLES {
+                    // Too small to be told from the noise of the measure.
+                } else if counted {
                     heard.slip_count += 1;
                     heard.largest_slip = heard.largest_slip.max(samples.abs());
-                    if heard.slips.len() < heard.slips.capacity() {
-                        heard.slips.push(Slip { second, samples });
-                    }
+                } else {
+                    heard.early_slip_count += 1;
+                    heard.largest_early_slip = heard.largest_early_slip.max(samples.abs());
+                }
+                // Kept one by one all the same, warm-up included: the
+                // time says which is which.
+                if samples.abs() >= SLIP_SAMPLES && heard.slips.len() < heard.slips.capacity() {
+                    heard.slips.push(Slip { second, samples });
                 }
             }
             listener.last_phase = Some(phase);
@@ -372,9 +391,9 @@ impl Patch {
                     .each_second
                     .push((decibels(power.sqrt()), decibels(tone), share));
             }
-            // The first second holds the start of the card: left out of
-            // the summary.
-            if self.blocks == 0 {
+            // The warm-up (the first second at least) holds the start
+            // of the card: left out of the summary.
+            if self.blocks < self.warm_up {
                 continue;
             }
             heard.seconds += 1;
@@ -421,6 +440,7 @@ mod tests {
             routes: vec![(2, 4)],
             listen: vec![2, 4, 0],
             keep_seconds: 2,
+            warm_up_seconds: 0,
         }
     }
 
@@ -514,6 +534,45 @@ mod tests {
             "{:?}",
             heard.slips
         );
+    }
+
+    #[test]
+    fn a_slip_in_the_warm_up_is_counted_apart() {
+        let config = PatchConfig {
+            tone_output: Some(0),
+            tone_hz: 1125.0,
+            tone_db: -12.0,
+            listen: vec![0],
+            warm_up_seconds: 3,
+            ..PatchConfig::default()
+        };
+        let mut patch = Patch::new(&config, 1, 1, FRAMES, RATE).expect("a valid patch");
+        let mut line: std::collections::VecDeque<i32> =
+            std::iter::repeat_n(0, FRAMES + 16).collect();
+        for cycle in 0..6 * 375 {
+            match cycle {
+                // Two seconds in, during the warm-up: three samples
+                // made up.
+                750 => line.extend([0, 0, 0]),
+                // Four and a half seconds in, after it: one sample lost.
+                1687 => drop(line.drain(..1)),
+                _ => {}
+            }
+            for sample in patch.input_mut() {
+                *sample = line.pop_front().unwrap_or(0);
+            }
+            patch.process();
+            line.extend(patch.output().iter().copied());
+        }
+        let heard = &patch.heard()[0];
+        assert_eq!(heard.early_slip_count, 1, "{heard:?}");
+        assert!((heard.largest_early_slip - 3.0).abs() < 0.05, "{heard:?}");
+        assert_eq!(heard.slip_count, 1, "{heard:?}");
+        assert!((heard.largest_slip - 1.0).abs() < 0.05, "{heard:?}");
+        // Both are kept, with their time; and only the seconds after
+        // the warm-up are summed up.
+        assert_eq!(heard.slips.len(), 2);
+        assert_eq!(heard.seconds, 3);
     }
 
     #[test]

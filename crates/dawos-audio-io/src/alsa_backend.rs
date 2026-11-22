@@ -59,6 +59,8 @@ pub struct CardStats {
     pub silent_cycles: AtomicU64,
     /// Times the driver stopped the streams because the engine was late.
     pub xruns: AtomicU64,
+    /// Those of them that fell in the warm-up.
+    pub early_xruns: AtomicU64,
     /// Times the streams were started again.
     pub recoveries: AtomicU64,
     /// The longest a restart took, in nanoseconds.
@@ -117,6 +119,9 @@ pub struct AlsaShared {
     info: CardInfo,
     /// When the periods begin (0: not said yet).
     start: AtomicU64,
+    /// How long after that the card is still taken to be settling, in
+    /// nanoseconds: xruns in there are counted apart.
+    warm_up_ns: AtomicU64,
     seat: Mutex<Seat>,
     handoff: Mutex<Handoff>,
     /// The live thread wants a new card.
@@ -142,6 +147,7 @@ impl AlsaShared {
             info: card.info().clone(),
             config,
             start: AtomicU64::new(0),
+            warm_up_ns: AtomicU64::new(0),
             seat: Mutex::new(Seat {
                 card: Some(card),
                 dead: None,
@@ -166,6 +172,13 @@ impl AlsaShared {
     /// that every thread of the engine is in place.
     pub fn set_start(&self, start: Instant) {
         self.start.store(start, Ordering::Release);
+    }
+
+    /// Say for how long after the start the card is taken to be
+    /// settling (an interface that changes its clock needs some
+    /// seconds): the xruns of that time are counted apart.
+    pub fn set_warm_up(&self, nanoseconds: u64) {
+        self.warm_up_ns.store(nanoseconds, Ordering::Release);
     }
 
     /// What the driver accepted when the card was first opened.
@@ -206,6 +219,28 @@ impl AlsaShared {
     }
 }
 
+/// Whether the kernel has the sound card an ALSA device name like
+/// `hw:USB,0` speaks of. A name of another shape is taken as present:
+/// opening it will tell.
+fn card_is_there(device: &str) -> bool {
+    let Some(rest) = device
+        .strip_prefix("hw:")
+        .or_else(|| device.strip_prefix("plughw:"))
+    else {
+        return true;
+    };
+    let card = rest.split(',').next().unwrap_or_default();
+    if card.is_empty() {
+        return true;
+    }
+    let directory = if card.bytes().all(|byte| byte.is_ascii_digit()) {
+        format!("/proc/asound/card{card}")
+    } else {
+        format!("/proc/asound/{card}")
+    };
+    std::path::Path::new(&directory).exists()
+}
+
 /// The work that must stay off the live CPUs: close a card that was
 /// given up, open it again. Runs until [`AlsaShared::stop`].
 pub fn keeper_loop(shared: &AlsaShared) {
@@ -226,6 +261,12 @@ pub fn keeper_loop(shared: &AlsaShared) {
         }
         if rounds_until_attempt > 0 {
             rounds_until_attempt -= 1;
+            continue;
+        }
+        // Not there at all: nothing to try, and alsa-lib would write its
+        // complaint on the terminal at every attempt.
+        if !card_is_there(&shared.config.playback) {
+            rounds_until_attempt = 1;
             continue;
         }
         shared.stats.reopen_attempts.fetch_add(1, Ordering::AcqRel);
@@ -357,6 +398,10 @@ impl AlsaBackend {
     fn recover(&self, seat: &mut Seat) {
         let stats = &self.shared.stats;
         stats.xruns.fetch_add(1, Ordering::AcqRel);
+        let since_start = clock::now().saturating_sub(self.shared.start.load(Ordering::Acquire));
+        if since_start < self.shared.warm_up_ns.load(Ordering::Acquire) {
+            stats.early_xruns.fetch_add(1, Ordering::AcqRel);
+        }
         seat.skip_until = 0;
         // The start before this xrun gave nothing: the card is not
         // ready. Give it time, asleep, before the next start.

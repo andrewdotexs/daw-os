@@ -22,12 +22,14 @@
 #              through its router (the file MODEL.test-loop.conf, set
 #              for the test and undone after it). No xrun is allowed.
 #
-# An interface needs some seconds after a change of sample rate: on the
-# Scarlett 18i20 the input stops a second after the start, then is
-# silent, and is back after four or five seconds (step P1.4). So before
-# the runs at a new rate "card" runs the engine once for eight seconds,
-# without judging it: the line "settle-RATE" says how many xruns that
-# cost and from which second the tone was clean.
+# An interface needs time after its streams start, and more after a
+# change of sample rate: on the Scarlett 18i20 the input stops a second
+# after the start, is silent, and is back after four or five seconds;
+# and in the first seconds the signal slips now and then (step P1.4).
+# So the plain runs of "card" do not judge their first minute (the
+# warm-up): what happens there is counted apart and shown. Before the
+# runs with a fault, which are short, the engine runs once for eight
+# seconds without being judged (the line "settle-RATE").
 #
 # Cases of "loopback": the plain run, an xrun made on purpose, the card
 # taken away and given back, a live thread that never yields.
@@ -50,10 +52,13 @@ usage() {
 	cat << USAGE
 Usage:
   ${PROG} loopback [--seconds N] [LABEL]
-  ${PROG} card [--card N] [--rates "HZ ..."] [--seconds N] [--periods N] [--no-faults] [LABEL]
+  ${PROG} card [--card N] [--rates "HZ ..."] [--seconds N] [--warm-up N] [--periods N]
+               [--no-faults] [LABEL]
 
   --seconds N    length of every plain run (default: 10 for loopback,
-                 600 for card)
+                 600 for card), after the warm-up
+  --warm-up N    "card": seconds at the start of every plain run that are
+                 not judged (default 60)
   --rates LIST   sample rates of the plain runs of "card" (default
                  "48000 96000 192000")
   --card N       the sound card (default: the first USB one)
@@ -177,6 +182,7 @@ esac
 seconds=
 rates="48000 96000 192000"
 card=
+warm_up=60
 periods=2
 faults=yes
 label=
@@ -198,6 +204,10 @@ while [ $# -gt 0 ]; do
 		periods=${2:-}
 		shift 2
 		;;
+	--warm-up)
+		warm_up=${2:-}
+		shift 2
+		;;
 	--no-faults)
 		faults=no
 		shift
@@ -209,8 +219,8 @@ while [ $# -gt 0 ]; do
 		;;
 	esac
 done
-case "${seconds}" in
-*[!0-9]*) die "--seconds takes a number" ;;
+case "${seconds}${warm_up}" in
+*[!0-9]*) die "--seconds and --warm-up take a number" ;;
 esac
 [ "$(id -u)" = 0 ] || die "must run as root"
 
@@ -226,7 +236,8 @@ passed=0
 	echo "kernel: $(uname -a | cut -d' ' -f1,3-)"
 	# shellcheck source=/dev/null
 	echo "image: $(. /etc/os-release && echo "${VERSION_ID:-unknown}")"
-	echo "virtual: $(systemd-detect-virt 2> /dev/null || echo unknown)"
+	virtual=$(systemd-detect-virt 2> /dev/null)
+	echo "virtual: ${virtual:-unknown}"
 	echo "engine: $("${ENGINE}" --version 2> /dev/null)"
 	echo "uptime_s: $(cut -d. -f1 /proc/uptime)"
 } > "${dir}/meta.txt"
@@ -263,6 +274,7 @@ else
 		echo "card: ${identifier} (${model:-not a USB card})"
 		echo "rates: ${rates}"
 		echo "periods: ${periods}"
+		echo "warm_up_s: ${warm_up}"
 	} >> "${dir}/meta.txt"
 	seconds=${seconds:-600}
 
@@ -283,8 +295,9 @@ else
 	current_rate=
 	for rate in ${rates}; do
 		first=${first:-${rate}}
-		settle "${rate}"
-		run_case "plain-${rate}" --rate "${rate}" --seconds "${seconds}" --require-rt
+		current_rate=${rate}
+		run_case "plain-${rate}" --rate "${rate}" --warm-up "${warm_up}" \
+			--seconds "$((seconds + warm_up))" --require-rt
 	done
 	if [ "${faults}" = yes ]; then
 		settle "${first}"
