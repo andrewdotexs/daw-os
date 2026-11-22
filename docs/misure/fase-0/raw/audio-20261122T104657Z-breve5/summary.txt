@@ -1,0 +1,13 @@
+case               result figures
+settle-48000       -     xruns 0, restarts after a pause 0; the tone is clean from second 1
+plain-48000        PASS  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.21 max 3.71 us; compute avg 2.99 max 4.04 us; input 3 tone -18.8 to -18.8 dB share 1.0000; input 5 tone -18.8 to -18.8 dB share 1.0000; slips 0 (largest 0.00 samples) and 0 (largest 0.00 samples)
+settle-96000       -     xruns 1, restarts after a pause 0; the tone is clean from second 5
+plain-96000        PASS  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.21 max 9.03 us; compute avg 4.50 max 5.62 us; input 3 tone -18.8 to -18.8 dB share 1.0000; input 5 tone -18.8 to -18.8 dB share 1.0000; slips 0 (largest 0.00 samples) and 0 (largest 0.00 samples)
+settle-192000      -     xruns 49, restarts after a pause 2; the tone is clean from second 5
+plain-192000       PASS  xruns 0, recoveries 0 (longest 0.00 ms), lost 0; wake-up avg 3.18 max 3.81 us; compute avg 6.67 max 8.21 us; input 3 tone -18.8 to -18.8 dB share 1.0000; input 5 tone -18.8 to -18.8 dB share 1.0000; slips 0 (largest 0.00 samples) and 0 (largest 0.00 samples)
+settle-48000       -     xruns 0, restarts after a pause 0; the tone is clean from second 6
+card-xrun-48000    PASS  xruns 1, recoveries 1 (longest 0.21 ms), lost 0; wake-up avg 3.13 max 3.71 us; compute avg 2.98 max 4.16 us; input 3 tone -18.9 to -18.8 dB share 0.9887; input 5 tone -19.0 to -18.8 dB share 0.9751; slips 1 (largest 1.00 samples) and 1 (largest 1.00 samples)
+stuck-node-48000   PASS  xruns 1, recoveries 1 (longest 0.21 ms), lost 0; wake-up avg 1.91 max 3.67 us; compute avg 2.01 max 3.25 us; input 3 tone -18.9 to -18.8 dB share 0.9885; input 5 tone -19.0 to -18.8 dB share 0.9740; slips 0 (largest 0.00 samples) and 0 (largest 0.00 samples); k04 PASS
+
+verdict: PASS (5 of 5 cases)
+finished_utc: 2026-11-22T10:48:58Z
