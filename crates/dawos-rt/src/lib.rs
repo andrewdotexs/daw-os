@@ -15,6 +15,7 @@
 pub mod clock;
 pub mod cpu;
 pub mod gate;
+pub mod ring;
 pub mod slot;
 pub mod stats;
 mod sys;

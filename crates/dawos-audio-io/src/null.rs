@@ -90,6 +90,9 @@ impl Backend for NullBackend {
             due,
             woke,
             missed,
+            input_ready: 0,
+            output_queued: 0,
+            events: 0,
         }
     }
 }

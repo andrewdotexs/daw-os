@@ -102,9 +102,16 @@ fn state_name(state: State) -> &'static str {
 /// What [`Card::wait`] found.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Ready {
-    /// One period of input is there. The time the kernel stamped on it,
-    /// in nanoseconds of the monotonic clock, when the driver gives one.
-    Period(Option<u64>),
+    /// One period of input is there.
+    Period {
+        /// The time the kernel stamped on it, in nanoseconds of the
+        /// monotonic clock, when the driver gives one.
+        stamp: Option<u64>,
+        /// Frames of input ready, and frames of output still to play:
+        /// both read in the memory shared with the kernel.
+        input_ready: u32,
+        output_queued: u32,
+    },
     /// Nothing came within the time allowed.
     Timeout,
 }
@@ -392,8 +399,18 @@ impl Card {
         // space; then one poll(). A second round only if the kernel woke
         // the thread for less than a period.
         for _ in 0..4 {
-            if self.capture.avail_update().map_err(classify)? >= period {
-                return Ok(Ready::Period(self.period_time()));
+            let ready = self.capture.avail_update().map_err(classify)?;
+            if ready >= period {
+                // How full the output is: its buffer less the room in
+                // it. A stream that has just stopped says so at the
+                // next exchange of samples, not here.
+                let room = self.playback.avail_update().unwrap_or(0);
+                let queued = (self.info.playback_buffer as i64 - room).max(0);
+                return Ok(Ready::Period {
+                    stamp: self.period_time(),
+                    input_ready: u32::try_from(ready).unwrap_or(u32::MAX),
+                    output_queued: u32::try_from(queued).unwrap_or(u32::MAX),
+                });
             }
             if !self.capture.wait(Some(timeout_ms)).map_err(classify)? {
                 return Ok(Ready::Timeout);

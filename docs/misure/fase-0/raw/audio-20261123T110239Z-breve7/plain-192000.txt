@@ -1,0 +1,242 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 192000
+quantum_frames: 384
+period_us: 2000.000
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 80
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 40029
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     39617     410          0        0      3.17      3.92        5.56        6.76      1989.39
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 192000 Hz, 10 inputs, 10 outputs
+card_period_frames: 384 (buffer: capture 1152, playback 1152)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 39617 with the card, 1 without
+warm_up_seconds: 60
+card_xruns: 15 (15 of them in the warm-up)
+card_recoveries: 15 (longest 2.17 ms)
+card_restarts_after_a_pause: 14 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_xrun_1: at 1.148 s; capture xrun, 82 frames to read (most ever 575); playback xrun, 790 frames of room (most ever 1128), delay 0
+card_xrun_2: at 1.208 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_3: at 1.266 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_4: at 1.324 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_5: at 1.382 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_6: at 1.440 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_7: at 1.498 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_8: at 1.557 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_9: at 1.615 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_10: at 1.673 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_11: at 1.731 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_12: at 1.789 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+routes: 3:5
+
+inputs listened to (dB relative to full scale; the first 60 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            19    -18.7      -21.8      -21.8     -18.8     -18.8     1.0000
+5            19    -18.7      -21.8      -21.8     -18.8     -18.8     1.0000
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+slips_on_input_5: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+second by second (the warm-up is not in the table above):
+second  input    level     tone    share
+1           3        -        -   0.0000
+1           5        -        -   0.0000
+2           3        -        -   0.0000
+2           5        -        -   0.0000
+3           3        -        -   0.0000
+3           5        -        -   0.0000
+4           3    -23.1    -21.5   0.7379
+4           5    -23.2    -21.5   0.7315
+5           3    -21.8    -18.8   1.0000
+5           5    -21.8    -18.8   1.0000
+6           3    -21.8    -18.8   1.0000
+6           5    -21.8    -18.8   1.0000
+7           3    -21.8    -18.8   1.0000
+7           5    -21.8    -18.8   1.0000
+8           3    -21.8    -18.8   1.0000
+8           5    -21.8    -18.8   1.0000
+9           3    -21.8    -18.8   1.0000
+9           5    -21.8    -18.8   1.0000
+10          3    -21.8    -18.8   1.0000
+10          5    -21.8    -18.8   1.0000
+11          3    -21.8    -18.8   1.0000
+11          5    -21.8    -18.8   1.0000
+12          3    -21.8    -18.8   1.0000
+12          5    -21.8    -18.8   1.0000
+13          3    -21.8    -18.8   1.0000
+13          5    -21.8    -18.8   1.0000
+14          3    -21.8    -18.8   1.0000
+14          5    -21.8    -18.8   1.0000
+15          3    -21.8    -18.8   1.0000
+15          5    -21.8    -18.8   1.0000
+16          3    -21.8    -18.8   1.0000
+16          5    -21.8    -18.8   1.0000
+17          3    -21.8    -18.8   1.0000
+17          5    -21.8    -18.8   1.0000
+18          3    -21.8    -18.8   1.0000
+18          5    -21.8    -18.8   1.0000
+19          3    -21.8    -18.8   1.0000
+19          5    -21.8    -18.8   1.0000
+20          3    -21.8    -18.8   1.0000
+20          5    -21.8    -18.8   1.0000
+21          3    -21.8    -18.8   1.0000
+21          5    -21.8    -18.8   1.0000
+22          3    -21.8    -18.8   1.0000
+22          5    -21.8    -18.8   1.0000
+23          3    -21.8    -18.8   1.0000
+23          5    -21.8    -18.8   1.0000
+24          3    -21.8    -18.8   1.0000
+24          5    -21.8    -18.8   1.0000
+25          3    -21.8    -18.8   1.0000
+25          5    -21.8    -18.8   1.0000
+26          3    -21.8    -18.8   1.0000
+26          5    -21.8    -18.8   1.0000
+27          3    -21.8    -18.8   1.0000
+27          5    -21.8    -18.8   1.0000
+28          3    -21.8    -18.8   1.0000
+28          5    -21.8    -18.8   1.0000
+29          3    -21.8    -18.8   1.0000
+29          5    -21.8    -18.8   1.0000
+30          3    -21.8    -18.8   1.0000
+30          5    -21.8    -18.8   1.0000
+31          3    -21.8    -18.8   1.0000
+31          5    -21.8    -18.8   1.0000
+32          3    -21.8    -18.8   1.0000
+32          5    -21.8    -18.8   1.0000
+33          3    -21.8    -18.8   1.0000
+33          5    -21.8    -18.8   1.0000
+34          3    -21.8    -18.8   1.0000
+34          5    -21.8    -18.8   1.0000
+35          3    -21.8    -18.8   1.0000
+35          5    -21.8    -18.8   1.0000
+36          3    -21.8    -18.8   1.0000
+36          5    -21.8    -18.8   1.0000
+37          3    -21.8    -18.8   1.0000
+37          5    -21.8    -18.8   1.0000
+38          3    -21.8    -18.8   1.0000
+38          5    -21.8    -18.8   1.0000
+39          3    -21.8    -18.8   1.0000
+39          5    -21.8    -18.8   1.0000
+40          3    -21.8    -18.8   1.0000
+40          5    -21.8    -18.8   1.0000
+41          3    -21.8    -18.8   1.0000
+41          5    -21.8    -18.8   1.0000
+42          3    -21.8    -18.8   1.0000
+42          5    -21.8    -18.8   1.0000
+43          3    -21.8    -18.8   1.0000
+43          5    -21.8    -18.8   1.0000
+44          3    -21.8    -18.8   1.0000
+44          5    -21.8    -18.8   1.0000
+45          3    -21.8    -18.8   1.0000
+45          5    -21.8    -18.8   1.0000
+46          3    -21.8    -18.8   1.0000
+46          5    -21.8    -18.8   1.0000
+47          3    -21.8    -18.8   1.0000
+47          5    -21.8    -18.8   1.0000
+48          3    -21.8    -18.8   1.0000
+48          5    -21.8    -18.8   1.0000
+49          3    -21.8    -18.8   1.0000
+49          5    -21.8    -18.8   1.0000
+50          3    -21.8    -18.8   1.0000
+50          5    -21.8    -18.8   1.0000
+51          3    -21.8    -18.8   1.0000
+51          5    -21.8    -18.8   1.0000
+52          3    -21.8    -18.8   1.0000
+52          5    -21.8    -18.8   1.0000
+53          3    -21.8    -18.8   1.0000
+53          5    -21.8    -18.8   1.0000
+54          3    -21.8    -18.8   1.0000
+54          5    -21.8    -18.8   1.0000
+55          3    -21.8    -18.8   1.0000
+55          5    -21.8    -18.8   1.0000
+56          3    -21.8    -18.8   1.0000
+56          5    -21.8    -18.8   1.0000
+57          3    -21.8    -18.8   1.0000
+57          5    -21.8    -18.8   1.0000
+58          3    -21.8    -18.8   1.0000
+58          5    -21.8    -18.8   1.0000
+59          3    -21.8    -18.8   1.0000
+59          5    -21.8    -18.8   1.0000
+60          3    -21.8    -18.8   1.0000
+60          5    -21.8    -18.8   1.0000
+61          3    -21.8    -18.8   1.0000
+61          5    -21.8    -18.8   1.0000
+62          3    -21.8    -18.8   1.0000
+62          5    -21.8    -18.8   1.0000
+63          3    -21.8    -18.8   1.0000
+63          5    -21.8    -18.8   1.0000
+64          3    -21.8    -18.8   1.0000
+64          5    -21.8    -18.8   1.0000
+65          3    -21.8    -18.8   1.0000
+65          5    -21.8    -18.8   1.0000
+66          3    -21.8    -18.8   1.0000
+66          5    -21.8    -18.8   1.0000
+67          3    -21.8    -18.8   1.0000
+67          5    -21.8    -18.8   1.0000
+68          3    -21.8    -18.8   1.0000
+68          5    -21.8    -18.8   1.0000
+69          3    -21.8    -18.8   1.0000
+69          5    -21.8    -18.8   1.0000
+70          3    -21.8    -18.8   1.0000
+70          5    -21.8    -18.8   1.0000
+71          3    -21.8    -18.8   1.0000
+71          5    -21.8    -18.8   1.0000
+72          3    -21.8    -18.8   1.0000
+72          5    -21.8    -18.8   1.0000
+73          3    -21.8    -18.8   1.0000
+73          5    -21.8    -18.8   1.0000
+74          3    -21.8    -18.8   1.0000
+74          5    -21.8    -18.8   1.0000
+75          3    -21.8    -18.8   1.0000
+75          5    -21.8    -18.8   1.0000
+76          3    -21.8    -18.8   1.0000
+76          5    -21.8    -18.8   1.0000
+77          3    -21.8    -18.8   1.0000
+77          5    -21.8    -18.8   1.0000
+78          3    -21.8    -18.8   1.0000
+78          5    -21.8    -18.8   1.0000
+79          3    -21.8    -18.8   1.0000
+79          5    -21.8    -18.8   1.0000
+
+record_of_every_cycle: 39617 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 10029 cycles after the warm-up, 29588 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.81      0.50      5.50      6.25      8.00     14.24
+  wake-up                       1.85      3.17      3.25      3.75      3.75      3.75      3.75
+  input and patch               2.94      4.13      4.00      4.92      4.92      4.92      4.92
+  nodes                         0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  output                        0.74      1.39      1.50      1.72      1.72      1.72      1.72
+  compute, whole                3.69      5.54      6.45      6.45      6.45      6.45      6.45
+  period_us: least 1985.76, most 2007.81 (nominal 2000.00)
+  wake_up_bands: under 5 us 10029, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1989.99
+  card_frames_at_the_wake_up: ready 501 to 526, to play 361 to 384
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 3.92 us
+cycles_to_look_at: 0 after the warm-up (none); 2 in it (2 after an xrun, the thread was in time)
+in the warm-up, 2 of them:
+  slot 0 cycle 751 at 1.507 s: after an xrun, the thread was in time, 364000.00 us after the period before (182.00 periods); periods gone by 181
+      it: woke 1.52 us after the period was due; input 3.40, nodes 0.01 (0 of them), output 0.04 us; ended 1995.03 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 3.09 us after the period was due; input 4.33, nodes 0.01 (0 of them), output 1.41 us; ended 1991.16 us before the end of its period; card: 466 frames ready, 362 to play
+  slot 0 cycle 981 at 1.967 s: after an xrun, the thread was in time, 460019.88 us after the period before (230.01 periods); periods gone by 229
+      it: woke 3.29 us after the period was due; input 4.92, nodes 0.01 (0 of them), output 0.88 us; ended 1990.90 us before the end of its period; card: 384 frames ready, 1 to play
+      the one before: woke 1.52 us after the period was due; input 3.40, nodes 0.01 (0 of them), output 0.04 us; ended 1995.03 us before the end of its period; card: 0 frames ready, 0 to play
+audio: PASS (no xrun after the warm-up (15 in it); the tone is on input 3; the tone is on input 5)

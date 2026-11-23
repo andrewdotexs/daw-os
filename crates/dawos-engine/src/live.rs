@@ -6,9 +6,11 @@ use std::sync::Mutex;
 
 use dawos_audio_io::{Backend, Disturbance};
 use dawos_rt::clock;
+use dawos_rt::ring::Writer;
 use dawos_rt::slot::Slot;
 use dawos_rt::stats::Durations;
 
+use crate::meter::{self, Cycle};
 use crate::patch::Patch;
 use crate::plan::{Fault, Plan};
 
@@ -72,14 +74,16 @@ pub enum End {
 
 /// Run the cycle on slot `slot` until the run is over or the watchdog
 /// retires this thread. A spare thread passes `first_cycle`, where the
-/// instant of its first cycle is written. Nothing in the loop allocates
-/// or prints.
+/// instant of its first cycle is written. `record`: the ring where every
+/// cycle is written for the meter, when the record is kept. Nothing in
+/// the loop allocates or prints.
 pub fn live_loop(
     shared: &Shared,
     slot_index: usize,
     generation: u32,
     first_cycle: Option<&AtomicU64>,
     backend: &mut dyn Backend,
+    mut record: Option<&mut Writer>,
 ) -> ThreadReport {
     let spare = first_cycle.is_some();
     let slot = &shared.slots[slot_index];
@@ -126,22 +130,33 @@ pub fn live_loop(
         // The input of this period, and what the patch makes of it. A
         // patch that cannot be had (a thread went wrong while holding
         // it) is a cycle without sound, not a wait.
+        let mut flags = u16::from(wake.events);
         if let Some(patch) = patch {
             if let Ok(mut patch) = patch.try_lock() {
                 backend.capture(patch.input_mut());
                 patch.process();
+            } else {
+                flags |= meter::NO_PATCH;
             }
         }
         if !disturbed && slot_index == 0 && !spare && wake.index >= shared.fault_cycle {
             match shared.fault {
-                Fault::CardXrun => backend.disturb(Disturbance::Xrun),
-                Fault::CardLost => backend.disturb(Disturbance::CardLost),
+                Fault::CardXrun => {
+                    backend.disturb(Disturbance::Xrun);
+                    flags |= meter::DISTURBED;
+                }
+                Fault::CardLost => {
+                    backend.disturb(Disturbance::CardLost);
+                    flags |= meter::DISTURBED;
+                }
                 _ => {}
             }
             disturbed = true;
         }
+        let captured = clock::now();
 
         let mut incomplete = false;
+        let mut nodes_run = 0_u16;
         for (index, node) in nodes.iter().enumerate() {
             if node.is_abandoned() {
                 continue;
@@ -154,6 +169,7 @@ pub fn live_loop(
             slot.enter_node(index);
             node.run(wake.index);
             slot.leave_node();
+            nodes_run = nodes_run.saturating_add(1);
             // Replaced while inside the node: a node that was only very
             // slow. The slot belongs to another thread now.
             if slot.generation() != generation {
@@ -173,6 +189,8 @@ pub fn live_loop(
                 std::hint::spin_loop();
             }
         }
+
+        let computed = clock::now();
 
         // The output, before the period ends: whatever the nodes did or
         // did not finish.
@@ -194,6 +212,30 @@ pub fn live_loop(
         } else {
             report.least_margin_ns = None;
             report.overruns += 1;
+        }
+        // The record of this cycle, for the meter: a few stores, and if
+        // the ring is full the record is lost and counted.
+        if let Some(record) = record.as_deref_mut() {
+            let since =
+                |instant: u64| u32::try_from(instant.saturating_sub(wake.woke)).unwrap_or(u32::MAX);
+            if incomplete {
+                flags |= meter::INCOMPLETE;
+            }
+            let cycle = Cycle {
+                index: wake.index,
+                due: wake.due,
+                woke: wake.woke,
+                captured_ns: since(captured),
+                computed_ns: since(computed),
+                finished_ns: since(finished),
+                missed: u32::try_from(wake.missed).unwrap_or(u32::MAX),
+                input_ready: wake.input_ready,
+                output_queued: wake.output_queued,
+                nodes: nodes_run,
+                flags,
+                slot: u16::try_from(slot_index).unwrap_or(u16::MAX),
+            };
+            record.push(&cycle.to_record());
         }
         slot.enter_wait();
     }

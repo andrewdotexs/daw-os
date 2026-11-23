@@ -13,6 +13,7 @@
 
 mod cli;
 mod live;
+mod meter;
 mod notify;
 mod patch;
 mod plan;

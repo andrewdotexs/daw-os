@@ -79,6 +79,8 @@ pub struct RunOptions {
     /// CPU, and time it: the proof that the kernel threads of the live
     /// CPUs get to run.
     pub kernel_probe: bool,
+    /// Keep the record of every cycle (on unless `--no-record`).
+    pub record: bool,
 }
 
 /// The back ends of `--backend`.
@@ -175,6 +177,9 @@ Options of run:
   --kernel-probe     again and again, ask the kernel for a piece of work
                      on every CPU and time it (needs root; it disturbs
                      the live CPUs: for the tests of the protection only)
+  --no-record        do not keep the record of every cycle (to see what
+                     keeping it costs; the report then has only what
+                     each thread sums up by itself)
   --require-rt       stop if the real-time priority or the memory lock is
                      refused, instead of going on without
   --no-rt            do not ask for a real-time priority
@@ -233,6 +238,7 @@ impl Default for RunOptions {
             fault_thread: 0,
             fault_after_s: 3,
             kernel_probe: false,
+            record: true,
         }
     }
 }
@@ -327,6 +333,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                 options.fault_thread = number(value("--fault-thread")?, "--fault-thread", 0, 63)?
             }
             "--kernel-probe" => options.kernel_probe = true,
+            "--no-record" => options.record = false,
             "--require-rt" => options.realtime = Realtime::Required,
             "--no-rt" => options.realtime = Realtime::Off,
             other => return Err(format!("unknown option '{other}'")),

@@ -1,0 +1,89 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 192000
+quantum_frames: 384
+period_us: 2000.000
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 8
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 4005
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      3594     410          0        0      3.19      3.94        5.04        5.92      1990.14
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 192000 Hz, 10 inputs, 10 outputs
+card_period_frames: 384 (buffer: capture 1152, playback 1152)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 3594 with the card, 1 without
+warm_up_seconds: 0
+card_xruns: 15 (0 of them in the warm-up)
+card_recoveries: 15 (longest 1.94 ms)
+card_restarts_after_a_pause: 14 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_xrun_1: at 1.152 s; capture xrun, 100 frames to read (most ever 575); playback xrun, 790 frames of room (most ever 1128), delay 0
+card_xrun_2: at 1.212 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_3: at 1.270 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_4: at 1.328 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_5: at 1.386 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_6: at 1.444 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_7: at 1.502 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_8: at 1.561 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_9: at 1.619 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_10: at 1.677 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_11: at 1.735 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_xrun_12: at 1.793 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 1151 frames of room (most ever 1151), delay 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+routes: none
+
+inputs listened to (dB relative to full scale; the first 1 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3             6    -18.6          -      -21.8         -     -18.8     0.0000
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+second by second (the warm-up is not in the table above):
+second  input    level     tone    share
+1           3        -        -   0.0000
+2           3        -        -   0.0000
+3           3        -        -   0.0000
+4           3    -23.2    -21.5   0.7337
+5           3    -21.8    -18.8   1.0000
+6           3    -21.8    -18.8   1.0000
+7           3    -21.8    -18.8   1.0000
+
+record_of_every_cycle: 3594 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 3594 cycles after the warm-up, 0 in it (1 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.64      0.25      2.75      5.00    983.48    983.48
+  wake-up                       1.83      3.19      3.25      3.75      3.94      3.94      3.94
+  input and patch               2.44      3.68      4.00      4.25      4.25      4.75      4.75
+  nodes                         0.01      0.01      0.04      0.04      0.04      0.04      0.04
+  output                        0.72      1.35      1.50      1.75      1.75      1.86      1.86
+  compute, whole                3.19      5.04      5.25      5.75      5.75      5.92      5.92
+  period_us: least 1978.01, most 2983.48 (nominal 2000.00)
+  wake_up_bands: under 5 us 3593, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1990.14
+  card_frames_at_the_wake_up: ready 384 to 575, to play 1 to 383
+  periods_gone_by: 410; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+cycles_to_look_at: 2 after the warm-up (2 after an xrun, the thread was in time); 0 in it (none)
+card_told_late_by_minute: 0 (from the first period, the warm-up too)
+  slot 0 cycle 753 at 1.511 s: after an xrun, the thread was in time, 364000.00 us after the period before (182.00 periods); periods gone by 181
+      it: woke 1.66 us after the period was due; input 2.61, nodes 0.01 (0 of them), output 0.03 us; ended 1995.69 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 3.03 us after the period was due; input 3.14, nodes 0.01 (0 of them), output 1.52 us; ended 1992.29 us before the end of its period; card: 484 frames ready, 362 to play
+  slot 0 cycle 983 at 1.971 s: after an xrun, the thread was in time, 460015.98 us after the period before (230.01 periods); periods gone by 229
+      it: woke 3.34 us after the period was due; input 3.93, nodes 0.01 (0 of them), output 0.89 us; ended 1991.82 us before the end of its period; card: 384 frames ready, 1 to play
+      the one before: woke 1.66 us after the period was due; input 2.61, nodes 0.01 (0 of them), output 0.03 us; ended 1995.69 us before the end of its period; card: 0 frames ready, 0 to play
+audio: PASS (15 xruns, allowed; the tone is on input 3)
