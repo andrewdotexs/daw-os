@@ -9,6 +9,11 @@
 //! never blocks on a lock: it tries, and a seat it cannot have means a
 //! cycle of silence.
 //!
+//! The other live threads never touch the card: each sleeps on a timer
+//! of the kernel that ticks when the card completes a period, to wake
+//! when the first wakes, and takes the number of the cycle from what
+//! the first publishes here ([`crate::AlsaFollower`], step P1.6b).
+//!
 //! # When the card stops
 //!
 //! - An **xrun** (the engine was late and the driver stopped the
@@ -86,6 +91,61 @@ pub struct CardStats {
     /// Times the card was given up because it had stopped giving
     /// periods.
     pub lost_to_stalls: AtomicU64,
+    /// Cycles the other live threads took after sleeping on the timer
+    /// of the card.
+    pub follower_cycles: AtomicU64,
+    /// Those of them that came with periods gone by: the thread was
+    /// behind.
+    pub follower_behind: AtomicU64,
+    /// Times they were woken, or their time ran out, with no new cycle
+    /// from the first thread: the card had stopped, or the first thread
+    /// was not there. A cycle on the clock followed.
+    pub follower_empty: AtomicU64,
+    /// Times one of them opened the timer of the card: once each, and
+    /// once more for every card that came back.
+    pub timers_opened: AtomicU64,
+    /// Times the kernel refused that.
+    pub timers_refused: AtomicU64,
+}
+
+/// The cycle the first thread is in, for the others to read: a number
+/// and the instant it was due, written so that the two are never read
+/// from two different cycles. One writer, the thread that holds the
+/// seat; any number of readers, none of which waits.
+#[derive(Default)]
+struct Published {
+    /// Odd while the writer is at it.
+    sequence: AtomicU64,
+    /// The number of the cycle, plus one; 0: none yet.
+    index: AtomicU64,
+    due: AtomicU64,
+}
+
+impl Published {
+    fn write(&self, index: u64, due: Instant) {
+        let sequence = self.sequence.load(Ordering::Relaxed);
+        self.sequence.store(sequence + 1, Ordering::Release);
+        self.index.store(index + 1, Ordering::Release);
+        self.due.store(due, Ordering::Release);
+        self.sequence.store(sequence + 2, Ordering::Release);
+    }
+
+    /// The cycle and when it was due; `None`: none yet, or the writer
+    /// was at it every time this looked (a few tries, never a wait).
+    fn read(&self) -> Option<(u64, Instant)> {
+        for _ in 0..8 {
+            let before = self.sequence.load(Ordering::Acquire);
+            if before & 1 == 0 {
+                let index = self.index.load(Ordering::Acquire);
+                let due = self.due.load(Ordering::Acquire);
+                if self.sequence.load(Ordering::Acquire) == before {
+                    return index.checked_sub(1).map(|index| (index, due));
+                }
+            }
+            std::hint::spin_loop();
+        }
+        None
+    }
 }
 
 /// The place of the card, for the one thread that uses it.
@@ -136,6 +196,13 @@ pub struct AlsaShared {
     /// Number of the next cycle, and when the last one was due.
     next_index: AtomicU64,
     last_due: AtomicU64,
+    /// The cycle in course, for the threads that follow.
+    published: Published,
+    /// The card in use, for the threads that open its timer: how many
+    /// cards came into use so far in the high half (0: none now), and
+    /// in the low half sound card, device and stream of the input as
+    /// the kernel numbers them, 10 bits each.
+    in_use: AtomicU64,
     stats: CardStats,
     /// The first xruns: when, in nanoseconds from the start, and how the
     /// streams stood.
@@ -147,6 +214,8 @@ impl AlsaShared {
     pub fn open(config: CardConfig) -> Result<Arc<Self>, String> {
         let card = Card::open(&config)?;
         Ok(Arc::new(Self {
+            in_use: AtomicU64::new(in_use(1, card.place())),
+            published: Published::default(),
             info: card.info().clone(),
             config,
             start: AtomicU64::new(0),
@@ -197,6 +266,46 @@ impl AlsaShared {
         &self.stats
     }
 
+    /// Rate and quantum the card was opened with.
+    pub(crate) const fn format(&self) -> Format {
+        self.config.format
+    }
+
+    /// When the periods begin (0: not said yet).
+    pub(crate) fn start(&self) -> Instant {
+        self.start.load(Ordering::Acquire)
+    }
+
+    /// The cycle the first thread is in, and when it was due.
+    pub(crate) fn published(&self) -> Option<(u64, Instant)> {
+        self.published.read()
+    }
+
+    /// The card in use: which one it is since the start (1, 2, ...),
+    /// and sound card, device and stream of its input. `None`: no card
+    /// just now, or one whose place the driver did not tell.
+    pub(crate) fn card_in_use(&self) -> Option<(u32, (u32, u32, u32))> {
+        let word = self.in_use.load(Ordering::Acquire);
+        let which = (word >> 32) as u32;
+        let place = word as u32;
+        (which != 0 && place & PLACE_KNOWN != 0).then_some((
+            which,
+            ((place >> 20) & 0x3ff, (place >> 10) & 0x3ff, place & 0x3ff),
+        ))
+    }
+
+    /// Whether the other live threads can wake with this card: its
+    /// place is known, and the timer of its input stream opens. Some
+    /// system calls: to be asked before the cycle starts.
+    pub fn followers_can_wake(&self) -> Result<(), String> {
+        let Some((_, (card, device, stream))) = self.card_in_use() else {
+            return Err("the driver did not tell where the stream is".to_string());
+        };
+        dawos_rt::pcm_timer::PcmTimer::open(card, device, stream, true)
+            .map(drop)
+            .map_err(|error| format!("the timer of the input stream does not open: {error}"))
+    }
+
     /// The first xruns of the run: when, in nanoseconds from the start
     /// of the periods, and how the two streams stood.
     #[must_use]
@@ -221,6 +330,22 @@ impl AlsaShared {
             .map(|seat| seat.card.is_some())
             .unwrap_or(true)
     }
+}
+
+/// Set in the low half of `AlsaShared::in_use` when the place is known.
+const PLACE_KNOWN: u32 = 1 << 30;
+
+/// The word of `AlsaShared::in_use` for the card number `which` since
+/// the start, at `place`. A place that does not fit 10 bits a number is
+/// a place not known.
+fn in_use(which: u32, place: Option<(u32, u32, u32)>) -> u64 {
+    let low = match place {
+        Some((card, device, stream)) if card < 1024 && device < 1024 && stream < 1024 => {
+            PLACE_KNOWN | card << 20 | device << 10 | stream
+        }
+        _ => 0,
+    };
+    u64::from(which) << 32 | u64::from(low)
 }
 
 /// Whether the kernel has the sound card an ALSA device name like
@@ -352,6 +477,9 @@ impl AlsaBackend {
             .next_index
             .fetch_add(1 + missed, Ordering::AcqRel)
             + missed;
+        // For the threads that follow, at once: they woke with this one
+        // and are looking for it.
+        self.shared.published.write(index, due);
         Wake {
             index,
             due,
@@ -368,6 +496,9 @@ impl AlsaBackend {
         if let Some(card) = seat.card.take() {
             seat.dead = Some(card);
         }
+        // No card now; the count of the cards that came stays.
+        let which = self.shared.in_use.load(Ordering::Acquire) >> 32;
+        self.shared.in_use.store(which << 32, Ordering::Release);
         seat.pending = None;
         seat.stalls = 0;
         seat.skip_until = 0;
@@ -397,6 +528,10 @@ impl AlsaBackend {
         }
         if seat.card.is_none() {
             if let Some(card) = handoff.fresh.take() {
+                let which = (self.shared.in_use.load(Ordering::Acquire) >> 32) as u32;
+                self.shared
+                    .in_use
+                    .store(in_use(which + 1, card.place()), Ordering::Release);
                 seat.card = Some(card);
                 seat.events |= Wake::CARD_BACK;
                 self.shared.ready.store(false, Ordering::Release);
@@ -625,5 +760,57 @@ impl Backend for AlsaBackend {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn nothing_is_published_before_the_first_cycle() {
+        let published = Published::default();
+        assert_eq!(published.read(), None);
+        published.write(0, 5_000);
+        assert_eq!(published.read(), Some((0, 5_000)));
+        published.write(41, 9_000);
+        assert_eq!(published.read(), Some((41, 9_000)));
+    }
+
+    #[test]
+    fn the_place_of_a_card_fits_in_a_word() {
+        assert_eq!(in_use(1, None) >> 32, 1);
+        assert_eq!(in_use(1, None) as u32, 0);
+        let word = in_use(7, Some((3, 0, 1)));
+        assert_eq!(word >> 32, 7);
+        assert_eq!(word as u32, PLACE_KNOWN | 3 << 20 | 1);
+        // A number too large for its place: not known, rather than
+        // another stream's.
+        assert_eq!(in_use(2, Some((1024, 0, 0))) as u32, 0);
+    }
+
+    #[test]
+    fn a_cycle_and_its_instant_are_read_together() {
+        // The instant is seven times the number: a reader that got the
+        // two from different cycles would see it.
+        let published = Arc::new(Published::default());
+        let writer = {
+            let published = Arc::clone(&published);
+            std::thread::spawn(move || {
+                for index in 0..200_000_u64 {
+                    published.write(index, index * 7);
+                }
+            })
+        };
+        let mut read = 0_u64;
+        while !writer.is_finished() {
+            if let Some((index, due)) = published.read() {
+                assert_eq!(due, index * 7);
+                read += 1;
+            }
+        }
+        writer.join().expect("the writer ended badly");
+        assert_eq!(published.read(), Some((199_999, 199_999 * 7)));
+        assert!(read > 0);
     }
 }

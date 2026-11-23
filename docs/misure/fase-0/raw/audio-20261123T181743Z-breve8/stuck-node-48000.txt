@@ -1,0 +1,237 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 96
+period_us: 2000.000
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 12
+load_percent: 0
+margin_us: 150
+fault: stuck-node on thread 0 after 4 s
+watchdog_rounds: 6007
+systemd_listening: no
+kernel_work_ms: 2337 rounds, mean 0.09, longest 4.91
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      spare  stopped      4001       5          0        0      2.62     13.09        1.69        2.80      1984.17
+1      first  stopped      3346    2860          0      124     93.33   2033.26        0.08        0.30            -
+2      first  stopped      3181    3029          0      126     96.17   2033.63        0.09        0.33            -
+3      first  stopped      3170    3055          0      128     99.03   2039.22        0.09        0.30            -
+0      first  never came back: stuck, moved off its CPU by the watchdog
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 48000 Hz, 18 inputs, 20 outputs
+card_period_frames: 96 (buffer: capture 288, playback 288)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 6002 with the card, 0 without
+warm_up_seconds: 0
+card_xruns: 1 (0 of them in the warm-up)
+card_recoveries: 1 (longest 0.20 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_xrun_1: at 4.010 s; capture xrun, 143 frames to read (most ever 143); playback xrun, 196 frames of room (most ever 282), delay 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+card_followers: 8414 cycles after a sleep on the card, 643 found already begun, 643 wake-ups with no cycle (a cycle on the clock followed)
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+routes: 3:5
+
+inputs listened to (dB relative to full scale; the first 1 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            11    -18.7      -21.9      -21.8     -18.9     -18.8     0.9929
+5            11    -18.7      -21.9      -21.8     -18.9     -18.8     0.9735
+slips_on_input_3: 1 (largest 1.00 samples); in the warm-up 1 (largest 1.00)
+  slip on input 3 at 0.026 s: +1.00 samples
+  slip on input 3 at 3.226 s: +1.00 samples
+slips_on_input_5: 2 (largest 1.00 samples); in the warm-up 2 (largest 1.00)
+  slip on input 5 at 0.026 s: +1.00 samples
+  slip on input 5 at 0.032 s: +1.00 samples
+  slip on input 5 at 3.226 s: +1.00 samples
+  slip on input 5 at 3.232 s: +1.00 samples
+
+second by second (the warm-up is not in the table above):
+second  input    level     tone    share
+1           3    -21.9    -18.9   0.9904
+1           5    -21.9    -18.9   0.9832
+2           3    -21.8    -18.8   1.0000
+2           5    -21.8    -18.8   1.0000
+3           3    -21.8    -18.8   1.0000
+3           5    -21.8    -18.8   1.0000
+4           3    -21.8    -18.9   0.9933
+4           5    -21.8    -18.9   0.9735
+5           3    -21.9    -18.9   0.9929
+5           5    -21.9    -18.9   0.9855
+6           3    -21.8    -18.8   1.0000
+6           5    -21.8    -18.8   1.0000
+7           3    -21.8    -18.8   1.0000
+7           5    -21.8    -18.8   1.0000
+8           3    -21.8    -18.8   1.0000
+8           5    -21.8    -18.8   1.0000
+9           3    -21.8    -18.8   1.0000
+9           5    -21.8    -18.8   1.0000
+10          3    -21.8    -18.8   1.0000
+10          5    -21.8    -18.8   1.0000
+11          3    -21.8    -18.8   1.0000
+11          5    -21.8    -18.8   1.0000
+12          3    -21.8    -18.8   1.0000
+12          5    -21.8    -18.8   1.0000
+
+record_of_every_cycle: 15697 cycles read, 0 dropped (rings of 4096 records, the fullest held 12)
+record, slot 0: 1999 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00     13.43      4.50     37.25     38.75   1003.92   1003.92
+  wake-up                       3.28      8.11      8.00     12.00     12.54     12.54     12.54
+  input and patch               1.00      1.58      1.75      2.00      2.00      2.97      2.97
+  nodes                         0.02      0.03      0.13      0.13      0.13      0.13      0.13
+  output                        0.59      0.97      1.00      1.16      1.16      1.16      1.16
+  compute, whole                1.66      2.58      2.75      3.00      3.25      4.08      4.08
+  period_us: least 1962.68, most 3003.92 (nominal 2000.00)
+  wake_up_bands: under 5 us 64, 5 to 10 1748, 10 to 20 187, 20 to 50 0, 50 and over 0
+  least_margin_us: 1984.62
+  card_frames_at_the_wake_up: ready 96 to 143, to play 6 to 96
+  periods_gone_by: 1; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 0 (spare): 4001 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      2.58      0.75     30.00     34.00    997.44    997.44
+  wake-up                       1.61      2.62      2.25      6.75      9.00     13.09     13.09
+  input and patch               0.88      1.09      1.25      1.50      1.75      1.96      1.96
+  nodes                         0.01      0.01      0.05      0.05      0.05      0.05      0.05
+  output                        0.50      0.59      0.75      1.00      1.00      1.00      1.00
+  compute, whole                1.43      1.69      1.75      2.25      2.50      2.80      2.80
+  period_us: least 1964.39, most 2997.44 (nominal 2000.00)
+  wake_up_bands: under 5 us 3919, 5 to 10 81, 10 to 20 1, 20 to 50 0, 50 and over 0
+  least_margin_us: 1984.17
+  card_frames_at_the_wake_up: ready 96 to 143, to play 6 to 93
+  periods_gone_by: 5; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 1: 3346 cycles after the warm-up, 0 in it (206 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00    815.22      3.75  17999.99  17999.99  17999.99  17999.99
+  wake-up                       1.82     99.33      2.75   2010.00   2033.26   2033.26   2033.26
+  input and patch               0.01      0.06      0.25      0.25      0.25      0.27      0.27
+  nodes                         0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  output                        0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  compute, whole                0.04      0.08      0.25      0.25      0.25      0.30      0.30
+  period_us: least 1962.73, most 19999.99 (nominal 2000.00)
+  wake_up_bands: under 5 us 2072, 5 to 10 418, 10 to 20 473, 20 to 50 28, 50 and over 149
+  least_margin_us: -33.30
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 2860; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 2: 3181 cycles after the warm-up, 0 in it (209 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00    985.75      4.25  18003.60  18003.60  18003.60  18003.60
+  wake-up                       1.72    102.79      2.75   2010.00   2033.63   2033.63   2033.63
+  input and patch               0.01      0.06      0.25      0.25      0.25      0.31      0.31
+  nodes                         0.01      0.01      0.04      0.04      0.04      0.04      0.04
+  output                        0.01      0.01      0.06      0.06      0.06      0.06      0.06
+  compute, whole                0.04      0.09      0.25      0.25      0.33      0.33      0.33
+  period_us: least 1962.68, most 20003.60 (nominal 2000.00)
+  wake_up_bands: under 5 us 1824, 5 to 10 397, 10 to 20 577, 20 to 50 28, 50 and over 146
+  least_margin_us: -33.67
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 3029; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 3: 3170 cycles after the warm-up, 0 in it (227 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00    916.78      4.00  18000.34  18000.34  18000.34  18000.34
+  wake-up                       1.91    106.52      2.75   2010.00   2039.22   2039.22   2039.22
+  input and patch               0.01      0.06      0.24      0.24      0.24      0.24      0.24
+  nodes                         0.01      0.01      0.05      0.05      0.05      0.05      0.05
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole                0.04      0.09      0.25      0.25      0.25      0.30      0.30
+  period_us: least 1962.82, most 20000.34 (nominal 2000.00)
+  wake_up_bands: under 5 us 2100, 5 to 10 217, 10 to 20 439, 20 to 50 37, 50 and over 150
+  least_margin_us: -39.26
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 3055; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, the 4 threads together: 711 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.05    430.64      1.00   2010.00   2025.98   2025.98   2025.98
+cycles_to_look_at: 2419 after the warm-up (1 after an xrun, no cycle before it; 2283 the card told of the period late; 110 periods went by, the cycle before ran over; 16 ended after its period; 9 woke more than 20 us late); 0 in it (none)
+card_told_late_by_minute: 2283 (from the first period, the warm-up too)
+  slot 1 cycle 7 at 0.020 s: woke more than 20 us late, 0.00 us after the period before (0.00 periods); periods gone by 0
+      it: woke 1745.52 us after the period was due; input 0.03, nodes 0.01 (0 of them), output 0.01 us; ended 254.43 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.70 us after the period was due; input 0.14, nodes 0.04 (0 of them), output 0.03 us; ended 1998.09 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 15 at 0.036 s: the card told of the period late, 0.00 us after the period before (0.00 periods); periods gone by 8
+      it: woke 2007.59 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 7.62 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.88 us after the period was due; input 0.10, nodes 0.01 (0 of them), output 0.01 us; ended 1997.99 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 17 at 0.040 s: the card told of the period late, 0.00 us after the period before (0.00 periods); periods gone by 8
+      it: woke 2000.45 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 0.49 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.47 us after the period was due; input 0.08, nodes 0.01 (0 of them), output 0.01 us; ended 1998.42 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 25 at 0.056 s: the card told of the period late, 0.00 us after the period before (0.00 periods); periods gone by 9
+      it: woke 2005.78 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 5.82 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 5.08 us after the period was due; input 0.07, nodes 0.01 (0 of them), output 0.01 us; ended 1994.82 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 27 at 0.060 s: the card told of the period late, 0.00 us after the period before (0.00 periods); periods gone by 9
+      it: woke 1971.96 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 28.00 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.66 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 1998.25 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 35 at 0.076 s: the card told of the period late, 0.00 us after the period before (0.00 periods); periods gone by 8
+      it: woke 2002.02 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 2.06 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.57 us after the period was due; input 0.07, nodes 0.01 (0 of them), output 0.01 us; ended 1998.34 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 37 at 0.080 s: the card told of the period late, 0.00 us after the period before (0.00 periods); periods gone by 8
+      it: woke 2032.30 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 32.34 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.64 us after the period was due; input 0.07, nodes 0.01 (0 of them), output 0.01 us; ended 1998.27 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 56 at 0.116 s: periods went by, the cycle before ran over, 18026.81 us after the period before (9.01 periods); periods gone by 8
+      it: woke 13.35 us after the period was due; input 0.11, nodes 0.01 (0 of them), output 0.01 us; ended 1986.51 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2001.65 us after the period was due; input 0.02, nodes 0.01 (0 of them), output 0.01 us; ended 1.70 us AFTER the end of its period; card: 0 frames ready, 0 to play
+  slot 2 cycle 258 at 0.520 s: periods went by, the cycle before ran over, 5999.40 us after the period before (3.00 periods); periods gone by 2
+      it: woke 11.74 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 1988.18 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2001.62 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 1.66 us AFTER the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 306 at 0.616 s: periods went by, the cycle before ran over, 18030.59 us after the period before (9.02 periods); periods gone by 8
+      it: woke 13.30 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 1986.62 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2004.94 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 4.98 us AFTER the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 317 at 0.638 s: woke more than 20 us late, 0.00 us after the period before (0.00 periods); periods gone by 0
+      it: woke 38.55 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 1961.41 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.49 us after the period was due; input 0.03, nodes 0.01 (0 of them), output 0.01 us; ended 1998.45 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 334 at 0.672 s: periods went by, the cycle before ran over, 14006.27 us after the period before (7.00 periods); periods gone by 6
+      it: woke 11.33 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 1988.59 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2008.55 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 8.59 us AFTER the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 503 at 1.010 s: periods went by, the cycle before ran over, 19999.99 us after the period before (10.00 periods); periods gone by 9
+      it: woke 4.95 us after the period was due; input 0.12, nodes 0.01 (0 of them), output 0.01 us; ended 1994.91 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2033.07 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 33.11 us AFTER the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 526 at 1.056 s: periods went by, the cycle before ran over, 6030.79 us after the period before (3.02 periods); periods gone by 2
+      it: woke 12.97 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1986.96 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2032.86 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 32.90 us AFTER the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 955 at 1.914 s: woke more than 20 us late, 0.00 us after the period before (0.00 periods); periods gone by 0
+      it: woke 32.96 us after the period was due; input 0.01, nodes 0.01 (0 of them), output 0.01 us; ended 1967.00 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.81 us after the period was due; input 0.03, nodes 0.01 (0 of them), output 0.01 us; ended 1998.13 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 2 cycle 2000 at 4.005 s: ended after its period, 1998.66 us after the period before (1.00 periods); periods gone by 0
+      it: woke 2011.30 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 11.38 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 10.19 us after the period was due; input 0.13, nodes 0.01 (0 of them), output 0.01 us; ended 1989.66 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 0 (spare) cycle 2006 at 4.014 s: after an xrun, no cycle before it; periods gone by 5
+      it: woke 13.09 us after the period was due; input 1.96, nodes 0.03 (0 of them), output 0.76 us; ended 1984.17 us before the end of its period; card: 96 frames ready, 6 to play
+  slot 1 cycle 2007 at 4.016 s: woke more than 20 us late, 0.00 us after the period before (0.00 periods); periods gone by 0
+      it: woke 37.23 us after the period was due; input 0.02, nodes 0.01 (0 of them), output 0.01 us; ended 1962.73 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 1.48 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1998.44 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 2 cycle 2414 at 4.832 s: ended after its period, 1999.95 us after the period before (1.00 periods); periods gone by 0
+      it: woke 2002.29 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 2.37 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2.49 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1997.43 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 2588 at 5.180 s: ended after its period, 1999.98 us after the period before (1.00 periods); periods gone by 0
+      it: woke 2002.35 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 2.43 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2.41 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1997.51 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 2631 at 5.266 s: ended after its period, 2000.02 us after the period before (1.00 periods); periods gone by 0
+      it: woke 2002.22 us after the period was due; input 0.08, nodes 0.01 (0 of them), output 0.01 us; ended 2.32 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2.79 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1997.13 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 2 cycle 2676 at 5.356 s: ended after its period, 2000.14 us after the period before (1.00 periods); periods gone by 0
+      it: woke 2002.47 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 2.55 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2.66 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1997.26 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 3 cycle 2720 at 5.444 s: ended after its period, 2000.17 us after the period before (1.00 periods); periods gone by 0
+      it: woke 2002.24 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 2.32 us AFTER the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2.54 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1997.39 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 2 cycle 3259 at 6.523 s: woke more than 20 us late, 1999.90 us after the period before (1.00 periods); periods gone by 0
+      it: woke 1998.52 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1.40 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2.41 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1997.51 us before the end of its period; card: 0 frames ready, 0 to play
+  slot 1 cycle 5973 at 11.951 s: woke more than 20 us late, 2004.45 us after the period before (1.00 periods); periods gone by 0
+      it: woke 1997.59 us after the period was due; input 0.06, nodes 0.01 (0 of them), output 0.01 us; ended 2.33 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 2.21 us after the period was due; input 0.05, nodes 0.01 (0 of them), output 0.01 us; ended 1997.71 us before the end of its period; card: 0 frames ready, 0 to play
+  ... and 2394 more, not shown (of each kind the first 6; of the late wake-ups the worst 6)
+
+watchdog events (milliseconds from the start of the compute phase the thread never left):
+slot 0 cycle 2000 node 0 thread 7389: noticed after 6.76, live CPU free after 6.79, spare thread at work after 11.04
+k04: PASS (limits: noticed within 8.5 ms, live CPU free within 15 ms, spare thread at work within 50 ms, kernel work on every CPU within 20 ms)
+audio: PASS (1 xruns after the stuck thread; the tone is on input 3; the tone is on input 5)

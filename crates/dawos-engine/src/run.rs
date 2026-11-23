@@ -8,8 +8,8 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use dawos_audio_io::{
-    keeper_loop, AlsaBackend, AlsaShared, Backend, CardConfig, CardInfo, Format, NullBackend,
-    XrunView,
+    keeper_loop, AlsaBackend, AlsaFollower, AlsaShared, Backend, CardConfig, CardInfo, Format,
+    NullBackend, XrunView,
 };
 use dawos_rt::cpu::{self, Policy};
 use dawos_rt::ring::{ring, Writer};
@@ -74,6 +74,14 @@ pub struct CardOutcome {
     pub paused_restarts: u64,
     pub short_writes: u64,
     pub bad_stamps: u64,
+    /// The other live threads: cycles taken after a tick of the card,
+    /// those of them with periods gone by, wake-ups with no cycle, and
+    /// timers of the card opened and refused.
+    pub follower_cycles: u64,
+    pub follower_behind: u64,
+    pub follower_empty: u64,
+    pub timers_opened: u64,
+    pub timers_refused: u64,
     /// Error number that made the card be given up, the last time.
     pub last_error: i32,
     /// Whether a card was in use when the run ended.
@@ -242,16 +250,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     let system_cpus =
         cpus(options.system.as_deref(), "system").map_err(|error| format!("--system: {error}"))?;
     let with_card = options.backend == BackendKind::Alsa;
-    // One live thread on a sound card yet: how the others wait for the
-    // card is decided with the measurements of step P1.6.
-    let threads = options
-        .threads
-        .unwrap_or(if with_card { 1 } else { live_cpus.len().max(1) });
-    if with_card && threads > 1 {
-        return Err(
-            "--backend alsa runs one live thread yet: leave --threads out, or say 1".to_string(),
-        );
-    }
+    let threads = options.threads.unwrap_or(live_cpus.len().max(1));
     if !live_cpus.is_empty() && threads > live_cpus.len() {
         return Err(format!(
             "{threads} live threads asked for, and {} live CPUs: one thread per CPU at most",
@@ -290,6 +289,15 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         })?),
         _ => None,
     };
+    // With more live threads than one, the others wake on the timer of
+    // the input stream: better to know now that it is there.
+    if let Some(card) = &card {
+        if threads > 1 {
+            card.followers_can_wake().map_err(|error| {
+                format!("the other live threads cannot wake with the card ({error}): --threads 1 runs without them")
+            })?;
+        }
+    }
     let patch = match &card {
         Some(card) => Some(Mutex::new(Patch::new(
             &PatchConfig {
@@ -412,6 +420,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 period_ns,
                 frames: format.frames,
                 periods: if card.is_some() { options.periods } else { 0 },
+                threads,
                 start_ns,
                 warm_up_ns: options.warm_up_s * 1_000_000_000,
             },
@@ -576,6 +585,11 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             paused_restarts: count(&stats.paused_restarts),
             short_writes: count(&stats.short_writes),
             bad_stamps: count(&stats.bad_stamps),
+            follower_cycles: count(&stats.follower_cycles),
+            follower_behind: count(&stats.follower_behind),
+            follower_empty: count(&stats.follower_empty),
+            timers_opened: count(&stats.timers_opened),
+            timers_refused: count(&stats.timers_refused),
             last_error: stats.last_error.load(Ordering::Acquire),
             in_use_at_the_end,
             xrun_log: card
@@ -721,12 +735,15 @@ fn live_thread(common: &Common, index: usize, mut record: Option<Writer>) -> Thr
     )
 }
 
-/// The back end of the thread that holds a slot: the sound card for the
-/// first slot when there is one, a timer otherwise. `joining`: the
-/// periods have already begun.
+/// The back end of the thread that holds a slot. With a sound card: the
+/// card itself for the first slot, and for the others a sleep on the
+/// same card and the cycle of the first. Without one: a timer.
+/// `joining`: the periods have already begun.
 fn backend(common: &Common, slot: usize, joining: bool) -> Box<dyn Backend> {
     match &common.card {
         Some(card) if slot == 0 => Box::new(AlsaBackend::new(Arc::clone(card))),
+        // The others sleep on the card too, and follow the first.
+        Some(card) => Box::new(AlsaFollower::new(Arc::clone(card), joining)),
         _ if joining => Box::new(NullBackend::joining(common.format, common.start_ns)),
         _ => Box::new(NullBackend::with_start(common.format, common.start_ns)),
     }
@@ -1306,6 +1323,14 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
     }
     println!("card_short_writes: {}", card.short_writes);
     println!("card_stamps_not_believed: {}", card.bad_stamps);
+    println!(
+        "card_followers: {} cycles after a tick of the card, {} of them with periods gone by, {} wake-ups with no cycle; timers of the card opened {}, refused {}",
+        card.follower_cycles,
+        card.follower_behind,
+        card.follower_empty,
+        card.timers_opened,
+        card.timers_refused
+    );
     match options.tone {
         Some(output) => println!(
             "tone: output {}, {:.2} Hz, peak {} dB below full scale",

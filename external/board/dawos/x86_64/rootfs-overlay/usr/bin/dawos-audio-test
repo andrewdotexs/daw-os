@@ -42,8 +42,9 @@
 # taken away and given back, a live thread that never yields.
 #
 # Cases of "card": the plain run at every rate asked for, then at the
-# first rate an xrun made on purpose and a live thread that never
-# yields.
+# first rate an xrun made on purpose, the live thread that holds the
+# card never yielding, and one of the threads that follow it never
+# yielding (step P1.6b; not with --threads 1).
 #
 # Results go to /var/lib/dawos/measure/audio-<time>[-LABEL].
 
@@ -60,6 +61,7 @@ usage() {
 Usage:
   ${PROG} loopback [--seconds N] [LABEL]
   ${PROG} card [--card N] [--rates "HZ ..."] [--seconds N] [--warm-up N] [--periods N]
+               [--threads N]
                [--no-faults] [LABEL]
 
   --seconds N    length of every plain run (default: 10 for loopback,
@@ -70,6 +72,8 @@ Usage:
                  "48000 96000 192000")
   --card N       the sound card (default: the first USB one)
   --periods N    "card": periods in the buffers of the card (default 3)
+  --threads N    "card": live threads (default: the engine's own, one per
+                 live CPU; the first holds the card, the others follow it)
   --no-faults    "card": the plain runs only
 USAGE
 }
@@ -137,6 +141,11 @@ run_case() {
 			"$(heard "${dir}/${name}.txt" 3)" "$(heard "${dir}/${name}.txt" 5)"
 		printf '; slips %s and %s' "$(field "${dir}/${name}.txt" slips_on_input_3)" \
 			"$(field "${dir}/${name}.txt" slips_on_input_5)"
+		# With more live threads than one: how far apart they woke, and
+		# how often one of those that follow the card woke for nothing.
+		spread=$(awk '$1 == "first" && $2 == "awake" { print $10 " and " $11 }' "${dir}/${name}.txt")
+		[ -n "${spread}" ] && printf '; first thread awake to last, 99.99%% and most, %s us; followers: %s' \
+			"${spread}" "$(field "${dir}/${name}.txt" card_followers)"
 		[ -n "${k04}" ] && printf '; k04 %s' "${k04%% *}"
 		# Why, in the engine's own words.
 		[ "${result}" = FAIL ] && printf '; audio: %s' "${audio:-no verdict: $(tail -n 1 "${dir}/${name}.err")}"
@@ -193,6 +202,7 @@ rates="48000 96000 192000"
 card=
 warm_up=60
 periods=3
+threads=
 faults=yes
 label=
 while [ $# -gt 0 ]; do
@@ -215,6 +225,10 @@ while [ $# -gt 0 ]; do
 		;;
 	--warm-up)
 		warm_up=${2:-}
+		shift 2
+		;;
+	--threads)
+		threads=${2:-}
 		shift 2
 		;;
 	--no-faults)
@@ -278,9 +292,10 @@ else
 	[ -d "/proc/asound/card${card}" ] || die "there is no sound card ${card}"
 	identifier=$(cat "/proc/asound/card${card}/id")
 	model=$(tr ':' '-' < "/proc/asound/card${card}/usbid" 2> /dev/null)
-	device_options="--device hw:${identifier},0 --periods ${periods}"
+	device_options="--device hw:${identifier},0 --periods ${periods}${threads:+ --threads ${threads}}"
 	{
 		echo "card: ${identifier} (${model:-not a USB card})"
+		echo "threads: ${threads:-the default of the engine}"
 		echo "rates: ${rates}"
 		echo "periods: ${periods}"
 		echo "warm_up_s: ${warm_up}"
@@ -313,6 +328,11 @@ else
 		run_case "card-xrun-${first}" --rate "${first}" --seconds 10 --require-rt --fault card-xrun
 		run_case "stuck-node-${first}" --rate "${first}" --seconds 12 --require-rt --kernel-probe \
 			--fault stuck-node --fault-thread 0 --fault-after 4
+		# The same for a thread that follows the card, when there is one.
+		if [ "${threads:-2}" -gt 1 ]; then
+			run_case "stuck-follower-${first}" --rate "${first}" --seconds 12 --require-rt --kernel-probe \
+				--load 20 --fault stuck-node --fault-thread 1 --fault-after 4
+		fi
 	fi
 
 	if [ -r "${CARDS_DIR}/${model}.conf" ]; then

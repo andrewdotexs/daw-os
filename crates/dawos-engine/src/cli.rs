@@ -161,7 +161,8 @@ Options of run:
   --system LIST      CPUs of the watchdog and of the parked spare threads
                      (default: the system domain of the boot profile)
   --threads N        live threads (default: one per live CPU; one without
-                     a profile; with alsa one, the only number yet)
+                     a profile). With alsa the first holds the card, and
+                     the others sleep on it and follow its cycle
   --priority N       real-time priority of the live threads, 1 to 94
                      (default 80; the watchdog runs at 95)
   --margin-us N      compute budget: stop taking work this long before

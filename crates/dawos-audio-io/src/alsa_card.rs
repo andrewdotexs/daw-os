@@ -125,6 +125,9 @@ pub struct Card {
     status: Option<Status>,
     info: CardInfo,
     started: bool,
+    /// Where the kernel keeps the input stream: sound card, device and
+    /// stream of the device. `None`: the driver did not say.
+    place: Option<(u32, u32, u32)>,
 }
 
 const BYTES_PER_SAMPLE: usize = 4;
@@ -279,6 +282,12 @@ impl Card {
         } else {
             None
         };
+        // Asked once, here: the answer is made with memory of its own,
+        // and that is not for the live thread.
+        let place = capture.info().ok().and_then(|info| {
+            let card = u32::try_from(info.get_card()).ok()?;
+            Some((card, info.get_device(), info.get_subdevice()))
+        });
         let mut card = Self {
             capture,
             playback,
@@ -296,6 +305,7 @@ impl Card {
             },
             status,
             started: false,
+            place,
         };
         card.fill_with_silence().map_err(|error| {
             format!(
@@ -347,6 +357,14 @@ impl Card {
         }
         self.started = true;
         Ok(())
+    }
+
+    /// Sound card, device and stream of the input, as the kernel
+    /// numbers them: what a thread needs to open the timer of the stream
+    /// and wake with it.
+    #[must_use]
+    pub const fn place(&self) -> Option<(u32, u32, u32)> {
+        self.place
     }
 
     /// Ask the kernel how the two streams stand: two system calls, for
