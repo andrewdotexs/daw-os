@@ -39,12 +39,15 @@
 # the run that counts starts its streams afresh.
 #
 # Cases of "loopback": the plain run, an xrun made on purpose, the card
-# taken away and given back, a live thread that never yields.
+# taken away and given back, a live thread that never yields, and a run
+# with the trace of the kernel on the live CPUs (step P1.6c: no system
+# call in the compute phase).
 #
 # Cases of "card": the plain run at every rate asked for, then at the
-# first rate an xrun made on purpose, the live thread that holds the
-# card never yielding, and one of the threads that follow it never
-# yielding (step P1.6b; not with --threads 1).
+# first rate a run with the trace of the kernel, an xrun made on
+# purpose, the live thread that holds the card never yielding, and one
+# of the threads that follow it never yielding (step P1.6b; not with
+# --threads 1).
 #
 # Results go to /var/lib/dawos/measure/audio-<time>[-LABEL].
 
@@ -129,6 +132,23 @@ run_case() {
 		esac
 		;;
 	esac
+	# A case with the trace of the kernel (step P1.6c): no system call
+	# may be entered in the compute phase, and the trace must be gone
+	# when the engine ends.
+	entries=
+	case " $* " in
+	*" --kernel-entries "*)
+		entries=$(field "${dir}/${name}.txt" kernel_entries_in_compute)
+		case "${entries}" in
+		"0 system calls"*) ;;
+		*) result=FAIL ;;
+		esac
+		if [ -d /sys/kernel/tracing/instances/dawos-engine ]; then
+			result=FAIL
+			entries="${entries}; the trace was left behind"
+		fi
+		;;
+	esac
 	[ "${result}" = PASS ] && passed=$((passed + 1))
 	{
 		printf '%-18s %-5s' "${name}" "${result}"
@@ -147,6 +167,7 @@ run_case() {
 		[ -n "${spread}" ] && printf '; first thread awake to last, 99.99%% and most, %s us; followers: %s' \
 			"${spread}" "$(field "${dir}/${name}.txt" card_followers)"
 		[ -n "${k04}" ] && printf '; k04 %s' "${k04%% *}"
+		[ -n "${entries}" ] && printf '; in the compute phase: %s' "${entries}"
 		# Why, in the engine's own words.
 		[ "${result}" = FAIL ] && printf '; audio: %s' "${audio:-no verdict: $(tail -n 1 "${dir}/${name}.err")}"
 		printf '\n'
@@ -282,6 +303,7 @@ if [ "${mode}" = loopback ]; then
 	run_case card-xrun --seconds 8 --allow-xruns --fault card-xrun
 	run_case card-lost --seconds 8 --allow-xruns --fault card-lost
 	run_case stuck-node --seconds 8 --allow-xruns --fault stuck-node --fault-thread 0
+	run_case kernel-entries --seconds 8 --allow-xruns --kernel-entries
 	if [ "${loaded}" = yes ]; then
 		modprobe -r snd-aloop 2> /dev/null || true
 	fi
@@ -325,6 +347,8 @@ else
 	done
 	if [ "${faults}" = yes ]; then
 		settle "${first}"
+		run_case "kernel-entries-${first}" --rate "${first}" --warm-up 8 --seconds 38 --require-rt \
+			--kernel-entries
 		run_case "card-xrun-${first}" --rate "${first}" --seconds 10 --require-rt --fault card-xrun
 		run_case "stuck-node-${first}" --rate "${first}" --seconds 12 --require-rt --kernel-probe \
 			--fault stuck-node --fault-thread 0 --fault-after 4

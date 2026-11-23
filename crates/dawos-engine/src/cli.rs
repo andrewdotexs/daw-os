@@ -81,6 +81,9 @@ pub struct RunOptions {
     pub kernel_probe: bool,
     /// Keep the record of every cycle (on unless `--no-record`).
     pub record: bool,
+    /// Read the trace of the kernel on the live CPUs, and say who enters
+    /// the kernel in which phase of the cycle (ADR 0021).
+    pub kernel_entries: bool,
 }
 
 /// The back ends of `--backend`.
@@ -181,6 +184,13 @@ Options of run:
   --no-record        do not keep the record of every cycle (to see what
                      keeping it costs; the report then has only what
                      each thread sums up by itself)
+  --kernel-entries   trace the kernel on the live CPUs and say, phase
+                     by phase of the cycle, who entered it: system
+                     calls, interrupts, threads of the kernel; and how
+                     every wake-up went (needs root, the record of
+                     every cycle and the live CPUs of the boot profile
+                     or --live; every system call of the machine costs
+                     a little more while it runs)
   --require-rt       stop if the real-time priority or the memory lock is
                      refused, instead of going on without
   --no-rt            do not ask for a real-time priority
@@ -240,6 +250,7 @@ impl Default for RunOptions {
             fault_after_s: 3,
             kernel_probe: false,
             record: true,
+            kernel_entries: false,
         }
     }
 }
@@ -335,10 +346,16 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             }
             "--kernel-probe" => options.kernel_probe = true,
             "--no-record" => options.record = false,
+            "--kernel-entries" => options.kernel_entries = true,
             "--require-rt" => options.realtime = Realtime::Required,
             "--no-rt" => options.realtime = Realtime::Off,
             other => return Err(format!("unknown option '{other}'")),
         }
+    }
+    if options.kernel_entries && !options.record {
+        return Err(
+            "--kernel-entries needs the record of every cycle: not with --no-record".to_string(),
+        );
     }
     if options.backend == BackendKind::Alsa {
         if options.device.is_none() {

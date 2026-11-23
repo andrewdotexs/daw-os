@@ -6,8 +6,8 @@
 #
 #   ssh "root@${H}" sh -s -- [LABEL] < tools/cycle-record.sh
 #
-# Three measurements, all with the engine of the image; PARTS chooses
-# among them (default: all three):
+# Four measurements, all with the engine of the image; PARTS chooses
+# among them (default: the first three):
 #
 #   cost    the engine on the sound card at 96 kHz with one live thread,
 #           three times with the record and three times without it
@@ -23,6 +23,12 @@
 #           follow its cycle. Twice: with nothing to do, and 60 % busy.
 #           A tone goes out of output 3 and is listened to on input 3
 #           (the cable of the audio tests): a slip of the signal shows.
+#   entries who enters the kernel on the live CPUs (step P1.6c): the runs
+#           of "four" and of "card" again, each once without the trace of
+#           the kernel and once with it (--kernel-entries). The first
+#           says what the trace costs; the second, phase by phase of the
+#           cycle, the system calls, the interrupts and the threads of
+#           the kernel, and how the wake-ups went.
 #
 # Results go to /var/lib/dawos/measure/record-<time>[-LABEL].
 
@@ -77,6 +83,18 @@ thread_line() {
 record_lines() {
 	grep -E '^(audio|card_xruns|card_followers|slips_on_input_3|record_of_every_cycle|record, |  wake-up|  period, off|  first awake|  compute, whole|  wake_up_bands|  least_margin_us|  card_frames|cycles_to_look_at)' "$1"
 	grep -A 2 -E '^  slot [0-9]+.* cycle ' "$1" | head -n 40
+}
+
+# What the trace of the kernel says, without the wake-ups told one by
+# one: those stay in the file.
+entries_lines() {
+	awk '/^kernel_entries, wake-ups one by one/ { exit } /^kernel_entries/ { on = 1 } on' "$1"
+}
+
+# The figures a run with the trace is compared by with one without: of
+# every live thread, the wake-up and the whole compute phase.
+compared_lines() {
+	grep -E '^(dawos-engine: |card_xruns|slips_on_input_3|record, slot|  wake-up +[0-9]|  compute, whole|  first awake|  least_margin_us|cycles_to_look_at)' "$1"
 }
 
 wanted() {
@@ -141,6 +159,47 @@ elif [ -n "${identifier}" ]; then
 else
 	echo "no USB sound card: the threads on the card are not measured"
 fi | tee "${dir}/card-summary.txt"
+
+# One run of "entries": $1 name, $2 words, the rest the options of the
+# engine. Twice: without the trace and with it.
+entries_run() {
+	name=$1
+	words=$2
+	shift 2
+	echo
+	echo "== entries: ${words}, ${FOUR_SECONDS} s; without the trace of the kernel =="
+	"${ENGINE}" run "$@" --require-rt > "${dir}/entries-${name}-plain.txt" 2>&1
+	compared_lines "${dir}/entries-${name}-plain.txt"
+	echo
+	echo "== entries: ${words}, ${FOUR_SECONDS} s; with the trace of the kernel =="
+	"${ENGINE}" run "$@" --require-rt --kernel-entries > "${dir}/entries-${name}-traced.txt" 2>&1
+	compared_lines "${dir}/entries-${name}-traced.txt"
+	entries_lines "${dir}/entries-${name}-traced.txt"
+}
+
+if wanted entries; then
+	entries_run timer "four live threads on the timer, 60 % busy" \
+		--backend null --threads 4 --load 60 --seconds "${FOUR_SECONDS}"
+	if [ -n "${identifier}" ]; then
+		"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate 96000 --seconds 8 --threads 1 \
+			--allow-xruns --require-rt > "${dir}/entries-settle.txt" 2>&1
+		for load in 0 60; do
+			entries_run "card-${load}" "four live threads on the card at 96 kHz, ${load} % busy" \
+				--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 4 --load "${load}" \
+				--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" \
+				--tone 3 --tone-cycles 3 --listen 3
+		done
+		entries_run card-one "one live thread on the card at 96 kHz, nothing to do" \
+			--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 1 \
+			--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" \
+			--tone 3 --tone-cycles 3 --listen 3
+	else
+		echo "no USB sound card: the kernel on the live CPUs is looked at on the timer only"
+	fi
+	# A run that was killed leaves its trace on: take it away.
+	[ -d /sys/kernel/tracing/instances/dawos-engine ] &&
+		rmdir /sys/kernel/tracing/instances/dawos-engine 2> /dev/null
+fi | tee "${dir}/entries-summary.txt"
 
 echo
 echo "finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a "${dir}/meta.txt"

@@ -123,4 +123,6 @@ _Come, dal 23 novembre 2026 (passo P1.6b, punto aperto A-56)_: il thread che tie
 
 La fa rispettare il meccanismo _Syscall User Dispatch_ del punto 6, acceso nel calcolo e spento nell'attesa; il filtro seccomp proposto in origine non distingue le fasi e non si usa.
 
+_Lo strumento per contare, dal 23 novembre 2026 (passo P1.6c)_: non il contatore per thread proposto al punto 6, che dice quante syscall ma non in quale fase, bensì la **traccia del kernel** sui core live, letta in binario da `/sys/kernel/tracing` e confrontata con il registro dei cicli. La stessa traccia dà la seconda misura (gli ingressi non volontari, per tipo e per fase). Per misurare, il calcolo dell'ADR è diviso in `compute` (fino alla fine dei nodi) e `delivery` (la consegna, dove cade la notifica del puntatore), e l'attesa in `wait` e `wake-up`: i dettagli nella [guida del passo](../fasi/fase-1/P1.6-la-misura-a-ogni-ciclo.md#p16c-chi-entra-nel-kernel). _Syscall User Dispatch_ resta lo strumento per far rispettare la regola.
+
 **Il bilancio di calcolo** (punto 4) parte da un margine di 150 µs, da sostituire con il valore misurato. La protezione per il thread che non ritorna affatto è nell'[ADR 0023](0023-protezione-dal-thread-che-non-cede.md).

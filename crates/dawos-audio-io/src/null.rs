@@ -110,18 +110,24 @@ mod tests {
     #[test]
     fn periods_come_in_order_and_on_time() {
         let mut backend = NullBackend::new(FAST);
-        let mut last_due = 0;
-        for expected in 0..20 {
+        let mut last: Option<(u64, u64)> = None;
+        for _ in 0..20 {
             let wake = backend.wait();
-            assert_eq!(wake.index, expected);
-            assert_eq!(wake.missed, 0);
             assert!(wake.woke >= wake.due);
-            assert!(wake.due > last_due);
-            if expected > 0 {
-                // Exactly one millisecond apart: 48 samples at 48 kHz.
-                assert_eq!(wake.due - last_due, 1_000_000);
+            // A machine that is busy with something else can keep this
+            // thread away for more than a period of one millisecond:
+            // then periods are missed, and said to be. What must hold
+            // either way is that numbers and instants go together.
+            match last {
+                None => assert_eq!((wake.index, wake.missed), (0, 0)),
+                Some((index, due)) => {
+                    assert_eq!(wake.index, index + 1 + wake.missed);
+                    // Exactly one millisecond a period: 48 samples at
+                    // 48 kHz.
+                    assert_eq!(wake.due - due, (1 + wake.missed) * 1_000_000);
+                }
             }
-            last_due = wake.due;
+            last = Some((wake.index, wake.due));
         }
     }
 

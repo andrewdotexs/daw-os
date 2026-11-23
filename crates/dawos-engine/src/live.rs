@@ -157,6 +157,9 @@ pub fn live_loop(
 
         let mut incomplete = false;
         let mut nodes_run = 0_u16;
+        // The longest step between two readings of the clock inside the
+        // nodes, and when it ended.
+        let mut gap = (0_u64, 0_u64);
         for (index, node) in nodes.iter().enumerate() {
             if node.is_abandoned() {
                 continue;
@@ -167,8 +170,11 @@ pub fn live_loop(
                 break;
             }
             slot.enter_node(index);
-            node.run(wake.index);
+            let step = node.run(wake.index);
             slot.leave_node();
+            if step.0 > gap.0 {
+                gap = step;
+            }
             nodes_run = nodes_run.saturating_add(1);
             // Replaced while inside the node: a node that was only very
             // slow. The slot belongs to another thread now.
@@ -234,6 +240,8 @@ pub fn live_loop(
                 nodes: nodes_run,
                 flags,
                 slot: u16::try_from(slot_index).unwrap_or(u16::MAX),
+                gap_ns: u32::try_from(gap.0).unwrap_or(u32::MAX),
+                gap_end_ns: since(gap.1),
             };
             record.push(&cycle.to_record());
         }

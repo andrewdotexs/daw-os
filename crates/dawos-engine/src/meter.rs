@@ -30,6 +30,9 @@ use dawos_audio_io::Wake;
 use dawos_rt::ring::{Reader, Record};
 use dawos_rt::stats::Durations;
 
+use crate::entries::{self, Entries, TraceFigures};
+use crate::ktrace::{Symbols, Tracer};
+
 /// Records a ring holds: eight seconds of cycles of 2 ms.
 pub const RING_RECORDS: usize = 4096;
 
@@ -92,6 +95,12 @@ pub struct Cycle {
     /// The slot the thread held: a spare thread learns it when it is
     /// called in.
     pub slot: u16,
+    /// The longest step between two readings of the clock inside the
+    /// nodes, and when it ended, from `woke`; both 0 when no node read
+    /// the clock. Time lost with or without the kernel: what the trace
+    /// of the kernel shows at that instant tells which.
+    pub gap_ns: u32,
+    pub gap_end_ns: u32,
 }
 
 impl Cycle {
@@ -106,7 +115,7 @@ impl Cycle {
             self.finished_ns as u64 | (self.missed as u64) << 32,
             self.input_ready as u64 | (self.output_queued as u64) << 32,
             self.nodes as u64 | (self.flags as u64) << 16 | (self.slot as u64) << 32,
-            0,
+            self.gap_ns as u64 | (self.gap_end_ns as u64) << 32,
         ]
     }
 
@@ -126,6 +135,8 @@ impl Cycle {
             nodes: record[6] as u16,
             flags: (record[6] >> 16) as u16,
             slot: (record[6] >> 32) as u16,
+            gap_ns: record[7] as u32,
+            gap_end_ns: (record[7] >> 32) as u32,
         }
     }
 
@@ -316,6 +327,16 @@ pub struct MeterReport {
     pub wake_spread: Durations,
     /// Live threads of the run.
     pub live_threads: usize,
+    /// What the trace of the kernel says of the live CPUs, when it was
+    /// asked for.
+    pub kernel: Option<KernelReport>,
+}
+
+/// The trace of the kernel on the live CPUs, read and placed.
+pub struct KernelReport {
+    pub entries: Entries,
+    pub trace: TraceFigures,
+    pub symbols: Symbols,
 }
 
 struct Source {
@@ -345,6 +366,9 @@ pub struct Meter {
     /// and the last wake-up, and how many threads wrote of it.
     held: Vec<(u64, u64, u64, usize)>,
     wake_spread: Durations,
+    /// The trace of the kernel on the live CPUs, and what is made of
+    /// it.
+    kernel: Option<(Tracer, Entries)>,
 }
 
 /// What the meter must know about the run.
@@ -390,10 +414,21 @@ impl Meter {
             threads: shape.threads,
             held: vec![(0, 0, 0, 0); CYCLES_HELD],
             wake_spread: Durations::new(),
+            kernel: None,
         }
     }
 
-    /// Empty every ring.
+    /// Read the trace of the kernel too: `tracer` is tracing `cpus`,
+    /// the CPUs of the live threads slot by slot.
+    #[must_use]
+    pub fn with_trace(mut self, tracer: Tracer, cpus: &[usize]) -> Self {
+        self.kernel = Some((tracer, Entries::new(cpus, self.warm_up_end_ns)));
+        self
+    }
+
+    /// Empty every ring, and then the trace of the kernel: in this
+    /// order, so that no event older than the last cycle read is still
+    /// to come.
     pub fn drain(&mut self) {
         for place in 0..self.sources.len() {
             let waiting = self.sources[place].reader.waiting();
@@ -404,6 +439,10 @@ impl Meter {
                 self.take(place, cycle);
             }
         }
+        if let Some((tracer, entries)) = &mut self.kernel {
+            tracer.read(|event| entries.event(event));
+            entries.settle();
+        }
     }
 
     /// One cycle of the thread at `place`.
@@ -412,6 +451,9 @@ impl Meter {
         let early = cycle.woke < self.warm_up_end_ns;
         let before = self.sources[place].before;
         let kind = self.judge(&cycle, before.as_ref());
+        if let Some((_, entries)) = &mut self.kernel {
+            entries.cycle(usize::from(cycle.slot), &cycle);
+        }
         let source = &mut self.sources[place];
         source.before = Some(cycle);
         let figures = &mut source.figures;
@@ -590,6 +632,18 @@ impl Meter {
             .filter(|figures| figures.cycles + figures.early_cycles > 0 || figures.dropped > 0)
             .collect();
         threads.sort_by_key(|figures| (figures.slot, figures.spare));
+        // The trace ends here: the tracer takes its instance away.
+        let kernel = self.kernel.map(|(tracer, entries)| KernelReport {
+            entries,
+            trace: TraceFigures {
+                records: tracer.records,
+                events: tracer.events,
+                lost_pages: tracer.lost_pages,
+                malformed_pages: tracer.malformed_pages,
+                missing: tracer.missing.clone(),
+            },
+            symbols: Symbols::load(),
+        });
         MeterReport {
             threads,
             counts: self.counts,
@@ -601,6 +655,7 @@ impl Meter {
             card_late_by_minute: self.card_late_by_minute[..self.minutes].to_vec(),
             wake_spread: self.wake_spread,
             live_threads: self.threads,
+            kernel,
         }
     }
 }
@@ -652,7 +707,16 @@ fn us(ns: u64) -> f64 {
     ns as f64 / 1000.0
 }
 
-fn row(name: &str, durations: &Durations) {
+/// The heading of a table of durations.
+pub fn heading() {
+    println!(
+        "  {:<24} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9}",
+        "", "least", "mean", "half", "99%", "99.9%", "99.99%", "most"
+    );
+}
+
+/// One row of a table of durations, in microseconds.
+pub fn row(name: &str, durations: &Durations) {
     let figure =
         |value: Option<u64>| value.map_or_else(|| "-".to_string(), |ns| format!("{:.2}", us(ns)));
     println!(
@@ -758,10 +822,7 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
             figures.early_cycles,
             figures.on_the_clock,
         );
-        println!(
-            "  {:<24} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9}",
-            "", "least", "mean", "half", "99%", "99.9%", "99.99%", "most"
-        );
+        heading();
         row("period, off the nominal", &figures.period_off);
         row("wake-up", &figures.wake_up);
         row("input and patch", &figures.input);
@@ -810,10 +871,7 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
             report.live_threads,
             report.wake_spread.count()
         );
-        println!(
-            "  {:<24} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9}",
-            "", "least", "mean", "half", "99%", "99.9%", "99.99%", "most"
-        );
+        heading();
         row("first awake to last", &report.wake_spread);
     }
     let total: u64 = report.counts.iter().sum();
@@ -848,6 +906,9 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
         for notable in &report.early_kept {
             print_notable(notable, start_ns, period_ns, report.card);
         }
+    }
+    if let Some(kernel) = &report.kernel {
+        entries::print(&kernel.entries, &kernel.trace, &kernel.symbols, start_ns);
     }
 }
 
@@ -886,6 +947,8 @@ mod tests {
             nodes: 2,
             flags: 0,
             slot: 0,
+            gap_ns: 0,
+            gap_end_ns: 0,
         }
     }
 
@@ -914,6 +977,8 @@ mod tests {
             nodes: 513,
             flags: 0x07ff,
             slot: 3,
+            gap_ns: 123_456,
+            gap_end_ns: u32::MAX - 9,
         };
         assert_eq!(Cycle::from_record(&cycle.to_record()), cycle);
     }

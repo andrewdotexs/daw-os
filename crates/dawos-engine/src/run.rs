@@ -17,6 +17,7 @@ use dawos_rt::slot::Slot;
 use dawos_rt::{clock, topology};
 
 use crate::cli::{BackendKind, Realtime, RunOptions};
+use crate::ktrace::Tracer;
 use crate::live::{live_loop, End, Shared, ThreadReport};
 use crate::meter::{self, Meter, MeterReport, Shape, RING_RECORDS};
 use crate::notify::Notifier;
@@ -357,6 +358,24 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     let events: Arc<Vec<Event>> = Arc::new((0..MAX_EVENTS).map(|_| Event::default()).collect());
     let heartbeat = Arc::new(AtomicU64::new(0));
 
+    // ---- The trace of the kernel on the live CPUs, when asked for:
+    // set up before the instant of the first period is fixed (it takes
+    // the kernel some tenths of a second), read by the meter.
+    let tracer = if options.kernel_entries {
+        if live_cpus.len() < threads {
+            return Err(
+                "--kernel-entries: the live CPUs are not known (no boot profile, no --live)"
+                    .to_string(),
+            );
+        }
+        Some(
+            Tracer::start(&live_cpus[..threads])
+                .map_err(|error| format!("--kernel-entries: {error}"))?,
+        )
+    } else {
+        None
+    };
+
     // The periods start a little from now: time for every thread to be
     // in place and waiting.
     let start_ns = clock::now() + 300_000_000;
@@ -425,6 +444,10 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 warm_up_ns: options.warm_up_s * 1_000_000_000,
             },
         );
+        let meter = match tracer {
+            Some(tracer) => meter.with_trace(tracer, &common.live_cpus[..threads]),
+            None => meter,
+        };
         let common = Arc::clone(&common);
         let done = Arc::clone(&records_done);
         Some(spawn("meter".to_string(), move || {
@@ -514,6 +537,10 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             spare.gate.open();
         }
         records_done.store(true, Ordering::Release);
+        // The meter ends, and with it the trace of the kernel.
+        if let Some(handle) = meter {
+            let _ = handle.join();
+        }
         return Err(if late {
             "the threads of the engine did not start in time".to_string()
         } else {

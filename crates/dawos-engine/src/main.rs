@@ -12,6 +12,8 @@
 #![forbid(unsafe_code)]
 
 mod cli;
+mod entries;
+mod ktrace;
 mod live;
 mod meter;
 mod notify;
