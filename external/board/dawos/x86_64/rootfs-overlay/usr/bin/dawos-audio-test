@@ -27,9 +27,16 @@
 # after the start, is silent, and is back after four or five seconds;
 # and in the first seconds the signal slips now and then (step P1.4).
 # So the plain runs of "card" do not judge their first minute (the
-# warm-up): what happens there is counted apart and shown. Before the
-# runs with a fault, which are short, the engine runs once for eight
-# seconds without being judged (the line "settle-RATE").
+# warm-up): what happens there is counted apart and shown.
+#
+# After a change of rate the interface stops its input once, about a
+# second after the streams start, and the streams started again after
+# that xrun are short of a millisecond of queue: for five minutes the
+# signal then slips three times by a third of a millisecond (step
+# P1.6a). Streams started afresh once the rate is set do not. So before
+# every run at a rate the interface was not at, the engine runs once
+# for eight seconds without being judged (the line "settle-RATE"), and
+# the run that counts starts its streams afresh.
 #
 # Cases of "loopback": the plain run, an xrun made on purpose, the card
 # taken away and given back, a live thread that never yields.
@@ -140,20 +147,22 @@ run_case() {
 
 # Bring the interface to the rate $1 and let it settle, unless it is
 # there already: eight seconds of the engine, not a case of the test.
+settles=0
 settle() {
 	[ "$1" = "${current_rate}" ] && return 0
 	current_rate=$1
+	settles=$((settles + 1))
 	# shellcheck disable=SC2086  # device_options is several words
 	"${ENGINE}" run --backend alsa ${device_options} --rate "$1" --seconds 8 --tone 3 --tone-cycles 3 --listen 3 \
-		--each-second --allow-xruns --require-rt > "${dir}/settle-$1.txt" 2> "${dir}/settle-$1.err"
+		--each-second --allow-xruns --require-rt > "${dir}/settle-${settles}-$1.txt" 2> "${dir}/settle-${settles}-$1.err"
 	clean=$(awk '
 		/^second +input/ { inside = 1; next }
 		inside && $1 !~ /^[0-9]+$/ { inside = 0 }
 		inside { last = $1; if ($5 < 0.99) bad = $1 }
-		END { if (last == "") print "never"; else if (bad == last) print "never"; else print bad + 1 }' "${dir}/settle-$1.txt")
+		END { if (last == "") print "never"; else if (bad == last) print "never"; else print bad + 1 }' "${dir}/settle-${settles}-$1.txt")
 	printf '%-18s %-5s xruns %s, restarts after a pause %s; the tone is clean from second %s\n' \
-		"settle-$1" "-" "$(field "${dir}/settle-$1.txt" card_xruns)" \
-		"$(field "${dir}/settle-$1.txt" card_restarts_after_a_pause | sed 's/ .*//')" "${clean}" |
+		"settle-$1" "-" "$(field "${dir}/settle-${settles}-$1.txt" card_xruns)" \
+		"$(field "${dir}/settle-${settles}-$1.txt" card_restarts_after_a_pause | sed 's/ .*//')" "${clean}" |
 		tee -a "${dir}/summary.txt"
 }
 
@@ -295,7 +304,7 @@ else
 	current_rate=
 	for rate in ${rates}; do
 		first=${first:-${rate}}
-		current_rate=${rate}
+		settle "${rate}"
 		run_case "plain-${rate}" --rate "${rate}" --warm-up "${warm_up}" \
 			--seconds "$((seconds + warm_up))" --require-rt
 	done

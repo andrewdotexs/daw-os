@@ -8,7 +8,7 @@
 #
 #   ssh "root@${H}" sh -s -- [LABEL] < tools/audio-settle.sh
 #
-# Three runs at RATE (default 96000), each of JUDGED seconds (default 600)
+# Runs at RATE (default 96000), each of JUDGED seconds (default 600)
 # after a minute of warm-up, with a tone through the cable (output 3 to
 # input 3) and the count inside the interface (output 5 to input 5,
 # through its router), which gives every slip with its exact size and
@@ -18,7 +18,14 @@
 #                    OTHER, default 48000, come first), with the record;
 #   changed-norecord the same, without the record (--no-record);
 #   settled          once more with the record, the interface having
-#                    been at RATE all the time since the run before.
+#                    been at RATE all the time since the run before;
+#   after-xrun       like "settled", with an xrun made on purpose ten
+#                    seconds after the warm-up: are streams started
+#                    again after an xrun short, as after a change of
+#                    rate? (the engine does not judge the slips of a run
+#                    with a fault: the lines of the count say.)
+#
+# CASES chooses among them (default: all four, in this order).
 #
 # Results go to /var/lib/dawos/measure/settle-<time>[-LABEL].
 
@@ -33,6 +40,7 @@ RATE=${RATE:-96000}
 OTHER=${OTHER:-48000}
 SECONDS_JUDGED=${JUDGED:-600}
 WARM_UP=60
+CASES=${CASES:-changed changed-norecord settled after-xrun}
 
 die() {
 	echo "audio-settle: $*" >&2
@@ -68,6 +76,7 @@ mkdir -p "${dir}" || die "cannot create ${dir}"
 	echo "rate: ${RATE}"
 	echo "other_rate: ${OTHER}"
 	echo "seconds: ${SECONDS_JUDGED} after ${WARM_UP} of warm-up"
+	echo "cases: ${CASES}"
 } > "${dir}/meta.txt"
 echo "directory: ${dir}"
 
@@ -107,13 +116,21 @@ change_rate() {
 		--allow-xruns --require-rt > "${dir}/$1-other-rate.txt" 2>&1
 }
 
-{
-	change_rate changed
-	run changed
-	change_rate changed-norecord
-	run changed-norecord --no-record
-	run settled
-} | tee "${dir}/summary.txt"
+for name in ${CASES}; do
+	case "${name}" in
+	changed)
+		change_rate changed
+		run changed
+		;;
+	changed-norecord)
+		change_rate changed-norecord
+		run changed-norecord --no-record
+		;;
+	settled) run settled ;;
+	after-xrun) run after-xrun --fault card-xrun --fault-after "$((WARM_UP + 10))" ;;
+	*) echo "audio-settle: no case '${name}'" ;;
+	esac
+done | tee "${dir}/summary.txt"
 
 "${SETUP}" apply --card "${card}" > "${dir}/routing-after.txt" 2>&1
 echo
