@@ -1,0 +1,8 @@
+
+== cost: the card at 96 kHz, 30 s after 8 s of warm-up, with and without the record ==
+with     1: compute mean 2.84 longest 3.96; wake-up mean 3.25 longest 3.83; least margin 1992.35; card_xruns: 0 (0 of them in the warm-up) record_of_every_cycle: 19013 cycles read, 0 dropped (rings of 4096 records, the fullest held 11) 
+without  1: compute mean 2.83 longest 3.80; wake-up mean 3.27 longest 10.19; least margin 1986.63; card_xruns: 0 (0 of them in the warm-up) record_of_every_cycle: not kept 
+with     2: compute mean 2.83 longest 3.73; wake-up mean 3.26 longest 3.81; least margin 1992.73; card_xruns: 0 (0 of them in the warm-up) record_of_every_cycle: 19013 cycles read, 0 dropped (rings of 4096 records, the fullest held 11) 
+without  2: compute mean 2.88 longest 3.88; wake-up mean 3.31 longest 3.99; least margin 1992.52; card_xruns: 0 (0 of them in the warm-up) record_of_every_cycle: not kept 
+with     3: compute mean 2.88 longest 3.92; wake-up mean 3.24 longest 3.89; least margin 1992.30; card_xruns: 0 (0 of them in the warm-up) record_of_every_cycle: 19014 cycles read, 0 dropped (rings of 4096 records, the fullest held 11) 
+without  3: compute mean 2.93 longest 3.94; wake-up mean 3.28 longest 8.36; least margin 1988.24; card_xruns: 0 (0 of them in the warm-up) record_of_every_cycle: not kept 

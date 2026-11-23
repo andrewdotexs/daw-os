@@ -1,0 +1,24 @@
+
+== four: four live threads on the timer, 60 % busy, 60 s ==
+record_of_every_cycle: 120088 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 30022 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.34      1.96      1.75      5.75      6.00      6.18      6.18
+  wake_up_bands: under 5 us 28264, 5 to 10 1758, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.61
+record, slot 1: 30022 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.34      1.97      1.75      5.75      6.00      6.25      7.12
+  wake_up_bands: under 5 us 28247, 5 to 10 1775, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 790.61
+record, slot 2: 30022 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.39      1.98      1.75      5.75      6.00      6.25      6.28
+  wake_up_bands: under 5 us 28224, 5 to 10 1798, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.59
+record, slot 3: 30022 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.34      1.97      1.75      5.75      6.00      6.25      6.27
+  wake_up_bands: under 5 us 28292, 5 to 10 1730, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.44
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)

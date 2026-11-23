@@ -1,0 +1,9 @@
+case          result figures
+healthy       PASS  missed 0, incomplete 0, overruns 0, kernel work 1669 rounds, mean 0.93, longest 0.98, kernel threads of CPU 5 ran 1678 times
+overload      PASS  incomplete 20020, missed 0, overruns 0, kernel work 1669 rounds, mean 0.93, longest 0.96, kernel threads of CPU 5 ran 1670 times
+stuck-node    PASS  node 0 thread 4564: noticed after 6.01, live CPU free after 6.03, spare thread at work after 8.00; kernel work 2003 rounds, mean 0.94, longest 2.17; kernel threads of CPU 5 ran 2004 times
+stuck-thread  PASS  outside any node thread 5550: noticed after 6.01, live CPU free after 6.03, spare thread at work after 8.00; kernel work 2003 rounds, mean 0.94, longest 1.75; kernel threads of CPU 5 ran 2004 times
+watchdog-off  PASS  systemd result 'watchdog' after 7 s, engine processes left 0, kernel threads of CPU 5 ran 1 times
+
+verdict: PASS (5 of 5 cases)
+finished_utc: 2026-11-23T11:02:39Z
