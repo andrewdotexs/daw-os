@@ -53,6 +53,11 @@ const KEPT_EARLY: usize = 2;
 /// one minute at a time.
 const MINUTES: usize = 180;
 
+/// Cycles in course the meter can hold while it waits for every thread
+/// to have written its record of them: the rings are emptied one after
+/// the other, so the records of one cycle arrive some cycles apart.
+const CYCLES_HELD: usize = 1024;
+
 /// The compute budget cut the cycle short.
 pub const INCOMPLETE: u16 = 0x100;
 /// A cycle with sound whose patch could not be had.
@@ -306,6 +311,11 @@ pub struct MeterReport {
     /// period, warm-up and all, up to the last minute that had cycles:
     /// how an interface settles shows here.
     pub card_late_by_minute: Vec<u32>,
+    /// From the first thread awake to the last, cycle by cycle, for the
+    /// cycles every live thread took part in; empty with one thread.
+    pub wake_spread: Durations,
+    /// Live threads of the run.
+    pub live_threads: usize,
 }
 
 struct Source {
@@ -330,6 +340,11 @@ pub struct Meter {
     start_ns: u64,
     card_late_by_minute: Vec<u32>,
     minutes: usize,
+    threads: usize,
+    /// For the cycles in course: number plus one (0: free), the first
+    /// and the last wake-up, and how many threads wrote of it.
+    held: Vec<(u64, u64, u64, usize)>,
+    wake_spread: Durations,
 }
 
 /// What the meter must know about the run.
@@ -343,6 +358,8 @@ pub struct Shape {
     /// When the first period is due, and how long the warm-up lasts.
     pub start_ns: u64,
     pub warm_up_ns: u64,
+    /// Live threads.
+    pub threads: usize,
 }
 
 impl Meter {
@@ -370,6 +387,9 @@ impl Meter {
             start_ns: shape.start_ns,
             card_late_by_minute: vec![0; MINUTES],
             minutes: 0,
+            threads: shape.threads,
+            held: vec![(0, 0, 0, 0); CYCLES_HELD],
+            wake_spread: Durations::new(),
         }
     }
 
@@ -451,6 +471,22 @@ impl Meter {
                         figures.period_most_ns = figures.period_most_ns.max(gap);
                     }
                 }
+            }
+        }
+
+        // How far apart the threads woke for this cycle: once every one
+        // of them has written of it. Cycles on the clock have no number
+        // of their own, and are left out.
+        if self.threads > 1 && !early && !cycle.has(u16::from(Wake::ON_THE_CLOCK | Wake::STALLED)) {
+            let held = &mut self.held[(cycle.index % CYCLES_HELD as u64) as usize];
+            if held.0 != cycle.index + 1 {
+                *held = (cycle.index + 1, cycle.woke, cycle.woke, 0);
+            }
+            held.1 = held.1.min(cycle.woke);
+            held.2 = held.2.max(cycle.woke);
+            held.3 += 1;
+            if held.3 == self.threads {
+                self.wake_spread.add(held.2 - held.1);
             }
         }
 
@@ -563,6 +599,8 @@ impl Meter {
             ring_records,
             card: self.buffer_frames != 0,
             card_late_by_minute: self.card_late_by_minute[..self.minutes].to_vec(),
+            wake_spread: self.wake_spread,
+            live_threads: self.threads,
         }
     }
 }
@@ -766,6 +804,18 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
             us(figures.early_worst_wake_ns)
         );
     }
+    if report.live_threads > 1 {
+        println!(
+            "record, the {} threads together: {} cycles after the warm-up that all of them took; microseconds:",
+            report.live_threads,
+            report.wake_spread.count()
+        );
+        println!(
+            "  {:<24} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9}",
+            "", "least", "mean", "half", "99%", "99.9%", "99.99%", "most"
+        );
+        row("first awake to last", &report.wake_spread);
+    }
     let total: u64 = report.counts.iter().sum();
     let early: u64 = report.early_counts.iter().sum();
     println!(
@@ -816,6 +866,7 @@ mod tests {
             periods: 3,
             start_ns: 1_000_000_000,
             warm_up_ns,
+            threads: 1,
         }
     }
 
@@ -1019,6 +1070,43 @@ mod tests {
         // No stretch is measured from or to a cycle on the clock.
         assert_eq!(figures.period_off.count(), 2);
         assert_eq!(report.counts.iter().sum::<u64>(), 0);
+    }
+
+    #[test]
+    fn the_spread_of_the_wake_ups_is_taken_cycle_by_cycle() {
+        let (mut first, first_reader) = ring(64);
+        let (mut second, second_reader) = ring(64);
+        let mut meter = Meter::new(
+            vec![(0, false, first_reader), (1, false, second_reader)],
+            Shape {
+                threads: 2,
+                ..shape(0)
+            },
+        );
+        for index in 0..10 {
+            let leader = healthy(index);
+            let mut follower = healthy(index);
+            follower.slot = 1;
+            // The follower wakes 2 us after the first; 7 us in cycle 4.
+            follower.woke += if index == 4 { 7_000 } else { 2_000 };
+            assert!(first.push(&leader.to_record()));
+            // Cycle 9 is one the follower never took.
+            if index != 9 {
+                assert!(second.push(&follower.to_record()));
+            }
+        }
+        // A cycle on the clock, with the number of the one before: not
+        // counted.
+        let mut on_the_clock = healthy(8);
+        on_the_clock.slot = 1;
+        on_the_clock.flags = u16::from(Wake::ON_THE_CLOCK);
+        assert!(second.push(&on_the_clock.to_record()));
+        meter.drain();
+        let report = meter.report();
+        assert_eq!(report.live_threads, 2);
+        assert_eq!(report.wake_spread.count(), 9);
+        assert_eq!(report.wake_spread.min_ns(), Some(2_000));
+        assert_eq!(report.wake_spread.max_ns(), Some(7_000));
     }
 
     #[test]

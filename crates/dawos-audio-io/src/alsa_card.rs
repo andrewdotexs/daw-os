@@ -9,6 +9,7 @@
 
 use ::alsa::direct::pcm::Status;
 use ::alsa::pcm::{Access, Format as SampleFormat, HwParams, State, TstampType, PCM};
+use ::alsa::poll::Descriptors;
 use ::alsa::{Direction, ValueOr};
 
 use crate::Format;
@@ -125,6 +126,9 @@ pub struct Card {
     status: Option<Status>,
     info: CardInfo,
     started: bool,
+    /// The descriptor a thread sleeps on to be told of a period of
+    /// input; -1 when the stream has none, or more than one.
+    poll_fd: i32,
 }
 
 const BYTES_PER_SAMPLE: usize = 4;
@@ -279,6 +283,12 @@ impl Card {
         } else {
             None
         };
+        // A hardware device has one descriptor. Asked once, here: the
+        // answer comes in a list, and lists are not for the live thread.
+        let poll_fd = match capture.get() {
+            Ok(descriptors) if descriptors.len() == 1 => descriptors[0].fd,
+            _ => -1,
+        };
         let mut card = Self {
             capture,
             playback,
@@ -296,6 +306,7 @@ impl Card {
             },
             status,
             started: false,
+            poll_fd,
         };
         card.fill_with_silence().map_err(|error| {
             format!(
@@ -347,6 +358,14 @@ impl Card {
         }
         self.started = true;
         Ok(())
+    }
+
+    /// The descriptor of the input stream, for a thread that is not the
+    /// one that reads it but wants to wake with it (`poll()` for
+    /// reading); -1: there is none to be had.
+    #[must_use]
+    pub const fn poll_fd(&self) -> i32 {
+        self.poll_fd
     }
 
     /// Ask the kernel how the two streams stand: two system calls, for

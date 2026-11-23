@@ -9,6 +9,11 @@
 //! never blocks on a lock: it tries, and a seat it cannot have means a
 //! cycle of silence.
 //!
+//! The other live threads never touch the card: they sleep on its
+//! descriptor, to wake when it wakes the first, and take the number of
+//! the cycle from what the first publishes here
+//! ([`crate::AlsaFollower`], step P1.6b).
+//!
 //! # When the card stops
 //!
 //! - An **xrun** (the engine was late and the driver stopped the
@@ -86,6 +91,55 @@ pub struct CardStats {
     /// Times the card was given up because it had stopped giving
     /// periods.
     pub lost_to_stalls: AtomicU64,
+    /// Cycles the other live threads took after sleeping on the card.
+    pub follower_cycles: AtomicU64,
+    /// Cycles they found already begun when they came to wait: they
+    /// were behind, and took the newest without sleeping.
+    pub follower_behind: AtomicU64,
+    /// Times they were woken, or their time ran out, with no new cycle
+    /// from the first thread: the card had stopped, or the first thread
+    /// was not there. A cycle on the clock followed.
+    pub follower_empty: AtomicU64,
+}
+
+/// The cycle the first thread is in, for the others to read: a number
+/// and the instant it was due, written so that the two are never read
+/// from two different cycles. One writer, the thread that holds the
+/// seat; any number of readers, none of which waits.
+#[derive(Default)]
+struct Published {
+    /// Odd while the writer is at it.
+    sequence: AtomicU64,
+    /// The number of the cycle, plus one; 0: none yet.
+    index: AtomicU64,
+    due: AtomicU64,
+}
+
+impl Published {
+    fn write(&self, index: u64, due: Instant) {
+        let sequence = self.sequence.load(Ordering::Relaxed);
+        self.sequence.store(sequence + 1, Ordering::Release);
+        self.index.store(index + 1, Ordering::Release);
+        self.due.store(due, Ordering::Release);
+        self.sequence.store(sequence + 2, Ordering::Release);
+    }
+
+    /// The cycle and when it was due; `None`: none yet, or the writer
+    /// was at it every time this looked (a few tries, never a wait).
+    fn read(&self) -> Option<(u64, Instant)> {
+        for _ in 0..8 {
+            let before = self.sequence.load(Ordering::Acquire);
+            if before & 1 == 0 {
+                let index = self.index.load(Ordering::Acquire);
+                let due = self.due.load(Ordering::Acquire);
+                if self.sequence.load(Ordering::Acquire) == before {
+                    return index.checked_sub(1).map(|index| (index, due));
+                }
+            }
+            std::hint::spin_loop();
+        }
+        None
+    }
 }
 
 /// The place of the card, for the one thread that uses it.
@@ -136,6 +190,14 @@ pub struct AlsaShared {
     /// Number of the next cycle, and when the last one was due.
     next_index: AtomicU64,
     last_due: AtomicU64,
+    /// The cycle in course, for the threads that follow.
+    published: Published,
+    /// The number of the next cycle, as it stood when the first thread
+    /// last took the input of the card: until then a sleep on the
+    /// descriptor of the card returns at once.
+    consumed: AtomicU64,
+    /// The descriptor the others sleep on; -1: no card just now.
+    poll_fd: AtomicI32,
     stats: CardStats,
     /// The first xruns: when, in nanoseconds from the start, and how the
     /// streams stood.
@@ -147,6 +209,9 @@ impl AlsaShared {
     pub fn open(config: CardConfig) -> Result<Arc<Self>, String> {
         let card = Card::open(&config)?;
         Ok(Arc::new(Self {
+            poll_fd: AtomicI32::new(card.poll_fd()),
+            published: Published::default(),
+            consumed: AtomicU64::new(0),
             info: card.info().clone(),
             config,
             start: AtomicU64::new(0),
@@ -195,6 +260,33 @@ impl AlsaShared {
     #[must_use]
     pub const fn stats(&self) -> &CardStats {
         &self.stats
+    }
+
+    /// Rate and quantum the card was opened with.
+    pub(crate) const fn format(&self) -> Format {
+        self.config.format
+    }
+
+    /// When the periods begin (0: not said yet).
+    pub(crate) fn start(&self) -> Instant {
+        self.start.load(Ordering::Acquire)
+    }
+
+    /// The cycle the first thread is in, and when it was due.
+    pub(crate) fn published(&self) -> Option<(u64, Instant)> {
+        self.published.read()
+    }
+
+    /// Whether the first thread has taken the input of cycle `index`.
+    pub(crate) fn has_consumed(&self, index: u64) -> bool {
+        self.consumed.load(Ordering::Acquire) > index
+    }
+
+    /// The descriptor to sleep on for the next period; `None`: no card
+    /// just now.
+    pub(crate) fn poll_fd(&self) -> Option<i32> {
+        let fd = self.poll_fd.load(Ordering::Acquire);
+        (fd >= 0).then_some(fd)
     }
 
     /// The first xruns of the run: when, in nanoseconds from the start
@@ -352,6 +444,9 @@ impl AlsaBackend {
             .next_index
             .fetch_add(1 + missed, Ordering::AcqRel)
             + missed;
+        // For the threads that follow, at once: they woke with this one
+        // and are looking for it.
+        self.shared.published.write(index, due);
         Wake {
             index,
             due,
@@ -368,6 +463,7 @@ impl AlsaBackend {
         if let Some(card) = seat.card.take() {
             seat.dead = Some(card);
         }
+        self.shared.poll_fd.store(-1, Ordering::Release);
         seat.pending = None;
         seat.stalls = 0;
         seat.skip_until = 0;
@@ -397,6 +493,7 @@ impl AlsaBackend {
         }
         if seat.card.is_none() {
             if let Some(card) = handoff.fresh.take() {
+                self.shared.poll_fd.store(card.poll_fd(), Ordering::Release);
                 seat.card = Some(card);
                 seat.events |= Wake::CARD_BACK;
                 self.shared.ready.store(false, Ordering::Release);
@@ -573,6 +670,12 @@ impl Backend for AlsaBackend {
             return;
         };
         let seat = &mut *guard;
+        // Whatever comes of it, this cycle is past the point where the
+        // input is taken: the threads that follow may sleep again.
+        self.shared.consumed.store(
+            self.shared.next_index.load(Ordering::Acquire),
+            Ordering::Release,
+        );
         if seat.silent || seat.pending.is_some() {
             input.fill(0);
             return;
@@ -625,5 +728,45 @@ impl Backend for AlsaBackend {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn nothing_is_published_before_the_first_cycle() {
+        let published = Published::default();
+        assert_eq!(published.read(), None);
+        published.write(0, 5_000);
+        assert_eq!(published.read(), Some((0, 5_000)));
+        published.write(41, 9_000);
+        assert_eq!(published.read(), Some((41, 9_000)));
+    }
+
+    #[test]
+    fn a_cycle_and_its_instant_are_read_together() {
+        // The instant is seven times the number: a reader that got the
+        // two from different cycles would see it.
+        let published = Arc::new(Published::default());
+        let writer = {
+            let published = Arc::clone(&published);
+            std::thread::spawn(move || {
+                for index in 0..200_000_u64 {
+                    published.write(index, index * 7);
+                }
+            })
+        };
+        let mut read = 0_u64;
+        while !writer.is_finished() {
+            if let Some((index, due)) = published.read() {
+                assert_eq!(due, index * 7);
+                read += 1;
+            }
+        }
+        writer.join().expect("the writer ended badly");
+        assert_eq!(published.read(), Some((199_999, 199_999 * 7)));
+        assert!(read > 0);
     }
 }
