@@ -12,11 +12,13 @@ use dawos_audio_io::{
     XrunView,
 };
 use dawos_rt::cpu::{self, Policy};
+use dawos_rt::ring::{ring, Writer};
 use dawos_rt::slot::Slot;
 use dawos_rt::{clock, topology};
 
 use crate::cli::{BackendKind, Realtime, RunOptions};
 use crate::live::{live_loop, End, Shared, ThreadReport};
+use crate::meter::{self, Meter, MeterReport, Shape, RING_RECORDS};
 use crate::notify::Notifier;
 use crate::patch::{Heard, Patch, PatchConfig};
 use crate::plan::{Fault, Plan};
@@ -120,6 +122,10 @@ pub struct Outcome {
     pub kernel_probe: Option<KernelProbe>,
     /// The sound card, with the back end that has one.
     pub card: Option<CardOutcome>,
+    /// When the first period was due.
+    pub start_ns: u64,
+    /// What the record of every cycle says, when it was kept.
+    pub meter: Option<MeterReport>,
 }
 
 /// One intervention of the watchdog, with times in milliseconds from the
@@ -365,12 +371,25 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         errors: Mutex::new(Vec::new()),
     });
 
+    // ---- The record of every cycle: a ring for each thread that may
+    // run the cycle, spare ones too, and the meter that reads them all
+    // from the system CPUs at normal priority.
+    let mut readers = Vec::new();
+    let mut ring_for = |slot: usize, spare: bool| {
+        options.record.then(|| {
+            let (writer, reader) = ring(RING_RECORDS);
+            readers.push((slot, spare, reader));
+            writer
+        })
+    };
+
     // ---- The spare threads: parked outside the live CPUs.
     let mut handles: Vec<(usize, bool, JoinHandle<Option<ThreadReport>>)> = Vec::new();
     for index in 0..threads {
         let common = Arc::clone(&common);
+        let record = ring_for(index, true);
         let handle = spawn(format!("spare-{index}"), move || {
-            spare_thread(&common, index)
+            spare_thread(&common, index, record)
         })?;
         handles.push((index, true, handle));
     }
@@ -378,11 +397,36 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     // ---- The live threads: one per live CPU.
     for index in 0..threads {
         let common = Arc::clone(&common);
+        let record = ring_for(index, false);
         let handle = spawn(format!("live-{index}"), move || {
-            Some(live_thread(&common, index))
+            Some(live_thread(&common, index, record))
         })?;
         handles.push((index, false, handle));
     }
+
+    let records_done = Arc::new(AtomicBool::new(false));
+    let meter = if options.record {
+        let meter = Meter::new(
+            readers,
+            Shape {
+                period_ns,
+                frames: format.frames,
+                periods: if card.is_some() { options.periods } else { 0 },
+                start_ns,
+                warm_up_ns: options.warm_up_s * 1_000_000_000,
+            },
+        );
+        let common = Arc::clone(&common);
+        let done = Arc::clone(&records_done);
+        Some(spawn("meter".to_string(), move || {
+            if !common.system_cpus.is_empty() {
+                let _ = cpu::set_affinity(0, &common.system_cpus);
+            }
+            meter::collect(meter, &done)
+        })?)
+    } else {
+        None
+    };
 
     // ---- The watchdog.
     let watchdog = {
@@ -460,6 +504,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         for spare in spares.iter() {
             spare.gate.open();
         }
+        records_done.store(true, Ordering::Release);
         return Err(if late {
             "the threads of the engine did not start in time".to_string()
         } else {
@@ -503,6 +548,10 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     if watchdog.is_finished() {
         let _ = watchdog.join();
     }
+    // Every thread that can still write has ended: the meter reads what
+    // is left and sums up.
+    records_done.store(true, Ordering::Release);
+    let meter = meter.and_then(|handle| handle.join().ok());
     let kernel_probe = probe.and_then(|handle| handle.join().ok());
     let card = card.map(|card| {
         let in_use_at_the_end = card.has_card();
@@ -595,6 +644,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         systemd: notifier.active(),
         kernel_probe,
         card,
+        start_ns,
+        meter,
     })
 }
 
@@ -647,7 +698,7 @@ fn spawn<T: Send + 'static>(
 }
 
 /// A live thread: its CPU, its priority, then the cycle.
-fn live_thread(common: &Common, index: usize) -> ThreadReport {
+fn live_thread(common: &Common, index: usize, mut record: Option<Writer>) -> ThreadReport {
     if let Some(&cpu) = common.live_cpus.get(index) {
         if let Err(error) = cpu::set_affinity(0, &[cpu]) {
             common.error(format!(
@@ -666,6 +717,7 @@ fn live_thread(common: &Common, index: usize) -> ThreadReport {
         slot.generation(),
         None,
         backend.as_mut(),
+        record.as_mut(),
     )
 }
 
@@ -682,7 +734,7 @@ fn backend(common: &Common, slot: usize, joining: bool) -> Box<dyn Backend> {
 
 /// A spare thread: parked on the system CPUs until the watchdog opens its
 /// gate, having already moved it to a live CPU and given it the priority.
-fn spare_thread(common: &Common, index: usize) -> Option<ThreadReport> {
+fn spare_thread(common: &Common, index: usize, mut record: Option<Writer>) -> Option<ThreadReport> {
     if !common.system_cpus.is_empty() {
         if let Err(error) = cpu::set_affinity(0, &common.system_cpus) {
             common.error(format!(
@@ -708,6 +760,7 @@ fn spare_thread(common: &Common, index: usize) -> Option<ThreadReport> {
         generation,
         Some(&spare.first_cycle_ns),
         backend.as_mut(),
+        record.as_mut(),
     ))
 }
 
@@ -1094,6 +1147,14 @@ fn print(outcome: &Outcome) {
         print_card(card, options);
     }
 
+    match &outcome.meter {
+        Some(report) => meter::print(report, outcome.start_ns, outcome.format.period_ns()),
+        None => {
+            println!();
+            println!("record_of_every_cycle: not kept");
+        }
+    }
+
     if !outcome.events.is_empty() {
         println!();
         println!("watchdog events (milliseconds from the start of the compute phase the thread never left):");
@@ -1413,6 +1474,33 @@ mod tests {
     }
 
     #[test]
+    fn the_record_of_every_cycle_agrees_with_the_threads() {
+        let _alone = alone();
+        let outcome = execute(&options(Fault::None)).expect("the run did not start");
+        let meter = outcome.meter.as_ref().expect("the record was not kept");
+        assert_eq!(meter.threads.len(), 2);
+        for report in &outcome.reports {
+            let figures = meter
+                .threads
+                .iter()
+                .find(|figures| figures.slot == report.slot && figures.spare == report.spare)
+                .expect("a thread without figures");
+            assert_eq!(figures.dropped, 0);
+            assert_eq!(figures.cycles + figures.early_cycles, report.cycles);
+            assert_eq!(figures.wake_up.max_ns(), report.lateness.max_ns());
+            assert_eq!(figures.compute.max_ns(), report.compute.max_ns());
+        }
+        // Without the record the run is the same, and says so.
+        let without = RunOptions {
+            record: false,
+            ..options(Fault::None)
+        };
+        let outcome = execute(&without).expect("the run did not start");
+        assert!(outcome.meter.is_none());
+        assert_eq!(outcome.reports.len(), 2);
+    }
+
+    #[test]
     fn a_stuck_node_is_replaced() {
         let _alone = alone();
         let outcome = execute(&options(Fault::StuckNode)).expect("the run did not start");
@@ -1423,6 +1511,12 @@ mod tests {
         assert_eq!(event.demote_errors, 0);
         assert!(event.spare_ms.is_some());
         assert_eq!(outcome.never_returned, vec![1]);
+        // The spare thread wrote its own cycles, under the slot it took.
+        let meter = outcome.meter.as_ref().expect("the record was not kept");
+        assert!(meter
+            .threads
+            .iter()
+            .any(|figures| figures.spare && figures.slot == 1 && figures.cycles > 0));
         // The other thread went on, and a spare took the slot.
         let other = outcome
             .reports

@@ -77,11 +77,36 @@ pub struct Wake {
     /// When the thread was running again.
     pub woke: Instant,
     /// Periods that went by unserved since the last wake-up: more than
-    /// zero means the cycle before this one took longer than a period.
+    /// zero means the cycle before this one took longer than a period,
+    /// or that the card told of this period late.
     pub missed: u64,
+    /// Frames of input the card had ready at the wake-up, read where
+    /// the kernel shares it, without a system call; 0 for a back end
+    /// without sound. More than a period: the card was ahead of the
+    /// thread.
+    pub input_ready: u32,
+    /// Frames of output the card still had to play at the wake-up; 0
+    /// for a back end without sound. What is left of the buffers
+    /// between the engine and the converters.
+    pub output_queued: u32,
+    /// What happened in the wait that ended with this wake-up: a sum of
+    /// the `Wake::*` flags.
+    pub events: u8,
 }
 
 impl Wake {
+    /// The thread slept on the clock and not on the card: there is no
+    /// card just now, or another thread held it.
+    pub const ON_THE_CLOCK: u8 = 1;
+    /// An xrun was found and the streams were started again.
+    pub const AFTER_XRUN: u8 = 2;
+    /// The card was given up (unplugged, or silent for too long).
+    pub const CARD_LOST: u8 = 4;
+    /// A card opened again was taken into use.
+    pub const CARD_BACK: u8 = 8;
+    /// The card let the time allowed go by without a period.
+    pub const STALLED: u8 = 16;
+
     /// How long after the period was due the thread was running, in
     /// nanoseconds.
     #[must_use]

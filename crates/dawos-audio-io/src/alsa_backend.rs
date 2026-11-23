@@ -104,6 +104,9 @@ struct Seat {
     skip_until: Instant,
     /// Whether this cycle has no card behind it.
     silent: bool,
+    /// What happened since the last wake-up, for the next one to tell
+    /// (the flags of [`Wake`]).
+    events: u8,
 }
 
 /// Between the live thread and the keeper.
@@ -156,6 +159,7 @@ impl AlsaShared {
                 served: 0,
                 skip_until: 0,
                 silent: true,
+                events: 0,
             }),
             handoff: Mutex::new(Handoff::default()),
             wanted: AtomicBool::new(false),
@@ -336,10 +340,12 @@ impl AlsaBackend {
             .stats
             .silent_cycles
             .fetch_add(1, Ordering::AcqRel);
-        self.wake(due, woke, missed)
+        let events = std::mem::take(&mut seat.events) | Wake::ON_THE_CLOCK;
+        self.wake(due, woke, missed, (0, 0), events)
     }
 
-    fn wake(&self, due: Instant, woke: Instant, missed: u64) -> Wake {
+    /// `fill`: frames of input ready and of output still to play.
+    fn wake(&self, due: Instant, woke: Instant, missed: u64, fill: (u32, u32), events: u8) -> Wake {
         self.shared.last_due.store(due, Ordering::Release);
         let index = self
             .shared
@@ -351,6 +357,9 @@ impl AlsaBackend {
             due,
             woke,
             missed,
+            input_ready: fill.0,
+            output_queued: fill.1,
+            events,
         }
     }
 
@@ -362,6 +371,7 @@ impl AlsaBackend {
         seat.pending = None;
         seat.stalls = 0;
         seat.skip_until = 0;
+        seat.events |= Wake::CARD_LOST;
         let stats = &self.shared.stats;
         stats.lost.fetch_add(1, Ordering::AcqRel);
         match error {
@@ -388,6 +398,7 @@ impl AlsaBackend {
         if seat.card.is_none() {
             if let Some(card) = handoff.fresh.take() {
                 seat.card = Some(card);
+                seat.events |= Wake::CARD_BACK;
                 self.shared.ready.store(false, Ordering::Release);
                 self.shared.stats.back.fetch_add(1, Ordering::AcqRel);
             }
@@ -403,6 +414,7 @@ impl AlsaBackend {
             stats.early_xruns.fetch_add(1, Ordering::AcqRel);
         }
         seat.skip_until = 0;
+        seat.events |= Wake::AFTER_XRUN;
         // The start before this xrun gave nothing: the card is not
         // ready. Give it time, asleep, before the next start.
         if seat.served == 0 && stats.recoveries.load(Ordering::Acquire) > 0 {
@@ -462,7 +474,7 @@ impl Backend for AlsaBackend {
             // this back end could hold it. Keep the cycle going.
             let due = clock::now() + self.period_ns;
             clock::sleep_until(due);
-            return self.wake(due, clock::now(), 0);
+            return self.wake(due, clock::now(), 0, (0, 0), Wake::ON_THE_CLOCK);
         };
         let seat = &mut *guard;
         // At most a few rounds: every one either returns or changes the
@@ -494,7 +506,11 @@ impl Backend for AlsaBackend {
                 }
             }
             match card.wait(self.timeout_ms) {
-                Ok(Ready::Period(stamp)) => {
+                Ok(Ready::Period {
+                    stamp,
+                    input_ready,
+                    output_queued,
+                }) => {
                     let woke = clock::now();
                     seat.stalls = 0;
                     seat.served += 1;
@@ -524,7 +540,8 @@ impl Backend for AlsaBackend {
                             .saturating_sub(1)
                     };
                     self.shared.stats.card_cycles.fetch_add(1, Ordering::AcqRel);
-                    return self.wake(due, woke, missed);
+                    let events = std::mem::take(&mut seat.events);
+                    return self.wake(due, woke, missed, (input_ready, output_queued), events);
                 }
                 Ok(Ready::Timeout) => {
                     self.shared.stats.stalls.fetch_add(1, Ordering::AcqRel);
@@ -541,7 +558,8 @@ impl Backend for AlsaBackend {
                         .stats
                         .silent_cycles
                         .fetch_add(1, Ordering::AcqRel);
-                    return self.wake(woke, woke, 0);
+                    let events = std::mem::take(&mut seat.events) | Wake::STALLED;
+                    return self.wake(woke, woke, 0, (0, 0), events);
                 }
                 Err(error) => seat.pending = Some(error),
             }
