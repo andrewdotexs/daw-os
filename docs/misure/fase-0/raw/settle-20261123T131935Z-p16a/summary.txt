@@ -1,0 +1,46 @@
+
+-- changed --
+audio: FAIL (a slip of 29 samples on input 3; a slip of 35 samples in the count on input 5)
+xruns: 1 (1 of them in the warm-up)
+count: way round 613 samples (6.385 ms), found at 0.007 s; at the end 589 samples (6.135 ms)
+count slips: 6 (largest 35 samples); in the warm-up 3 (largest 145)
+  count slip on input 5 at 1.751 s: -145 samples
+  count slip on input 5 at 1.770 s: +12 samples
+  count slip on input 5 at 1.776 s: +7 samples
+  count slip on input 5 at 90.448 s: +29 samples
+  count slip on input 5 at 100.156 s: +1 samples
+  count slip on input 5 at 185.312 s: +35 samples
+  count slip on input 5 at 186.436 s: +1 samples
+  count slip on input 5 at 280.513 s: +35 samples
+  count slip on input 5 at 281.146 s: +1 samples
+slips of the tone: 6 (largest 29.05 samples); in the warm-up 0 (largest 0.00)
+cycles_to_look_at: 3 after the warm-up (3 the card told of the period late); 167 in it (1 after an xrun, the thread was in time; 166 the card told of the period late)
+card_told_late_by_minute: 166 1 0 0 0 0 1 0 0 1 0 0 (from the first period, the warm-up too)
+
+-- changed-norecord --
+audio: FAIL (a slip of 30 samples on input 3; a slip of 35 samples in the count on input 5)
+xruns: 1 (1 of them in the warm-up)
+count: way round 612 samples (6.375 ms), found at 0.007 s; at the end 592 samples (6.167 ms)
+count slips: 6 (largest 35 samples); in the warm-up 5 (largest 144)
+  count slip on input 5 at 0.019 s: +1 samples
+  count slip on input 5 at 0.328 s: +1 samples
+  count slip on input 5 at 1.744 s: -144 samples
+  count slip on input 5 at 1.770 s: +7 samples
+  count slip on input 5 at 1.772 s: +12 samples
+  count slip on input 5 at 90.190 s: +30 samples
+  count slip on input 5 at 109.873 s: +1 samples
+  count slip on input 5 at 187.022 s: +35 samples
+  count slip on input 5 at 200.087 s: +1 samples
+  count slip on input 5 at 283.567 s: +35 samples
+  count slip on input 5 at 290.011 s: +1 samples
+slips of the tone: 6 (largest 30.00 samples); in the warm-up 1 (largest 0.37)
+
+-- settled --
+audio: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 625 samples)
+xruns: 0 (0 of them in the warm-up)
+count: way round 625 samples (6.510 ms), found at 0.007 s; at the end 625 samples (6.510 ms)
+count slips: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+slips of the tone: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+cycles_to_look_at: 4 after the warm-up (4 the card told of the period late); 0 in it (none)
+card_told_late_by_minute: 0 0 1 0 0 1 0 1 0 0 1 0 (from the first period, the warm-up too)
+finished_utc: 2026-11-23T13:52:59Z
