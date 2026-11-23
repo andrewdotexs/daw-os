@@ -1,0 +1,88 @@
+
+== card: four live threads on the card at 96 kHz, 0 % busy, 60 s after 8 s of warm-up ==
+card_xruns: 0 (0 of them in the warm-up)
+card_followers: 102036 cycles after a tick of the card, 3 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 3, refused 0
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 1 (largest 1.00)
+record_of_every_cycle: 136044 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 30022 cycles after the warm-up, 3989 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      1.11      0.75      4.25     15.25     31.75     31.93
+  wake-up                       3.27      7.48      7.75      8.25     11.75     12.50     12.63
+  compute, whole                2.04      3.35      3.50      3.75      4.00      4.00      4.07
+  wake_up_bands: under 5 us 165, 5 to 10 29738, 10 to 20 119, 20 to 50 0, 50 and over 0
+  least_margin_us: 1984.10
+  card_frames_at_the_wake_up: ready 244 to 282, to play 181 to 192
+record, slot 1: 30022 cycles after the warm-up, 3989 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      1.11      0.75      4.25     15.25     31.75     31.93
+  wake-up                       3.48      7.57      7.75      8.50     11.75     12.50     12.71
+  compute, whole                0.08      0.20      0.25      0.50      0.50      0.73      0.73
+  wake_up_bands: under 5 us 159, 5 to 10 29743, 10 to 20 120, 20 to 50 0, 50 and over 0
+  least_margin_us: 1987.09
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+record, slot 2: 30022 cycles after the warm-up, 3989 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      1.11      0.75      4.25     15.25     31.75     31.93
+  wake-up                       3.34      7.57      7.75      8.50     11.75     12.50     12.72
+  compute, whole                0.09      0.21      0.25      0.50      0.50      0.50      0.74
+  wake_up_bands: under 5 us 161, 5 to 10 29741, 10 to 20 120, 20 to 50 0, 50 and over 0
+  least_margin_us: 1987.05
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+record, slot 3: 30022 cycles after the warm-up, 3989 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      1.11      0.75      4.25     15.25     31.75     31.93
+  wake-up                       3.33      7.57      7.75      8.50     11.75     12.50     12.71
+  compute, whole                0.11      0.20      0.25      0.50      0.50      0.67      0.67
+  wake_up_bands: under 5 us 160, 5 to 10 29742, 10 to 20 120, 20 to 50 0, 50 and over 0
+  least_margin_us: 1987.15
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+record, the 4 threads together: 30022 cycles after the warm-up that all of them took; microseconds:
+  first awake to last           0.02      0.10      0.25      0.25      0.50      0.50      0.50
+cycles_to_look_at: 0 after the warm-up (none); 4 in it (4 the card told of the period late)
+audio: PASS (no xrun; the tone is on input 3)
+  slot 0 cycle 25 at 0.054 s: the card told of the period late, 3013.45 us after the period before (1.51 periods); periods gone by 1
+      it: woke 8.28 us after the period was due; input 2.25, nodes 0.01 (0 of them), output 1.07 us; ended 1988.39 us before the end of its period; card: 287 frames ready, 181 to play
+      the one before: woke 7.74 us after the period was due; input 2.30, nodes 0.01 (0 of them), output 1.16 us; ended 1988.79 us before the end of its period; card: 192 frames ready, 181 to play
+  slot 1 cycle 25 at 0.054 s: the card told of the period late, 3013.45 us after the period before (1.51 periods); periods gone by 1
+      it: woke 8.37 us after the period was due; input 0.16, nodes 0.01 (0 of them), output 0.01 us; ended 1991.45 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 7.77 us after the period was due; input 0.25, nodes 0.01 (0 of them), output 0.01 us; ended 1991.96 us before the end of its period; card: 0 frames ready, 0 to play
+
+== card: four live threads on the card at 96 kHz, 60 % busy, 60 s after 8 s of warm-up ==
+card_xruns: 0 (0 of them in the warm-up)
+card_followers: 102087 cycles after a tick of the card, 3 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 3, refused 0
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 2 (largest 31.00)
+record_of_every_cycle: 136112 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 30032 cycles after the warm-up, 3996 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.71      0.50      4.25     17.25     32.00     32.59
+  wake-up                       3.21      7.67      7.75      8.75     12.00     12.75     13.05
+  compute, whole             1204.67   1206.12   1207.23   1207.23   1207.23   1207.23   1207.23
+  wake_up_bands: under 5 us 201, 5 to 10 29694, 10 to 20 137, 20 to 50 0, 50 and over 0
+  least_margin_us: 780.89
+  card_frames_at_the_wake_up: ready 245 to 283, to play 181 to 192
+record, slot 1: 30032 cycles after the warm-up, 3996 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.71      0.50      4.25     17.25     32.00     32.59
+  wake-up                       3.48      7.86      8.00      9.00     12.25     13.00     13.30
+  compute, whole             1202.33   1202.83   1204.06   1204.06   1204.06   1204.06   1204.06
+  wake_up_bands: under 5 us 192, 5 to 10 29702, 10 to 20 138, 20 to 50 0, 50 and over 0
+  least_margin_us: 783.57
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+record, slot 2: 30032 cycles after the warm-up, 3996 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.71      0.50      4.25     17.25     32.00     32.59
+  wake-up                       3.31      7.86      8.00      9.00     12.25     13.00     13.30
+  compute, whole             1202.30   1202.80   1204.04   1204.04   1204.04   1204.04   1204.04
+  wake_up_bands: under 5 us 192, 5 to 10 29702, 10 to 20 138, 20 to 50 0, 50 and over 0
+  least_margin_us: 783.93
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+record, slot 3: 30032 cycles after the warm-up, 3996 in it (0 without a card); microseconds:
+  period, off the nominal       0.00      0.71      0.50      4.25     17.25     32.00     32.59
+  wake-up                       3.34      7.86      8.00      9.00     12.25     13.00     13.31
+  compute, whole             1202.30   1202.84   1203.81   1203.81   1203.81   1203.81   1203.81
+  wake_up_bands: under 5 us 192, 5 to 10 29702, 10 to 20 138, 20 to 50 0, 50 and over 0
+  least_margin_us: 783.97
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+record, the 4 threads together: 30032 cycles after the warm-up that all of them took; microseconds:
+  first awake to last           0.08      0.22      0.25      0.50      0.50      0.75      0.77
+cycles_to_look_at: 0 after the warm-up (none); 4 in it (4 the card told of the period late)
+audio: PASS (no xrun; the tone is on input 3)
+  slot 0 cycle 451 at 0.906 s: the card told of the period late, 3000.88 us after the period before (1.50 periods); periods gone by 1
+      it: woke 7.58 us after the period was due; input 2.24, nodes 1202.54 (50 of them), output 1.24 us; ended 786.41 us before the end of its period; card: 287 frames ready, 181 to play
+      the one before: woke 7.07 us after the period was due; input 2.45, nodes 1202.52 (50 of them), output 1.17 us; ended 786.80 us before the end of its period; card: 192 frames ready, 181 to play
+  slot 1 cycle 451 at 0.906 s: the card told of the period late, 3000.88 us after the period before (1.50 periods); periods gone by 1
+      it: woke 7.66 us after the period was due; input 0.29, nodes 1202.35 (50 of them), output 0.01 us; ended 789.69 us before the end of its period; card: 0 frames ready, 0 to play
+      the one before: woke 7.28 us after the period was due; input 0.17, nodes 1202.46 (50 of them), output 0.01 us; ended 790.08 us before the end of its period; card: 0 frames ready, 0 to play

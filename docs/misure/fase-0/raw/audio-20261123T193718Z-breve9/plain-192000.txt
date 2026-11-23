@@ -1,0 +1,278 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 192000
+quantum_frames: 384
+period_us: 2000.000
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 80
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 40032
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     40043       0          0        0      7.60     13.35        5.65        7.32      1980.96
+1      first  stopped     40043       0          0        0      7.69     13.38        0.21        0.49      1986.39
+2      first  stopped     40043       0          0        0      7.69     13.37        0.20        0.81      1986.41
+3      first  stopped     40043       0          0        0      7.69     13.39        0.21        0.78      1986.44
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 192000 Hz, 10 inputs, 10 outputs
+card_period_frames: 384 (buffer: capture 1152, playback 1152)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 40044 with the card, 0 without
+warm_up_seconds: 60
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+card_followers: 120132 cycles after a tick of the card, 0 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 3, refused 0
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+routes: 3:5
+
+inputs listened to (dB relative to full scale; the first 60 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            20    -18.7      -21.8      -21.8     -18.8     -18.8     1.0000
+5            20    -18.7      -21.8      -21.8     -18.8     -18.8     1.0000
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 2 (largest 1.00)
+  slip on input 3 at 11.636 s: +0.75 samples
+  slip on input 3 at 48.762 s: +1.00 samples
+slips_on_input_5: 0 (largest 0.00 samples); in the warm-up 4 (largest 1.00)
+  slip on input 5 at 11.634 s: +1.00 samples
+  slip on input 5 at 11.642 s: +0.92 samples
+  slip on input 5 at 48.762 s: +1.00 samples
+  slip on input 5 at 48.768 s: +1.00 samples
+
+second by second (the warm-up is not in the table above):
+second  input    level     tone    share
+1           3    -21.9    -18.9   0.9931
+1           5    -21.9    -18.9   0.9867
+2           3    -21.8    -18.8   1.0000
+2           5    -21.8    -18.8   1.0000
+3           3    -21.8    -18.8   1.0000
+3           5    -21.8    -18.8   1.0000
+4           3    -21.8    -18.8   1.0000
+4           5    -21.8    -18.8   1.0000
+5           3    -21.8    -18.8   1.0000
+5           5    -21.8    -18.8   1.0000
+6           3    -21.8    -18.8   1.0000
+6           5    -21.8    -18.8   1.0000
+7           3    -21.8    -18.8   1.0000
+7           5    -21.8    -18.8   1.0000
+8           3    -21.8    -18.8   1.0000
+8           5    -21.8    -18.8   1.0000
+9           3    -21.8    -18.8   1.0000
+9           5    -21.8    -18.8   1.0000
+10          3    -21.8    -18.8   1.0000
+10          5    -21.8    -18.8   1.0000
+11          3    -21.8    -18.8   1.0000
+11          5    -21.8    -18.8   1.0000
+12          3    -21.8    -18.8   0.9994
+12          5    -21.8    -18.8   0.9978
+13          3    -21.8    -18.8   1.0000
+13          5    -21.8    -18.8   1.0000
+14          3    -21.8    -18.8   1.0000
+14          5    -21.8    -18.8   1.0000
+15          3    -21.8    -18.8   1.0000
+15          5    -21.8    -18.8   1.0000
+16          3    -21.8    -18.8   1.0000
+16          5    -21.8    -18.8   1.0000
+17          3    -21.8    -18.8   1.0000
+17          5    -21.8    -18.8   1.0000
+18          3    -21.8    -18.8   1.0000
+18          5    -21.8    -18.8   1.0000
+19          3    -21.8    -18.8   1.0000
+19          5    -21.8    -18.8   1.0000
+20          3    -21.8    -18.8   1.0000
+20          5    -21.8    -18.8   1.0000
+21          3    -21.8    -18.8   1.0000
+21          5    -21.8    -18.8   1.0000
+22          3    -21.8    -18.8   1.0000
+22          5    -21.8    -18.8   1.0000
+23          3    -21.8    -18.8   1.0000
+23          5    -21.8    -18.8   1.0000
+24          3    -21.8    -18.8   1.0000
+24          5    -21.8    -18.8   1.0000
+25          3    -21.8    -18.8   1.0000
+25          5    -21.8    -18.8   1.0000
+26          3    -21.8    -18.8   1.0000
+26          5    -21.8    -18.8   1.0000
+27          3    -21.8    -18.8   1.0000
+27          5    -21.8    -18.8   1.0000
+28          3    -21.8    -18.8   1.0000
+28          5    -21.8    -18.8   1.0000
+29          3    -21.8    -18.8   1.0000
+29          5    -21.8    -18.8   1.0000
+30          3    -21.8    -18.8   1.0000
+30          5    -21.8    -18.8   1.0000
+31          3    -21.8    -18.8   1.0000
+31          5    -21.8    -18.8   1.0000
+32          3    -21.8    -18.8   1.0000
+32          5    -21.8    -18.8   1.0000
+33          3    -21.8    -18.8   1.0000
+33          5    -21.8    -18.8   1.0000
+34          3    -21.8    -18.8   1.0000
+34          5    -21.8    -18.8   1.0000
+35          3    -21.8    -18.8   1.0000
+35          5    -21.8    -18.8   1.0000
+36          3    -21.8    -18.8   1.0000
+36          5    -21.8    -18.8   1.0000
+37          3    -21.8    -18.8   1.0000
+37          5    -21.8    -18.8   1.0000
+38          3    -21.8    -18.8   1.0000
+38          5    -21.8    -18.8   1.0000
+39          3    -21.8    -18.8   1.0000
+39          5    -21.8    -18.8   1.0000
+40          3    -21.8    -18.8   1.0000
+40          5    -21.8    -18.8   1.0000
+41          3    -21.8    -18.8   1.0000
+41          5    -21.8    -18.8   1.0000
+42          3    -21.8    -18.8   1.0000
+42          5    -21.8    -18.8   1.0000
+43          3    -21.8    -18.8   1.0000
+43          5    -21.8    -18.8   1.0000
+44          3    -21.8    -18.8   1.0000
+44          5    -21.8    -18.8   1.0000
+45          3    -21.8    -18.8   1.0000
+45          5    -21.8    -18.8   1.0000
+46          3    -21.8    -18.8   1.0000
+46          5    -21.8    -18.8   1.0000
+47          3    -21.8    -18.8   1.0000
+47          5    -21.8    -18.8   1.0000
+48          3    -21.8    -18.8   1.0000
+48          5    -21.8    -18.8   1.0000
+49          3    -21.8    -18.8   0.9995
+49          5    -21.8    -18.8   0.9982
+50          3    -21.8    -18.8   1.0000
+50          5    -21.8    -18.8   1.0000
+51          3    -21.8    -18.8   1.0000
+51          5    -21.8    -18.8   1.0000
+52          3    -21.8    -18.8   1.0000
+52          5    -21.8    -18.8   1.0000
+53          3    -21.8    -18.8   1.0000
+53          5    -21.8    -18.8   1.0000
+54          3    -21.8    -18.8   1.0000
+54          5    -21.8    -18.8   1.0000
+55          3    -21.8    -18.8   1.0000
+55          5    -21.8    -18.8   1.0000
+56          3    -21.8    -18.8   1.0000
+56          5    -21.8    -18.8   1.0000
+57          3    -21.8    -18.8   1.0000
+57          5    -21.8    -18.8   1.0000
+58          3    -21.8    -18.8   1.0000
+58          5    -21.8    -18.8   1.0000
+59          3    -21.8    -18.8   1.0000
+59          5    -21.8    -18.8   1.0000
+60          3    -21.8    -18.8   1.0000
+60          5    -21.8    -18.8   1.0000
+61          3    -21.8    -18.8   1.0000
+61          5    -21.8    -18.8   1.0000
+62          3    -21.8    -18.8   1.0000
+62          5    -21.8    -18.8   1.0000
+63          3    -21.8    -18.8   1.0000
+63          5    -21.8    -18.8   1.0000
+64          3    -21.8    -18.8   1.0000
+64          5    -21.8    -18.8   1.0000
+65          3    -21.8    -18.8   1.0000
+65          5    -21.8    -18.8   1.0000
+66          3    -21.8    -18.8   1.0000
+66          5    -21.8    -18.8   1.0000
+67          3    -21.8    -18.8   1.0000
+67          5    -21.8    -18.8   1.0000
+68          3    -21.8    -18.8   1.0000
+68          5    -21.8    -18.8   1.0000
+69          3    -21.8    -18.8   1.0000
+69          5    -21.8    -18.8   1.0000
+70          3    -21.8    -18.8   1.0000
+70          5    -21.8    -18.8   1.0000
+71          3    -21.8    -18.8   1.0000
+71          5    -21.8    -18.8   1.0000
+72          3    -21.8    -18.8   1.0000
+72          5    -21.8    -18.8   1.0000
+73          3    -21.8    -18.8   1.0000
+73          5    -21.8    -18.8   1.0000
+74          3    -21.8    -18.8   1.0000
+74          5    -21.8    -18.8   1.0000
+75          3    -21.8    -18.8   1.0000
+75          5    -21.8    -18.8   1.0000
+76          3    -21.8    -18.8   1.0000
+76          5    -21.8    -18.8   1.0000
+77          3    -21.8    -18.8   1.0000
+77          5    -21.8    -18.8   1.0000
+78          3    -21.8    -18.8   1.0000
+78          5    -21.8    -18.8   1.0000
+79          3    -21.8    -18.8   1.0000
+79          5    -21.8    -18.8   1.0000
+80          3    -21.8    -18.8   1.0000
+80          5    -21.8    -18.8   1.0000
+
+record_of_every_cycle: 160172 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 10037 cycles after the warm-up, 30006 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.35      1.25      4.00     11.00     15.75     16.04
+  wake-up                       3.50      7.58      7.75      8.50     12.00     12.50     12.59
+  input and patch               2.99      4.35      4.25      5.18      5.18      5.18      5.18
+  nodes                         0.01      0.01      0.05      0.05      0.05      0.05      0.05
+  output                        0.71      1.35      1.50      1.75      1.75      2.00      2.08
+  compute, whole                3.71      5.71      5.75      6.50      6.75      6.97      6.97
+  period_us: least 1983.96, most 2015.68 (nominal 2000.00)
+  wake_up_bands: under 5 us 50, 5 to 10 9936, 10 to 20 51, 20 to 50 0, 50 and over 0
+  least_margin_us: 1981.62
+  card_frames_at_the_wake_up: ready 475 to 501, to play 361 to 384
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 13.35 us
+record, slot 1: 10037 cycles after the warm-up, 30006 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.35      1.25      4.00     11.00     15.75     16.04
+  wake-up                       3.65      7.67      7.75      8.75     12.25     12.50     12.67
+  input and patch               0.06      0.18      0.25      0.42      0.42      0.42      0.42
+  nodes                         0.01      0.01      0.01      0.01      0.01      0.01      0.01
+  output                        0.01      0.01      0.01      0.01      0.01      0.01      0.01
+  compute, whole                0.09      0.21      0.25      0.44      0.44      0.44      0.44
+  period_us: least 1983.96, most 2015.68 (nominal 2000.00)
+  wake_up_bands: under 5 us 48, 5 to 10 9937, 10 to 20 52, 20 to 50 0, 50 and over 0
+  least_margin_us: 1987.11
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 13.38 us
+record, slot 2: 10037 cycles after the warm-up, 30006 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.35      1.25      4.00     11.00     15.75     16.04
+  wake-up                       3.58      7.67      7.75      8.75     12.25     12.50     12.68
+  input and patch               0.07      0.18      0.25      0.48      0.48      0.48      0.48
+  nodes                         0.01      0.01      0.05      0.05      0.05      0.05      0.05
+  output                        0.01      0.01      0.01      0.01      0.01      0.01      0.01
+  compute, whole                0.09      0.21      0.25      0.50      0.50      0.50      0.55
+  period_us: least 1983.96, most 2015.68 (nominal 2000.00)
+  wake_up_bands: under 5 us 47, 5 to 10 9938, 10 to 20 52, 20 to 50 0, 50 and over 0
+  least_margin_us: 1987.20
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 13.37 us
+record, slot 3: 10037 cycles after the warm-up, 30006 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.35      1.25      4.00     11.00     15.75     16.04
+  wake-up                       3.58      7.67      7.75      8.75     12.25     12.50     12.68
+  input and patch               0.09      0.19      0.25      0.42      0.42      0.42      0.42
+  nodes                         0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  output                        0.01      0.01      0.01      0.01      0.01      0.01      0.01
+  compute, whole                0.11      0.21      0.25      0.44      0.44      0.44      0.44
+  period_us: least 1983.96, most 2015.68 (nominal 2000.00)
+  wake_up_bands: under 5 us 48, 5 to 10 9937, 10 to 20 52, 20 to 50 0, 50 and over 0
+  least_margin_us: 1987.09
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 13.39 us
+record, the 4 threads together: 10037 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.02      0.11      0.25      0.25      0.25      0.49      0.49
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+card_told_late_by_minute: 0 0 (from the first period, the warm-up too)
+audio: PASS (no xrun; the tone is on input 3; the tone is on input 5)
