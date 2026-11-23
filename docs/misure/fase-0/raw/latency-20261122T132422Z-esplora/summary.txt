@@ -1,0 +1,453 @@
+
+-- 44100 Hz, 128 frames x 2 periods (5.80 ms of buffer) --
+  inside: 10 runs, 290 to 295 samples (6.576 to 6.689 ms); lengths seen: 295 (1 times) 290 (9 times); runs that ended with another length: 10; slips: 43
+  cable: 10 runs, 351.92 to 357.92 samples (7.980 to 8.116 ms)
+  converters and cable alone: 63.52 samples (1.440 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (8.116 ms at the most); from start to start it moves by 6.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 5; slips of the tone 0
+    count slip on input 5 at 0.011 s: +50 samples
+    count slip on input 5 at 0.017 s: +6 samples
+    count slip on input 5 at 0.023 s: +10 samples
+    count slip on input 5 at 0.029 s: +11 samples
+    count slip on input 5 at 0.032 s: +1 samples
+
+-- 44100 Hz, 128 frames x 3 periods (8.71 ms of buffer) --
+  inside: 10 runs, 364 to 413 samples (8.254 to 9.365 ms); lengths seen: 412 (1 times) 413 (2 times) 407 (1 times) 408 (4 times) 409 (1 times) 364 (1 times); runs that ended with another length: 0; slips: 0
+  cable: 10 runs, 392.92 to 441.92 samples (8.910 to 10.021 ms)
+  converters and cable alone: 28.92 samples (0.656 ms) more than inside, on average
+  R-01, under 10 ms through the cable: NO (10.021 ms at the most); from start to start it moves by 49.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 0; slips of the tone 0
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer) --
+  inside: 10 runs, 311 to 318 samples (7.052 to 7.211 ms); lengths seen: 311 (1 times) 312 (6 times) 316 (1 times) 317 (1 times) 318 (1 times); runs that ended with another length: 0; slips: 0
+  cable: 10 runs, 339.92 to 346.92 samples (7.708 to 7.867 ms)
+  converters and cable alone: 28.92 samples (0.656 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (7.867 ms at the most); from start to start it moves by 7.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 1; slips of the tone 1
+    count slip on input 5 at 13.471 s: +1 samples
+
+-- 44100 Hz, 64 frames x 2 periods (2.90 ms of buffer) --
+  inside: 10 runs, 234 to 307 samples (5.306 to 6.961 ms); lengths seen: 305 (3 times) 234 (2 times) 306 (4 times) 307 (1 times); runs that ended with another length: 10; slips: 5062
+  cable: the bursts never came back in 10 runs
+  xruns in the short runs: 1
+  long run, 60 s: xruns 0; count slips 15251; slips of the tone 6902
+    count slip on input 5 at 0.018 s: +6 samples
+    count slip on input 5 at 0.022 s: -57 samples
+    count slip on input 5 at 0.025 s: -1 samples
+    count slip on input 5 at 0.028 s: +5 samples
+    count slip on input 5 at 0.030 s: +5 samples
+    count slip on input 5 at 0.033 s: +6 samples
+    count slip on input 5 at 0.039 s: +5 samples
+    count slip on input 5 at 0.043 s: +6 samples
+    count slip on input 5 at 0.045 s: +5 samples
+    count slip on input 5 at 0.048 s: +11 samples
+    count slip on input 5 at 0.052 s: -63 samples
+    count slip on input 5 at 0.060 s: +71 samples
+    count slip on input 5 at 0.063 s: +11 samples
+    count slip on input 5 at 0.069 s: -58 samples
+    count slip on input 5 at 0.073 s: +1 samples
+    count slip on input 5 at 0.076 s: +4 samples
+    count slip on input 5 at 0.078 s: +6 samples
+    count slip on input 5 at 0.081 s: +5 samples
+    count slip on input 5 at 0.084 s: +6 samples
+    count slip on input 5 at 0.090 s: +5 samples
+    count slip on input 5 at 0.093 s: +6 samples
+    count slip on input 5 at 0.097 s: -56 samples
+    count slip on input 5 at 0.100 s: -1 samples
+    count slip on input 5 at 0.105 s: +42 samples
+    count slip on input 5 at 0.108 s: +33 samples
+    count slip on input 5 at 0.111 s: +6 samples
+    count slip on input 5 at 0.114 s: -57 samples
+    count slip on input 5 at 0.117 s: +10 samples
+    count slip on input 5 at 0.119 s: -1 samples
+    count slip on input 5 at 0.126 s: +11 samples
+    count slip on input 5 at 0.132 s: +6 samples
+    count slip on input 5 at 0.138 s: +5 samples
+    count slip on input 5 at 0.142 s: -53 samples
+    count slip on input 5 at 0.145 s: +3 samples
+    count slip on input 5 at 0.148 s: +5 samples
+    count slip on input 5 at 0.151 s: -1 samples
+    count slip on input 5 at 0.156 s: +43 samples
+    count slip on input 5 at 0.162 s: +10 samples
+    count slip on input 5 at 0.165 s: +1 samples
+    count slip on input 5 at 0.168 s: +6 samples
+    count slip on input 5 at 0.171 s: -58 samples
+    count slip on input 5 at 0.176 s: +26 samples
+    count slip on input 5 at 0.179 s: +6 samples
+    count slip on input 5 at 0.185 s: +11 samples
+    count slip on input 5 at 0.191 s: +5 samples
+    count slip on input 5 at 0.193 s: +1 samples
+    count slip on input 5 at 0.197 s: +5 samples
+    count slip on input 5 at 0.200 s: +6 samples
+    count slip on input 5 at 0.203 s: -57 samples
+    count slip on input 5 at 0.206 s: +10 samples
+    count slip on input 5 at 0.211 s: +26 samples
+    count slip on input 5 at 0.214 s: +1 samples
+    count slip on input 5 at 0.220 s: +10 samples
+    count slip on input 5 at 0.223 s: +1 samples
+    count slip on input 5 at 0.226 s: +5 samples
+    count slip on input 5 at 0.232 s: -53 samples
+    count slip on input 5 at 0.235 s: +3 samples
+    count slip on input 5 at 0.238 s: +5 samples
+    count slip on input 5 at 0.241 s: +4 samples
+    count slip on input 5 at 0.244 s: -1 samples
+    count slip on input 5 at 0.247 s: +11 samples
+    count slip on input 5 at 0.253 s: +6 samples
+    count slip on input 5 at 0.259 s: +5 samples
+    count slip on input 5 at 0.262 s: +6 samples
+
+-- 44100 Hz, 64 frames x 3 periods (4.35 ms of buffer) --
+  inside: 10 runs, 226 to 231 samples (5.125 to 5.238 ms); lengths seen: 231 (2 times) 226 (6 times) 227 (1 times) 228 (1 times); runs that ended with another length: 10; slips: 40
+  cable: 10 runs, 287.92 to 293.92 samples (6.529 to 6.665 ms)
+  converters and cable alone: 62.82 samples (1.424 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (6.665 ms at the most); from start to start it moves by 6.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 1; slips of the tone 0
+    count slip on input 5 at 0.016 s: +11 samples
+
+-- 48000 Hz, 128 frames x 2 periods (5.33 ms of buffer) --
+  inside: 10 runs, 274 to 282 samples (5.708 to 5.875 ms); lengths seen: 280 (1 times) 281 (3 times) 282 (1 times) 274 (2 times) 275 (2 times) 276 (1 times); runs that ended with another length: 9; slips: 16
+  cable: 10 runs, 304.92 to 364.92 samples (6.353 to 7.603 ms)
+  converters and cable alone: 67.42 samples (1.405 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (7.603 ms at the most); from start to start it moves by 60.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 5; slips of the tone 5
+    count slip on input 5 at 2.597 s: +11 samples
+    count slip on input 5 at 3.191 s: +1 samples
+    count slip on input 5 at 19.099 s: +24 samples
+    count slip on input 5 at 53.536 s: +23 samples
+    count slip on input 5 at 54.136 s: +1 samples
+
+-- 48000 Hz, 128 frames x 3 periods (8.00 ms of buffer) --
+  inside: 10 runs, 403 to 410 samples (8.396 to 8.542 ms); lengths seen: 410 (1 times) 403 (5 times) 404 (1 times) 408 (1 times) 409 (2 times); runs that ended with another length: 5; slips: 5
+  cable: 10 runs, 431.92 to 438.92 samples (8.998 to 9.144 ms)
+  converters and cable alone: 30.02 samples (0.625 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (9.144 ms at the most); from start to start it moves by 7.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 1; slips of the tone 0
+    count slip on input 5 at 0.020 s: +1 samples
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer) --
+  inside: 10 runs, 306 to 313 samples (6.375 to 6.521 ms); lengths seen: 313 (4 times) 306 (1 times) 307 (5 times); runs that ended with another length: 9; slips: 9
+  cable: 10 runs, 335.92 to 348.92 samples (6.998 to 7.269 ms)
+  converters and cable alone: 31.62 samples (0.659 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (7.269 ms at the most); from start to start it moves by 13.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 1; slips of the tone 0
+    count slip on input 5 at 0.017 s: +1 samples
+
+-- 48000 Hz, 64 frames x 2 periods (2.67 ms of buffer) --
+  inside: 10 runs, 242 to 258 samples (5.042 to 5.375 ms); lengths seen: 250 (1 times) 242 (2 times) 243 (2 times) 248 (1 times) 249 (3 times) 258 (1 times); runs that ended with another length: 10; slips: 6209
+  cable: the bursts never came back in 10 runs
+  xruns in the short runs: 1
+  long run, 60 s: xruns 0; count slips 18761; slips of the tone 13271
+    count slip on input 5 at 0.017 s: +62 samples
+    count slip on input 5 at 0.019 s: -44 samples
+    count slip on input 5 at 0.022 s: +11 samples
+    count slip on input 5 at 0.025 s: +18 samples
+    count slip on input 5 at 0.028 s: +12 samples
+    count slip on input 5 at 0.031 s: -41 samples
+    count slip on input 5 at 0.034 s: +16 samples
+    count slip on input 5 at 0.037 s: +10 samples
+    count slip on input 5 at 0.040 s: +18 samples
+    count slip on input 5 at 0.043 s: -44 samples
+    count slip on input 5 at 0.046 s: +10 samples
+    count slip on input 5 at 0.049 s: +18 samples
+    count slip on input 5 at 0.052 s: +18 samples
+    count slip on input 5 at 0.057 s: -16 samples
+    count slip on input 5 at 0.060 s: +12 samples
+    count slip on input 5 at 0.063 s: -42 samples
+    count slip on input 5 at 0.066 s: +16 samples
+    count slip on input 5 at 0.069 s: +10 samples
+    count slip on input 5 at 0.072 s: +18 samples
+    count slip on input 5 at 0.075 s: -44 samples
+    count slip on input 5 at 0.078 s: +10 samples
+    count slip on input 5 at 0.081 s: +18 samples
+    count slip on input 5 at 0.084 s: +18 samples
+    count slip on input 5 at 0.089 s: -16 samples
+    count slip on input 5 at 0.092 s: +12 samples
+    count slip on input 5 at 0.095 s: -42 samples
+    count slip on input 5 at 0.098 s: +16 samples
+    count slip on input 5 at 0.101 s: +10 samples
+    count slip on input 5 at 0.104 s: +18 samples
+    count slip on input 5 at 0.107 s: -44 samples
+    count slip on input 5 at 0.110 s: +10 samples
+    count slip on input 5 at 0.113 s: +18 samples
+    count slip on input 5 at 0.116 s: +18 samples
+    count slip on input 5 at 0.121 s: -16 samples
+    count slip on input 5 at 0.124 s: +12 samples
+    count slip on input 5 at 0.127 s: -42 samples
+    count slip on input 5 at 0.130 s: +16 samples
+    count slip on input 5 at 0.133 s: +10 samples
+    count slip on input 5 at 0.136 s: +18 samples
+    count slip on input 5 at 0.139 s: -44 samples
+    count slip on input 5 at 0.142 s: +10 samples
+    count slip on input 5 at 0.145 s: +18 samples
+    count slip on input 5 at 0.148 s: +18 samples
+    count slip on input 5 at 0.153 s: -16 samples
+    count slip on input 5 at 0.156 s: +12 samples
+    count slip on input 5 at 0.159 s: -42 samples
+    count slip on input 5 at 0.162 s: +16 samples
+    count slip on input 5 at 0.165 s: +10 samples
+    count slip on input 5 at 0.168 s: +18 samples
+    count slip on input 5 at 0.171 s: -44 samples
+    count slip on input 5 at 0.174 s: +10 samples
+    count slip on input 5 at 0.177 s: +18 samples
+    count slip on input 5 at 0.180 s: +18 samples
+    count slip on input 5 at 0.185 s: -16 samples
+    count slip on input 5 at 0.188 s: +12 samples
+    count slip on input 5 at 0.191 s: -42 samples
+    count slip on input 5 at 0.194 s: +16 samples
+    count slip on input 5 at 0.197 s: +10 samples
+    count slip on input 5 at 0.200 s: +18 samples
+    count slip on input 5 at 0.203 s: -44 samples
+    count slip on input 5 at 0.206 s: +10 samples
+    count slip on input 5 at 0.209 s: +18 samples
+    count slip on input 5 at 0.212 s: +18 samples
+    count slip on input 5 at 0.217 s: -16 samples
+
+-- 48000 Hz, 64 frames x 3 periods (4.00 ms of buffer) --
+  inside: 10 runs, 259 to 266 samples (5.396 to 5.542 ms); lengths seen: 260 (2 times) 264 (2 times) 265 (4 times) 266 (1 times) 259 (1 times); runs that ended with another length: 10; slips: 17
+  cable: 10 runs, 299.92 to 306.92 samples (6.248 to 6.394 ms)
+  converters and cable alone: 38.02 samples (0.792 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (6.394 ms at the most); from start to start it moves by 7.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 2; slips of the tone 0
+    count slip on input 5 at 0.010 s: +6 samples
+    count slip on input 5 at 0.014 s: +1 samples
+
+-- 96000 Hz, 256 frames x 2 periods (5.33 ms of buffer) --
+  inside: 10 runs, 548 to 620 samples (5.708 to 6.458 ms); lengths seen: 560 (1 times) 561 (1 times) 548 (2 times) 549 (5 times) 620 (1 times); runs that ended with another length: 10; slips: 15
+  cable: 10 runs, 567.97 to 663.97 samples (5.916 to 6.916 ms)
+  converters and cable alone: 45.47 samples (0.474 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (6.916 ms at the most); from start to start it moves by 96.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 3; slips of the tone 0
+    count slip on input 5 at 0.010 s: +108 samples
+    count slip on input 5 at 0.021 s: +1 samples
+    count slip on input 5 at 0.716 s: +1 samples
+
+-- 96000 Hz, 256 frames x 3 periods (8.00 ms of buffer) --
+  inside: 10 runs, 708 to 817 samples (7.375 to 8.510 ms); lengths seen: 803 (1 times) 708 (1 times) 804 (3 times) 805 (4 times) 817 (1 times); runs that ended with another length: 5; slips: 7
+  cable: 10 runs, 728.97 to 835.97 samples (7.593 to 8.708 ms)
+  converters and cable alone: 20.87 samples (0.217 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (8.708 ms at the most); from start to start it moves by 107.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 1; slips of the tone 1
+    count slip on input 5 at 7.215 s: +1 samples
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer) --
+  inside: 10 runs, 516 to 625 samples (5.375 to 6.510 ms); lengths seen: 528 (1 times) 625 (1 times) 516 (1 times) 612 (2 times) 613 (5 times); runs that ended with another length: 3; slips: 3
+  cable: 10 runs, 546.97 to 643.97 samples (5.698 to 6.708 ms)
+  converters and cable alone: 20.47 samples (0.213 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (6.708 ms at the most); from start to start it moves by 97.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 1; slips of the tone 0
+    count slip on input 5 at 0.011 s: +1 samples
+
+-- 96000 Hz, 128 frames x 2 periods (2.67 ms of buffer) --
+  inside: 10 runs, 520 to 521 samples (5.417 to 5.427 ms); lengths seen: 520 (4 times) 521 (6 times); runs that ended with another length: 10; slips: 6909
+  cable: the bursts never came back in 10 runs
+  xruns in the short runs: 1
+  long run, 60 s: xruns 0; count slips 20697; slips of the tone 8713
+    count slip on input 5 at 0.008 s: +60 samples
+    count slip on input 5 at 0.009 s: +24 samples
+    count slip on input 5 at 0.010 s: -121 samples
+    count slip on input 5 at 0.012 s: +36 samples
+    count slip on input 5 at 0.013 s: -4 samples
+    count slip on input 5 at 0.015 s: +96 samples
+    count slip on input 5 at 0.018 s: -92 samples
+    count slip on input 5 at 0.020 s: +60 samples
+    count slip on input 5 at 0.023 s: +24 samples
+    count slip on input 5 at 0.026 s: -84 samples
+    count slip on input 5 at 0.029 s: +32 samples
+    count slip on input 5 at 0.032 s: +20 samples
+    count slip on input 5 at 0.035 s: +36 samples
+    count slip on input 5 at 0.038 s: -88 samples
+    count slip on input 5 at 0.041 s: +20 samples
+    count slip on input 5 at 0.044 s: +36 samples
+    count slip on input 5 at 0.047 s: +36 samples
+    count slip on input 5 at 0.050 s: -92 samples
+    count slip on input 5 at 0.052 s: +60 samples
+    count slip on input 5 at 0.055 s: +24 samples
+    count slip on input 5 at 0.058 s: -84 samples
+    count slip on input 5 at 0.061 s: +32 samples
+    count slip on input 5 at 0.064 s: +20 samples
+    count slip on input 5 at 0.067 s: +36 samples
+    count slip on input 5 at 0.070 s: -88 samples
+    count slip on input 5 at 0.073 s: +20 samples
+    count slip on input 5 at 0.076 s: +36 samples
+    count slip on input 5 at 0.079 s: +36 samples
+    count slip on input 5 at 0.082 s: -92 samples
+    count slip on input 5 at 0.084 s: +60 samples
+    count slip on input 5 at 0.087 s: +24 samples
+    count slip on input 5 at 0.090 s: -84 samples
+    count slip on input 5 at 0.093 s: +32 samples
+    count slip on input 5 at 0.096 s: +20 samples
+    count slip on input 5 at 0.099 s: +36 samples
+    count slip on input 5 at 0.102 s: -88 samples
+    count slip on input 5 at 0.105 s: +20 samples
+    count slip on input 5 at 0.108 s: +36 samples
+    count slip on input 5 at 0.111 s: +36 samples
+    count slip on input 5 at 0.114 s: -92 samples
+    count slip on input 5 at 0.116 s: +60 samples
+    count slip on input 5 at 0.119 s: +24 samples
+    count slip on input 5 at 0.122 s: -84 samples
+    count slip on input 5 at 0.125 s: +32 samples
+    count slip on input 5 at 0.128 s: +20 samples
+    count slip on input 5 at 0.131 s: +36 samples
+    count slip on input 5 at 0.134 s: -88 samples
+    count slip on input 5 at 0.137 s: +20 samples
+    count slip on input 5 at 0.140 s: +36 samples
+    count slip on input 5 at 0.143 s: +36 samples
+    count slip on input 5 at 0.146 s: -92 samples
+    count slip on input 5 at 0.148 s: +60 samples
+    count slip on input 5 at 0.151 s: +24 samples
+    count slip on input 5 at 0.154 s: -84 samples
+    count slip on input 5 at 0.157 s: +32 samples
+    count slip on input 5 at 0.160 s: +20 samples
+    count slip on input 5 at 0.163 s: +36 samples
+    count slip on input 5 at 0.166 s: -88 samples
+    count slip on input 5 at 0.169 s: +20 samples
+    count slip on input 5 at 0.172 s: +36 samples
+    count slip on input 5 at 0.175 s: +36 samples
+    count slip on input 5 at 0.178 s: -92 samples
+    count slip on input 5 at 0.180 s: +60 samples
+    count slip on input 5 at 0.183 s: +24 samples
+
+-- 96000 Hz, 128 frames x 3 periods (4.00 ms of buffer) --
+  inside: 10 runs, 517 to 541 samples (5.385 to 5.635 ms); lengths seen: 527 (1 times) 528 (6 times) 529 (1 times) 517 (1 times) 541 (1 times); runs that ended with another length: 9; slips: 16
+  cable: 10 runs, 558.97 to 559.97 samples (5.823 to 5.833 ms)
+  converters and cable alone: 31.67 samples (0.330 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (5.833 ms at the most); from start to start it moves by 1.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 6; slips of the tone 4
+    count slip on input 5 at 0.007 s: +72 samples
+    count slip on input 5 at 0.012 s: +12 samples
+    count slip on input 5 at 1.489 s: +47 samples
+    count slip on input 5 at 1.494 s: +24 samples
+    count slip on input 5 at 1.623 s: +1 samples
+    count slip on input 5 at 22.673 s: +1 samples
+
+-- 192000 Hz, 512 frames x 2 periods (5.33 ms of buffer) --
+  inside: 10 runs, 4727 to 8802 samples (24.620 to 45.844 ms); lengths seen: 8802 (2 times) 8777 (4 times) 8778 (1 times) 8779 (2 times) 4727 (1 times); runs that ended with another length: 10; slips: 29
+  cable: 10 runs, 1182.97 to 1207.97 samples (6.161 to 6.292 ms)
+  converters and cable alone: -7190.93 samples (-37.453 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (6.292 ms at the most); from start to start it moves by 25.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 8; slips of the tone 5
+    count slip on input 5 at 0.006 s: -7683 samples
+    count slip on input 5 at 0.420 s: +71 samples
+    count slip on input 5 at 0.509 s: +2 samples
+    count slip on input 5 at 19.266 s: +95 samples
+    count slip on input 5 at 45.977 s: +23 samples
+    count slip on input 5 at 51.855 s: +72 samples
+    count slip on input 5 at 52.240 s: +1 samples
+    count slip on input 5 at 58.960 s: +1 samples
+
+-- 192000 Hz, 512 frames x 3 periods (8.00 ms of buffer) --
+  inside: 10 runs, 6939 to 8809 samples (36.141 to 45.880 ms); lengths seen: 6939 (1 times) 8807 (1 times) 8808 (5 times) 8809 (3 times); runs that ended with another length: 10; slips: 10
+  cable: 10 runs, 1454.97 to 1646.97 samples (7.578 to 8.578 ms)
+  converters and cable alone: -6993.73 samples (-36.426 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (8.578 ms at the most); from start to start it moves by 192.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 1; slips of the tone 0
+    count slip on input 5 at 0.009 s: -7179 samples
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer) --
+  inside: 10 runs, 6752 to 8929 samples (35.167 to 46.505 ms); lengths seen: 6752 (1 times) 8905 (1 times) 8906 (5 times) 8907 (1 times) 8928 (1 times) 8929 (1 times); runs that ended with another length: 10; slips: 14
+  cable: 10 runs, 1047.97 to 1262.97 samples (5.458 to 6.578 ms)
+  converters and cable alone: -7469.43 samples (-38.903 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (6.578 ms at the most); from start to start it moves by 215.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 2; slips of the tone 1
+    count slip on input 5 at 0.007 s: -7682 samples
+    count slip on input 5 at 9.781 s: +1 samples
+
+-- 192000 Hz, 256 frames x 2 periods (2.67 ms of buffer) --
+  inside: 10 runs, 1038 to 9191 samples (5.406 to 47.870 ms); lengths seen: 1062 (2 times) 1038 (2 times) 6731 (1 times) 1039 (3 times) 9190 (1 times) 9191 (1 times); runs that ended with another length: 10; slips: 7576
+  cable: the bursts never came back in 10 runs
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 22686; slips of the tone 3927
+    count slip on input 5 at 0.008 s: +144 samples
+    count slip on input 5 at 0.009 s: +24 samples
+    count slip on input 5 at 0.009 s: -241 samples
+    count slip on input 5 at 0.012 s: +72 samples
+    count slip on input 5 at 0.012 s: -8 samples
+    count slip on input 5 at 0.015 s: +192 samples
+    count slip on input 5 at 0.018 s: -184 samples
+    count slip on input 5 at 0.019 s: +72 samples
+    count slip on input 5 at 0.020 s: +72 samples
+    count slip on input 5 at 0.023 s: +24 samples
+    count slip on input 5 at 0.026 s: -168 samples
+    count slip on input 5 at 0.029 s: +64 samples
+    count slip on input 5 at 0.032 s: +40 samples
+    count slip on input 5 at 0.035 s: +72 samples
+    count slip on input 5 at 0.038 s: -176 samples
+    count slip on input 5 at 0.041 s: +64 samples
+    count slip on input 5 at 0.044 s: +48 samples
+    count slip on input 5 at 0.047 s: +72 samples
+    count slip on input 5 at 0.050 s: -184 samples
+    count slip on input 5 at 0.051 s: +48 samples
+    count slip on input 5 at 0.052 s: +72 samples
+    count slip on input 5 at 0.055 s: +48 samples
+    count slip on input 5 at 0.058 s: -168 samples
+    count slip on input 5 at 0.061 s: +64 samples
+    count slip on input 5 at 0.064 s: +64 samples
+    count slip on input 5 at 0.067 s: +48 samples
+    count slip on input 5 at 0.070 s: -176 samples
+    count slip on input 5 at 0.073 s: +40 samples
+    count slip on input 5 at 0.076 s: +96 samples
+    count slip on input 5 at 0.079 s: +48 samples
+    count slip on input 5 at 0.082 s: -184 samples
+    count slip on input 5 at 0.083 s: +48 samples
+    count slip on input 5 at 0.084 s: +72 samples
+    count slip on input 5 at 0.087 s: +72 samples
+    count slip on input 5 at 0.090 s: -192 samples
+    count slip on input 5 at 0.093 s: +64 samples
+    count slip on input 5 at 0.096 s: +40 samples
+    count slip on input 5 at 0.099 s: +96 samples
+    count slip on input 5 at 0.102 s: -200 samples
+    count slip on input 5 at 0.105 s: +40 samples
+    count slip on input 5 at 0.108 s: +72 samples
+    count slip on input 5 at 0.111 s: +96 samples
+    count slip on input 5 at 0.114 s: -208 samples
+    count slip on input 5 at 0.115 s: +48 samples
+    count slip on input 5 at 0.116 s: +72 samples
+    count slip on input 5 at 0.119 s: +48 samples
+    count slip on input 5 at 0.122 s: -144 samples
+    count slip on input 5 at 0.125 s: +40 samples
+    count slip on input 5 at 0.128 s: +40 samples
+    count slip on input 5 at 0.131 s: +72 samples
+    count slip on input 5 at 0.134 s: -152 samples
+    count slip on input 5 at 0.137 s: +16 samples
+    count slip on input 5 at 0.140 s: +72 samples
+    count slip on input 5 at 0.143 s: +72 samples
+    count slip on input 5 at 0.146 s: -160 samples
+    count slip on input 5 at 0.147 s: +24 samples
+    count slip on input 5 at 0.148 s: +72 samples
+    count slip on input 5 at 0.151 s: +48 samples
+    count slip on input 5 at 0.154 s: -168 samples
+    count slip on input 5 at 0.157 s: +88 samples
+    count slip on input 5 at 0.160 s: +16 samples
+    count slip on input 5 at 0.163 s: +72 samples
+    count slip on input 5 at 0.166 s: -176 samples
+    count slip on input 5 at 0.169 s: +40 samples
+
+-- 192000 Hz, 256 frames x 3 periods (4.00 ms of buffer) --
+  inside: 10 runs, 1030 to 8978 samples (5.365 to 46.760 ms); lengths seen: 1030 (1 times) 8953 (4 times) 8954 (2 times) 8955 (1 times) 8977 (1 times) 8978 (1 times); runs that ended with another length: 10; slips: 21
+  cable: 10 runs, 1094.97 to 1119.97 samples (5.703 to 5.833 ms)
+  converters and cable alone: -7065.23 samples (-36.798 ms) more than inside, on average
+  R-01, under 10 ms through the cable: yes (5.833 ms at the most); from start to start it moves by 25.00 samples
+  xruns in the short runs: 0
+  long run, 60 s: xruns 0; count slips 4; slips of the tone 0
+    count slip on input 5 at 0.005 s: -8115 samples
+    count slip on input 5 at 0.007 s: +168 samples
+    count slip on input 5 at 0.761 s: +95 samples
+    count slip on input 5 at 0.766 s: +72 samples
+
+shapes over 10 ms through the cable, or not measured: 5
+finished_utc: 2026-11-22T13:54:18Z

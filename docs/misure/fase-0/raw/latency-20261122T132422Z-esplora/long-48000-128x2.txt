@@ -1,0 +1,57 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 128
+period_us: 2666.666
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 60
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 22516
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     22515       0          0        0      3.25     10.04        2.90        3.70      2653.84
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 48000 Hz, 18 inputs, 20 outputs
+card_period_frames: 128 (buffer: capture 256, playback 256)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 22516 with the card, 0 without
+warm_up_seconds: 0
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: output 3, 1125.00 Hz, peak 12 dB below full scale
+count_on_input_5: way round 282 samples (5.875 ms), found at 0.007 s; at the end 342 samples (7.125 ms)
+count_slips_on_input_5: 5 (largest 24 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 2881194 in place, 380 out of place
+  count slip on input 5 at 2.597 s: +11 samples
+  count slip on input 5 at 3.191 s: +1 samples
+  count slip on input 5 at 19.099 s: +24 samples
+  count slip on input 5 at 53.536 s: +23 samples
+  count slip on input 5 at 54.136 s: +1 samples
+routes: none
+
+inputs listened to (dB relative to full scale; the first 1 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            59    -18.6      -21.8      -21.8     -35.8     -18.8     0.0199
+slips_on_input_3: 5 (largest 19.67 samples); in the warm-up 0 (largest 0.00)
+  slip on input 3 at 2.597 s: +11.00 samples
+  slip on input 3 at 3.192 s: +1.00 samples
+  slip on input 3 at 19.099 s: -18.67 samples
+  slip on input 3 at 53.536 s: -19.67 samples
+  slip on input 3 at 54.139 s: +0.76 samples
+audio: PASS (0 xruns, allowed; the tone is on input 3; the count comes back on input 5 after 342 samples)

@@ -1,0 +1,12 @@
+started_utc: 2026-11-22T13:24:22Z
+label: esplora
+kernel: Linux 6.18.64-dawos #3 SMP PREEMPT_RT Sun Nov 22 05:01:13 CET 2026 x86_64 GNU/Linux
+image: 0.0.1
+engine: dawos-engine 0.1.0
+card: USB (1235-8201)
+lowlatency: Y
+implicit_fb: N,N,N,N,N,N,N,N
+rates: 44100 48000 96000 192000
+shapes: 128:2 128:3 96:3 64:2 64:3
+runs: 10
+long_s: 60

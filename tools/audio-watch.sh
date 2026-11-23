@@ -24,7 +24,7 @@
 #
 #   ssh "root@${H}" sh -s -- [RATE [PERIODS [SECONDS]]] < tools/audio-watch.sh > FILE
 #
-# Defaults: 48000, 2, 30. The tone (1125 Hz) is on output 3 and is
+# Defaults: 48000, 2, 30. The tone (three cycles in a quantum) is on output 3 and is
 # listened to on input 3, where the cable brings it.
 
 set -u
@@ -73,11 +73,11 @@ echo "rate: ${rate}, periods: ${periods}, seconds: ${seconds}"
 
 # The interface needs some seconds after a change of rate: not judged.
 "${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate "${rate}" --periods "${periods}" \
-	--seconds 8 --tone 3 --tone-hz 1125 --listen 3 --allow-xruns --require-rt > "${work}/settle.txt" 2>&1
+	--seconds 8 --tone 3 --tone-cycles 3 --listen 3 --allow-xruns --require-rt > "${work}/settle.txt" 2>&1
 echo "settling run: xruns $(sed -n 's/^card_xruns: //p' "${work}/settle.txt")"
 
 "${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate "${rate}" --periods "${periods}" \
-	--seconds "${seconds}" --tone 3 --tone-hz 1125 --listen 3 --each-second --require-rt \
+	--seconds "${seconds}" --tone 3 --tone-cycles 3 --listen 3 --each-second --require-rt \
 	> "${work}/run.txt" 2> "${work}/run.err" &
 engine_pid=$!
 

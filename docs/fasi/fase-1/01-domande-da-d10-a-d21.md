@@ -9,7 +9,7 @@
 | Domanda | Decisione | Dove è scritta |
 | --- | --- | --- |
 | D-11 | Regola per fase: nessuna syscall nel calcolo; nell'attesa la chiamata bloccante e la notifica del puntatore; `futex` solo fuori dal ciclo | [ADR 0021](../../adr/0021-core-live-senza-kernel.md), precisazioni |
-| D-14 | Si decide dopo la misura di P1.5, che comprende 44,1 kHz; il quanto è un parametro del motore | Qui |
+| D-14 | Si decide dopo la misura di P1.5, che comprende 44,1 kHz; il quanto è un parametro del motore. **Deciso il 22 novembre 2026**: tre periodi da 96 campioni a 44,1 e 48 kHz, 192 a 88,2 e 96 kHz, 384 a 176,4 e 192 kHz; i 10 ms restano fermi a ogni frequenza | Qui; [P1.5](P1.5-latenza-in-loopback.md) |
 | D-17 | Tre backend: `null` in P1.2, `alsa` in P1.4, `file` in P1.7 | Qui |
 | D-18 | Le regole del documento 0, con le quattro integrazioni | Qui |
 | D-26 | Tutti i thread live aspettano la scheda | [ADR 0021](../../adr/0021-core-live-senza-kernel.md), precisazioni |
@@ -63,6 +63,8 @@ In tutti i casi l'utente ha scelto l'alternativa raccomandata.
 | Accettare ora che R-01 valga da 48 kHz in su | Il più semplice | Chi lavora a 44,1 kHz con strumenti virtuali ha una latenza che non garantiamo |
 
 **Raccomandazione**: decidere dopo P1.5, e fare in modo che il quanto sia un parametro del motore e non una costante, così la seconda alternativa resta possibile senza riscrivere nulla. Se servirà scegliere, resto dell'idea di allora: tenere fermi i 10 ms.
+
+**Decisione del 22 novembre 2026**, sulle misure di [P1.5](P1.5-latenza-in-loopback.md): la premessa è cambiata, perché due periodi non reggono con nessuna lunghezza. Il motore usa **tre periodi da 2 ms** (96, 192 e 384 campioni secondo la frequenza; 2,177 ms nella famiglia dei 44,1 kHz). Il giro misurato per il cavo è tra 5,5 e 7,9 ms a tutte e quattro le frequenze provate. Non c'è un profilo «bassa latenza» a parte: è la forma predefinita. Il quanto resta un parametro.
 
 ### D-17 — Backend audio alternativi e sviluppo fuori dall'immagine
 

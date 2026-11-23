@@ -1,0 +1,50 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 96000
+quantum_frames: 256
+period_us: 2666.666
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 8
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 3003
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      2907     115          0        0      3.31      4.24        3.71        4.57      2657.95
+
+card_capture: hw:USB,0
+card_playback: hw:USB,0
+card_format: S32_LE, 96000 Hz, 14 inputs, 16 outputs
+card_period_frames: 256 (buffer: capture 512, playback 512)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 2908 with the card, 0 without
+warm_up_seconds: 0
+card_xruns: 2 (0 of them in the warm-up)
+card_recoveries: 2 (longest 1.49 ms)
+card_restarts_after_a_pause: 1 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_xrun_1: at 1.152 s; capture xrun, 53 frames to read (most ever 351); playback xrun, 263 frames of room (most ever 504), delay 0
+card_xrun_2: at 1.211 s; capture xrun, 0 frames to read (most ever 0); playback xrun, 504 frames of room (most ever 504), delay 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+tone: none
+count_on_input_5: way round 549 samples (5.719 ms), found at 0.006 s; at the end 680 samples (7.083 ms)
+count_slips_on_input_5: 6 (largest 118 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 689081 in place, 54495 out of place
+  count slip on input 5 at 0.868 s: +35 samples
+  count slip on input 5 at 1.706 s: -100 samples
+  count slip on input 5 at 1.707 s: +18 samples
+  count slip on input 5 at 1.710 s: +36 samples
+  count slip on input 5 at 1.713 s: +24 samples
+  count slip on input 5 at 1.730 s: +118 samples
+routes: none
+audio: PASS (2 xruns, allowed; the count comes back on input 5 after 680 samples)

@@ -7,7 +7,7 @@
 # the slips of each: from the engine's own two short periods to buffers
 # as long as those of an ordinary program.
 #
-# The tone (1125 Hz) is on output 3 and is listened to on input 3, where
+# The tone (three cycles in a quantum) is on output 3 and is listened to on input 3, where
 # the cable brings it. The router of the interface is not touched.
 #
 # It runs ON the machine, from the development PC:
@@ -76,11 +76,11 @@ for shape in ${SHAPES}; do
 	if [ "${rate}" != "${current_rate}" ]; then
 		# The interface needs some seconds after a change of rate.
 		"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate "${rate}" --seconds 8 \
-			--tone 3 --tone-hz 1125 --listen 3 --allow-xruns --require-rt > /dev/null 2>&1
+			--tone 3 --tone-cycles 3 --listen 3 --allow-xruns --require-rt > /dev/null 2>&1
 		current_rate=${rate}
 	fi
 	"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate "${rate}" --quantum "${quantum}" \
-		--periods "${periods}" --seconds "${seconds}" --tone 3 --tone-hz 1125 --listen 3 --each-second \
+		--periods "${periods}" --seconds "${seconds}" --tone 3 --tone-cycles 3 --listen 3 --each-second \
 		--require-rt > "${work}/run.txt" 2> "${work}/run.err"
 	echo
 	echo "-- rate ${rate}, period ${quantum} frames, ${periods} periods ($((quantum * periods * 1000 / rate)) ms of buffer) --"
