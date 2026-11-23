@@ -59,6 +59,12 @@ const KEPT_GAPS: usize = 4;
 const KEPT_LATE: usize = 4;
 const KEPT_AGAIN: usize = 3;
 
+/// Events of the other traced CPUs held for the wake-ups told one by
+/// one, and how long before the instant a period was due they are
+/// taken into one.
+const HELD_ELSEWHERE: usize = 16_384;
+const BEFORE_DUE_NS: u64 = 50_000;
+
 /// The phases of the cycle, as this module cuts them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Phase {
@@ -111,6 +117,8 @@ pub enum Label {
     Work(u64),
     /// Another thread was given the CPU, by its name.
     Ran([u8; 16]),
+    /// A thread waited for a lock of the kernel that was taken.
+    LockWait,
 }
 
 /// The kinds of names, for the report.
@@ -130,7 +138,9 @@ impl Label {
             Self::Vector(_) | Self::DeviceIrq(_) | Self::PageFault | Self::Nmi(_) => {
                 Group::NotAskedFor
             }
-            Self::Softirq(_) | Self::Timer(_) | Self::Work(_) | Self::Ran(_) => Group::Inside,
+            Self::Softirq(_) | Self::Timer(_) | Self::Work(_) | Self::Ran(_) | Self::LockWait => {
+                Group::Inside
+            }
         }
     }
 
@@ -145,6 +155,7 @@ impl Label {
             Self::Timer(function) => format!("timer: {}", symbols.name(*function)),
             Self::Work(function) => format!("work: {}", symbols.name(*function)),
             Self::Ran(comm) => format!("thread {}", name(comm)),
+            Self::LockWait => "wait for a lock of the kernel".to_string(),
         }
     }
 }
@@ -174,7 +185,8 @@ fn label(event: &Event) -> Option<Label> {
         What::Softirq => Label::Softirq(event.a),
         What::Timer => Label::Timer(event.a),
         What::Work => Label::Work(event.a),
-        What::SyscallExit | What::Switch => return None,
+        What::LockWait => Label::LockWait,
+        What::SyscallExit | What::Switch | What::LockGot | What::Waking => return None,
     })
 }
 
@@ -224,6 +236,13 @@ struct Tally {
     /// due; 0: none.
     first_irq: u64,
     at_due: Option<Holder>,
+    /// When the thread of the engine began to wait for a lock of the
+    /// kernel (0: it is not waiting), and how long it waited in all
+    /// for locks it got at or after the instant the next period was
+    /// due, in how many waits.
+    lock_since: u64,
+    lock_ns: u64,
+    lock_waits: u32,
 }
 
 impl Tally {
@@ -237,6 +256,9 @@ impl Tally {
         self.blocked_again = 0;
         self.first_irq = 0;
         self.at_due = None;
+        self.lock_since = 0;
+        self.lock_ns = 0;
+        self.lock_waits = 0;
     }
 }
 
@@ -253,6 +275,7 @@ pub struct Band {
 /// A wake-up whose events are kept one by one.
 pub struct Story {
     pub slot: usize,
+    pub cpu: usize,
     pub index: u64,
     pub why: &'static str,
     pub due: u64,
@@ -294,6 +317,9 @@ pub struct CpuFigures {
     pub to_cpu: Durations,
     pub off_and_on: Durations,
     pub to_user: Durations,
+    /// For the wake-ups in which the thread found a lock of the kernel
+    /// taken: how long it waited for it, in all.
+    pub lock_wait: Durations,
     /// Wake-ups in which the thread was given the CPU no time (it had
     /// never left it), once, twice, three times or more.
     pub given_the_cpu: [u64; 4],
@@ -309,7 +335,7 @@ pub struct CpuFigures {
     /// The thread of the engine last seen on this CPU; 0: none yet.
     ours: i32,
     current: Holder,
-    story_told: bool,
+    story_told: [bool; 5],
 }
 
 /// Everything found about the kernel on the live CPUs.
@@ -336,6 +362,14 @@ pub struct Entries {
     pub gaps_unexplained: Durations,
     pub worst_unexplained: Vec<Gap>,
     pub stories: Vec<Story>,
+    /// CPUs traced that have no live thread (those of the interrupt of
+    /// the card): their events are not counted, and are told in the
+    /// wake-ups told one by one.
+    pub also: Vec<usize>,
+    pub elsewhere_total: u64,
+    elsewhere: VecDeque<Event>,
+    /// The names of the threads seen in the trace.
+    pub names: HashMap<i32, [u8; 16]>,
 }
 
 impl Entries {
@@ -354,6 +388,7 @@ impl Entries {
                     to_cpu: Durations::new(),
                     off_and_on: Durations::new(),
                     to_user: Durations::new(),
+                    lock_wait: Durations::new(),
                     given_the_cpu: [0; 4],
                     blocked_again: 0,
                     bands: Default::default(),
@@ -366,7 +401,7 @@ impl Entries {
                     },
                     ours: 0,
                     current: Holder::Unknown,
-                    story_told: false,
+                    story_told: [false; 5],
                 })
                 .collect(),
             warm_up_end_ns,
@@ -380,6 +415,10 @@ impl Entries {
             gaps_unexplained: Durations::new(),
             worst_unexplained: Vec::new(),
             stories: Vec::new(),
+            also: Vec::new(),
+            elsewhere_total: 0,
+            elsewhere: VecDeque::new(),
+            names: HashMap::new(),
         }
     }
 
@@ -409,11 +448,34 @@ impl Entries {
         });
     }
 
+    /// These CPUs are traced too, and have no live thread.
+    pub fn also(&mut self, cpus: &[usize]) {
+        self.also = cpus.to_vec();
+        self.elsewhere = VecDeque::with_capacity(HELD_ELSEWHERE);
+    }
+
     /// An event of the trace.
     pub fn event(&mut self, event: Event) {
-        match self.cpus.iter_mut().find(|cpu| cpu.cpu == event.cpu) {
-            Some(cpu) => cpu.events_held.push_back(event),
-            None => self.outside += 1,
+        // The names of the threads, from the events that carry one.
+        match event.what {
+            What::Switch if event.b != 0 => {
+                self.names.insert(event.b as i32, event.comm);
+            }
+            What::Waking => {
+                self.names.insert(event.a as i32, event.comm);
+            }
+            _ => {}
+        }
+        if let Some(cpu) = self.cpus.iter_mut().find(|cpu| cpu.cpu == event.cpu) {
+            cpu.events_held.push_back(event);
+        } else if self.also.contains(&event.cpu) {
+            if self.elsewhere.len() == HELD_ELSEWHERE {
+                self.elsewhere.pop_front();
+            }
+            self.elsewhere.push_back(event);
+            self.elsewhere_total += 1;
+        } else {
+            self.outside += 1;
         }
     }
 
@@ -502,6 +564,21 @@ impl Entries {
             && cpu.tally.first_irq == 0
         {
             cpu.tally.first_irq = time;
+        }
+        // The thread of the engine waiting for a lock of the kernel
+        // that another CPU holds.
+        if event.pid == cpu.ours && cpu.ours != 0 {
+            match event.what {
+                What::LockWait => cpu.tally.lock_since = time,
+                What::LockGot if cpu.tally.lock_since != 0 => {
+                    if phase == Phase::WakeUp {
+                        cpu.tally.lock_ns += time - cpu.tally.lock_since;
+                        cpu.tally.lock_waits += 1;
+                    }
+                    cpu.tally.lock_since = 0;
+                }
+                _ => {}
+            }
         }
         if waiting {
             if cpu.tally.wait.len() == HELD_WAIT {
@@ -606,13 +683,17 @@ impl Entries {
                 cpu.to_first_irq
                     .add(tally.first_irq.saturating_sub(after.due));
             }
-            let band = &mut cpu.bands[match wake_up {
+            if tally.lock_waits > 0 {
+                cpu.lock_wait.add(tally.lock_ns);
+            }
+            let which = match wake_up {
                 0..5_000 => 0,
                 5_000..10_000 => 1,
                 10_000..20_000 => 2,
                 20_000..50_000 => 3,
                 _ => 4,
-            }];
+            };
+            let band = &mut cpu.bands[which];
             band.cycles += 1;
             *band
                 .at_due
@@ -629,11 +710,13 @@ impl Entries {
                 *band.events.entry(named).or_insert(0) += 1;
             }
 
-            // Told one by one: the first of every thread that slept,
-            // those where the thread lost the CPU again, the latest.
-            let why = if !cpu.story_told && tally.switch_ins > 0 {
-                cpu.story_told = true;
-                Some("the first after the warm-up")
+            // Told one by one: of every thread the first wake-up of
+            // each length (the lengths the wake-ups are divided by,
+            // above), those where the thread lost the CPU again, the
+            // latest.
+            let why = if !cpu.story_told[which] && tally.switch_ins > 0 {
+                cpu.story_told[which] = true;
+                Some("the first that took so long")
             } else if wake_up > LATE_WAKE_NS {
                 Some("woke more than 20 us late")
             } else if tally.switch_ins > 1 {
@@ -642,20 +725,35 @@ impl Entries {
                 None
             };
             if let Some(why) = why {
+                // With what the other traced CPUs did around the
+                // instant the period was due: the interrupt of the card
+                // is served there.
+                let mut events: Vec<Event> = tally.wait.iter().copied().collect();
+                let from = after.due.saturating_sub(BEFORE_DUE_NS);
+                events.extend(
+                    self.elsewhere
+                        .iter()
+                        .filter(|event| (from..after.woke).contains(&event.time_ns))
+                        .copied(),
+                );
+                events.sort_by_key(|event| event.time_ns);
                 let story = Story {
                     slot,
+                    cpu: cpu.cpu,
                     index: after.index,
                     why,
                     due: after.due,
                     woke: after.woke,
                     ours: cpu.ours,
-                    events: tally.wait.iter().copied().collect(),
+                    events,
                 };
                 let same = |kept: &&mut Story| kept.why == why;
-                let room = match wake_up {
-                    _ if why.starts_with("the first") => usize::MAX,
-                    LATE_WAKE_NS.. => KEPT_LATE,
-                    _ => KEPT_AGAIN,
+                let room = if why.starts_with("the first") {
+                    usize::MAX
+                } else if wake_up > LATE_WAKE_NS {
+                    KEPT_LATE
+                } else {
+                    KEPT_AGAIN
                 };
                 if self.stories.iter_mut().filter(same).count() < room {
                     self.stories.push(story);
@@ -763,6 +861,40 @@ fn told(event: &Event, ours: i32, symbols: &Symbols) -> String {
             };
             format!("the CPU goes to {taken}; the one before is left {state}")
         }
+        What::LockWait => {
+            // The kinds of lock and of wait, as `lock.h` of the kernel
+            // flags them.
+            let mut kinds = Vec::new();
+            for (bit, words) in [
+                (8, "a lock of the real-time kernel"),
+                (32, "a mutex"),
+                (2, "for reading"),
+                (4, "for writing"),
+                (1, "spinning"),
+            ] {
+                if event.b & bit != 0 {
+                    kinds.push(words);
+                }
+            }
+            format!(
+                "finds a lock of the kernel taken and waits for it (lock {:#x}; {})",
+                event.a,
+                if kinds.is_empty() {
+                    "kind not told".to_string()
+                } else {
+                    kinds.join(", ")
+                }
+            )
+        }
+        What::LockGot => format!("has the lock ({:#x})", event.a),
+        What::Waking => {
+            let woken = if event.a as i32 == ours && ours != 0 {
+                "the thread of the engine".to_string()
+            } else {
+                format!("thread {}", name(&event.comm))
+            };
+            format!("wakes {woken}, for CPU {}", event.b)
+        }
         _ => label(event).map_or_else(String::new, |label| label.words(symbols)),
     }
 }
@@ -782,6 +914,14 @@ pub fn print(entries: &Entries, trace: &TraceFigures, symbols: &Symbols, start_n
         entries.outside,
         entries.out_of_order,
     );
+    if !entries.also.is_empty() {
+        let also: Vec<String> = entries.also.iter().map(usize::to_string).collect();
+        println!(
+            "kernel_entries_other_cpus: {} traced too, {} events: not counted, told in the wake-ups one by one",
+            also.join(" "),
+            entries.elsewhere_total
+        );
+    }
     println!(
         "kernel_entries_events_this_kernel_has_not: {}",
         if trace.missing.is_empty() {
@@ -904,10 +1044,16 @@ pub fn print(entries: &Entries, trace: &TraceFigures, symbols: &Symbols, start_n
         meter::row("to the thread on the CPU", &cpu.to_cpu);
         meter::row("from there to user space", &cpu.to_user);
         meter::row("off the CPU and on again", &cpu.off_and_on);
+        meter::row("waiting for a lock", &cpu.lock_wait);
         let given = cpu.given_the_cpu;
         println!(
-            "  given_the_cpu: never left it {}, once {}, twice {}, three times or more {}; lost it again blocked in the kernel: {}",
-            given[0], given[1], given[2], given[3], cpu.blocked_again
+            "  given_the_cpu: never left it {}, once {}, twice {}, three times or more {}; lost it again blocked in the kernel: {}; found a lock of the kernel taken: in {} wake-ups",
+            given[0],
+            given[1],
+            given[2],
+            given[3],
+            cpu.blocked_again,
+            cpu.lock_wait.count()
         );
         let bands = [
             "under 5 us",
@@ -975,10 +1121,19 @@ pub fn print(entries: &Entries, trace: &TraceFigures, symbols: &Symbols, start_n
             } else if event.pid == 0 {
                 "at rest".to_string()
             } else {
-                format!("pid {}", event.pid)
+                entries
+                    .names
+                    .get(&event.pid)
+                    .map_or_else(|| format!("pid {}", event.pid), name)
+            };
+            // On another CPU than that of the thread: which.
+            let who = if event.cpu == story.cpu {
+                who
+            } else {
+                format!("CPU {}, {who}", event.cpu)
             };
             println!(
-                "    {:>+10.2}  {:<10}  {}",
+                "    {:>+10.2}  {:<28}  {}",
                 (event.time_ns as i64 - story.due as i64) as f64 / 1000.0,
                 who,
                 told(event, story.ours, symbols)
@@ -1141,6 +1296,108 @@ mod tests {
             .stories
             .iter()
             .any(|story| story.why == "given the CPU more than once" && story.index == 2));
+    }
+
+    #[test]
+    fn a_wait_for_a_lock_of_the_kernel_on_the_way_to_user_space_is_measured() {
+        let cycles: Vec<Cycle> = (0..4).map(cycle).collect();
+        let mut events: Vec<Event> = Vec::new();
+        for index in 0..4 {
+            let next = START + (index + 1) * PERIOD;
+            let mut one = healthy(index);
+            if index == 1 {
+                // On the CPU 1.5 us after the period was due, then 900
+                // ns for a lock another CPU holds.
+                let exit = one.pop().unwrap();
+                let mut wait = event(next + 1_600, OURS, What::LockWait, 0xffff_8880_1234_5678);
+                wait.b = 8;
+                one.push(wait);
+                one.push(event(
+                    next + 2_500,
+                    OURS,
+                    What::LockGot,
+                    0xffff_8880_1234_5678,
+                ));
+                one.push(exit);
+            }
+            events.extend(one);
+        }
+        let entries = run(&cycles, &events);
+        let cpu = &entries.cpus[0];
+        assert_eq!(cpu.wake_ups, 3);
+        assert_eq!(cpu.lock_wait.count(), 1);
+        assert_eq!(cpu.lock_wait.max_ns(), Some(900));
+        assert_eq!(count(&entries, Phase::WakeUp, Label::LockWait), 1);
+        // Still given the CPU once: the wait was on the CPU.
+        assert_eq!(cpu.given_the_cpu, [0, 3, 0, 0]);
+        // Both ends of the wait have words of their own in a story.
+        let symbols = Symbols::from_text("");
+        let mut wait = event(0, OURS, What::LockWait, 0x1000);
+        wait.b = 8 | 1;
+        assert_eq!(
+            told(&wait, OURS, &symbols),
+            "finds a lock of the kernel taken and waits for it (lock 0x1000; a lock of the real-time kernel, spinning)"
+        );
+        let got = event(0, OURS, What::LockGot, 0x1000);
+        assert_eq!(told(&got, OURS, &symbols), "has the lock (0x1000)");
+    }
+
+    #[test]
+    fn what_another_traced_cpu_did_is_told_with_the_wake_up_and_not_counted() {
+        let cycles: Vec<Cycle> = (0..3).map(cycle).collect();
+        let mut events: Vec<Event> = (0..3).flat_map(healthy).collect();
+        // On CPU 21 the interrupt of the card is served: its thread
+        // wakes ours 200 ns after the period was due. And something
+        // long before, which no wake-up is told with.
+        let next = START + PERIOD;
+        let mut interrupt = event(next - 1_000, 0, What::DeviceIrq, 142);
+        interrupt.cpu = 21;
+        let mut waking = switch(next + 200, 0, 0, 0, "live-0");
+        waking.cpu = 21;
+        waking.pid = 900;
+        waking.what = What::Waking;
+        waking.a = OURS as u64;
+        waking.b = 4;
+        let mut early = event(next - 900_000, 0, What::DeviceIrq, 142);
+        early.cpu = 21;
+        let mut entries = Entries::new(&[4], START);
+        entries.also(&[21]);
+        for cycle in &cycles {
+            entries.cycle(0, cycle);
+        }
+        for event in events.drain(..).chain([early, interrupt, waking]) {
+            entries.event(event);
+        }
+        entries.settle();
+        assert_eq!(entries.elsewhere_total, 3);
+        assert_eq!(entries.outside, 0);
+        assert!(entries
+            .counts
+            .keys()
+            .all(|(_, _, label)| !matches!(label, Label::DeviceIrq(_))));
+        // The first wake-up told: five events of its own CPU and two of
+        // CPU 21, in the order they happened.
+        let story = &entries.stories[0];
+        assert_eq!(story.cpu, 4);
+        assert_eq!(story.events.len(), 7);
+        assert!(story
+            .events
+            .windows(2)
+            .all(|pair| pair[0].time_ns <= pair[1].time_ns));
+        let told_waking = story
+            .events
+            .iter()
+            .find(|event| event.what == What::Waking)
+            .map(|event| told(event, OURS, &Symbols::from_text("")));
+        assert_eq!(
+            told_waking.as_deref(),
+            Some("wakes the thread of the engine, for CPU 4")
+        );
+        // The names of the threads are learnt from the trace.
+        assert_eq!(
+            entries.names.get(&OURS).map(name).as_deref(),
+            Some("live-0")
+        );
     }
 
     #[test]

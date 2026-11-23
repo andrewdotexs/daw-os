@@ -361,6 +361,34 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     // ---- The trace of the kernel on the live CPUs, when asked for:
     // set up before the instant of the first period is fixed (it takes
     // the kernel some tenths of a second), read by the meter.
+    // With --trace-also, other CPUs too: a list, or a domain of the
+    // boot profile by its name.
+    let also_traced: Vec<usize> = match options.trace_also.as_deref() {
+        Some(asked) => {
+            let named = asked.chars().all(|letter| letter.is_ascii_alphabetic());
+            let found = if asked == "all" {
+                // Every CPU that is on.
+                let online = std::fs::read_to_string("/sys/devices/system/cpu/online")
+                    .map_err(|error| format!("--trace-also all: {error}"))?;
+                cpus(Some(online.trim()), "")
+            } else if named {
+                cpus(None, asked)
+            } else {
+                cpus(Some(asked), "")
+            }
+            .map_err(|error| format!("--trace-also: {error}"))?;
+            if found.is_empty() {
+                return Err(format!(
+                    "--trace-also: the boot profile has no CPUs called '{asked}'"
+                ));
+            }
+            found
+                .into_iter()
+                .filter(|cpu| !live_cpus.contains(cpu))
+                .collect()
+        }
+        None => Vec::new(),
+    };
     let tracer = if options.kernel_entries {
         if live_cpus.len() < threads {
             return Err(
@@ -368,10 +396,9 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                     .to_string(),
             );
         }
-        Some(
-            Tracer::start(&live_cpus[..threads])
-                .map_err(|error| format!("--kernel-entries: {error}"))?,
-        )
+        let mut traced = live_cpus[..threads].to_vec();
+        traced.extend(&also_traced);
+        Some(Tracer::start(&traced).map_err(|error| format!("--kernel-entries: {error}"))?)
     } else {
         None
     };
@@ -445,7 +472,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             },
         );
         let meter = match tracer {
-            Some(tracer) => meter.with_trace(tracer, &common.live_cpus[..threads]),
+            Some(tracer) => meter.with_trace(tracer, &common.live_cpus[..threads], &also_traced),
             None => meter,
         };
         let common = Arc::clone(&common);

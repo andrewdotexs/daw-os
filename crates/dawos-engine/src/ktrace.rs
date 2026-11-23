@@ -87,6 +87,15 @@ pub enum What {
     Work,
     /// An interrupt that cannot be masked (`a`: its handler).
     Nmi,
+    /// A thread found a lock of the kernel taken and began to wait for
+    /// it (`a`: the address of the lock; `b`: the kind of lock and of
+    /// wait, as the kernel flags them).
+    LockWait,
+    /// The wait ended (`a`: the address of the lock).
+    LockGot,
+    /// A thread is being woken by what runs on this CPU (`a`: the
+    /// thread, whose name is in `comm`; `b`: the CPU it will run on).
+    Waking,
 }
 
 /// One record of the trace.
@@ -156,7 +165,7 @@ const fn vector(name: &'static str, words: &'static str) -> Wanted {
 
 /// Everything asked for. An event this kernel does not have is left
 /// out and named in the report.
-const WANTED: [Wanted; 21] = [
+const WANTED: [Wanted; 24] = [
     wanted(
         "raw_syscalls",
         "sys_enter",
@@ -221,6 +230,24 @@ const WANTED: [Wanted; 21] = [
         ["function", "", "", ""],
     ),
     wanted("nmi", "nmi_handler", What::Nmi, ["handler", "", "", ""]),
+    wanted(
+        "lock",
+        "contention_begin",
+        What::LockWait,
+        ["lock_addr", "flags", "", ""],
+    ),
+    wanted(
+        "sched",
+        "sched_waking",
+        What::Waking,
+        ["pid", "target_cpu", "", "comm"],
+    ),
+    wanted(
+        "lock",
+        "contention_end",
+        What::LockGot,
+        ["lock_addr", "", "", ""],
+    ),
 ];
 
 /// The fields of an event, from the text of its `format` file: name to

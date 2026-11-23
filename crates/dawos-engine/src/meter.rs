@@ -419,10 +419,13 @@ impl Meter {
     }
 
     /// Read the trace of the kernel too: `tracer` is tracing `cpus`,
-    /// the CPUs of the live threads slot by slot.
+    /// the CPUs of the live threads slot by slot, and `also`, CPUs
+    /// with no live thread.
     #[must_use]
-    pub fn with_trace(mut self, tracer: Tracer, cpus: &[usize]) -> Self {
-        self.kernel = Some((tracer, Entries::new(cpus, self.warm_up_end_ns)));
+    pub fn with_trace(mut self, tracer: Tracer, cpus: &[usize], also: &[usize]) -> Self {
+        let mut entries = Entries::new(cpus, self.warm_up_end_ns);
+        entries.also(also);
+        self.kernel = Some((tracer, entries));
         self
     }
 

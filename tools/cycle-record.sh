@@ -28,7 +28,17 @@
 #           the kernel and once with it (--kernel-entries). The first
 #           says what the trace costs; the second, phase by phase of the
 #           cycle, the system calls, the interrupts and the threads of
-#           the kernel, and how the wake-ups went.
+#           the kernel, and how the wake-ups went. ENTRIES chooses
+#           among its runs (default "timer card-0 card-60 card-one"):
+#           timer, four threads on the timer; timer-here, the same with
+#           the timers of the kernel kept on the CPU that sets them
+#           (kernel.timer_migration at 0 for the run); card-0 and
+#           card-60, four threads on the card; card-one, one thread.
+#           Before and after every run the count of the interrupts of
+#           the firmware (SMI) is read. The traced runs trace other CPUs
+#           too, for the wake-ups told one by one: on the timer all of
+#           them (the kernel may keep a timer on another CPU), on the
+#           card those of the io domain (where its interrupt is served).
 #
 # Results go to /var/lib/dawos/measure/record-<time>[-LABEL].
 
@@ -42,6 +52,7 @@ COST_SECONDS=${COST_SECONDS:-30}
 FOUR_SECONDS=${FOUR_SECONDS:-60}
 WARM_UP=8
 PARTS=${PARTS:-cost four card}
+ENTRIES=${ENTRIES:-timer card-0 card-60 card-one}
 
 die() {
 	echo "cycle-record: $*" >&2
@@ -94,7 +105,7 @@ entries_lines() {
 # The figures a run with the trace is compared by with one without: of
 # every live thread, the wake-up and the whole compute phase.
 compared_lines() {
-	grep -E '^(dawos-engine: |card_xruns|slips_on_input_3|record, slot|  wake-up +[0-9]|  compute, whole|  first awake|  least_margin_us|cycles_to_look_at)' "$1"
+	grep -E '^(dawos-engine: |card_xruns|slips_on_input_3|record, slot|  wake-up +[0-9]|  wake_up_bands|  compute, whole|  first awake|  least_margin_us|cycles_to_look_at)' "$1"
 }
 
 wanted() {
@@ -160,41 +171,86 @@ else
 	echo "no USB sound card: the threads on the card are not measured"
 fi | tee "${dir}/card-summary.txt"
 
+# The interrupts of the firmware (SMI) the processor has counted since
+# it was switched on: register 0x34 of CPU 0, where the kernel serves
+# it. They stop every CPU, and no trace of the kernel sees them.
+smi_count() {
+	value=$(dd if=/dev/cpu/0/msr bs=8 skip=52 count=1 iflag=skip_bytes 2> /dev/null |
+		od -An -tu8 | tr -d ' \n')
+	echo "${value:-unknown}"
+}
+
 # One run of "entries": $1 name, $2 words, the rest the options of the
 # engine. Twice: without the trace and with it.
 entries_run() {
 	name=$1
 	words=$2
 	shift 2
-	echo
-	echo "== entries: ${words}, ${FOUR_SECONDS} s; without the trace of the kernel =="
-	"${ENGINE}" run "$@" --require-rt > "${dir}/entries-${name}-plain.txt" 2>&1
-	compared_lines "${dir}/entries-${name}-plain.txt"
-	echo
-	echo "== entries: ${words}, ${FOUR_SECONDS} s; with the trace of the kernel =="
-	"${ENGINE}" run "$@" --require-rt --kernel-entries > "${dir}/entries-${name}-traced.txt" 2>&1
-	compared_lines "${dir}/entries-${name}-traced.txt"
-	entries_lines "${dir}/entries-${name}-traced.txt"
+	for trace in plain traced; do
+		option=
+		with="without"
+		if [ "${trace}" = traced ]; then
+			case "${name}" in
+			timer*) option="--kernel-entries --trace-also all" ;;
+			*) option="--kernel-entries --trace-also io" ;;
+			esac
+			with="with"
+		fi
+		echo
+		echo "== entries: ${words}, ${FOUR_SECONDS} s; ${with} the trace of the kernel =="
+		before=$(smi_count)
+		# shellcheck disable=SC2086  # option is empty or several words
+		"${ENGINE}" run "$@" --require-rt ${option} > "${dir}/entries-${name}-${trace}.txt" 2>&1
+		echo "smi_count: ${before} before, $(smi_count) after; uptime_s at the end: $(cut -d. -f1 /proc/uptime)"
+		compared_lines "${dir}/entries-${name}-${trace}.txt"
+		[ "${trace}" = traced ] && entries_lines "${dir}/entries-${name}-${trace}.txt"
+	done
+}
+
+# Is $1 among the runs of "entries" asked for?
+entries_wanted() {
+	case " ${ENTRIES} " in
+	*" $1 "*) return 0 ;;
+	esac
+	return 1
 }
 
 if wanted entries; then
-	entries_run timer "four live threads on the timer, 60 % busy" \
-		--backend null --threads 4 --load 60 --seconds "${FOUR_SECONDS}"
-	if [ -n "${identifier}" ]; then
-		"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate 96000 --seconds 8 --threads 1 \
-			--allow-xruns --require-rt > "${dir}/entries-settle.txt" 2>&1
+	if entries_wanted timer; then
+		entries_run timer "four live threads on the timer, 60 % busy" \
+			--backend null --threads 4 --load 60 --seconds "${FOUR_SECONDS}"
+	fi
+	if entries_wanted timer-here; then
+		migration=$(cat /proc/sys/kernel/timer_migration 2> /dev/null)
+		echo
+		echo "kernel.timer_migration: ${migration:-not there}; 0 for the next two runs"
+		[ -n "${migration}" ] && echo 0 > /proc/sys/kernel/timer_migration
+		entries_run timer-here "four live threads on the timer, 60 % busy, timers kept on their CPU" \
+			--backend null --threads 4 --load 60 --seconds "${FOUR_SECONDS}"
+		[ -n "${migration}" ] && echo "${migration}" > /proc/sys/kernel/timer_migration
+	fi
+	if [ -z "${identifier}" ]; then
+		echo "no USB sound card: the kernel on the live CPUs is looked at on the timer only"
+	else
+		case " ${ENTRIES} " in
+		*" card-"*)
+			"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate 96000 --seconds 8 --threads 1 \
+				--allow-xruns --require-rt > "${dir}/entries-settle.txt" 2>&1
+			;;
+		esac
 		for load in 0 60; do
+			entries_wanted "card-${load}" || continue
 			entries_run "card-${load}" "four live threads on the card at 96 kHz, ${load} % busy" \
 				--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 4 --load "${load}" \
 				--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" \
 				--tone 3 --tone-cycles 3 --listen 3
 		done
-		entries_run card-one "one live thread on the card at 96 kHz, nothing to do" \
-			--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 1 \
-			--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" \
-			--tone 3 --tone-cycles 3 --listen 3
-	else
-		echo "no USB sound card: the kernel on the live CPUs is looked at on the timer only"
+		if entries_wanted card-one; then
+			entries_run card-one "one live thread on the card at 96 kHz, nothing to do" \
+				--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 1 \
+				--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" \
+				--tone 3 --tone-cycles 3 --listen 3
+		fi
 	fi
 	# A run that was killed leaves its trace on: take it away.
 	[ -d /sys/kernel/tracing/instances/dawos-engine ] &&

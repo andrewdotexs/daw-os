@@ -84,6 +84,10 @@ pub struct RunOptions {
     /// Read the trace of the kernel on the live CPUs, and say who enters
     /// the kernel in which phase of the cycle (ADR 0021).
     pub kernel_entries: bool,
+    /// With `kernel_entries`: trace these CPUs too (a list, or the name
+    /// of a domain of the boot profile, like `io`, where the interrupt
+    /// of the card is served).
+    pub trace_also: Option<String>,
 }
 
 /// The back ends of `--backend`.
@@ -191,6 +195,11 @@ Options of run:
                      every cycle and the live CPUs of the boot profile
                      or --live; every system call of the machine costs
                      a little more while it runs)
+  --trace-also CPUS  with --kernel-entries: trace these CPUs too: a
+                     list like 20-23; a domain of the boot profile, like
+                     io, where the interrupt of the card is served; or
+                     all. Their events are not counted, and are told in
+                     the wake-ups told one by one
   --require-rt       stop if the real-time priority or the memory lock is
                      refused, instead of going on without
   --no-rt            do not ask for a real-time priority
@@ -251,6 +260,7 @@ impl Default for RunOptions {
             kernel_probe: false,
             record: true,
             kernel_entries: false,
+            trace_also: None,
         }
     }
 }
@@ -347,10 +357,14 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             "--kernel-probe" => options.kernel_probe = true,
             "--no-record" => options.record = false,
             "--kernel-entries" => options.kernel_entries = true,
+            "--trace-also" => options.trace_also = Some(value("--trace-also")?.to_string()),
             "--require-rt" => options.realtime = Realtime::Required,
             "--no-rt" => options.realtime = Realtime::Off,
             other => return Err(format!("unknown option '{other}'")),
         }
+    }
+    if options.trace_also.is_some() && !options.kernel_entries {
+        return Err("--trace-also needs --kernel-entries".to_string());
     }
     if options.kernel_entries && !options.record {
         return Err(
