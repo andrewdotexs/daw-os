@@ -9,10 +9,10 @@
 //! never blocks on a lock: it tries, and a seat it cannot have means a
 //! cycle of silence.
 //!
-//! The other live threads never touch the card: they sleep on its
-//! descriptor, to wake when it wakes the first, and take the number of
-//! the cycle from what the first publishes here
-//! ([`crate::AlsaFollower`], step P1.6b).
+//! The other live threads never touch the card: each sleeps on a timer
+//! of the kernel that ticks when the card completes a period, to wake
+//! when the first wakes, and takes the number of the cycle from what
+//! the first publishes here ([`crate::AlsaFollower`], step P1.6b).
 //!
 //! # When the card stops
 //!
@@ -91,15 +91,21 @@ pub struct CardStats {
     /// Times the card was given up because it had stopped giving
     /// periods.
     pub lost_to_stalls: AtomicU64,
-    /// Cycles the other live threads took after sleeping on the card.
+    /// Cycles the other live threads took after sleeping on the timer
+    /// of the card.
     pub follower_cycles: AtomicU64,
-    /// Cycles they found already begun when they came to wait: they
-    /// were behind, and took the newest without sleeping.
+    /// Those of them that came with periods gone by: the thread was
+    /// behind.
     pub follower_behind: AtomicU64,
     /// Times they were woken, or their time ran out, with no new cycle
     /// from the first thread: the card had stopped, or the first thread
     /// was not there. A cycle on the clock followed.
     pub follower_empty: AtomicU64,
+    /// Times one of them opened the timer of the card: once each, and
+    /// once more for every card that came back.
+    pub timers_opened: AtomicU64,
+    /// Times the kernel refused that.
+    pub timers_refused: AtomicU64,
 }
 
 /// The cycle the first thread is in, for the others to read: a number
@@ -192,12 +198,11 @@ pub struct AlsaShared {
     last_due: AtomicU64,
     /// The cycle in course, for the threads that follow.
     published: Published,
-    /// The number of the next cycle, as it stood when the first thread
-    /// last took the input of the card: until then a sleep on the
-    /// descriptor of the card returns at once.
-    consumed: AtomicU64,
-    /// The descriptor the others sleep on; -1: no card just now.
-    poll_fd: AtomicI32,
+    /// The card in use, for the threads that open its timer: how many
+    /// cards came into use so far in the high half (0: none now), and
+    /// in the low half sound card, device and stream of the input as
+    /// the kernel numbers them, 10 bits each.
+    in_use: AtomicU64,
     stats: CardStats,
     /// The first xruns: when, in nanoseconds from the start, and how the
     /// streams stood.
@@ -209,9 +214,8 @@ impl AlsaShared {
     pub fn open(config: CardConfig) -> Result<Arc<Self>, String> {
         let card = Card::open(&config)?;
         Ok(Arc::new(Self {
-            poll_fd: AtomicI32::new(card.poll_fd()),
+            in_use: AtomicU64::new(in_use(1, card.place())),
             published: Published::default(),
-            consumed: AtomicU64::new(0),
             info: card.info().clone(),
             config,
             start: AtomicU64::new(0),
@@ -277,16 +281,29 @@ impl AlsaShared {
         self.published.read()
     }
 
-    /// Whether the first thread has taken the input of cycle `index`.
-    pub(crate) fn has_consumed(&self, index: u64) -> bool {
-        self.consumed.load(Ordering::Acquire) > index
+    /// The card in use: which one it is since the start (1, 2, ...),
+    /// and sound card, device and stream of its input. `None`: no card
+    /// just now, or one whose place the driver did not tell.
+    pub(crate) fn card_in_use(&self) -> Option<(u32, (u32, u32, u32))> {
+        let word = self.in_use.load(Ordering::Acquire);
+        let which = (word >> 32) as u32;
+        let place = word as u32;
+        (which != 0 && place & PLACE_KNOWN != 0).then_some((
+            which,
+            ((place >> 20) & 0x3ff, (place >> 10) & 0x3ff, place & 0x3ff),
+        ))
     }
 
-    /// The descriptor to sleep on for the next period; `None`: no card
-    /// just now.
-    pub(crate) fn poll_fd(&self) -> Option<i32> {
-        let fd = self.poll_fd.load(Ordering::Acquire);
-        (fd >= 0).then_some(fd)
+    /// Whether the other live threads can wake with this card: its
+    /// place is known, and the timer of its input stream opens. Some
+    /// system calls: to be asked before the cycle starts.
+    pub fn followers_can_wake(&self) -> Result<(), String> {
+        let Some((_, (card, device, stream))) = self.card_in_use() else {
+            return Err("the driver did not tell where the stream is".to_string());
+        };
+        dawos_rt::pcm_timer::PcmTimer::open(card, device, stream, true)
+            .map(drop)
+            .map_err(|error| format!("the timer of the input stream does not open: {error}"))
     }
 
     /// The first xruns of the run: when, in nanoseconds from the start
@@ -313,6 +330,22 @@ impl AlsaShared {
             .map(|seat| seat.card.is_some())
             .unwrap_or(true)
     }
+}
+
+/// Set in the low half of `AlsaShared::in_use` when the place is known.
+const PLACE_KNOWN: u32 = 1 << 30;
+
+/// The word of `AlsaShared::in_use` for the card number `which` since
+/// the start, at `place`. A place that does not fit 10 bits a number is
+/// a place not known.
+fn in_use(which: u32, place: Option<(u32, u32, u32)>) -> u64 {
+    let low = match place {
+        Some((card, device, stream)) if card < 1024 && device < 1024 && stream < 1024 => {
+            PLACE_KNOWN | card << 20 | device << 10 | stream
+        }
+        _ => 0,
+    };
+    u64::from(which) << 32 | u64::from(low)
 }
 
 /// Whether the kernel has the sound card an ALSA device name like
@@ -463,7 +496,9 @@ impl AlsaBackend {
         if let Some(card) = seat.card.take() {
             seat.dead = Some(card);
         }
-        self.shared.poll_fd.store(-1, Ordering::Release);
+        // No card now; the count of the cards that came stays.
+        let which = self.shared.in_use.load(Ordering::Acquire) >> 32;
+        self.shared.in_use.store(which << 32, Ordering::Release);
         seat.pending = None;
         seat.stalls = 0;
         seat.skip_until = 0;
@@ -493,7 +528,10 @@ impl AlsaBackend {
         }
         if seat.card.is_none() {
             if let Some(card) = handoff.fresh.take() {
-                self.shared.poll_fd.store(card.poll_fd(), Ordering::Release);
+                let which = (self.shared.in_use.load(Ordering::Acquire) >> 32) as u32;
+                self.shared
+                    .in_use
+                    .store(in_use(which + 1, card.place()), Ordering::Release);
                 seat.card = Some(card);
                 seat.events |= Wake::CARD_BACK;
                 self.shared.ready.store(false, Ordering::Release);
@@ -670,12 +708,6 @@ impl Backend for AlsaBackend {
             return;
         };
         let seat = &mut *guard;
-        // Whatever comes of it, this cycle is past the point where the
-        // input is taken: the threads that follow may sleep again.
-        self.shared.consumed.store(
-            self.shared.next_index.load(Ordering::Acquire),
-            Ordering::Release,
-        );
         if seat.silent || seat.pending.is_some() {
             input.fill(0);
             return;
@@ -743,6 +775,18 @@ mod tests {
         assert_eq!(published.read(), Some((0, 5_000)));
         published.write(41, 9_000);
         assert_eq!(published.read(), Some((41, 9_000)));
+    }
+
+    #[test]
+    fn the_place_of_a_card_fits_in_a_word() {
+        assert_eq!(in_use(1, None) >> 32, 1);
+        assert_eq!(in_use(1, None) as u32, 0);
+        let word = in_use(7, Some((3, 0, 1)));
+        assert_eq!(word >> 32, 7);
+        assert_eq!(word as u32, PLACE_KNOWN | 3 << 20 | 1);
+        // A number too large for its place: not known, rather than
+        // another stream's.
+        assert_eq!(in_use(2, Some((1024, 0, 0))) as u32, 0);
     }
 
     #[test]

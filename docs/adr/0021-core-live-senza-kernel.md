@@ -111,7 +111,7 @@ Decise dall'utente all'apertura della Fase 1, sul [progetto P1.1](../fasi/fase-1
 
 **Chi sveglia i thread live (D-26).** La scheda audio, per tutti: ogni thread live fa la propria attesa sul dispositivo, e il kernel li sveglia tutti quando il periodo è pronto. Nessun thread ne sveglia un altro, e non c'è un secondo orologio. Se la dispersione dei risvegli tra i thread, misurata nel passo P1.6, risulta troppa, il ripiego è un timer proprio per i worker, con attesa attiva fino all'inizio del ciclo. Scartato: il primo thread che sveglia gli altri, perché è una syscall nel calcolo.
 
-_Come, dal 23 novembre 2026 (passo P1.6b, scelta dell'utente per il punto aperto A-56)_: una `poll()` sul descrittore del flusso di ingresso, la stessa per tutti. Il thread che tiene la scheda pubblica in memoria il numero del ciclo; gli altri lo prendono da lì, e prima di dormire controllano in memoria che l'ingresso sia stato letto, perché `poll()` è vera finché c'è un periodo da leggere. Il timer ALSA del flusso resta l'alternativa se le misure non vanno.
+_Come, dal 23 novembre 2026 (passo P1.6b, punto aperto A-56)_: il thread che tiene la scheda dorme sul flusso di ingresso; ognuno degli altri dorme su un timer proprio del kernel legato a quel flusso (`/dev/snd/timer`), che scatta nello stesso punto in cui il primo viene svegliato, e prende il numero del ciclo da ciò che il primo pubblica in memoria. Due syscall nell'attesa per chi segue (`poll()` e `read()` sul timer). La `poll()` di tutti sullo stesso flusso, provata per prima, non regge: un thread svegliato ricontrolla se il periodo c'è ancora, e se il primo l'ha già letto resta a dormire.
 
 **La regola sulle chiamate di sistema (D-11).**
 

@@ -4,32 +4,37 @@
 //! must begin their cycle when it begins its own, and nobody may wake
 //! them from the compute phase: that would be a system call where none
 //! is allowed (ADR 0021, decision D-26). So each of them sleeps on the
-//! card too, with a `poll()` on the descriptor of the input stream: the
-//! kernel wakes every sleeper when a period of input is complete, the
-//! first thread and these at the same instant.
+//! card too: on a timer of the kernel bound to the input stream
+//! ([`dawos_rt::pcm_timer`]), which ticks at the instant a period is
+//! complete, the same instant the kernel wakes the first thread.
 //!
-//! What a `poll()` says is "there is a period to read", not "a period
-//! went by", and the number of the cycle is the business of the thread
-//! that holds the card. Two things follow:
-//!
-//! - once awake, a follower takes the cycle from what the first thread
-//!   publishes in memory. It may be a moment ahead of it: it looks
-//!   again for some microseconds, without entering the kernel;
-//! - before sleeping, it makes sure the first thread has taken the
-//!   input of the cycle in course: until then the `poll()` would return
-//!   at once.
+//! The number of the cycle is the business of the thread that holds the
+//! card. Once awake, a follower takes it from what the first thread
+//! publishes in memory. It may be a moment ahead of the first: it looks
+//! again for some microseconds, without entering the kernel.
 //!
 //! When nothing comes from the first thread (the card stopped, an xrun
 //! is being recovered, the first thread was replaced) the follower does
 //! not spin: it sleeps on the clock for a period and runs a cycle with
 //! no number of its own, marked as on the clock. A thread that never
 //! slept would be the fault the watchdog is there for.
+//!
+//! # Why not a `poll()` on the stream itself
+//!
+//! That was the first design, and the 285K said no. A `poll()` holds
+//! while there is a period to read. The kernel wakes every sleeper when
+//! the period is complete, and each of them looks again; the first
+//! thread reads the period some microseconds after it wakes, and a
+//! follower that looks after that finds nothing and stays asleep, until
+//! its time runs out. With four threads on the Scarlett the followers
+//! lost more than half their cycles that way, and the first thread woke in 8 us
+//! instead of 3: four threads on the lock of one stream.
 
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use ::alsa::poll::{poll, pollfd, Flags};
 use dawos_rt::clock::{self, Instant};
+use dawos_rt::pcm_timer::{PcmTimer, Tick};
 
 use crate::alsa_backend::AlsaShared;
 use crate::{Backend, Format, Wake};
@@ -40,10 +45,9 @@ use crate::{Backend, Format, Wake};
 /// (under 10 us in every run of the 285K): past this, it is not coming.
 const LOOK_NS: u64 = 50_000;
 
-/// How long it looks, before sleeping, for the first thread to have
-/// taken the input: some microseconds after its wake-up, in a cycle
-/// that is going well.
-const INPUT_TAKEN_NS: u64 = 20_000;
+/// Cycles between two attempts to open the timer of a card that
+/// refused: half a second of cycles of 2 ms.
+const TRY_AGAIN_AFTER: u32 = 250;
 
 /// The back end of a live thread that does not hold the card.
 pub struct AlsaFollower {
@@ -55,6 +59,12 @@ pub struct AlsaFollower {
     last: Option<(u64, Instant)>,
     /// Whether the periods have already begun (a spare thread).
     joining: bool,
+    /// The timer of the card in use, and which card it belongs to (see
+    /// [`AlsaShared::card_in_use`]; 0: none).
+    timer: Option<PcmTimer>,
+    timer_of: u32,
+    /// Cycles to let go by before trying a card that refused again.
+    patience: u32,
 }
 
 impl AlsaFollower {
@@ -72,6 +82,9 @@ impl AlsaFollower {
             timeout_ms: i32::try_from(4 * period_ns / 1_000_000 + 10).unwrap_or(i32::MAX),
             last: None,
             joining,
+            timer: None,
+            timer_of: 0,
+            patience: 0,
         }
     }
 
@@ -85,35 +98,69 @@ impl AlsaFollower {
         }
     }
 
-    fn take(&mut self, index: u64, due: Instant, woke: Instant) -> Wake {
-        let missed = match self.last {
-            Some((last, _)) => index - last - 1,
-            None => 0,
-        };
-        self.last = Some((index, due));
-        Wake {
-            index,
-            due,
-            woke,
-            missed,
-            input_ready: 0,
-            output_queued: 0,
-            events: 0,
+    /// Look for a new cycle of the first thread until `LOOK_NS` from
+    /// now, without entering the kernel.
+    fn look(&mut self) -> Option<Wake> {
+        let until = clock::now() + LOOK_NS;
+        loop {
+            let now = clock::now();
+            if let Some((index, due)) = self.newer() {
+                let missed = match self.last {
+                    Some((last, _)) => index - last - 1,
+                    None => 0,
+                };
+                self.last = Some((index, due));
+                let stats = self.shared.stats();
+                stats.follower_cycles.fetch_add(1, Ordering::AcqRel);
+                if missed > 0 {
+                    stats.follower_behind.fetch_add(1, Ordering::AcqRel);
+                }
+                return Some(Wake {
+                    index,
+                    due,
+                    woke: now,
+                    missed,
+                    input_ready: 0,
+                    output_queued: 0,
+                    events: 0,
+                });
+            }
+            if now >= until {
+                return None;
+            }
+            std::hint::spin_loop();
         }
     }
 
-    /// Sleep until the card has a period of input. `false`: there is no
-    /// card, or the time ran out, or the sleep was cut short.
-    fn sleep_on_the_card(&self) -> bool {
-        let Some(fd) = self.shared.poll_fd() else {
-            return false;
+    /// Have the timer of the card that is in use now: at the first
+    /// cycle, and after a card came back. Some system calls, in the
+    /// wait phase, a few times in a run.
+    fn keep_the_timer(&mut self) {
+        let Some((which, (card, device, stream))) = self.shared.card_in_use() else {
+            self.timer = None;
+            self.timer_of = 0;
+            return;
         };
-        let mut descriptors = [pollfd {
-            fd,
-            events: Flags::IN.bits(),
-            revents: 0,
-        }];
-        matches!(poll(&mut descriptors, self.timeout_ms), Ok(ready) if ready > 0)
+        if self.timer.is_some() && self.timer_of == which {
+            return;
+        }
+        if self.patience > 0 {
+            self.patience -= 1;
+            return;
+        }
+        let stats = self.shared.stats();
+        match PcmTimer::open(card, device, stream, true) {
+            Ok(timer) => {
+                self.timer = Some(timer);
+                self.timer_of = which;
+                stats.timers_opened.fetch_add(1, Ordering::AcqRel);
+            }
+            Err(_) => {
+                self.timer = None;
+                self.patience = TRY_AGAIN_AFTER;
+                stats.timers_refused.fetch_add(1, Ordering::AcqRel);
+            }
+        }
     }
 }
 
@@ -127,60 +174,36 @@ impl Backend for AlsaFollower {
     }
 
     fn wait(&mut self) -> Wake {
-        let shared = &*self.shared;
         // Before the first period: everybody in place.
         if !self.joining && self.last.is_none() {
-            clock::sleep_until(shared.start());
+            clock::sleep_until(self.shared.start());
             self.joining = true;
         }
+        self.keep_the_timer();
 
-        // Behind already: the newest cycle, without sleeping.
-        if let Some((index, due)) = self.newer() {
-            shared
-                .stats()
-                .follower_behind
-                .fetch_add(1, Ordering::AcqRel);
-            return self.take(index, due, clock::now());
-        }
-
-        // The first thread takes the input some microseconds after its
-        // wake-up; a thread with little to do can be back here before
-        // that. No system call: it is still the tail of the compute
-        // phase.
-        if let Some((last, _)) = self.last {
-            let until = clock::now() + INPUT_TAKEN_NS;
-            while !shared.has_consumed(last) && clock::now() < until {
-                std::hint::spin_loop();
-            }
-        }
-
-        // ---- The one blocking call of the cycle.
-        let woken = self.sleep_on_the_card();
-
-        // The first thread woke at the same instant and publishes its
-        // cycle at once.
-        if woken {
-            let until = clock::now() + LOOK_NS;
-            loop {
-                let now = clock::now();
-                if let Some((index, due)) = self.newer() {
-                    shared
-                        .stats()
-                        .follower_cycles
-                        .fetch_add(1, Ordering::AcqRel);
-                    return self.take(index, due, now);
+        // ---- The blocking call of the cycle, and the reading of what
+        // woke the thread. A tick is there for every period completed,
+        // also for one completed while this thread was still at work:
+        // then the sleep returns at once.
+        match self.timer.as_ref().map(|timer| timer.wait(self.timeout_ms)) {
+            // The first thread woke at the same instant and publishes
+            // its cycle at once.
+            Some(Tick::Periods(_)) => {
+                if let Some(wake) = self.look() {
+                    return wake;
                 }
-                if now >= until {
-                    break;
-                }
-                std::hint::spin_loop();
             }
+            Some(Tick::Nothing) | None => {}
+            Some(Tick::Gone) => self.timer = None,
         }
 
-        // Nothing from the first thread. Asleep until the next period
-        // would be due, then a cycle on the clock: the thread stays
-        // alive, sees the end of the run, and never spins.
-        shared.stats().follower_empty.fetch_add(1, Ordering::AcqRel);
+        // Nothing from the card, or nothing from the first thread.
+        // Asleep until the next period would be due; the first thread
+        // may be going on the clock, and then its cycle is there.
+        self.shared
+            .stats()
+            .follower_empty
+            .fetch_add(1, Ordering::AcqRel);
         let now = clock::now();
         let mut due = match self.last {
             Some((_, due)) => due + self.period_ns,
@@ -190,9 +213,12 @@ impl Backend for AlsaFollower {
             due += self.period_ns;
         }
         clock::sleep_until(due);
+        if let Some(wake) = self.look() {
+            return wake;
+        }
+        // A cycle with no number of its own: the thread stays alive,
+        // sees the end of the run, and never spins.
         let woke = clock::now();
-        // If the first thread came back meanwhile, its cycle is taken at
-        // the next wait. This one has no number of its own.
         let index = self.last.map_or(0, |(index, _)| index);
         if let Some((_, last_due)) = &mut self.last {
             *last_due = due;

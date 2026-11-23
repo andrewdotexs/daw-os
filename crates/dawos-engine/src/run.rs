@@ -74,11 +74,14 @@ pub struct CardOutcome {
     pub paused_restarts: u64,
     pub short_writes: u64,
     pub bad_stamps: u64,
-    /// The other live threads: cycles taken after sleeping on the card,
-    /// cycles found already begun, and wake-ups with no cycle.
+    /// The other live threads: cycles taken after a tick of the card,
+    /// those of them with periods gone by, wake-ups with no cycle, and
+    /// timers of the card opened and refused.
     pub follower_cycles: u64,
     pub follower_behind: u64,
     pub follower_empty: u64,
+    pub timers_opened: u64,
+    pub timers_refused: u64,
     /// Error number that made the card be given up, the last time.
     pub last_error: i32,
     /// Whether a card was in use when the run ended.
@@ -286,6 +289,15 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         })?),
         _ => None,
     };
+    // With more live threads than one, the others wake on the timer of
+    // the input stream: better to know now that it is there.
+    if let Some(card) = &card {
+        if threads > 1 {
+            card.followers_can_wake().map_err(|error| {
+                format!("the other live threads cannot wake with the card ({error}): --threads 1 runs without them")
+            })?;
+        }
+    }
     let patch = match &card {
         Some(card) => Some(Mutex::new(Patch::new(
             &PatchConfig {
@@ -576,6 +588,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             follower_cycles: count(&stats.follower_cycles),
             follower_behind: count(&stats.follower_behind),
             follower_empty: count(&stats.follower_empty),
+            timers_opened: count(&stats.timers_opened),
+            timers_refused: count(&stats.timers_refused),
             last_error: stats.last_error.load(Ordering::Acquire),
             in_use_at_the_end,
             xrun_log: card
@@ -1310,8 +1324,12 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
     println!("card_short_writes: {}", card.short_writes);
     println!("card_stamps_not_believed: {}", card.bad_stamps);
     println!(
-        "card_followers: {} cycles after a sleep on the card, {} found already begun, {} wake-ups with no cycle (a cycle on the clock followed)",
-        card.follower_cycles, card.follower_behind, card.follower_empty
+        "card_followers: {} cycles after a tick of the card, {} of them with periods gone by, {} wake-ups with no cycle; timers of the card opened {}, refused {}",
+        card.follower_cycles,
+        card.follower_behind,
+        card.follower_empty,
+        card.timers_opened,
+        card.timers_refused
     );
     match options.tone {
         Some(output) => println!(

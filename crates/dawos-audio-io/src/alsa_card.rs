@@ -9,7 +9,6 @@
 
 use ::alsa::direct::pcm::Status;
 use ::alsa::pcm::{Access, Format as SampleFormat, HwParams, State, TstampType, PCM};
-use ::alsa::poll::Descriptors;
 use ::alsa::{Direction, ValueOr};
 
 use crate::Format;
@@ -126,9 +125,9 @@ pub struct Card {
     status: Option<Status>,
     info: CardInfo,
     started: bool,
-    /// The descriptor a thread sleeps on to be told of a period of
-    /// input; -1 when the stream has none, or more than one.
-    poll_fd: i32,
+    /// Where the kernel keeps the input stream: sound card, device and
+    /// stream of the device. `None`: the driver did not say.
+    place: Option<(u32, u32, u32)>,
 }
 
 const BYTES_PER_SAMPLE: usize = 4;
@@ -283,12 +282,12 @@ impl Card {
         } else {
             None
         };
-        // A hardware device has one descriptor. Asked once, here: the
-        // answer comes in a list, and lists are not for the live thread.
-        let poll_fd = match capture.get() {
-            Ok(descriptors) if descriptors.len() == 1 => descriptors[0].fd,
-            _ => -1,
-        };
+        // Asked once, here: the answer is made with memory of its own,
+        // and that is not for the live thread.
+        let place = capture.info().ok().and_then(|info| {
+            let card = u32::try_from(info.get_card()).ok()?;
+            Some((card, info.get_device(), info.get_subdevice()))
+        });
         let mut card = Self {
             capture,
             playback,
@@ -306,7 +305,7 @@ impl Card {
             },
             status,
             started: false,
-            poll_fd,
+            place,
         };
         card.fill_with_silence().map_err(|error| {
             format!(
@@ -360,12 +359,12 @@ impl Card {
         Ok(())
     }
 
-    /// The descriptor of the input stream, for a thread that is not the
-    /// one that reads it but wants to wake with it (`poll()` for
-    /// reading); -1: there is none to be had.
+    /// Sound card, device and stream of the input, as the kernel
+    /// numbers them: what a thread needs to open the timer of the stream
+    /// and wake with it.
     #[must_use]
-    pub const fn poll_fd(&self) -> i32 {
-        self.poll_fd
+    pub const fn place(&self) -> Option<(u32, u32, u32)> {
+        self.place
     }
 
     /// Ask the kernel how the two streams stand: two system calls, for

@@ -201,3 +201,98 @@ pub(crate) fn futex_wake_all(word: &AtomicU32) {
         );
     }
 }
+
+/// Open a device of the kernel for reading, without ever blocking on
+/// it. Returns the descriptor.
+pub(crate) fn open_device(path: &std::ffi::CStr) -> io::Result<i32> {
+    // SAFETY: `path` is a valid C string that outlives the call, and the
+    // flags ask for nothing that needs a third argument.
+    let fd = unsafe {
+        libc::open(
+            path.as_ptr(),
+            libc::O_RDONLY | libc::O_NONBLOCK | libc::O_CLOEXEC,
+        )
+    };
+    if fd >= 0 {
+        Ok(fd)
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+/// Close a descriptor this process opened.
+pub(crate) fn close_descriptor(fd: i32) {
+    // SAFETY: closing a descriptor has no memory to get wrong; the
+    // caller owns `fd` and does not use it again.
+    unsafe { libc::close(fd) };
+}
+
+/// A request to a device that takes a structure and only reads it.
+/// `T` must be the plain structure the kernel defines for `request`.
+pub(crate) fn device_request<T>(fd: i32, request: u32, argument: &T) -> io::Result<()> {
+    // SAFETY: `argument` is a valid, initialised `T` that outlives the
+    // call; the callers of this module pass the structure whose size is
+    // written in `request`, and requests that write to it are not made
+    // through this function.
+    let result =
+        unsafe { libc::ioctl(fd, libc::Ioctl::from(request), std::ptr::from_ref(argument)) };
+    if result == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+/// A request to a device that takes nothing.
+pub(crate) fn device_request_bare(fd: i32, request: u32) -> io::Result<()> {
+    // SAFETY: the request has no argument for the kernel to read or
+    // write.
+    let result = unsafe { libc::ioctl(fd, libc::Ioctl::from(request)) };
+    if result == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+/// What a wait on one descriptor ended with.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Readable {
+    /// There is something to read.
+    Yes,
+    /// The time ran out, or the sleep was cut short by a signal.
+    NotYet,
+    /// The descriptor is of no use any more.
+    Broken,
+}
+
+/// Sleep until `fd` has something to read, for `timeout_ms` at the
+/// most. A blocking system call: wait phase only.
+pub(crate) fn wait_readable(fd: i32, timeout_ms: i32) -> Readable {
+    let mut descriptor = libc::pollfd {
+        fd,
+        events: libc::POLLIN,
+        revents: 0,
+    };
+    // SAFETY: `descriptor` is one valid pollfd, and the count says one.
+    let result = unsafe { libc::poll(&mut descriptor, 1, timeout_ms) };
+    if result <= 0 {
+        return Readable::NotYet;
+    }
+    if descriptor.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
+        Readable::Broken
+    } else if descriptor.revents & libc::POLLIN != 0 {
+        Readable::Yes
+    } else {
+        Readable::NotYet
+    }
+}
+
+/// Read into `buffer` whatever `fd` has, without blocking. The number
+/// of bytes, or the error of the kernel.
+pub(crate) fn read_some(fd: i32, buffer: &mut [u8]) -> io::Result<usize> {
+    // SAFETY: `buffer` is valid for writes of its whole length, which is
+    // the length given to the kernel.
+    let result = unsafe { libc::read(fd, buffer.as_mut_ptr().cast(), buffer.len()) };
+    usize::try_from(result).map_err(|_| io::Error::last_os_error())
+}
