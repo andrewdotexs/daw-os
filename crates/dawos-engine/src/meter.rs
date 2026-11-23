@@ -49,6 +49,10 @@ const WAKE_LIMIT_NS: u64 = 50_000;
 const KEPT: usize = 6;
 const KEPT_EARLY: usize = 2;
 
+/// Minutes of a run for which the periods the card told late are counted
+/// one minute at a time.
+const MINUTES: usize = 180;
+
 /// The compute budget cut the cycle short.
 pub const INCOMPLETE: u16 = 0x100;
 /// A cycle with sound whose patch could not be had.
@@ -268,10 +272,9 @@ impl ThreadFigures {
             period_most_ns: 0,
             wake_up: Durations::new(),
             input: Durations::new(),
-            // Up to 2 ms, in steps of 5 us: the nodes fill the period.
-            nodes: Durations::with_bucket_ns(5_000),
+            nodes: Durations::new(),
             output: Durations::new(),
-            compute: Durations::with_bucket_ns(5_000),
+            compute: Durations::new(),
             wake_bands: [0; 5],
             least_margin_ns: i64::MAX,
             input_ready: (u32::MAX, 0),
@@ -299,6 +302,10 @@ pub struct MeterReport {
     pub ring_records: u64,
     /// Whether the run had a sound card.
     pub card: bool,
+    /// Periods the card told late, minute by minute from the first
+    /// period, warm-up and all, up to the last minute that had cycles:
+    /// how an interface settles shows here.
+    pub card_late_by_minute: Vec<u32>,
 }
 
 struct Source {
@@ -320,6 +327,9 @@ pub struct Meter {
     early_counts: [u64; 10],
     kept: Vec<Notable>,
     early_kept: Vec<Notable>,
+    start_ns: u64,
+    card_late_by_minute: Vec<u32>,
+    minutes: usize,
 }
 
 /// What the meter must know about the run.
@@ -357,6 +367,9 @@ impl Meter {
             early_counts: [0; 10],
             kept: Vec::with_capacity(KEPT * Kind::ALL.len()),
             early_kept: Vec::with_capacity(KEPT_EARLY * Kind::ALL.len()),
+            start_ns: shape.start_ns,
+            card_late_by_minute: vec![0; MINUTES],
+            minutes: 0,
         }
     }
 
@@ -438,6 +451,14 @@ impl Meter {
                         figures.period_most_ns = figures.period_most_ns.max(gap);
                     }
                 }
+            }
+        }
+
+        let minute = (cycle.woke.saturating_sub(self.start_ns) / 60_000_000_000) as usize;
+        if minute < MINUTES {
+            self.minutes = self.minutes.max(minute + 1);
+            if kind == Some(Kind::CardLate) {
+                self.card_late_by_minute[minute] += 1;
             }
         }
 
@@ -541,6 +562,7 @@ impl Meter {
             early_kept: self.early_kept,
             ring_records,
             card: self.buffer_frames != 0,
+            card_late_by_minute: self.card_late_by_minute[..self.minutes].to_vec(),
         }
     }
 }
@@ -751,6 +773,17 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
         counts_in_words(&report.counts),
         counts_in_words(&report.early_counts)
     );
+    if report.card {
+        let by_minute: Vec<String> = report
+            .card_late_by_minute
+            .iter()
+            .map(u32::to_string)
+            .collect();
+        println!(
+            "card_told_late_by_minute: {} (from the first period, the warm-up too)",
+            by_minute.join(" ")
+        );
+    }
     for notable in &report.kept {
         print_notable(notable, start_ns, period_ns, report.card);
     }
@@ -877,6 +910,8 @@ mod tests {
         assert_eq!(kinds, vec![Kind::CardLate, Kind::Overrun, Kind::ThreadLate]);
         assert_eq!(report.kept[0].before, Some(healthy(9)));
         assert_eq!(report.threads[0].missed, 3);
+        // One period told late by the card, in the first minute.
+        assert_eq!(report.card_late_by_minute, vec![1]);
         // The stretch of two periods is in the figures of the period.
         assert_eq!(report.threads[0].period_most_ns, 3 * PERIOD);
     }
