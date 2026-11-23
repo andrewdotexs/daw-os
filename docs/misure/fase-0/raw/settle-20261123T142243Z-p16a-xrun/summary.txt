@@ -1,0 +1,12 @@
+
+-- after-xrun --
+audio: PASS (the xrun asked for was recovered in 0.19 ms; the tone is on input 3; the count comes back on input 5 after 614 samples)
+xruns: 1 (0 of them in the warm-up)
+count: way round 612 samples (6.375 ms), found at 0.007 s; at the end 614 samples (6.396 ms)
+count slips: 1 (largest 1 samples); in the warm-up 1 (largest 1)
+  count slip on input 5 at 0.475 s: +1 samples
+  count slip on input 5 at 103.446 s: +1 samples
+slips of the tone: 1 (largest 0.94 samples); in the warm-up 1 (largest 1.00)
+cycles_to_look_at: 3 after the warm-up (1 after an xrun asked for; 2 the card told of the period late); 0 in it (none)
+card_told_late_by_minute: 0 1 0 0 0 0 1 0 0 (from the first period, the warm-up too)
+finished_utc: 2026-11-23T14:30:43Z
