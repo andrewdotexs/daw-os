@@ -346,7 +346,7 @@ card_trial() {
 # the interface, and the server may: those lines are left out.
 fcp_report() {
 	unit="fcp-server@$1.service"
-	echo "hwdep: $(awk -F': ' -v card="$1" '{ split($1, place, "-") } place[1] + 0 == card { print $2 }' /proc/asound/hwdep 2> /dev/null | tr '\n' ';')"
+	echo "hwdep: $(awk -v card="$1" '{ split($1, place, "-") } place[1] + 0 == card' /proc/asound/hwdep 2> /dev/null | tr '\n' ';')"
 	if ! command -v fcp-server > /dev/null 2>&1; then
 		echo "fcp_server: not in this image"
 		return 0
@@ -416,7 +416,16 @@ do_card() {
 
 	echo
 	echo "== mixer controls, with their values (amixer contents) =="
-	amixer -c "${card}" contents 2>&1
+	# The name an interface of Focusrite gives itself (control "Name",
+	# a string of bytes) ends with digits of its serial number: its
+	# value is left out.
+	amixer -c "${card}" contents 2>&1 | awk '
+		/^numid=/ { name_control = ($0 ~ /,name=\047Name\047$/) }
+		name_control && /^  : values=/ {
+			print "  : values=(left out: the name of the interface ends with digits of its serial number)"
+			next
+		}
+		{ print }'
 
 	echo
 	echo "== trials: two periods of one quantum, mmap access, four seconds each =="

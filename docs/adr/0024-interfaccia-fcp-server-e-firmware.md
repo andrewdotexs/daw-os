@@ -1,6 +1,6 @@
 # ADR 0024 — L'interfaccia di quarta generazione: `fcp-support` e firmware nell'immagine
 
-- **Stato**: accettata dall'utente il 24 novembre 2026 nelle tre scelte che gli sono state poste (firmware nell'immagine, aggiornamento prima delle misure, nome del passo); le altre scelte sono mie, dichiarate nel [passo P1.12](../fasi/fase-1/P1.12-la-scarlett-di-quarta-generazione.md) e non contestate. Da confermare con le misure sul 285K
+- **Stato**: accettata dall'utente il 24 novembre 2026 nelle tre scelte che gli sono state poste (firmware nell'immagine, aggiornamento prima delle misure, nome del passo); le altre scelte sono mie, dichiarate nel [passo P1.12](../fasi/fase-1/P1.12-la-scarlett-di-quarta-generazione.md) e non contestate. Confermata nella parte che riguarda il passo P1.12a (24 novembre 2026: `fcp-server` attivo dall'avvio, firmware aggiornato, controlli letti); resta la misura di `fcp-server` acceso durante l'audio (P1.12c)
 - **Data**: 24 novembre 2026
 - **Origine**: passo [P1.12](../fasi/fase-1/P1.12-la-scarlett-di-quarta-generazione.md); domanda D-28; prompt della Fase 1, che nomina `fcp-server`
 
@@ -51,7 +51,7 @@ Il firmware dell'interfaccia è un file di Focusrite, pubblicato per Linux nel r
 - **Un programma in più parla con l'interfaccia mentre suona.** `fcp-server` dorme finché un controllo cambia o l'interfaccia lo avvisa (una manopola girata, un cambio di clock), poi fa trasferimenti di controllo sullo stesso bus USB dell'audio _(verificato nel sorgente: il ciclo principale aspetta senza scadenza)_. Quanto disturbi non è misurato.
 - **Due modifiche nostre al `Makefile` del pacchetto**, come patch: il collegamento con il compilatore della build invece di `cc`, e niente `-Werror`. La prima è un difetto da segnalare all'autore.
 - **Con la seconda generazione collegata `fcp-server` parte e finisce subito, senza errore** _(verificato nel sorgente: riconosce il driver `scarlett2` dalla versione del protocollo ed esce con stato 0; da verificare sulla macchina alla prima occasione)_.
-- **I numeri di serie.** `fcp-tool` stampa il numero di serie dell'interfaccia. Gli script che lo usano lo tolgono dalla loro uscita; chi lo lancia a mano deve ricordarsene prima di incollare l'uscita in un file del repository.
+- **I numeri di serie.** `fcp-tool` stampa il numero di serie dell'interfaccia. Gli script che lo usano lo tolgono dalla loro uscita; chi lo lancia a mano deve ricordarsene prima di incollare l'uscita in un file del repository. E l'interfaccia porta cifre del numero di serie nel proprio nome, che `fcp-server` mostra nel controllo `Name`: il 24 novembre 2026 è finito in due letture sul ramo, e la storia del ramo è stata riscritta per toglierlo (scelta dell'utente). Da allora la lettura non scrive quel valore e `tools/check-private.sh` lo rifiuta.
 - **L'aggiornamento del firmware non è reversibile con ciò che abbiamo** _(da verificare: le versioni precedenti sono nel repository del firmware, ma non so se l'interfaccia le accetta)_.
 
 ## Quando si riapre
