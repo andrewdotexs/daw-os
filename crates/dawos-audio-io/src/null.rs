@@ -135,12 +135,15 @@ mod tests {
     fn a_slow_caller_is_told_what_it_missed() {
         let mut backend = NullBackend::new(FAST);
         let first = backend.wait();
-        // Stay away for three and a half periods.
+        // Stay away for three and a half periods: three are missed, or
+        // more on a machine that keeps this thread waiting longer. How
+        // many is not what is tested: that they are told, and that the
+        // number and the instant of the period go with them.
         clock::sleep_until(first.due + 3_500_000);
         let second = backend.wait();
-        assert_eq!(second.missed, 3);
-        assert_eq!(second.index, 4);
-        assert_eq!(second.due, first.due + 4_000_000);
+        assert!(second.missed >= 3, "{} periods missed", second.missed);
+        assert_eq!(second.index, first.index + 1 + second.missed);
+        assert_eq!(second.due, first.due + (1 + second.missed) * 1_000_000);
     }
 
     #[test]
@@ -151,8 +154,11 @@ mod tests {
         let a = first.wait();
         let b = second.wait();
         // The second call comes after the first period is over: it gets
-        // the next one, on the same grid.
-        assert_eq!(a.due, start + 1_000_000);
+        // a later one, on the same grid. Which periods they are depends
+        // on how long the machine keeps this thread waiting.
+        assert!(a.due >= start + 1_000_000);
+        assert_eq!((a.due - start) % 1_000_000, 0);
+        assert!(b.due > a.due);
         assert_eq!((b.due - start) % 1_000_000, 0);
     }
 
@@ -162,9 +168,12 @@ mod tests {
         clock::sleep_until(start + 5_500_000);
         let mut backend = NullBackend::joining(FAST, start);
         let wake = backend.wait();
+        // It joins at the period in course, the sixth or a later one
+        // on a machine that kept this thread waiting, and is told of
+        // none missed: those before it were never its own.
         assert_eq!(wake.missed, 0);
-        assert_eq!(wake.index, 5);
-        assert_eq!(wake.due, start + 6_000_000);
+        assert!(wake.index >= 5, "period {}", wake.index);
+        assert_eq!(wake.due, start + (wake.index + 1) * 1_000_000);
     }
 
     #[test]

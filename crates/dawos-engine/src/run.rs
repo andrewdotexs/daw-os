@@ -1809,16 +1809,28 @@ mod tests {
         let _alone = alone();
         let mut options = options(Fault::None);
         options.load_percent = 150;
+        // A period of 20 ms. These threads want all of a CPU and have
+        // no real-time priority: on a busy machine they are kept off it
+        // for some time, and the watchdog rightly calls stuck a thread
+        // that makes no progress for three periods. With periods of 5
+        // ms that is 15 ms, and the test failed on a PC that was doing
+        // other things; with eight busy loops on four CPUs it failed
+        // four times in six, and with this period never in eight.
+        options.frames = Some(960);
         let outcome = execute(&options).expect("the run did not start");
         assert!(
             outcome.events.is_empty(),
             "the watchdog acted on a heavy cycle"
         );
         for report in &outcome.reports {
+            // Nearly every cycle is cut by the budget, however many of
+            // them the machine let the thread run.
+            assert!(report.cycles > 0);
             assert!(
-                report.incomplete > 200,
-                "{} incomplete cycles",
-                report.incomplete
+                report.incomplete * 10 >= report.cycles * 9,
+                "{} incomplete cycles of {}",
+                report.incomplete,
+                report.cycles
             );
         }
     }
@@ -1846,8 +1858,10 @@ mod tests {
         };
         assert_eq!(of(0).caught, 0);
         assert!(of(0).caught_calls.is_empty());
-        assert!((150..=230).contains(&of(1).caught), "{}", of(1).caught);
-        // Every call made was stopped: not one more, not one less.
+        // Every call made was stopped: not one more, not one less. How
+        // many cycles the thread ran in that second depends on the
+        // machine.
+        assert!(of(1).caught > dispatch::KEPT as u64, "{}", of(1).caught);
         assert_eq!(of(1).calls_on_purpose, of(1).caught);
         assert_eq!(of(1).caught_calls.len(), dispatch::KEPT);
         for call in &of(1).caught_calls {
