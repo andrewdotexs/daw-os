@@ -734,6 +734,11 @@ impl Entries {
                     self.elsewhere
                         .iter()
                         .filter(|event| (from..after.woke).contains(&event.time_ns))
+                        // Not their system calls: with every CPU traced
+                        // they are those of the reader of this trace.
+                        .filter(|event| {
+                            !matches!(event.what, What::SyscallEnter | What::SyscallExit)
+                        })
                         .copied(),
                 );
                 events.sort_by_key(|event| event.time_ns);
