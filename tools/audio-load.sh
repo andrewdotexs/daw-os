@@ -15,7 +15,11 @@
 # every mixer control with its value, and, for each sample rate, whether
 # the driver accepts two periods of one quantum (2.667 ms) in mmap access,
 # with the parameters it really sets. It plays silence and records for
-# four seconds per rate: about half a minute in all.
+# four seconds per rate: about half a minute in all. For an interface of
+# the Focusrite Control Protocol (step P1.12) it also reads the state of
+# fcp-server, without which there are no mixer controls to read, the
+# version of the firmware, and whether the interface still shows the
+# small disk it leaves the factory with.
 #
 # Options of start:
 #   --card N        the sound card (default: the first USB one)
@@ -333,6 +337,52 @@ card_trial() {
 	sleep 1
 }
 
+# What there is to know of fcp-server for card $1: the kernel driver of
+# the Focusrite Control Protocol only carries messages, and it is this
+# server that reads the router, the mixer and the preamplifiers of the
+# interface and shows them as mixer controls. udev starts one for every
+# card of Focusrite; in front of a card of another driver it ends at
+# once, and that is not a failure. fcp-tool prints the serial number of
+# the interface, and the server may: those lines are left out.
+fcp_report() {
+	unit="fcp-server@$1.service"
+	echo "hwdep: $(awk -F': ' -v card="$1" '{ split($1, place, "-") } place[1] + 0 == card { print $2 }' /proc/asound/hwdep 2> /dev/null | tr '\n' ';')"
+	if ! command -v fcp-server > /dev/null 2>&1; then
+		echo "fcp_server: not in this image"
+		return 0
+	fi
+	echo "fcp_server: $(fcp-server --version 2>&1 | head -n 1)"
+	echo "unit: ${unit}: $(systemctl is-active "${unit}" 2> /dev/null), $(systemctl show -p Result -p NRestarts -p ExecMainStatus "${unit}" 2> /dev/null | tr '\n' ' ')"
+	echo "socket_directory: $(find /run/fcp-server -maxdepth 1 2> /dev/null | tr '\n' ' ')"
+	echo "firmware_files: $(find /usr/lib/firmware/scarlett4 -name '*.bin' 2> /dev/null | sed 's|.*/||' | tr '\n' ' ')"
+	echo "-- fcp-tool list --"
+	fcp-tool list 2>&1 | grep -v -i 'serial'
+	echo "-- fcp-tool list-all --"
+	fcp-tool list-all 2>&1 | grep -v -i 'serial'
+	echo "-- messages of the unit since the boot (the last 40) --"
+	journalctl -b -u "${unit}" --no-pager -o cat 2> /dev/null | grep -v -i 'serial' | tail -n 40
+}
+
+# The disks that are part of the USB device of card $1. An interface of
+# Focusrite leaves the factory showing a small read-only disk with a link
+# to the page where it is registered, and stays so until its firmware is
+# updated or it is switched on with the 48V button held down.
+card_disks() {
+	place=$(usb_place "$1") || return 0
+	usb_device=${place##* }
+	found=no
+	for block in /sys/block/sd*; do
+		[ -d "${block}" ] || continue
+		case "$(readlink -f "${block}")" in
+		"${usb_device}"/*) ;;
+		*) continue ;;
+		esac
+		found=yes
+		echo "${block##*/}: $(read_file "${block}/device/vendor" | tr -s ' ') $(read_file "${block}/device/model" | tr -s ' '), $(read_file "${block}/size") sectors, read-only $(read_file "${block}/ro")"
+	done
+	[ "${found}" = yes ] || echo "(none)"
+}
+
 do_card() {
 	[ "$(id -u)" = 0 ] || die "must run as root"
 	choose_card "${1:-}"
@@ -353,6 +403,18 @@ do_card() {
 	echo "trials_on_cpus: ${cpus} (real-time priority 60)"
 
 	echo
+	echo "== the server of the interface (fcp-server) =="
+	fcp_report "${card}"
+
+	echo
+	echo "== disks the interface itself shows =="
+	card_disks "${card}"
+
+	echo
+	echo "== streams as the driver describes them =="
+	cat "/proc/asound/card${card}/stream0" 2> /dev/null
+
+	echo
 	echo "== mixer controls, with their values (amixer contents) =="
 	amixer -c "${card}" contents 2>&1
 
@@ -364,7 +426,10 @@ do_card() {
 
 	echo
 	echo "== kernel messages about sound and USB in the last minute =="
-	journalctl -k --since=-1min --no-pager -o cat 2> /dev/null | grep -i -E 'usb|snd|alsa|scarlett|xhci' || echo "(none)"
+	# When the interface was plugged in during that minute, the kernel
+	# has written its serial number: that line is left out.
+	journalctl -k --since=-1min --no-pager -o cat 2> /dev/null | grep -i -E 'usb|snd|alsa|scarlett|xhci' |
+		grep -v -i 'serial' || echo "(none)"
 }
 
 # The lines of one stream that say how it runs.

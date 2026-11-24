@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: dawOS <dawos@localhost>
+Date: Tue, 24 Nov 2026 14:34:53 +0000
+Subject: [PATCH] Makefile: do not stop at warnings
+
+A compiler newer than the one the package was written with may warn
+where that one did not, and with -Werror the image is no longer built.
+Warnings stay on.
+
+Upstream: not applicable (a choice of who packages)
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 1ce9c28..8ae1c0b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -56,7 +56,7 @@ DEPDIR := .deps
+ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$(*D)/$(*F).d
+ 
+ CFLAGS ?= -ggdb -fno-omit-frame-pointer -O2
+-CFLAGS += -Wall -Werror -fPIE
++CFLAGS += -Wall -fPIE
+ CFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3
+ CFLAGS += -DVERSION=\"$(VERSION)\"
+ CFLAGS += -DDATADIR=\"$(DATADIR_PATH)\"

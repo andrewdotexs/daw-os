@@ -55,6 +55,7 @@ Un passo non si considera chiuso finché il suo criterio non è stato eseguito e
 | P1.9 | Il kernel (Q-13, A-49): stima e piano sottoposti all'utente, poi la prova della serie sul rinvio degli interrupt tra core | 8 |
 | P1.10 | La campagna: 24 ore a 96 kHz, un'ora a 48 e una a 192 kHz, prova d'urto finale | 2, 3, 4, 5, 6 |
 | P1.11 | Chiusura: rapporto, ADR, elenco degli aperti per la Fase 2 | 9 |
+| P1.12 | **Si fa tra P1.6 e P1.7** (il numero è in coda per non rinumerare). La Scarlett 18i20 di quarta generazione: `fcp-support` e firmware nell'immagine ([ADR 0024](../../adr/0024-interfaccia-fcp-server-e-firmware.md)), stato noto del routing, di nuovo la latenza di P1.5 e le due ore di P1.6e. In tre sottopassi ([guida](P1.12-la-scarlett-di-quarta-generazione.md)): P1.12a consegnato il 24 novembre 2026 | 1, 2 |
 
 Perché quest'ordine:
 
@@ -192,3 +193,5 @@ Se la misura di A-53 dirà che il controller condiviso disturba, la via più pul
 Quando arriva: il criterio di accettazione della fase nomina la 18i20, e il prompt nomina `fcp-server`, che è della quarta. Vedi la domanda D-28.
 
 **È arrivata il 24 novembre 2026.** Scelta dell'utente dello stesso giorno: ci si passa **subito dopo la chiusura di P1.6, prima del grafo (P1.7)**, con un passo a sé: `fcp-server` nell'immagine, il routing noto, e di nuovo le misure di latenza (P1.5) e le due ore (P1.6e). I punti aperti da A-57 ad A-62 sono stranezze viste sulla seconda generazione, ed è meglio sapere se valgono anche per la quarta prima di progettare il grafo e il lavoro sul driver. Scartati: aspettare la fine della fase (si scoprirebbe tardi un comportamento diverso) e tenerle collegate tutte e due (due interfacce sullo stesso controller USB, punto aperto A-53).
+
+Il passo è il **P1.12** ([guida](P1.12-la-scarlett-di-quarta-generazione.md)). Scelte dell'utente del 24 novembre 2026: il firmware dell'interfaccia sta nell'immagine, l'interfaccia si aggiorna prima di misurarla, e il passo prende un numero nuovo in coda invece di rinumerare gli altri.

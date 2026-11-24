@@ -1,0 +1,15 @@
+config BR2_PACKAGE_SCARLETT4_FIRMWARE
+	bool "scarlett4-firmware"
+	depends on BR2_PACKAGE_FCP_SUPPORT
+	help
+	  The firmware of the Focusrite Scarlett 18i20 of the fourth
+	  generation, as Focusrite publishes it for use with Linux: the
+	  file fcp-tool writes into the interface when asked to update
+	  it. Nothing in the image does so by itself.
+
+	  Only the file of the 18i20 (USB 1235:821d) is installed, in
+	  /usr/lib/firmware/scarlett4. It is not free software: it may
+	  be passed on unchanged, for use with products of Focusrite
+	  only (LICENSE.Focusrite).
+
+	  https://github.com/geoffreybennett/scarlett4-firmware
