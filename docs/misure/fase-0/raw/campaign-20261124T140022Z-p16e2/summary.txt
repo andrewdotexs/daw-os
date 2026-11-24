@@ -1,0 +1,48 @@
+started_utc: 2026-11-24T14:00:22Z
+label: p16e2
+plan: load:840
+cycle: default
+script_sha256: b72916271a87f66857c45fce10323367adc83e7eb47a3283d99f4acfc691aa96
+threshold_us: 50
+trace_us: 20
+timerlat_period_us: 250
+cyclictest_period_us: 1000
+priority: fifo 95
+live_cpus: 4-7
+system_cpus: 16-19
+io_cpus: 20-23
+load_cpus: 0-3,8-15,16-19
+burst_cpus: 0,1,2,3
+monitored_cpus: 0-3,8-15,16-19,20-23
+disk_load: yes
+shared_dev: /dev/disk/by-partlabel/shared
+write_mib_s: 25
+file_mib: 65536
+vm_bytes: 2G
+uptime_at_start_s: 352
+image_version: 0.0.1.20261124134837
+image_build: f22fde9f7a9d
+kernel: Linux 6.18.64-dawos #3 SMP PREEMPT_RT Sun Nov 22 05:01:13 CET 2026
+kernel_config_sha256: 2b8d975c1ee78d562ab59f41d1ba9f4a38c54b255dd4186e1a9c64bf8ffaee49
+cmdline: dm-mod.create="dawos-root,,,ro,0 128848 verity 1 PARTLABEL=dawos-root-0.0.1.20261124134837 PARTLABEL=dawos-verity-0.0.1.20261124134837 4096 4096 16106 1 sha256 8dea3d4f8db82ba0a9faebe1d230a2570e06d8035e8fe3075c5bcfcb92bdb185 663af1b286a51986ccd3155287dc3984a9c5250209ae63716760f12cc3fdafed 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261124134837,PARTLABEL=dawos-verity-0.0.1.20261124134837 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k
+cmdline_sha256: c21b5476af53180e8ff75fcd4efbef8bd76bbf0068ed65368e36bedc88ff98cd
+bios: 3402 09/18/2026
+microcode: 0x122
+profile: 285k
+tune: ok
+modules_loaded: 11
+tools: rtla 6.18.63; stress-ng, version 0.20.00 (gcc 14.3.0, x86_64 Linux 6.18.64-dawos); fio-3.41; cyclictest V 2.80
+throttle_since_boot: core=0 package=0
+finished_utc: 2026-11-24T14:14:31Z
+
+steps (delays in microseconds, of the threads in user space on the live CPUs):
+step                       samples     avg   p99.999     max irq_max traces  smi throttle dev_irq  link   watt watt_max    C  verdict
+1-load-840                       -                                       0    0        0       0     0  107.3  147.4   83  PASS
+
+1-load-840: interrupts that reached each live CPU in the step (name=count):
+  cpu 4: LOC=5 IWI=2 CAL=739 TLB=9 
+  cpu 5: LOC=5 IWI=5 RES=1 CAL=737 TLB=8 
+  cpu 6: LOC=5 IWI=5 RES=2 CAL=740 TLB=10 
+  cpu 7: LOC=3 IWI=2 CAL=736 TLB=7 
+
+campaign: PASS (1 of 1 steps)
