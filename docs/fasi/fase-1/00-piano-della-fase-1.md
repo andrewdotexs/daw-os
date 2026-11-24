@@ -55,7 +55,7 @@ Un passo non si considera chiuso finché il suo criterio non è stato eseguito e
 | P1.9 | Il kernel (Q-13, A-49): stima e piano sottoposti all'utente, poi la prova della serie sul rinvio degli interrupt tra core | 8 |
 | P1.10 | La campagna: 24 ore a 96 kHz, un'ora a 48 e una a 192 kHz, prova d'urto finale | 2, 3, 4, 5, 6 |
 | P1.11 | Chiusura: rapporto, ADR, elenco degli aperti per la Fase 2 | 9 |
-| P1.12 | **Si fa tra P1.6 e P1.7** (il numero è in coda per non rinumerare). La Scarlett 18i20 di quarta generazione: `fcp-support` e firmware nell'immagine ([ADR 0024](../../adr/0024-interfaccia-fcp-server-e-firmware.md)), stato noto del routing, di nuovo la latenza di P1.5 e le due ore di P1.6e. In tre sottopassi ([guida](P1.12-la-scarlett-di-quarta-generazione.md)): P1.12a consegnato il 24 novembre 2026 | 1, 2 |
+| P1.12 | **Si fa tra P1.6 e P1.7** (il numero è in coda per non rinumerare). La Scarlett 18i20 di quarta generazione: `fcp-support` e firmware nell'immagine ([ADR 0024](../../adr/0024-interfaccia-fcp-server-e-firmware.md)), stato noto del routing, di nuovo la latenza di P1.5 e le due ore di P1.6e. In tre sottopassi ([guida](P1.12-la-scarlett-di-quarta-generazione.md)): P1.12a **superato** il 24 novembre 2026 (firmware da 1.4.2301.0 a 3.0.2778.0, 959 controlli, il motore apre la scheda alle tre frequenze); P1.12b, i file dello stato noto, **superato** lo stesso giorno (prova breve 8 casi su 8, nessun xrun e nessuno slittamento) | 1, 2 |
 
 Perché quest'ordine:
 

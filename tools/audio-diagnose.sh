@@ -7,24 +7,36 @@
 #
 #   1. the state of the router of the interface;
 #   2. its level meters at rest;
-#   3. for each of the ten line outputs: the engine plays the tone there
-#      for six seconds and listens to the eight analogue inputs; half way
-#      the level meters of the interface are read. The meters say whether
-#      the interface receives the tone from the computer; the inputs say
-#      where it comes back, whichever jacks the cable is in;
+#   3. for each of the first ten playback channels: the engine plays the
+#      tone there for six seconds and listens to the first ten capture
+#      channels; half way the level meters of the interface are read.
+#      The meters say whether the interface receives the tone from the
+#      computer and where it sends it; the inputs say where it comes
+#      back, whichever jacks the cable is in;
 #   4. the same tone on output 3 from another program (speaker-test), to
 #      tell the engine from the rest.
 #
-# The meters are those of the driver (control "Level Meter", 0 to 4095):
-# one per destination of the router, the ten line outputs first, the
-# eighteen capture channels last.
+# The meters are the control "Level Meter" (0 to 4095), and which meter
+# is which depends on the interface: here they are numbered from 1 and
+# only those that are not at zero are shown. On the Scarlett 18i20 of
+# the second generation (driver scarlett2) there is one per destination
+# of the router: the ten line outputs first, the eighteen capture
+# channels last. On the fourth generation fcp-server puts the sources
+# first, in the order of its map (analogue inputs 1-8, the microphone of
+# the panel, S/PDIF, ADAT, the playback channels), then the
+# destinations; only those the interface has a meter for (step P1.12).
+#
+# On the fourth generation capture channels 9 and 10 take playback
+# channels 1 and 2 back inside the interface, in its known state: the
+# tone on output 1 must be heard on input 9 whatever the cables.
 #
 # It runs ON the machine, from the development PC:
 #
 #   ssh "root@${H}" sh -s < tools/audio-diagnose.sh > FILE
 #
 # About a minute and a half. A tone of 1 kHz comes out of every line
-# output in turn: keep monitors and headphones down.
+# output in turn: keep monitors and headphones down, and nothing that
+# amplifies on the line outputs.
 
 set -u
 
@@ -51,17 +63,22 @@ meters() {
 	amixer -c "${card}" cget iface=PCM,name='Level Meter' 2> /dev/null | sed -n 's/^  : values=//p'
 }
 
-# One line: the meters of the ten line outputs and of the capture
-# channels 1 to 8 (fields 39 to 46: after 10 line outputs, 2 S/PDIF
-# outputs, 8 ADAT outputs and 18 inputs of the mixer).
+# One line: the meters that are not at zero, as NUMBER=VALUE, numbered
+# from 1.
 show_meters() {
 	meters | awk -F, -v label="$1" '{
-		printf "%s line outputs 1-10:", label
-		for (i = 1; i <= 10; i++) printf " %s", $i
-		printf " | capture channels 1-8:"
-		for (i = 39; i <= 46; i++) printf " %s", $i
+		printf "%s", label
+		shown = 0
+		for (i = 1; i <= NF; i++) if ($i + 0 != 0) { printf " %d=%s", i, $i; shown++ }
+		if (!shown) printf " all %d at zero", NF
 		printf "\n"
 	}'
+}
+
+# Channels of the first playback setting of the card.
+playback_channels() {
+	awk '$1 == "Playback:" { inside = 1 } $1 == "Capture:" { inside = 0 }
+		inside && $1 == "Channels:" { print $2; exit }' "/proc/asound/card${card}/stream0" 2> /dev/null
 }
 
 # The inputs the engine listened to, from its report $1: one line each.
@@ -97,16 +114,16 @@ dawos-card-setup check --card "${card}" 2>&1
 echo
 echo "== 2. the level meters at rest (0 to 4095) =="
 show_meters "at rest:"
-echo "all 56: $(meters)"
+echo "all of them: $(meters)"
 
 echo
-echo "== 3. the tone of the engine on each line output, six seconds each =="
+echo "== 3. the tone of the engine on each of the first ten outputs, six seconds each =="
 echo "(levels in dB relative to full scale; the tone leaves at -12)"
 for output in 1 2 3 4 5 6 7 8 9 10; do
 	echo
 	echo "-- tone on output ${output} --"
 	"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --seconds 6 \
-		--tone "${output}" --listen 1,2,3,4,5,6,7,8 --allow-xruns --require-rt \
+		--tone "${output}" --listen 1,2,3,4,5,6,7,8,9,10 --allow-xruns --require-rt \
 		> "${work}/run.txt" 2> "${work}/run.err" &
 	engine_pid=$!
 	sleep 4
@@ -122,7 +139,7 @@ done
 
 echo
 echo "== 4. the same tone on output 3 from speaker-test =="
-speaker-test -D "hw:${identifier},0" -c 20 -r 48000 -F S32_LE -t sine -f 1000 -s 3 \
+speaker-test -D "hw:${identifier},0" -c "$(playback_channels)" -r 48000 -F S32_LE -t sine -f 1000 -s 3 \
 	> "${work}/speaker.txt" 2>&1 &
 speaker_pid=$!
 sleep 3

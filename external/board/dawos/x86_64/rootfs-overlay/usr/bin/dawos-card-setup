@@ -20,6 +20,8 @@
 # Usage:
 #   dawos-card-setup show  [--card N]            every writable control, in
 #                                                the format of a state file
+#                                                (not the locked ones, nor
+#                                                strings of bytes)
 #   dawos-card-setup check [--card N] [FILE]     what differs from the file
 #   dawos-card-setup apply [--card N] [FILE]     set what differs, then check
 #   dawos-card-setup set   [--card N] NAME VALUE set one control
@@ -89,7 +91,12 @@ function flush(    count, parts, i, shown) {
 	order[++controls] = name
 	current[name] = shown
 	kind[name] = type
-	writable[name] = (access ~ /^rw/)
+	# Writable by us: not the controls another program keeps for itself
+	# ("l", locked: fcp-server shows versions, the lock of the clock
+	# and the fixed inputs of the mixer that way), and not strings of
+	# bytes (the name the interface gives itself, which ends with
+	# digits of its serial number and has no place in a state file).
+	writable[name] = (access ~ /^rw/ && access !~ /^....l/ && type != "BYTES")
 	ident[name] = id
 	name = ""
 }
@@ -209,14 +216,24 @@ differences() {
 }
 
 # Print what differs, in words. Returns 1 when something does.
+#
+# Of the controls the card does not have, the first five are named and
+# the others counted: when the router of an interface is shown by a
+# program and not by the kernel (fcp-server, for the Focusrite Control
+# Protocol) and that program is not running, every control of the file
+# is missing, and they are hundreds.
 report() {
 	result=0
+	missing=0
 	tab=$(printf '\t')
 	while IFS="${tab}" read -r what _ _ control current wanted; do
 		result=1
 		case "${what}" in
 		DIFF) echo "differs: ${control}: is '${current}', the file says '${wanted}'" ;;
-		MISSING) echo "missing: the card has no control '${control}'" ;;
+		MISSING)
+			missing=$((missing + 1))
+			[ "${missing}" -gt 5 ] || echo "missing: the card has no control '${control}'"
+			;;
 		BADVALUE) echo "bad value: ${control}: '${wanted}' is not one of its values (it is '${current}')" ;;
 		READONLY) echo "read-only: ${control}: is '${current}', the file says '${wanted}', and it cannot be set" ;;
 		BADFILE) echo "the file has lines that were not understood" ;;
@@ -224,6 +241,10 @@ report() {
 	done << EOF
 $1
 EOF
+	if [ "${missing}" -gt 5 ]; then
+		echo "missing: and $((missing - 5)) more controls of the file"
+		echo "hint: is this the file of this card? For an interface of the Focusrite Control Protocol: is fcp-server@${card}.service running?"
+	fi
 	return "${result}"
 }
 
