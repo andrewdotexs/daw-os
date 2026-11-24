@@ -1,0 +1,95 @@
+dawos-engine 0.1.0
+backend: null
+rate_hz: 48000
+quantum_frames: 96
+period_us: 2000.000
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 12
+load_percent: 60
+margin_us: 150
+fault: stuck-thread on thread 1 after 4 s
+watchdog_rounds: 6005
+systemd_listening: no
+kernel_work_ms: 2002 rounds, mean 0.94, longest 3.22
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped      6005       0          0        0      1.57      2.77     1202.70     1202.97       794.39
+1      spare  stopped      4001       0          0        0      1.55      1.95     1202.69     1202.89       795.29
+2      first  stopped      6005       0          0        0      1.58      2.74     1202.69     1203.00       794.26
+3      first  stopped      6005       0          0        0      1.59      2.61     1202.55     1203.25       794.28
+1      first  never came back: stuck, moved off its CPU by the watchdog
+
+record_of_every_cycle: 24016 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 6005 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.27      1.57      1.75      2.00      2.25      2.77      2.77
+  input and patch               0.01      0.03      0.25      0.25      0.25      0.25      0.25
+  nodes                      1202.28   1202.66   1202.92   1202.92   1202.92   1202.92   1202.92
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.33   1202.70   1202.97   1202.97   1202.97   1202.97   1202.97
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 6005, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 794.39
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 1: 2000 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.26      1.59      1.75      2.00      2.25      2.72      2.72
+  input and patch               0.01      0.01      0.23      0.23      0.23      0.23      0.23
+  nodes                      1202.37   1202.68   1202.87   1202.87   1202.87   1202.87   1202.87
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.39   1202.71   1202.90   1202.90   1202.90   1202.90   1202.90
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 2000, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 794.49
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 1 (spare): 4001 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.23      1.55      1.75      1.95      1.95      1.95      1.95
+  input and patch               0.01      0.04      0.10      0.10      0.10      0.10      0.10
+  nodes                      1202.47   1202.64   1202.83   1202.83   1202.83   1202.83   1202.83
+  output                        0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  compute, whole             1202.52   1202.69   1202.89   1202.89   1202.89   1202.89   1202.89
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 4001, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 795.29
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 2: 6005 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.27      1.58      1.75      2.00      2.25      2.74      2.74
+  input and patch               0.01      0.03      0.24      0.24      0.24      0.24      0.24
+  nodes                      1202.39   1202.65   1202.95   1202.95   1202.95   1202.95   1202.95
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.41   1202.69   1203.00   1203.00   1203.00   1203.00   1203.00
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 6005, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 794.26
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 3: 6005 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.29      1.59      1.75      2.00      2.25      2.61      2.61
+  input and patch               0.01      0.03      0.12      0.12      0.12      0.12      0.12
+  nodes                      1202.28   1202.51   1203.19   1203.19   1203.19   1203.19   1203.19
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.32   1202.55   1203.25   1203.25   1203.25   1203.25   1203.25
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 6005, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 794.28
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, the 4 threads together: 6001 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.04      0.18      0.25      0.50      0.65      0.65      0.65
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+
+watchdog events (milliseconds from the start of the compute phase the thread never left):
+slot 1 cycle 2000 outside any node thread 5524: noticed after 6.01, live CPU free after 6.04, spare thread at work after 8.00
+k04: PASS (limits: noticed within 8.5 ms, live CPU free within 15 ms, spare thread at work within 50 ms, kernel work on every CPU within 20 ms)

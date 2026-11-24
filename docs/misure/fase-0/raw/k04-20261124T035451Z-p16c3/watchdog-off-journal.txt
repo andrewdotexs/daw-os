@@ -1,0 +1,7 @@
+Starting [systemd-run] /usr/bin/dawos-engine run --require-rt --seconds 30 --load 60 --fault watchdog-off --fault-after 4 --fault-thread 1...
+Started [systemd-run] /usr/bin/dawos-engine run --require-rt --seconds 30 --load 60 --fault watchdog-off --fault-after 4 --fault-thread 1.
+dawos-k04-watchdog.service: Watchdog timeout (limit 2s)!
+dawos-k04-watchdog.service: Killing process 6480 (dawos-engine) with signal SIGABRT.
+dawos-k04-watchdog.service: Main process exited, code=dumped, status=6/ABRT
+dawos-k04-watchdog.service: Failed with result 'watchdog'.
+dawos-k04-watchdog.service: Consumed 15.687s CPU time, 26.1M memory peak.
