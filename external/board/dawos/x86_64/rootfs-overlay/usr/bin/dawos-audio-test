@@ -39,15 +39,21 @@
 # the run that counts starts its streams afresh.
 #
 # Cases of "loopback": the plain run, an xrun made on purpose, the card
-# taken away and given back, a live thread that never yields, and a run
+# taken away and given back, a live thread that never yields, a run
 # with the trace of the kernel on the live CPUs (step P1.6c: no system
-# call in the compute phase).
+# call in the compute phase), and a run where the thread that holds the
+# card makes a system call in every compute phase (step P1.6d: the
+# kernel must stop it, and the engine name it and carry it out).
 #
 # Cases of "card": the plain run at every rate asked for, then at the
-# first rate a run with the trace of the kernel, an xrun made on
-# purpose, the live thread that holds the card never yielding, and one
-# of the threads that follow it never yielding (step P1.6b; not with
-# --threads 1).
+# first rate a run with the trace of the kernel, the system call made on
+# purpose, an xrun made on purpose, the live thread that holds the card
+# never yielding, and one of the threads that follow it never yielding
+# (step P1.6b; not with --threads 1).
+#
+# In every case the engine has the kernel stop the system calls of the
+# compute phase, and a call stopped where none was asked for fails the
+# case.
 #
 # Results go to /var/lib/dawos/measure/audio-<time>[-LABEL].
 
@@ -135,6 +141,14 @@ run_case() {
 	# A case with the trace of the kernel (step P1.6c): no system call
 	# may be entered in the compute phase, and the trace must be gone
 	# when the engine ends.
+	# In every case the kernel stops the system calls of the compute
+	# phase (step P1.6d): the engine's own verdict, "compute:", must not
+	# be FAIL. In the case "syscall" a call is made there on purpose,
+	# and the verdict says whether it was stopped and carried out.
+	compute=$(field "${dir}/${name}.txt" compute)
+	case "${compute}" in
+	FAIL*) result=FAIL ;;
+	esac
 	entries=
 	case " $* " in
 	*" --kernel-entries "*)
@@ -168,6 +182,7 @@ run_case() {
 			"${spread}" "$(field "${dir}/${name}.txt" card_followers)"
 		[ -n "${k04}" ] && printf '; k04 %s' "${k04%% *}"
 		[ -n "${entries}" ] && printf '; in the compute phase: %s' "${entries}"
+		printf '; compute %s' "${compute:-not watched}"
 		# Why, in the engine's own words.
 		[ "${result}" = FAIL ] && printf '; audio: %s' "${audio:-no verdict: $(tail -n 1 "${dir}/${name}.err")}"
 		printf '\n'
@@ -304,6 +319,7 @@ if [ "${mode}" = loopback ]; then
 	run_case card-lost --seconds 8 --allow-xruns --fault card-lost
 	run_case stuck-node --seconds 8 --allow-xruns --fault stuck-node --fault-thread 0
 	run_case kernel-entries --seconds 8 --allow-xruns --kernel-entries
+	run_case syscall --seconds 8 --allow-xruns --fault syscall
 	if [ "${loaded}" = yes ]; then
 		modprobe -r snd-aloop 2> /dev/null || true
 	fi
@@ -349,6 +365,8 @@ else
 		settle "${first}"
 		run_case "kernel-entries-${first}" --rate "${first}" --warm-up 8 --seconds 38 --require-rt \
 			--kernel-entries
+		run_case "syscall-${first}" --rate "${first}" --warm-up 8 --seconds 38 --require-rt \
+			--fault syscall --fault-after 18
 		run_case "card-xrun-${first}" --rate "${first}" --seconds 10 --require-rt --fault card-xrun
 		run_case "stuck-node-${first}" --rate "${first}" --seconds 12 --require-rt --kernel-probe \
 			--fault stuck-node --fault-thread 0 --fault-after 4

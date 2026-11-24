@@ -6,7 +6,7 @@
 #
 #   ssh "root@${H}" sh -s -- [LABEL] < tools/cycle-record.sh
 #
-# Four measurements, all with the engine of the image; PARTS chooses
+# Five measurements, all with the engine of the image; PARTS chooses
 # among them (default: the first three):
 #
 #   cost    the engine on the sound card at 96 kHz with one live thread,
@@ -39,6 +39,13 @@
 #           too, for the wake-ups told one by one: on the timer all of
 #           them (the kernel may keep a timer on another CPU), on the
 #           card those of the io domain (where its interrupt is served).
+#   dispatch what it costs to have the kernel stop the system calls of
+#           the compute phase (step P1.6d): four threads on the timer and
+#           four on the card, each twice with it and twice without
+#           (--no-dispatch), in turn; then a run on the card where the
+#           thread that holds it makes a system call in every compute
+#           phase, which must be stopped, named and carried out with no
+#           xrun and no slip.
 #
 # Results go to /var/lib/dawos/measure/record-<time>[-LABEL].
 
@@ -105,7 +112,7 @@ entries_lines() {
 # The figures a run with the trace is compared by with one without: of
 # every live thread, the wake-up and the whole compute phase.
 compared_lines() {
-	grep -E '^(dawos-engine: |card_xruns|slips_on_input_3|record, slot|  wake-up +[0-9]|  wake_up_bands|  compute, whole|  first awake|  least_margin_us|cycles_to_look_at)' "$1"
+	grep -E '^(dawos-engine: |syscall_dispatch|syscalls_stopped_in_compute|compute: |audio: |card_xruns|slips_on_input_3|record, slot|  wake-up +[0-9]|  wake_up_bands|  compute, whole|  first awake|  least_margin_us|cycles_to_look_at)' "$1"
 }
 
 wanted() {
@@ -256,6 +263,47 @@ if wanted entries; then
 	[ -d /sys/kernel/tracing/instances/dawos-engine ] &&
 		rmdir /sys/kernel/tracing/instances/dawos-engine 2> /dev/null
 fi | tee "${dir}/entries-summary.txt"
+
+# One run of "dispatch": $1 name, $2 words, the rest the options of the
+# engine.
+dispatch_run() {
+	name=$1
+	words=$2
+	shift 2
+	echo
+	echo "== dispatch: ${words} =="
+	"${ENGINE}" run "$@" --require-rt > "${dir}/dispatch-${name}.txt" 2>&1
+	compared_lines "${dir}/dispatch-${name}.txt"
+	grep -E '^  slot [0-9]+.* cycle [0-9]+ (node|outside)' "${dir}/dispatch-${name}.txt" | head -n 4
+}
+
+if wanted dispatch; then
+	for round in 1 2; do
+		dispatch_run "timer-on-${round}" "four live threads on the timer, 60 % busy, ${FOUR_SECONDS} s, system calls stopped (${round})" \
+			--backend null --threads 4 --load 60 --seconds "${FOUR_SECONDS}"
+		dispatch_run "timer-off-${round}" "the same, system calls not stopped (${round})" \
+			--backend null --threads 4 --load 60 --seconds "${FOUR_SECONDS}" --no-dispatch
+	done
+	if [ -n "${identifier}" ]; then
+		"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --rate 96000 --seconds 8 --threads 1 \
+			--allow-xruns --require-rt > "${dir}/dispatch-settle.txt" 2>&1
+		for round in 1 2; do
+			dispatch_run "card-on-${round}" "four live threads on the card at 96 kHz, ${FOUR_SECONDS} s, system calls stopped (${round})" \
+				--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 4 \
+				--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" --tone 3 --tone-cycles 3 --listen 3
+			dispatch_run "card-off-${round}" "the same, system calls not stopped (${round})" \
+				--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 4 \
+				--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" --tone 3 --tone-cycles 3 --listen 3 \
+				--no-dispatch
+		done
+		dispatch_run card-syscall "four live threads on the card at 96 kHz, 60 % busy; the thread that holds it makes a system call in every compute phase from second 20" \
+			--backend alsa --device "hw:${identifier},0" --rate 96000 --threads 4 --load 60 \
+			--seconds "$((FOUR_SECONDS + WARM_UP))" --warm-up "${WARM_UP}" --tone 3 --tone-cycles 3 --listen 3 \
+			--fault syscall --fault-after 20
+	else
+		echo "no USB sound card: the cost is measured on the timer only"
+	fi
+fi | tee "${dir}/dispatch-summary.txt"
 
 echo
 echo "finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a "${dir}/meta.txt"

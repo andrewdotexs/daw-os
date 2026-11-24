@@ -26,6 +26,9 @@ pub enum Fault {
     CardXrun,
     /// The card is taken away, as if unplugged (ALSA back end).
     CardLost,
+    /// A thread makes a system call in every compute phase: in its
+    /// first node, or outside any node when it has none.
+    Syscall,
 }
 
 /// What a test node does when it is run.

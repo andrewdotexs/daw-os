@@ -101,6 +101,9 @@ pub struct Cycle {
     /// of the kernel shows at that instant tells which.
     pub gap_ns: u32,
     pub gap_end_ns: u32,
+    /// System calls stopped in the compute phase (and carried out, or
+    /// refused): none in a healthy cycle.
+    pub caught: u16,
 }
 
 impl Cycle {
@@ -114,7 +117,10 @@ impl Cycle {
             self.captured_ns as u64 | (self.computed_ns as u64) << 32,
             self.finished_ns as u64 | (self.missed as u64) << 32,
             self.input_ready as u64 | (self.output_queued as u64) << 32,
-            self.nodes as u64 | (self.flags as u64) << 16 | (self.slot as u64) << 32,
+            self.nodes as u64
+                | (self.flags as u64) << 16
+                | (self.slot as u64) << 32
+                | (self.caught as u64) << 48,
             self.gap_ns as u64 | (self.gap_end_ns as u64) << 32,
         ]
     }
@@ -137,6 +143,7 @@ impl Cycle {
             slot: (record[6] >> 32) as u16,
             gap_ns: record[7] as u32,
             gap_end_ns: (record[7] >> 32) as u32,
+            caught: (record[6] >> 48) as u16,
         }
     }
 
@@ -268,6 +275,8 @@ pub struct ThreadFigures {
     pub missed: u64,
     pub incomplete: u64,
     pub without_patch: u64,
+    /// System calls stopped in the compute phase, warm-up and all.
+    pub caught: u64,
     /// The worst wake-up of the warm-up.
     pub early_worst_wake_ns: u64,
     /// The fullest the ring was found, and records it had no room for.
@@ -298,6 +307,7 @@ impl ThreadFigures {
             missed: 0,
             incomplete: 0,
             without_patch: 0,
+            caught: 0,
             early_worst_wake_ns: 0,
             fullest: 0,
             dropped: 0,
@@ -461,6 +471,7 @@ impl Meter {
         source.before = Some(cycle);
         let figures = &mut source.figures;
         figures.slot = usize::from(cycle.slot);
+        figures.caught += u64::from(cycle.caught);
 
         if early {
             figures.early_cycles += 1;
@@ -861,10 +872,11 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
             );
         }
         println!(
-            "  periods_gone_by: {}; cycles cut by the budget: {}; cycles without the patch: {}; worst wake-up of the warm-up: {:.2} us",
+            "  periods_gone_by: {}; cycles cut by the budget: {}; cycles without the patch: {}; system calls stopped in the compute phase: {}; worst wake-up of the warm-up: {:.2} us",
             figures.missed,
             figures.incomplete,
             figures.without_patch,
+            figures.caught,
             us(figures.early_worst_wake_ns)
         );
     }
@@ -952,6 +964,7 @@ mod tests {
             slot: 0,
             gap_ns: 0,
             gap_end_ns: 0,
+            caught: 0,
         }
     }
 
@@ -982,6 +995,7 @@ mod tests {
             slot: 3,
             gap_ns: 123_456,
             gap_end_ns: u32::MAX - 9,
+            caught: 40_000,
         };
         assert_eq!(Cycle::from_record(&cycle.to_record()), cycle);
     }

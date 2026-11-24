@@ -2,6 +2,9 @@
 //!
 //! The only module of the workspace with `unsafe` code. Each function
 //! wraps one call, checks its result and hands out plain Rust types.
+//! Two of them make no call: they read and write the registers of a
+//! thread in the state the kernel hands a signal handler (see
+//! `dispatch`).
 
 use std::io;
 use std::sync::atomic::AtomicU32;
@@ -295,4 +298,188 @@ pub(crate) fn read_some(fd: i32, buffer: &mut [u8]) -> io::Result<usize> {
     // the length given to the kernel.
     let result = unsafe { libc::read(fd, buffer.as_mut_ptr().cast(), buffer.len()) };
     usize::try_from(result).map_err(|_| io::Error::last_os_error())
+}
+
+/// What the kernel calls a handler of a signal that wants the details:
+/// the signal, what is known about it, and the state of the thread at
+/// the instant it was stopped.
+pub(crate) type SignalHandler = extern "C" fn(libc::c_int, *mut libc::siginfo_t, *mut libc::c_void);
+
+/// Have `handler` called when a thread of this process gets SIGSYS, the
+/// signal the kernel sends in place of a system call it was told to
+/// stop. For the whole process.
+pub(crate) fn handle_stopped_calls(handler: SignalHandler) -> io::Result<()> {
+    // SAFETY: an all-zero sigaction is a valid one (no handler, no
+    // flags, an empty set of signals to hold back).
+    let mut action: libc::sigaction = unsafe { std::mem::zeroed() };
+    action.sa_sigaction = handler as usize;
+    action.sa_flags = libc::SA_SIGINFO;
+    // SAFETY: `action` is a valid sigaction that outlives the call; the
+    // old one is not asked for. `handler` is a function of this program
+    // that lives as long as the process.
+    let result = unsafe { libc::sigaction(libc::SIGSYS, &action, std::ptr::null_mut()) };
+    if result == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+/// The handler of a signal as the kernel keeps it: not the structure of
+/// the C library, which hides the last field that matters here.
+#[repr(C)]
+struct KernelAction {
+    handler: usize,
+    flags: u64,
+    restorer: usize,
+    mask: u64,
+}
+
+/// Where the code is that ends the handler of SIGSYS: a few bytes of
+/// the C library that make the system call `rt_sigreturn`, and that the
+/// library gives the kernel with every handler. Asked of the kernel
+/// itself, after [`handle_stopped_calls`].
+pub(crate) fn end_of_handler() -> io::Result<usize> {
+    let mut action = KernelAction {
+        handler: 0,
+        flags: 0,
+        restorer: 0,
+        mask: 0,
+    };
+    // SAFETY: with no new action the kernel only writes the current one
+    // into `action`, which has the layout of its own structure on
+    // x86-64 and outlives the call; the last argument is the size of
+    // its set of signals, eight bytes.
+    let result = unsafe {
+        libc::syscall(
+            libc::SYS_rt_sigaction,
+            libc::SIGSYS,
+            std::ptr::null::<KernelAction>(),
+            &mut action as *mut KernelAction,
+            std::mem::size_of::<u64>(),
+        )
+    };
+    // SA_RESTORER, which the C library sets on x86-64.
+    const WITH_RESTORER: u64 = 0x0400_0000;
+    if result != 0 {
+        Err(io::Error::last_os_error())
+    } else if action.flags & WITH_RESTORER == 0 || action.restorer == 0 {
+        Err(io::Error::other(
+            "the C library gave the kernel no code to end a signal handler with",
+        ))
+    } else {
+        Ok(action.restorer)
+    }
+}
+
+/// Ask the kernel to look at `selector` before every system call of the
+/// calling thread, and to send SIGSYS in place of the call when it
+/// holds 1; calls made from the `length` bytes of code at `allowed` are
+/// let through whatever it holds (Syscall User Dispatch).
+///
+/// `selector` must live as long as the thread: the kernel keeps its
+/// address.
+pub(crate) fn stop_calls_by(
+    selector: &'static std::thread::LocalKey<crate::dispatch::State>,
+    allowed: usize,
+    length: usize,
+) -> io::Result<()> {
+    /// From `linux/prctl.h`: the C library crate does not have them for
+    /// this target.
+    const PR_SET_SYSCALL_USER_DISPATCH: libc::c_int = 59;
+    const PR_SYS_DISPATCH_ON: libc::c_ulong = 1;
+    let address = selector.with(|state| state.selector.as_ptr());
+    // SAFETY: `address` is the byte of an atomic in the thread-local
+    // storage of the calling thread, which lives until the thread ends,
+    // and with the thread ends the setting made here; the kernel only
+    // reads it. The other arguments are plain numbers.
+    let result = unsafe {
+        libc::prctl(
+            PR_SET_SYSCALL_USER_DISPATCH,
+            PR_SYS_DISPATCH_ON,
+            allowed as libc::c_ulong,
+            length as libc::c_ulong,
+            address,
+        )
+    };
+    if result == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+/// A system call the kernel stopped: its number, where the program was
+/// (the instruction after the call) and its six arguments.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct StoppedCall {
+    pub number: u64,
+    pub address: u64,
+    pub arguments: [u64; 6],
+}
+
+/// The system call a handler of SIGSYS was called for, from the state
+/// of the thread the kernel hands it. On x86-64 the number is in RAX
+/// (the kernel puts it back there before the signal) and the arguments
+/// in RDI, RSI, RDX, R10, R8 and R9.
+pub(crate) fn stopped_call(context: *mut libc::c_void) -> StoppedCall {
+    // SAFETY: the kernel calls a handler set with SA_SIGINFO with a
+    // pointer to a valid ucontext_t on the stack of the thread, which
+    // stays there until the handler returns; it is only read here.
+    let registers = unsafe { (*context.cast::<libc::ucontext_t>()).uc_mcontext.gregs };
+    let register = |which: libc::c_int| registers[which as usize] as u64;
+    StoppedCall {
+        number: register(libc::REG_RAX),
+        address: register(libc::REG_RIP),
+        arguments: [
+            register(libc::REG_RDI),
+            register(libc::REG_RSI),
+            register(libc::REG_RDX),
+            register(libc::REG_R10),
+            register(libc::REG_R8),
+            register(libc::REG_R9),
+        ],
+    }
+}
+
+/// Make a system call by its number, and return what the kernel
+/// returns: the result, or the error as a negative number.
+pub(crate) fn call_kernel(number: u64, arguments: &[u64; 6]) -> i64 {
+    // SAFETY: this repeats, with the same number and the same six
+    // values, a system call the program itself had made and the kernel
+    // had stopped: whatever those values point to is the business of
+    // the code that made the call, as it would have been.
+    let result = unsafe {
+        libc::syscall(
+            number as libc::c_long,
+            arguments[0],
+            arguments[1],
+            arguments[2],
+            arguments[3],
+            arguments[4],
+            arguments[5],
+        )
+    };
+    if result == -1 {
+        // The C library turns an error into -1 and a number apart.
+        -i64::from(
+            io::Error::last_os_error()
+                .raw_os_error()
+                .unwrap_or(libc::ENOSYS),
+        )
+    } else {
+        result
+    }
+}
+
+/// Give the program `result` as what its stopped system call returned:
+/// it finds it in RAX when the handler ends.
+pub(crate) fn answer_stopped_call(context: *mut libc::c_void, result: i64) {
+    // SAFETY: as in `stopped_call`, `context` is the valid ucontext_t
+    // the kernel gave the handler; the kernel puts its registers back
+    // into the thread when the handler returns, and RAX is where a
+    // system call leaves its result.
+    unsafe {
+        (*context.cast::<libc::ucontext_t>()).uc_mcontext.gregs[libc::REG_RAX as usize] = result;
+    }
 }
