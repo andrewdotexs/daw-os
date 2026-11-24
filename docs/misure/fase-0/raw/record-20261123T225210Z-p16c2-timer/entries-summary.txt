@@ -1,0 +1,260 @@
+
+== entries: four live threads on the timer, 60 % busy, 300 s; without the trace of the kernel ==
+smi_count: 389 before, 389 after; uptime_s at the end: 380
+record, slot 0: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.30      1.98      1.75      5.75      8.00      8.25     67.40
+  compute, whole             1201.93   1202.27   1202.72   1202.72   1202.72   1202.72   1202.72
+  wake_up_bands: under 5 us 141083, 5 to 10 8920, 10 to 20 0, 20 to 50 2, 50 and over 1
+  least_margin_us: 730.40
+record, slot 1: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.26      2.10      1.75      7.75      9.75     10.50     11.94
+  compute, whole             1202.17   1202.53   1202.74   1202.74   1202.74   1202.74   1202.74
+  wake_up_bands: under 5 us 139800, 5 to 10 10149, 10 to 20 57, 20 to 50 0, 50 and over 0
+  least_margin_us: 785.70
+record, slot 2: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.27      2.11      1.75      7.75      9.50     10.25     13.01
+  compute, whole             1202.18   1202.49   1202.74   1202.74   1202.74   1202.74   1202.74
+  wake_up_bands: under 5 us 139817, 5 to 10 10151, 10 to 20 38, 20 to 50 0, 50 and over 0
+  least_margin_us: 784.41
+record, slot 3: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.29      2.04      1.75      7.00      8.50     10.25     14.23
+  compute, whole             1202.15   1202.38   1202.73   1202.73   1202.73   1202.73   1202.73
+  wake_up_bands: under 5 us 140169, 5 to 10 9815, 10 to 20 22, 20 to 50 0, 50 and over 0
+  least_margin_us: 783.23
+  first awake to last           0.05      0.83      0.25      6.25      8.50      9.00     65.63
+cycles_to_look_at: 3 after the warm-up (3 woke more than 20 us late); 0 in it (none)
+
+== entries: four live threads on the timer, 60 % busy, 300 s; with the trace of the kernel ==
+smi_count: 389 before, 389 after; uptime_s at the end: 682
+record, slot 0: 150008 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.62      2.42      2.25      7.75      8.00      8.50     11.40
+  compute, whole             1202.29   1202.53   1202.86   1202.86   1202.86   1202.86   1202.86
+  wake_up_bands: under 5 us 140993, 5 to 10 9012, 10 to 20 3, 20 to 50 0, 50 and over 0
+  least_margin_us: 786.19
+record, slot 1: 150008 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.62      2.69      2.25     11.50     12.00     12.25     14.91
+  compute, whole             1202.37   1202.73   1202.94   1202.94   1202.94   1202.94   1202.94
+  wake_up_bands: under 5 us 140848, 5 to 10 2153, 10 to 20 7007, 20 to 50 0, 50 and over 0
+  least_margin_us: 782.40
+record, slot 2: 150008 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.64      2.60      2.25     10.00     11.50     12.00     17.05
+  compute, whole             1202.25   1202.52   1202.87   1202.87   1202.87   1202.87   1202.87
+  wake_up_bands: under 5 us 140865, 5 to 10 8011, 10 to 20 1132, 20 to 50 0, 50 and over 0
+  least_margin_us: 780.20
+record, slot 3: 150008 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.66      2.51      2.25      9.50     11.50     11.75     19.11
+  compute, whole             1202.16   1202.39   1202.82   1202.82   1202.82   1202.82   1202.82
+  wake_up_bands: under 5 us 140871, 5 to 10 8560, 10 to 20 577, 20 to 50 0, 50 and over 0
+  least_margin_us: 778.24
+  first awake to last           0.04      1.16      0.25      9.75     10.00     10.50     15.41
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+kernel_entries: CPUs 4 5 6 7 traced; 23021557 records read, 23021557 of them of the events asked for; pages with records lost before them: 0; pages not understood: 0; events outside the cycles: 40; cycles out of order: 0
+kernel_entries_other_cpus: 0 1 2 3 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 traced too, 18996431 events: not counted, told in the wake-ups one by one
+kernel_entries_events_this_kernel_has_not: none
+kernel_entries_in_compute: 0 system calls, 0 entries not asked for, in 600028 cycles after the warm-up
+kernel_entries, system calls for each cycle; cycles with:
+                                none       one       two     three      more
+  slot 0, compute             150007         0         0         0         0
+  slot 0, delivery            150007         0         0         0         0
+  slot 0, wait                     0    150007         0         0         0
+  slot 1, compute             150007         0         0         0         0
+  slot 1, delivery            150007         0         0         0         0
+  slot 1, wait                     0    150007         0         0         0
+  slot 2, compute             150007         0         0         0         0
+  slot 2, delivery            150007         0         0         0         0
+  slot 2, wait                     0    150007         0         0         0
+  slot 3, compute             150007         0         0         0         0
+  slot 3, delivery            150007         0         0         0         0
+  slot 3, wait                     0    150007         0         0         0
+kernel_entries, system calls, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     clock_nanosleep 600028 [150007 150007 150007 150007]
+  wake-up:  none
+kernel_entries, entries not asked for, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     none
+  wake-up:  local timer interrupt 526892 [131825 131689 131689 131689]; reschedule interrupt 147 [136 8 3 0]
+kernel_entries, what the kernel did there, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     wait for a lock of the kernel 21990 [3200 9054 5609 4127]
+  wake-up:  timer: hrtimer_wakeup 526892 [131825 131689 131689 131689]
+kernel_entries, the longest step between two readings of the clock in the nodes of each cycle (600028 cycles); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  longest step                  0.03      0.41      0.50      0.75      0.94      0.94      0.94
+  steps_of_a_microsecond_and_more: 0 with an entry into the kernel in them, 0 with none
+kernel_entries, the wake-up of slot 0 (CPU 4), 150007 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.45      0.61      0.75      1.00      2.00      2.25      2.52
+  to the thread on the CPU      1.29      2.03      1.75      7.00      7.25      7.75     10.62
+  from there to user space      0.32      0.40      0.50      1.00      1.00      1.50      1.64
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150007, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 140992; the CPU was held by: nobody 140992; before user space: local timer interrupt 131823, timer: hrtimer_wakeup 131823, reschedule interrupt 136
+  wake-ups of 5 to 10 us: 9012; the CPU was held by: nobody 9012; before user space: local timer interrupt 2, timer: hrtimer_wakeup 2
+  wake-ups of 10 to 20 us: 3; the CPU was held by: nobody 3; before user space: nothing traced
+kernel_entries, the wake-up of slot 1 (CPU 5), 150007 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.46      0.61      0.75      1.00      1.00      1.25      3.24
+  to the thread on the CPU      1.29      2.29      1.75     10.75     11.25     11.50     13.57
+  from there to user space      0.32      0.40      0.50      1.00      1.00      1.50      1.95
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150007, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 140848; the CPU was held by: nobody 140848; before user space: local timer interrupt 131682, timer: hrtimer_wakeup 131682, reschedule interrupt 8
+  wake-ups of 5 to 10 us: 2153; the CPU was held by: nobody 2153; before user space: local timer interrupt 7, timer: hrtimer_wakeup 7
+  wake-ups of 10 to 20 us: 7006; the CPU was held by: nobody 7006; before user space: nothing traced
+kernel_entries, the wake-up of slot 2 (CPU 6), 150007 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.46      0.62      0.75      1.00      1.00      1.00      3.26
+  to the thread on the CPU      1.31      2.20      1.75      9.25     10.75     11.25     11.60
+  from there to user space      0.32      0.40      0.50      1.00      1.00      1.50      1.70
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150007, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 140865; the CPU was held by: nobody 140865; before user space: local timer interrupt 131683, timer: hrtimer_wakeup 131683, reschedule interrupt 3
+  wake-ups of 5 to 10 us: 8011; the CPU was held by: nobody 8011; before user space: local timer interrupt 6, timer: hrtimer_wakeup 6
+  wake-ups of 10 to 20 us: 1131; the CPU was held by: nobody 1131; before user space: nothing traced
+kernel_entries, the wake-up of slot 3 (CPU 7), 150007 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.46      0.62      0.75      1.00      1.00      1.11      1.11
+  to the thread on the CPU      1.33      2.11      1.75      9.00     10.75     11.00     16.24
+  from there to user space      0.30      0.40      0.50      1.00      1.00      1.25      1.72
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150007, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 140871; the CPU was held by: nobody 140871; before user space: local timer interrupt 131683, timer: hrtimer_wakeup 131683
+  wake-ups of 5 to 10 us: 8560; the CPU was held by: nobody 8560; before user space: local timer interrupt 6, timer: hrtimer_wakeup 6
+  wake-ups of 10 to 20 us: 576; the CPU was held by: nobody 576; before user space: nothing traced
+
+kernel.timer_migration: 1; 0 for the next two runs
+
+== entries: four live threads on the timer, 60 % busy, timers kept on their CPU, 300 s; without the trace of the kernel ==
+smi_count: 389 before, 389 after; uptime_s at the end: 982
+record, slot 0: 150033 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.29      1.66      1.75      2.00      2.25      2.25      5.29
+  compute, whole             1202.28   1203.01   1203.66   1203.66   1203.66   1203.66   1203.66
+  wake_up_bands: under 5 us 150032, 5 to 10 1, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.96
+record, slot 1: 150033 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.28      1.66      1.75      2.00      2.00      2.25      5.23
+  compute, whole             1202.39   1203.03   1203.55   1203.55   1203.55   1203.55   1203.55
+  wake_up_bands: under 5 us 150032, 5 to 10 1, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.93
+record, slot 2: 150033 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.34      1.67      1.75      2.00      2.25      2.50      5.34
+  compute, whole             1202.26   1202.70   1203.48   1203.48   1203.48   1203.48   1203.48
+  wake_up_bands: under 5 us 150032, 5 to 10 1, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.99
+record, slot 3: 150033 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.30      1.67      1.75      2.00      2.25      2.50      5.44
+  compute, whole             1202.44   1203.04   1203.53   1203.53   1203.53   1203.53   1203.53
+  wake_up_bands: under 5 us 150032, 5 to 10 1, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.86
+  first awake to last           0.06      0.14      0.25      0.50      0.75      0.75      1.00
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+
+== entries: four live threads on the timer, 60 % busy, timers kept on their CPU, 300 s; with the trace of the kernel ==
+smi_count: 389 before, 389 after; uptime_s at the end: 1284
+record, slot 0: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.69      2.09      2.25      2.75      3.00      4.75      6.14
+  compute, whole             1202.32   1202.75   1203.10   1203.10   1203.10   1203.10   1203.10
+  wake_up_bands: under 5 us 150002, 5 to 10 4, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.07
+record, slot 1: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.71      2.10      2.25      2.75      3.00      4.25      5.55
+  compute, whole             1202.26   1202.75   1203.08   1203.08   1203.08   1203.08   1203.08
+  wake_up_bands: under 5 us 150003, 5 to 10 3, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.77
+record, slot 2: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.75      2.12      2.25      2.75      3.00      5.00      5.71
+  compute, whole             1202.30   1202.54   1202.93   1202.93   1202.93   1202.93   1202.93
+  wake_up_bands: under 5 us 149995, 5 to 10 11, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.75
+record, slot 3: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+  wake-up                       1.71      2.12      2.25      2.75      4.00      5.00      5.61
+  compute, whole             1202.36   1202.88   1203.29   1203.29   1203.29   1203.29   1203.29
+  wake_up_bands: under 5 us 149992, 5 to 10 14, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.57
+  first awake to last           0.04      0.20      0.25      0.50      2.25      3.25      4.11
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+kernel_entries: CPUs 4 5 6 7 traced; 23033732 records read, 23033732 of them of the events asked for; pages with records lost before them: 0; pages not understood: 0; events outside the cycles: 56; cycles out of order: 0
+kernel_entries_other_cpus: 0 1 2 3 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 traced too, 18798450 events: not counted, told in the wake-ups one by one
+kernel_entries_events_this_kernel_has_not: none
+kernel_entries_in_compute: 0 system calls, 0 entries not asked for, in 600020 cycles after the warm-up
+kernel_entries, system calls for each cycle; cycles with:
+                                none       one       two     three      more
+  slot 0, compute             150005         0         0         0         0
+  slot 0, delivery            150005         0         0         0         0
+  slot 0, wait                     0    150005         0         0         0
+  slot 1, compute             150005         0         0         0         0
+  slot 1, delivery            150005         0         0         0         0
+  slot 1, wait                     0    150005         0         0         0
+  slot 2, compute             150005         0         0         0         0
+  slot 2, delivery            150005         0         0         0         0
+  slot 2, wait                     0    150005         0         0         0
+  slot 3, compute             150005         0         0         0         0
+  slot 3, delivery            150005         0         0         0         0
+  slot 3, wait                     0    150005         0         0         0
+kernel_entries, system calls, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     clock_nanosleep 600020 [150005 150005 150005 150005]
+  wake-up:  none
+kernel_entries, entries not asked for, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     none
+  wake-up:  local timer interrupt 600020 [150005 150005 150005 150005]
+kernel_entries, what the kernel did there, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     wait for a lock of the kernel 17429 [4435 4272 4249 4473]
+  wake-up:  timer: hrtimer_wakeup 600020 [150005 150005 150005 150005]
+kernel_entries, the longest step between two readings of the clock in the nodes of each cycle (600020 cycles); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  longest step                  0.03      0.40      0.50      0.75      0.75      0.89      0.89
+  steps_of_a_microsecond_and_more: 0 with an entry into the kernel in them, 0 with none
+kernel_entries, the wake-up of slot 0 (CPU 4), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.47      0.60      0.75      0.93      0.93      0.93      0.93
+  to the thread on the CPU      1.35      1.72      1.75      2.25      2.50      3.50      4.37
+  from there to user space      0.32      0.38      0.50      0.75      0.75      1.50      1.78
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 150001; the CPU was held by: nobody 150001; before user space: local timer interrupt 150001, timer: hrtimer_wakeup 150001
+  wake-ups of 5 to 10 us: 4; the CPU was held by: nobody 4; before user space: local timer interrupt 4, timer: hrtimer_wakeup 4
+kernel_entries, the wake-up of slot 1 (CPU 5), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.48      0.61      0.75      1.00      1.00      1.00      1.04
+  to the thread on the CPU      1.38      1.72      1.75      2.25      2.50      3.50      3.86
+  from there to user space      0.32      0.38      0.50      0.75      0.75      1.25      1.71
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 150002; the CPU was held by: nobody 150002; before user space: local timer interrupt 150002, timer: hrtimer_wakeup 150002
+  wake-ups of 5 to 10 us: 3; the CPU was held by: nobody 3; before user space: local timer interrupt 3, timer: hrtimer_wakeup 3
+kernel_entries, the wake-up of slot 2 (CPU 6), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.48      0.61      0.75      1.00      1.00      1.00      1.05
+  to the thread on the CPU      1.43      1.73      1.75      2.25      2.50      3.75      4.07
+  from there to user space      0.31      0.38      0.50      0.75      0.75      1.50      1.76
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 149994; the CPU was held by: nobody 149994; before user space: local timer interrupt 149994, timer: hrtimer_wakeup 149994
+  wake-ups of 5 to 10 us: 11; the CPU was held by: nobody 11; before user space: local timer interrupt 11, timer: hrtimer_wakeup 11
+kernel_entries, the wake-up of slot 3 (CPU 7), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.49      0.62      0.75      0.75      1.00      1.00      1.14
+  to the thread on the CPU      1.39      1.74      1.75      2.25      3.00      4.00      4.46
+  from there to user space      0.32      0.38      0.50      0.75      1.00      1.50      1.72
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 149991; the CPU was held by: nobody 149991; before user space: local timer interrupt 149991, timer: hrtimer_wakeup 149991
+  wake-ups of 5 to 10 us: 14; the CPU was held by: nobody 14; before user space: local timer interrupt 14, timer: hrtimer_wakeup 14
