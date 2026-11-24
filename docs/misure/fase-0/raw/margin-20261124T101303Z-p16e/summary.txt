@@ -1,0 +1,31 @@
+rate     load  margin  xruns                        slips of the count                 cut         compute   left_us   to_play  audio
+96000     120     400  0                            0 (largest 0 samples)              15017       1638.11    354.50       181  PASS (no xrun; the tone is on input 3; the count comes back 
+96000     120     300  0                            0 (largest 0 samples)              15017       1734.33    257.98       181  PASS (no xrun; the tone is on input 3; the count comes back 
+96000     120     250  0                            1 (largest 1 samples)              15017       1782.52    209.90       181  PASS (no xrun; the tone is on input 3; 1 slips of at most 1 
+96000     120     200  0                            1 (largest 1 samples)              15017       1830.53    161.53       181  PASS (no xrun; the tone is on input 3; 1 slips of at most 1 
+96000     120     150  0                            0 (largest 0 samples)              15017       1878.47    113.92       181  PASS (no xrun; the tone is on input 3; the count comes back 
+96000     120     100  0                            0 (largest 0 samples)              15016       1926.35     62.20       181  PASS (no xrun; the tone is on input 3; the count comes back 
+96000     120      50  0                            0 (largest 0 samples)              15016       1974.65      5.31       185  PASS (no xrun; the tone is on input 3; the count comes back 
+96000      60     150  0                            0 (largest 0 samples)              0           1207.02    785.24       181  PASS (no xrun; the tone is on input 3; the count comes back 
+48000     120     400  0                            1 (largest 1 samples)              15014       1637.01    355.60        91  PASS (no xrun; the tone is on input 3; 1 slips of at most 1 
+48000     120     300  0                            0 (largest 0 samples)              15016       1733.07    259.10        91  PASS (no xrun; the tone is on input 3; the count comes back 
+48000     120     250  0                            1 (largest 1 samples)              15016       1781.17    211.32        91  PASS (no xrun; the tone is on input 3; 1 slips of at most 1 
+48000     120     200  0                            1 (largest 1 samples)              15017       1829.18    162.84        91  PASS (no xrun; the tone is on input 3; 1 slips of at most 1 
+48000     120     150  0                            0 (largest 0 samples)              15016       1877.31    111.12        91  PASS (no xrun; the tone is on input 3; the count comes back 
+48000     120     100  0                            1 (largest 1 samples)              15017       1925.35     66.80        91  PASS (no xrun; the tone is on input 3; 1 slips of at most 1 
+48000     120      50  0                            0 (largest 0 samples)              15016       1973.38     10.06        93  PASS (no xrun; the tone is on input 3; the count comes back 
+48000      60     150  0                            0 (largest 0 samples)              0           1205.90    786.12        91  PASS (no xrun; the tone is on input 3; the count comes back 
+192000    120     400  0                            0 (largest 0 samples)              15017       1640.19    352.44       361  PASS (no xrun; the tone is on input 3; the count comes back 
+192000    120     300  0                            0 (largest 0 samples)              15017       1736.24    251.81       361  PASS (no xrun; the tone is on input 3; the count comes back 
+192000    120     250  0                            0 (largest 0 samples)              15016       1784.21    207.64       361  PASS (no xrun; the tone is on input 3; the count comes back 
+192000    120     200  0                            0 (largest 0 samples)              15016       1832.21    159.84       361  PASS (no xrun; the tone is on input 3; the count comes back 
+192000    120     150  0                            0 (largest 0 samples)              15017       1880.72    111.86       361  PASS (no xrun; the tone is on input 3; the count comes back 
+192000    120     100  0                            0 (largest 0 samples)              15016       1928.26     64.02       361  PASS (no xrun; the tone is on input 3; the count comes back 
+192000    120      50  0                            0 (largest 0 samples)              15016       1976.61     11.92       745  PASS (no xrun; the tone is on input 3; the count comes back 
+192000     60     150  0                            0 (largest 0 samples)              0           1208.74    783.48       361  PASS (no xrun; the tone is on input 3; the count comes back 
+
+columns: cut, the cycles of the thread that holds the card ended by the compute budget;
+  compute, its longest compute phase in microseconds; left_us, the least time left before
+  the end of the period (negative: after it); to_play, the least frames the card still had
+  to play at a wake-up.
+finished_utc: 2026-11-24T10:28:59Z
