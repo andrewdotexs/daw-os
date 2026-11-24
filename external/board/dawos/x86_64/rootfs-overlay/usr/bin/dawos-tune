@@ -22,8 +22,9 @@
 #      live CPUs pauses of 10 to 20 us (measured in step P1.0);
 #   3. every interrupt that can be moved goes to the "io" CPUs;
 #   4. kernel work queues not bound to a CPU are kept off the live CPUs;
-#   5. the periodic refresh of memory statistics is slowed down, and the
-#      periodic poll for corrected hardware errors is switched off;
+#   5. the periodic refresh of memory statistics is slowed down, the
+#      periodic poll for corrected hardware errors is switched off, and
+#      the timers of the kernel are kept on the CPU that sets them;
 #   6. the live CPUs get their fair-server setting, their idle-state
 #      limit, a fixed frequency and the energy preference of the other
 #      CPUs; what the processor does on its own
@@ -418,6 +419,29 @@ stop_error_poll() {
 	esac
 }
 
+# --- Step 5c: timers stay on the CPU that sets them ----------------------------------
+# Left to itself the kernel moves a timer set on an isolated CPU to a CPU
+# that is not, when that one has an event of its own due sooner: the timer
+# goes off there, and the thread it wakes is woken across two CPUs. For a
+# live thread asleep on the clock that was 4 us more in one wake-up out of
+# fourteen, and now and then tens of microseconds (80 at the worst) when
+# the other CPU was late: with the timers kept at home, ten minutes of
+# four live threads had no wake-up above 6.2 us (step P1.6c). The setting
+# is one for the whole machine.
+keep_timers_home() {
+	file=${PROC}/sys/kernel/timer_migration
+	timer_migration=null
+	if [ ! -e "${file}" ]; then
+		note "no timer migration to switch off"
+		return
+	fi
+	write_file "${file}" 0
+	case "$(read_file "${file}")" in
+	0) timer_migration=0 ;;
+	*) problem "could not keep the timers of the kernel on their CPU (${file})" ;;
+	esac
+}
+
 # --- Step 6: fair server of the live CPUs -------------------------------------------
 # The kernel exposes it per CPU in debugfs, as the nanoseconds reserved
 # in each period; 0 switches it off. The kernel logs a warning for every
@@ -707,6 +731,7 @@ write_report() {
 				echo "    \"workqueue_cpumask\": $(json_string "${workqueue_mask}"),"
 				echo "    \"vm_stat_interval_s\": ${STAT_INTERVAL},"
 				echo "    \"machine_check_poll_s\": ${error_poll_s},"
+				echo "    \"timer_migration\": ${timer_migration},"
 				echo "    \"fair_server_on_live\": $(json_string "${fair_server}"),"
 				echo "    \"idle\": {\"driver\": $(json_string "${idle_driver}"), \"limit\": $(json_string "${idle_limit}"), \"resume_latency_us\": ${idle_latency}, \"c1e_auto_promotion\": ${idle_c1e}},"
 				echo "    \"frequency\": {\"live_khz\": ${live_khz}, \"energy_preference\": ${live_preference}, \"preemptive_pcore_khz\": ${preemptive_khz}},"
@@ -789,6 +814,7 @@ else
 		limit_workqueues
 		slow_statistics
 		stop_error_poll
+		keep_timers_home
 		set_fair_server
 		if [ "${virtual}" = true ]; then
 			note "virtual machine: idle states, frequency and power limit not touched"

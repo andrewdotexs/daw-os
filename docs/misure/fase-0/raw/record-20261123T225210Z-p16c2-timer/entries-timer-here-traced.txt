@@ -1,0 +1,296 @@
+dawos-engine 0.1.0
+backend: null
+rate_hz: 48000
+quantum_frames: 96
+period_us: 2000.000
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+seconds: 300
+load_percent: 60
+margin_us: 150
+fault: none
+watchdog_rounds: 150006
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped    150006       0          0        0      2.09      6.14     1202.75     1203.10       791.07
+1      first  stopped    150006       0          0        0      2.10      5.55     1202.75     1203.08       791.77
+2      first  stopped    150006       0          0        0      2.12      5.71     1202.54     1202.93       791.75
+3      first  stopped    150006       0          0        0      2.12      5.61     1202.88     1203.29       791.57
+
+record_of_every_cycle: 600024 cycles read, 0 dropped (rings of 4096 records, the fullest held 12)
+record, slot 0: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.69      2.09      2.25      2.75      3.00      4.75      6.14
+  input and patch               0.01      0.04      0.13      0.13      0.13      0.13      0.13
+  nodes                      1202.26   1202.69   1203.04   1203.04   1203.04   1203.04   1203.04
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.32   1202.75   1203.10   1203.10   1203.10   1203.10   1203.10
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 150002, 5 to 10 4, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.07
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 1: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.71      2.10      2.25      2.75      3.00      4.25      5.55
+  input and patch               0.01      0.04      0.14      0.14      0.14      0.14      0.14
+  nodes                      1202.17   1202.69   1203.03   1203.03   1203.03   1203.03   1203.03
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.26   1202.75   1203.08   1203.08   1203.08   1203.08   1203.08
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 150003, 5 to 10 3, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.77
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 2: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.75      2.12      2.25      2.75      3.00      5.00      5.71
+  input and patch               0.01      0.04      0.15      0.15      0.15      0.15      0.15
+  nodes                      1202.26   1202.48   1202.87   1202.87   1202.87   1202.87   1202.87
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.30   1202.54   1202.93   1202.93   1202.93   1202.93   1202.93
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 149995, 5 to 10 11, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.75
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 3: 150006 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.71      2.12      2.25      2.75      4.00      5.00      5.61
+  input and patch               0.01      0.04      0.13      0.13      0.13      0.13      0.13
+  nodes                      1202.29   1202.83   1203.23   1203.23   1203.23   1203.23   1203.23
+  output                        0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  compute, whole             1202.36   1202.88   1203.29   1203.29   1203.29   1203.29   1203.29
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 149992, 5 to 10 14, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 791.57
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; worst wake-up of the warm-up: 0.00 us
+record, the 4 threads together: 150006 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.04      0.20      0.25      0.50      2.25      3.25      4.11
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+
+kernel_entries: CPUs 4 5 6 7 traced; 23033732 records read, 23033732 of them of the events asked for; pages with records lost before them: 0; pages not understood: 0; events outside the cycles: 56; cycles out of order: 0
+kernel_entries_other_cpus: 0 1 2 3 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 traced too, 18798450 events: not counted, told in the wake-ups one by one
+kernel_entries_events_this_kernel_has_not: none
+kernel_entries_in_compute: 0 system calls, 0 entries not asked for, in 600020 cycles after the warm-up
+kernel_entries, system calls for each cycle; cycles with:
+                                none       one       two     three      more
+  slot 0, compute             150005         0         0         0         0
+  slot 0, delivery            150005         0         0         0         0
+  slot 0, wait                     0    150005         0         0         0
+  slot 1, compute             150005         0         0         0         0
+  slot 1, delivery            150005         0         0         0         0
+  slot 1, wait                     0    150005         0         0         0
+  slot 2, compute             150005         0         0         0         0
+  slot 2, delivery            150005         0         0         0         0
+  slot 2, wait                     0    150005         0         0         0
+  slot 3, compute             150005         0         0         0         0
+  slot 3, delivery            150005         0         0         0         0
+  slot 3, wait                     0    150005         0         0         0
+kernel_entries, system calls, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     clock_nanosleep 600020 [150005 150005 150005 150005]
+  wake-up:  none
+kernel_entries, entries not asked for, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     none
+  wake-up:  local timer interrupt 600020 [150005 150005 150005 150005]
+kernel_entries, what the kernel did there, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     wait for a lock of the kernel 17429 [4435 4272 4249 4473]
+  wake-up:  timer: hrtimer_wakeup 600020 [150005 150005 150005 150005]
+kernel_entries, the longest step between two readings of the clock in the nodes of each cycle (600020 cycles); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  longest step                  0.03      0.40      0.50      0.75      0.75      0.89      0.89
+  steps_of_a_microsecond_and_more: 0 with an entry into the kernel in them, 0 with none
+kernel_entries, the wake-up of slot 0 (CPU 4), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.47      0.60      0.75      0.93      0.93      0.93      0.93
+  to the thread on the CPU      1.35      1.72      1.75      2.25      2.50      3.50      4.37
+  from there to user space      0.32      0.38      0.50      0.75      0.75      1.50      1.78
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 150001; the CPU was held by: nobody 150001; before user space: local timer interrupt 150001, timer: hrtimer_wakeup 150001
+  wake-ups of 5 to 10 us: 4; the CPU was held by: nobody 4; before user space: local timer interrupt 4, timer: hrtimer_wakeup 4
+kernel_entries, the wake-up of slot 1 (CPU 5), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.48      0.61      0.75      1.00      1.00      1.00      1.04
+  to the thread on the CPU      1.38      1.72      1.75      2.25      2.50      3.50      3.86
+  from there to user space      0.32      0.38      0.50      0.75      0.75      1.25      1.71
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 150002; the CPU was held by: nobody 150002; before user space: local timer interrupt 150002, timer: hrtimer_wakeup 150002
+  wake-ups of 5 to 10 us: 3; the CPU was held by: nobody 3; before user space: local timer interrupt 3, timer: hrtimer_wakeup 3
+kernel_entries, the wake-up of slot 2 (CPU 6), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.48      0.61      0.75      1.00      1.00      1.00      1.05
+  to the thread on the CPU      1.43      1.73      1.75      2.25      2.50      3.75      4.07
+  from there to user space      0.31      0.38      0.50      0.75      0.75      1.50      1.76
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 149994; the CPU was held by: nobody 149994; before user space: local timer interrupt 149994, timer: hrtimer_wakeup 149994
+  wake-ups of 5 to 10 us: 11; the CPU was held by: nobody 11; before user space: local timer interrupt 11, timer: hrtimer_wakeup 11
+kernel_entries, the wake-up of slot 3 (CPU 7), 150005 of them; microseconds from the instant the period was due:
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt        0.49      0.62      0.75      0.75      1.00      1.00      1.14
+  to the thread on the CPU      1.39      1.74      1.75      2.25      3.00      4.00      4.46
+  from there to user space      0.32      0.38      0.50      0.75      1.00      1.50      1.72
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock               -         -         -         -         -         -         -
+  given_the_cpu: never left it 0, once 150005, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 0 wake-ups
+  wake-ups of under 5 us: 149991; the CPU was held by: nobody 149991; before user space: local timer interrupt 149991, timer: hrtimer_wakeup 149991
+  wake-ups of 5 to 10 us: 14; the CPU was held by: nobody 14; before user space: local timer interrupt 14, timer: hrtimer_wakeup 14
+kernel_entries, wake-ups one by one (microseconds from the instant the period was due):
+  slot 3 cycle 1 at 0.004 s (the first that took so long): in user space 2.14 us after the period was due
+       -793.94  the thread                    enters the kernel: clock_nanosleep
+       -793.17  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -27.13  CPU 0, at rest                local timer interrupt
+        -27.05  CPU 0, at rest                timer: tick_nohz_handler
+         +0.62  at rest                       local timer interrupt
+         +0.73  at rest                       timer: hrtimer_wakeup
+         +0.79  at rest                       wakes the thread of the engine, for CPU 7
+         +1.74  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +1.95  the thread                    back from clock_nanosleep, which returned 0
+  slot 1 cycle 1 at 0.004 s (the first that took so long): in user space 2.26 us after the period was due
+       -794.16  the thread                    enters the kernel: clock_nanosleep
+       -793.58  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -27.13  CPU 0, at rest                local timer interrupt
+        -27.05  CPU 0, at rest                timer: tick_nohz_handler
+         +0.64  at rest                       local timer interrupt
+         +0.71  at rest                       timer: hrtimer_wakeup
+         +0.77  at rest                       wakes the thread of the engine, for CPU 5
+         +1.84  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +2.07  the thread                    back from clock_nanosleep, which returned 0
+         +2.21  CPU 16, at rest               local timer interrupt
+  slot 0 cycle 1 at 0.004 s (the first that took so long): in user space 2.27 us after the period was due
+       -794.21  the thread                    enters the kernel: clock_nanosleep
+       -793.64  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -27.13  CPU 0, at rest                local timer interrupt
+        -27.05  CPU 0, at rest                timer: tick_nohz_handler
+         +0.57  at rest                       local timer interrupt
+         +0.67  at rest                       timer: hrtimer_wakeup
+         +0.74  at rest                       wakes the thread of the engine, for CPU 4
+         +1.84  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +2.03  the thread                    back from clock_nanosleep, which returned 0
+         +2.21  CPU 16, at rest               local timer interrupt
+  slot 2 cycle 1 at 0.004 s (the first that took so long): in user space 2.29 us after the period was due
+       -794.04  the thread                    enters the kernel: clock_nanosleep
+       -793.10  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -27.13  CPU 0, at rest                local timer interrupt
+        -27.05  CPU 0, at rest                timer: tick_nohz_handler
+         +0.61  at rest                       local timer interrupt
+         +0.70  at rest                       timer: hrtimer_wakeup
+         +0.76  at rest                       wakes the thread of the engine, for CPU 6
+         +1.90  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +2.13  the thread                    back from clock_nanosleep, which returned 0
+         +2.21  CPU 16, at rest               local timer interrupt
+  slot 3 cycle 4362 at 8.726 s (the first that took so long): in user space 5.07 us after the period was due
+       -794.95  the thread                    enters the kernel: clock_nanosleep
+       -794.47  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -42.60  CPU 18, meter                 back from read, which returned 4096
+        -34.70  CPU 18, meter                 enters the kernel: read
+        -33.91  CPU 18, meter                 back from read, which returned -11
+        -33.20  CPU 18, meter                 enters the kernel: read
+        -28.46  CPU 18, meter                 back from read, which returned 4096
+        -27.18  CPU 0, at rest                local timer interrupt
+        -27.08  CPU 0, at rest                timer: tick_nohz_handler
+        -24.08  CPU 18, meter                 enters the kernel: read
+        -16.01  CPU 18, meter                 back from read, which returned 4096
+         -8.42  CPU 18, meter                 enters the kernel: read
+         -7.66  CPU 18, meter                 back from read, which returned -11
+         -6.95  CPU 18, meter                 enters the kernel: read
+         -3.98  CPU 18, meter                 back from read, which returned 4096
+         -2.17  CPU 18, meter                 enters the kernel: read
+         +1.04  at rest                       local timer interrupt
+         +1.78  at rest                       timer: hrtimer_wakeup
+         +2.05  CPU 16, at rest               local timer interrupt
+         +2.41  at rest                       wakes the thread of the engine, for CPU 7
+         +2.47  CPU 16, at rest               timer: hrtimer_wakeup
+         +2.90  CPU 16, at rest               wakes thread watchdog, for CPU 16
+         +3.88  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +4.60  the thread                    back from clock_nanosleep, which returned 0
+  slot 1 cycle 16557 at 33.116 s (the first that took so long): in user space 5.34 us after the period was due
+       -795.07  the thread                    enters the kernel: clock_nanosleep
+       -794.59  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -49.41  CPU 18, meter                 back from clock_nanosleep, which returned 0
+        -39.49  CPU 18, meter                 enters the kernel: read
+        -36.36  CPU 18, meter                 back from read, which returned 4096
+        -34.72  CPU 18, meter                 enters the kernel: read
+        -27.16  CPU 0, at rest                local timer interrupt
+        -27.07  CPU 0, at rest                timer: tick_nohz_handler
+        -22.97  CPU 18, meter                 back from read, which returned 4096
+        -12.61  CPU 18, meter                 enters the kernel: read
+        -11.79  CPU 18, meter                 back from read, which returned -11
+        -10.97  CPU 18, meter                 enters the kernel: read
+         -7.55  CPU 18, meter                 back from read, which returned 4096
+         -5.25  CPU 18, meter                 enters the kernel: read
+         +0.88  at rest                       local timer interrupt
+         +1.58  at rest                       timer: hrtimer_wakeup
+         +2.08  CPU 16, at rest               local timer interrupt
+         +2.38  at rest                       wakes the thread of the engine, for CPU 5
+         +2.51  CPU 16, at rest               timer: hrtimer_wakeup
+         +2.95  CPU 16, at rest               wakes thread watchdog, for CPU 16
+         +3.67  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +4.62  the thread                    back from clock_nanosleep, which returned 0
+  slot 2 cycle 18127 at 36.256 s (the first that took so long): in user space 5.05 us after the period was due
+       -795.29  the thread                    enters the kernel: clock_nanosleep
+       -794.78  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -43.80  CPU 18, meter                 enters the kernel: read
+        -43.01  CPU 18, meter                 back from read, which returned -11
+        -42.25  CPU 18, meter                 enters the kernel: read
+        -39.53  CPU 18, meter                 back from read, which returned 4096
+        -38.19  CPU 18, meter                 enters the kernel: read
+        -27.13  CPU 0, at rest                local timer interrupt
+        -27.03  CPU 0, at rest                timer: tick_nohz_handler
+        -26.85  CPU 18, meter                 back from read, which returned 4096
+        -16.56  CPU 18, meter                 enters the kernel: read
+        -15.82  CPU 18, meter                 back from read, which returned -11
+        -15.12  CPU 18, meter                 enters the kernel: read
+         -8.50  CPU 18, meter                 back from read, which returned 4096
+         -2.82  CPU 18, meter                 enters the kernel: read
+         +0.84  at rest                       local timer interrupt
+         +1.56  at rest                       timer: hrtimer_wakeup
+         +2.04  CPU 16, at rest               local timer interrupt
+         +2.30  at rest                       wakes the thread of the engine, for CPU 6
+         +2.51  CPU 16, at rest               timer: hrtimer_wakeup
+         +2.91  CPU 16, at rest               wakes thread watchdog, for CPU 16
+         +3.63  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +4.37  the thread                    back from clock_nanosleep, which returned 0
+  slot 0 cycle 29585 at 59.172 s (the first that took so long): in user space 5.12 us after the period was due
+       -794.94  the thread                    enters the kernel: clock_nanosleep
+       -794.43  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -36.13  CPU 17, at rest               local timer interrupt
+        -35.19  CPU 17, at rest               wakes thread ktimers/17, for CPU 17
+        -31.56  CPU 17, at rest               the CPU goes to thread ktimers/17; the one before is left able to run
+        -30.55  CPU 17, ktimers/17            softirq: high resolution timer
+        -29.98  CPU 17, ktimers/17            timer: hrtimer_wakeup
+        -29.55  CPU 17, ktimers/17            wakes thread meter, for CPU 17
+        -27.15  CPU 0, at rest                local timer interrupt
+        -27.03  CPU 0, at rest                timer: tick_nohz_handler
+        -24.00  CPU 17, ktimers/17            the CPU goes to nobody (the CPU rests); the one before is left asleep
+        -23.03  CPU 18, at rest               the CPU goes to thread meter; the one before is left able to run
+        -21.76  CPU 18, meter                 back from clock_nanosleep, which returned 0
+        -11.94  CPU 18, meter                 enters the kernel: read
+         -5.53  CPU 18, meter                 back from read, which returned 4096
+         -0.41  CPU 18, meter                 enters the kernel: read
+         +0.82  at rest                       local timer interrupt
+         +1.59  at rest                       timer: hrtimer_wakeup
+         +2.01  CPU 16, at rest               local timer interrupt
+         +2.44  at rest                       wakes the thread of the engine, for CPU 4
+         +2.44  CPU 16, at rest               timer: hrtimer_wakeup
+         +2.86  CPU 16, at rest               wakes thread watchdog, for CPU 16
+         +3.84  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +4.45  the thread                    back from clock_nanosleep, which returned 0

@@ -65,12 +65,28 @@ impl Node {
     }
 
     /// Run the node in cycle `cycle`. Compute phase: no system call.
+    ///
+    /// A node that keeps the CPU busy does it by reading the clock
+    /// again and again, some tens of nanoseconds apart. A longer step
+    /// between two readings is time something took from the thread: the
+    /// longest step of the run is returned, with the instant it ended
+    /// (0 and 0 for a node that does not read the clock).
     #[inline]
-    pub fn run(&self, cycle: u64) {
+    pub fn run(&self, cycle: u64) -> (u64, clock::Instant) {
         match self.work {
             Work::Spin(ns) => {
-                let end = clock::now() + ns;
-                while clock::now() < end {
+                let mut before = clock::now();
+                let end = before + ns;
+                let mut longest = (0, 0);
+                loop {
+                    let now = clock::now();
+                    if now - before > longest.0 {
+                        longest = (now - before, now);
+                    }
+                    if now >= end {
+                        return longest;
+                    }
+                    before = now;
                     std::hint::spin_loop();
                 }
             }
@@ -82,6 +98,7 @@ impl Node {
                         std::hint::spin_loop();
                     }
                 }
+                (0, 0)
             }
         }
     }

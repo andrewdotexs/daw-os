@@ -14,6 +14,7 @@
 
 pub mod clock;
 pub mod cpu;
+pub mod files;
 pub mod gate;
 pub mod pcm_timer;
 pub mod ring;
