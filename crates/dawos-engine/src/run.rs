@@ -12,6 +12,7 @@ use dawos_audio_io::{
     NullBackend, XrunView,
 };
 use dawos_rt::cpu::{self, Policy};
+use dawos_rt::dispatch;
 use dawos_rt::ring::{ring, Writer};
 use dawos_rt::slot::Slot;
 use dawos_rt::{clock, topology};
@@ -118,6 +119,8 @@ pub struct Outcome {
     pub threads: usize,
     pub realtime: bool,
     pub memory_locked: bool,
+    /// Whether the kernel stops the system calls of the compute phase.
+    pub dispatch: Watched,
     pub options: RunOptions,
     /// One report per thread that ended, in no particular order.
     pub reports: Vec<ThreadReport>,
@@ -150,6 +153,18 @@ pub struct EventView {
     pub demote_errors: u32,
 }
 
+/// Whether the system calls of the compute phase are stopped by the
+/// kernel (ADR 0021).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Watched {
+    /// Not asked for (`--no-dispatch`).
+    Off,
+    /// On every thread that runs the cycle, tried at its start.
+    On,
+    /// The kernel refused, or the trial failed: why.
+    Refused(String),
+}
+
 /// Run and print; an error when the run could not start, or when a fault
 /// was injected and not handled within the limits.
 pub fn run(options: &RunOptions) -> Result<(), String> {
@@ -170,6 +185,14 @@ pub fn run(options: &RunOptions) -> Result<(), String> {
         Verdict::Fail(text) => {
             println!("audio: FAIL ({text})");
             failures.push("the sound card did not do what was asked");
+        }
+    }
+    match compute_verdict(&outcome) {
+        Verdict::NotAsked => {}
+        Verdict::Pass(text) => println!("compute: PASS ({text})"),
+        Verdict::Fail(text) => {
+            println!("compute: FAIL ({text})");
+            failures.push("system calls in the compute phase are not as ADR 0021 requires");
         }
     }
     if failures.is_empty() {
@@ -208,6 +231,10 @@ struct Common {
     ready: AtomicUsize,
     /// Threads that did not get the real-time priority.
     without_realtime: AtomicUsize,
+    /// Have the kernel stop the system calls of the compute phase, and
+    /// why it does not on some thread, if so.
+    dispatch: bool,
+    dispatch_refused: Mutex<Option<String>>,
     /// What went wrong while starting, if anything.
     errors: Mutex<Vec<String>>,
 }
@@ -216,6 +243,24 @@ impl Common {
     fn error(&self, message: String) {
         if let Ok(mut errors) = self.errors.lock() {
             errors.push(message);
+        }
+    }
+
+    /// Have the kernel stop the system calls the calling thread makes
+    /// in its compute phase, as the options say.
+    fn watch_calls(&self, who: &str) {
+        if !self.dispatch {
+            return;
+        }
+        if let Err(error) = dispatch::enable_here() {
+            if self.realtime == Realtime::Required {
+                self.error(format!(
+                    "{who}: cannot have its system calls stopped in the compute phase: {error}"
+                ));
+            }
+            if let Ok(mut refused) = self.dispatch_refused.lock() {
+                refused.get_or_insert_with(|| format!("{who}: {error}"));
+            }
         }
     }
 
@@ -267,6 +312,19 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     if options.fault != Fault::None && options.fault_after_s >= options.seconds {
         return Err("--fault-after must be less than --seconds".to_string());
     }
+
+    // ---- The handler of the system calls the kernel stops in the
+    // compute phase: one for the process, before any thread exists.
+    let (dispatch, handler_refused) = match options.dispatch.then(dispatch::install) {
+        None => (false, None),
+        Some(Ok(())) => (true, None),
+        Some(Err(error)) if options.realtime == Realtime::Required => {
+            return Err(format!(
+                "cannot have the system calls of the compute phase stopped: {error}"
+            ));
+        }
+        Some(Err(error)) => (false, Some(error.to_string())),
+    };
 
     let memory_locked = match cpu::lock_memory() {
         Ok(()) => true,
@@ -352,6 +410,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         fault: options.fault,
         fault_thread: options.fault_thread,
         fault_cycle,
+        fault_made: AtomicBool::new(false),
         patch,
     });
     let spares: Arc<Vec<Spare>> = Arc::new((0..threads).map(|_| Spare::default()).collect());
@@ -422,6 +481,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         realtime: options.realtime,
         ready: AtomicUsize::new(0),
         without_realtime: AtomicUsize::new(0),
+        dispatch,
+        dispatch_refused: Mutex::new(None),
         errors: Mutex::new(Vec::new()),
     });
 
@@ -704,6 +765,20 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         realtime: options.realtime != Realtime::Off
             && common.without_realtime.load(Ordering::Acquire) == 0,
         memory_locked,
+        dispatch: {
+            let refused = handler_refused.or_else(|| {
+                common
+                    .dispatch_refused
+                    .lock()
+                    .ok()
+                    .and_then(|refused| refused.clone())
+            });
+            match refused {
+                Some(why) => Watched::Refused(why),
+                None if options.dispatch => Watched::On,
+                None => Watched::Off,
+            }
+        },
         options: options.clone(),
         reports,
         never_returned,
@@ -775,6 +850,7 @@ fn live_thread(common: &Common, index: usize, mut record: Option<Writer>) -> Thr
         }
     }
     common.take_priority(common.priority, &format!("live thread {index}"));
+    common.watch_calls(&format!("live thread {index}"));
     let slot = &common.shared.slots[index];
     slot.take(cpu::thread_id());
     let mut backend = backend(common, index, false);
@@ -813,6 +889,7 @@ fn spare_thread(common: &Common, index: usize, mut record: Option<Writer>) -> Op
             ));
         }
     }
+    common.watch_calls(&format!("spare thread {index}"));
     let spare = &common.spares[index];
     spare.tid.store(cpu::thread_id(), Ordering::Release);
     common.ready.fetch_add(1, Ordering::AcqRel);
@@ -842,6 +919,50 @@ enum Verdict {
     Fail(String),
 }
 
+/// The answer to "was the compute phase free of system calls?", and,
+/// when one is made on purpose, "was it stopped, named and carried
+/// out?".
+fn compute_verdict(outcome: &Outcome) -> Verdict {
+    if outcome.dispatch != Watched::On {
+        return Verdict::NotAsked;
+    }
+    let caught: u64 = outcome.reports.iter().map(|report| report.caught).sum();
+    if outcome.options.fault != Fault::Syscall {
+        return if caught == 0 {
+            Verdict::Pass("no system call in the compute phase".to_string())
+        } else {
+            Verdict::Fail(format!("{caught} system calls in the compute phase"))
+        };
+    }
+    // The call made on purpose: every one of them stopped and carried
+    // out, on the thread asked, and no other call anywhere.
+    let thread = outcome.options.fault_thread;
+    let of_the_thread = |count: fn(&ThreadReport) -> u64| -> u64 {
+        outcome
+            .reports
+            .iter()
+            .filter(|report| report.slot == thread)
+            .map(count)
+            .sum()
+    };
+    let made = of_the_thread(|report| report.calls_on_purpose);
+    let stopped = of_the_thread(|report| report.caught);
+    let as_asked = outcome
+        .reports
+        .iter()
+        .flat_map(|report| &report.caught_calls)
+        .all(|call| call.number == 24 && call.carried_out);
+    let text = format!(
+        "{made} system calls made on purpose in the compute phase of thread {thread}, {stopped} stopped and carried out; {} stopped elsewhere",
+        caught - stopped
+    );
+    if made > 0 && stopped == made && caught == stopped && as_asked {
+        Verdict::Pass(text)
+    } else {
+        Verdict::Fail(text)
+    }
+}
+
 fn verdict(outcome: &Outcome) -> Verdict {
     let period_ms = outcome.format.period_ns() as f64 / 1e6;
     // Three periods stuck, one of grain of the watchdog, half a
@@ -849,7 +970,8 @@ fn verdict(outcome: &Outcome) -> Verdict {
     let detect_limit_ms = (STUCK_PERIODS + 1) as f64 * period_ms + 0.5;
     match outcome.options.fault {
         // The faults of the card are judged with the sound.
-        Fault::None | Fault::CardXrun | Fault::CardLost => Verdict::NotAsked,
+        // The system call made on purpose has a verdict of its own.
+        Fault::None | Fault::CardXrun | Fault::CardLost | Fault::Syscall => Verdict::NotAsked,
         Fault::WatchdogOff => {
             if outcome.events.is_empty() {
                 Verdict::Pass(
@@ -980,8 +1102,11 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
 
     // With a tone, every input listened to must carry it; in every
     // second, unless the run was disturbed on purpose.
-    let disturbed =
-        options.allow_xruns || !matches!(options.fault, Fault::None | Fault::WatchdogOff);
+    let disturbed = options.allow_xruns
+        || !matches!(
+            options.fault,
+            Fault::None | Fault::WatchdogOff | Fault::Syscall
+        );
     if options.tone.is_some() {
         for heard in &card.heard {
             let input = heard.channel + 1;
@@ -1125,6 +1250,46 @@ fn print(outcome: &Outcome) {
         "memory_locked: {}",
         if outcome.memory_locked { "yes" } else { "no" }
     );
+    println!(
+        "syscall_dispatch: {}",
+        match &outcome.dispatch {
+            Watched::On => "on (every thread of the cycle tried it at its start)".to_string(),
+            Watched::Off => "off (--no-dispatch)".to_string(),
+            Watched::Refused(why) => format!("refused ({why})"),
+        }
+    );
+    let caught: u64 = outcome.reports.iter().map(|report| report.caught).sum();
+    println!("syscalls_stopped_in_compute: {caught}");
+    for report in &outcome.reports {
+        for call in &report.caught_calls {
+            println!(
+                "  slot {}{} cycle {} {}: {}, from address {:#x}; {}",
+                report.slot,
+                if report.spare { " (spare)" } else { "" },
+                call.cycle,
+                call.node.map_or_else(
+                    || "outside any node".to_string(),
+                    |node| format!("node {node}")
+                ),
+                crate::ktrace::syscall_name(call.number)
+                    .map_or_else(|| format!("system call {}", call.number), str::to_string),
+                call.address,
+                if call.carried_out {
+                    "carried out"
+                } else {
+                    "refused"
+                }
+            );
+        }
+        if report.caught > report.caught_calls.len() as u64 {
+            println!(
+                "  slot {}{}: ... and {} more",
+                report.slot,
+                if report.spare { " (spare)" } else { "" },
+                report.caught - report.caught_calls.len() as u64
+            );
+        }
+    }
     println!("seconds: {}", options.seconds);
     println!("load_percent: {}", options.load_percent);
     println!("margin_us: {}", options.margin_us);
@@ -1146,6 +1311,10 @@ fn print(outcome: &Outcome) {
             ),
             Fault::CardXrun => format!("card-xrun after {} s", options.fault_after_s),
             Fault::CardLost => format!("card-lost after {} s", options.fault_after_s),
+            Fault::Syscall => format!(
+                "a system call in every compute phase of thread {} after {} s",
+                options.fault_thread, options.fault_after_s
+            ),
         }
     );
     println!("watchdog_rounds: {}", outcome.watchdog_rounds);
@@ -1645,6 +1814,65 @@ mod tests {
                 report.incomplete
             );
         }
+    }
+
+    #[test]
+    fn a_system_call_in_the_compute_phase_is_stopped_named_and_carried_out() {
+        let _alone = alone();
+        let outcome = execute(&options(Fault::Syscall)).expect("the run did not start");
+        if let Watched::Refused(why) = &outcome.dispatch {
+            // A kernel older than 5.11, or not built for it: nothing to
+            // say here.
+            eprintln!("the kernel does not stop system calls: {why}");
+            return;
+        }
+        assert_eq!(outcome.dispatch, Watched::On);
+        assert!(outcome.events.is_empty());
+        // Thread 1 makes one call in every cycle of the second second;
+        // thread 0 none.
+        let of = |slot: usize| {
+            outcome
+                .reports
+                .iter()
+                .find(|report| report.slot == slot)
+                .expect("no report for the slot")
+        };
+        assert_eq!(of(0).caught, 0);
+        assert!(of(0).caught_calls.is_empty());
+        assert!((150..=230).contains(&of(1).caught), "{}", of(1).caught);
+        // Every call made was stopped: not one more, not one less.
+        assert_eq!(of(1).calls_on_purpose, of(1).caught);
+        assert_eq!(of(1).caught_calls.len(), dispatch::KEPT);
+        for call in &of(1).caught_calls {
+            // sched_yield, in the first node, and carried out.
+            assert_eq!((call.number, call.node), (24, Some(0)));
+            assert!(call.carried_out);
+            assert!(call.cycle >= 200);
+        }
+        assert!(matches!(compute_verdict(&outcome), Verdict::Pass(_)));
+        // The record of every cycle has them too.
+        let meter = outcome.meter.as_ref().expect("the record was not kept");
+        let recorded: u64 = meter.threads.iter().map(|figures| figures.caught).sum();
+        assert_eq!(recorded, of(1).caught);
+    }
+
+    #[test]
+    fn a_healthy_run_makes_no_system_call_in_the_compute_phase() {
+        let _alone = alone();
+        let outcome = execute(&options(Fault::None)).expect("the run did not start");
+        if outcome.dispatch != Watched::On {
+            return;
+        }
+        assert!(outcome.reports.iter().all(|report| report.caught == 0));
+        assert!(matches!(compute_verdict(&outcome), Verdict::Pass(_)));
+        // Without it nothing is watched, and no verdict is given.
+        let outcome = execute(&RunOptions {
+            dispatch: false,
+            ..options(Fault::None)
+        })
+        .expect("the run did not start");
+        assert_eq!(outcome.dispatch, Watched::Off);
+        assert!(matches!(compute_verdict(&outcome), Verdict::NotAsked));
     }
 
     #[test]

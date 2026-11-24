@@ -84,6 +84,9 @@ pub struct RunOptions {
     /// Read the trace of the kernel on the live CPUs, and say who enters
     /// the kernel in which phase of the cycle (ADR 0021).
     pub kernel_entries: bool,
+    /// Have the kernel stop the system calls of the compute phase (on
+    /// unless `--no-dispatch`).
+    pub dispatch: bool,
     /// With `kernel_entries`: trace these CPUs too (a list, or the name
     /// of a domain of the boot profile, like `io`, where the interrupt
     /// of the card is served).
@@ -179,7 +182,9 @@ Options of run:
   --fault NAME       make something go wrong: stuck-node, stuck-thread,
                      watchdog-off; with alsa also card-xrun (the engine
                      skips some periods) and card-lost (as if the card
-                     had been unplugged) (default: nothing)
+                     had been unplugged); syscall (a thread makes a
+                     system call in every compute phase: it must be
+                     stopped, named and carried out) (default: nothing)
   --fault-after N    seconds before the fault (default 3)
   --fault-thread N   the live thread it strikes, from 0 (default 0)
   --kernel-probe     again and again, ask the kernel for a piece of work
@@ -188,6 +193,9 @@ Options of run:
   --no-record        do not keep the record of every cycle (to see what
                      keeping it costs; the report then has only what
                      each thread sums up by itself)
+  --no-dispatch      do not have the kernel stop the system calls of the
+                     compute phase (to see what it costs; a call made
+                     there is then neither stopped nor named)
   --kernel-entries   trace the kernel on the live CPUs and say, phase
                      by phase of the cycle, who entered it: system
                      calls, interrupts, threads of the kernel; and how
@@ -260,6 +268,7 @@ impl Default for RunOptions {
             kernel_probe: false,
             record: true,
             kernel_entries: false,
+            dispatch: true,
             trace_also: None,
         }
     }
@@ -341,9 +350,10 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                     "watchdog-off" => Fault::WatchdogOff,
                     "card-xrun" => Fault::CardXrun,
                     "card-lost" => Fault::CardLost,
+                    "syscall" => Fault::Syscall,
                     other => {
                         return Err(format!(
-                            "unknown fault '{other}': stuck-node, stuck-thread, watchdog-off, card-xrun or card-lost"
+                            "unknown fault '{other}': stuck-node, stuck-thread, watchdog-off, card-xrun, card-lost or syscall"
                         ))
                     }
                 };
@@ -357,6 +367,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             "--kernel-probe" => options.kernel_probe = true,
             "--no-record" => options.record = false,
             "--kernel-entries" => options.kernel_entries = true,
+            "--no-dispatch" => options.dispatch = false,
             "--trace-also" => options.trace_also = Some(value("--trace-also")?.to_string()),
             "--require-rt" => options.realtime = Realtime::Required,
             "--no-rt" => options.realtime = Realtime::Off,

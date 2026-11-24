@@ -9,11 +9,14 @@
 //! - nothing here allocates, takes a lock or blocks, except the functions
 //!   whose name says so (`sleep_until`, `Gate::wait`);
 //! - `unsafe` code lives in the module `sys` only, one call to the C
-//!   library per function, each with its reason written next to it;
+//!   library per function (or, for the handler of the system calls the
+//!   kernel stops, one reading or one writing of the state the kernel
+//!   hands it), each with its reason written next to it;
 //! - no type from `std::sync` that can block, no channel.
 
 pub mod clock;
 pub mod cpu;
+pub mod dispatch;
 pub mod files;
 pub mod gate;
 pub mod pcm_timer;

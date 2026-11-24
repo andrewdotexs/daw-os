@@ -6,6 +6,7 @@ use std::sync::Mutex;
 
 use dawos_audio_io::{Backend, Disturbance};
 use dawos_rt::clock;
+use dawos_rt::dispatch::{self, Caught};
 use dawos_rt::ring::Writer;
 use dawos_rt::slot::Slot;
 use dawos_rt::stats::Durations;
@@ -31,6 +32,9 @@ pub struct Shared {
     pub fault: Fault,
     pub fault_thread: usize,
     pub fault_cycle: u64,
+    /// The fault of the card was made: it is made once, by whichever
+    /// thread holds the card when its cycle comes.
+    pub fault_made: AtomicBool,
     /// What the first live thread does with the sound of the card, when
     /// the back end has sound. Shared with the spare thread that may
     /// replace it; never waited for.
@@ -61,6 +65,12 @@ pub struct ThreadReport {
     pub least_margin_ns: Option<u64>,
     /// Cycles that ended after their period.
     pub overruns: u64,
+    /// System calls stopped in the compute phase, and the first of
+    /// them one by one.
+    pub caught: u64,
+    pub caught_calls: Vec<Caught>,
+    /// System calls made on purpose in the compute phase (a test).
+    pub calls_on_purpose: u64,
 }
 
 /// How a live thread ended.
@@ -83,6 +93,24 @@ pub fn live_loop(
     generation: u32,
     first_cycle: Option<&AtomicU64>,
     backend: &mut dyn Backend,
+    record: Option<&mut Writer>,
+) -> ThreadReport {
+    let mut report = cycles(shared, slot_index, generation, first_cycle, backend, record);
+    // Out of the cycle: system calls go through, and memory may be
+    // asked for.
+    dispatch::allow();
+    report.caught = dispatch::caught();
+    report.caught_calls = dispatch::kept();
+    report
+}
+
+/// The loop itself.
+fn cycles(
+    shared: &Shared,
+    slot_index: usize,
+    generation: u32,
+    first_cycle: Option<&AtomicU64>,
+    backend: &mut dyn Backend,
     mut record: Option<&mut Writer>,
 ) -> ThreadReport {
     let spare = first_cycle.is_some();
@@ -99,11 +127,15 @@ pub fn live_loop(
         compute: Durations::new(),
         least_margin_ns: Some(u64::MAX),
         overruns: 0,
+        caught: 0,
+        caught_calls: Vec::new(),
+        calls_on_purpose: 0,
     };
+    // System calls stopped so far, to tell those of each cycle.
+    let mut caught_before = dispatch::caught();
     let mut first = true;
     // Sound is the business of the first slot alone.
     let patch = shared.patch.as_ref().filter(|_| slot_index == 0);
-    let mut disturbed = false;
 
     loop {
         // ---- Wait phase: the one blocking call of the cycle.
@@ -120,6 +152,14 @@ pub fn live_loop(
         let period_end = wake.due + shared.period_ns;
         let deadline = period_end.saturating_sub(shared.margin_ns);
         slot.enter_compute(wake.index, wake.woke);
+        // From here to the end of the nodes the kernel stops every
+        // system call of this thread (when it was asked to: one store
+        // that nobody reads otherwise).
+        dispatch::block(wake.index);
+        // By whichever thread holds the slot: a spare one too.
+        let call_on_purpose = shared.fault == Fault::Syscall
+            && slot_index == shared.fault_thread
+            && wake.index >= shared.fault_cycle;
         if first {
             if let Some(first_cycle) = first_cycle {
                 first_cycle.store(wake.woke, Ordering::Release);
@@ -139,19 +179,17 @@ pub fn live_loop(
                 flags |= meter::NO_PATCH;
             }
         }
-        if !disturbed && slot_index == 0 && !spare && wake.index >= shared.fault_cycle {
-            match shared.fault {
-                Fault::CardXrun => {
-                    backend.disturb(Disturbance::Xrun);
-                    flags |= meter::DISTURBED;
-                }
-                Fault::CardLost => {
-                    backend.disturb(Disturbance::CardLost);
-                    flags |= meter::DISTURBED;
-                }
-                _ => {}
-            }
-            disturbed = true;
+        if slot_index == 0
+            && wake.index >= shared.fault_cycle
+            && matches!(shared.fault, Fault::CardXrun | Fault::CardLost)
+            && !shared.fault_made.swap(true, Ordering::AcqRel)
+        {
+            backend.disturb(if shared.fault == Fault::CardXrun {
+                Disturbance::Xrun
+            } else {
+                Disturbance::CardLost
+            });
+            flags |= meter::DISTURBED;
         }
         let captured = clock::now();
 
@@ -170,6 +208,11 @@ pub fn live_loop(
                 break;
             }
             slot.enter_node(index);
+            dispatch::in_node(Some(index as u32));
+            if call_on_purpose && index == 0 {
+                report.calls_on_purpose += 1;
+                std::thread::yield_now();
+            }
             let step = node.run(wake.index);
             slot.leave_node();
             if step.0 > gap.0 {
@@ -182,6 +225,11 @@ pub fn live_loop(
                 report.end = End::Retired;
                 return report;
             }
+        }
+        dispatch::in_node(None);
+        if call_on_purpose && nodes.is_empty() {
+            report.calls_on_purpose += 1;
+            std::thread::yield_now();
         }
 
         // A thread gone wrong outside any node: it never reaches the
@@ -197,6 +245,11 @@ pub fn live_loop(
         }
 
         let computed = clock::now();
+        // The compute phase is over: the output may tell the driver.
+        dispatch::allow();
+        let caught_now = dispatch::caught();
+        let caught = u16::try_from(caught_now - caught_before).unwrap_or(u16::MAX);
+        caught_before = caught_now;
 
         // The output, before the period ends: whatever the nodes did or
         // did not finish.
@@ -242,6 +295,7 @@ pub fn live_loop(
                 slot: u16::try_from(slot_index).unwrap_or(u16::MAX),
                 gap_ns: u32::try_from(gap.0).unwrap_or(u32::MAX),
                 gap_end_ns: since(gap.1),
+                caught,
             };
             record.push(&cycle.to_record());
         }
