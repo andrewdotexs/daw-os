@@ -32,6 +32,15 @@ I sorgenti non stanno nel repository: `make engine-vendor` li scarica una volta 
 | Leggere la riga di comando | Scritto a mano in `dawos-engine/src/cli.rs`: sono otto opzioni |
 | Leggere `topology.json` | Scritto a mano in `dawos-rt/src/topology.rs`: serve una riga del file |
 
+## Programmi di altri nell'immagine, non nel motore
+
+Non sono crate e il motore non li collega: stanno nell'immagine accanto a lui. Decisione e ragioni nell'[ADR 0024](../../adr/0024-interfaccia-fcp-server-e-firmware.md) (passo P1.12, 24 novembre 2026).
+
+| Pacchetto | Versione | Licenza | Perché |
+| --- | --- | --- | --- |
+| `fcp-support` (`fcp-server`, `fcp-tool`) | commit `02be3c9` del 5 novembre 2026, quattro dopo l'etichetta `1.0beta1` | GPL-3.0-or-later | Senza `fcp-server` router, mixer e preamplificatori della Scarlett di quarta generazione non si leggono né si scrivono |
+| `scarlett4-firmware` | commit `183d5ec`, etichetta `1.1`: firmware 3.0.2778.0, il solo file della 18i20 | Di Focusrite: ridistribuzione senza modifiche, solo per prodotti Focusrite. **Non è software libero** | Un firmware noto sotto ogni misura; si scrive nell'interfaccia solo a mano |
+
 ## In arrivo, da approvare al loro passo
 
 | Passo | Bisogno | Candidato |

@@ -130,6 +130,13 @@ BR2_PACKAGE_ALSA_UTILS=y
 BR2_PACKAGE_ALSA_UTILS_APLAY=y
 BR2_PACKAGE_ALSA_UTILS_AMIXER=y
 BR2_PACKAGE_ALSA_UTILS_SPEAKER_TEST=y
+# The Scarlett 18i20 of the fourth generation (USB 1235:821d): the server
+# that turns its router, mixer and preamplifiers into ALSA controls, and
+# the tool that lists the interfaces and updates their firmware (our
+# packages; step P1.12). The firmware file is only ever written into the
+# interface by a command given by hand.
+BR2_PACKAGE_FCP_SUPPORT=y
+BR2_PACKAGE_SCARLETT4_FIRMWARE=y
 
 # Records and reads kernel traces when a latency threshold is exceeded.
 BR2_PACKAGE_TRACE_CMD=y

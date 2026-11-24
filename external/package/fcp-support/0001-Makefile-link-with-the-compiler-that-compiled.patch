@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: dawOS <dawos@localhost>
+Date: Tue, 24 Nov 2026 14:34:53 +0000
+Subject: [PATCH] Makefile: link with the compiler that compiled
+
+The two programs are linked by a literal "cc", whatever CC is: when
+the package is cross-compiled, the objects of the target are handed to
+the compiler of the build machine, which links them against its own
+libraries, or fails.
+
+Upstream: not sent yet
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 64954e7..1ce9c28 100644
+--- a/Makefile
++++ b/Makefile
+@@ -123,10 +123,10 @@ $(SHARED_DEPS):
+ -include $(wildcard $(SHARED_DEPS))
+ 
+ fcp-tool: $(CLIENT_OBJS) $(SHARED_OBJS)
+-	cc -o $@ $(CLIENT_OBJS) $(SHARED_OBJS) ${LDFLAGS}
++	$(CC) -o $@ $(CLIENT_OBJS) $(SHARED_OBJS) ${LDFLAGS}
+ 
+ fcp-server: $(SERVER_OBJS)
+-	cc -o $@ $(SERVER_OBJS) ${LDFLAGS} ${SERVER_LDFLAGS}
++	$(CC) -o $@ $(SERVER_OBJS) ${LDFLAGS} ${SERVER_LDFLAGS}
+ 
+ clean: depclean
+ 	rm -f $(TARGETS) $(CLIENT_OBJS) $(SERVER_OBJS) $(SHARED_OBJS) systemd/fcp-server@.service

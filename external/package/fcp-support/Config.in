@@ -1,0 +1,30 @@
+config BR2_PACKAGE_FCP_SUPPORT
+	bool "fcp-support"
+	depends on BR2_INIT_SYSTEMD
+	depends on BR2_USE_MMU
+	select BR2_PACKAGE_ALSA_LIB
+	select BR2_PACKAGE_ALSA_LIB_HWDEP
+	select BR2_PACKAGE_ALSA_LIB_MIXER
+	select BR2_PACKAGE_JSON_C
+	select BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_ZLIB
+	help
+	  The user-space half of the Linux support for the Focusrite
+	  interfaces that speak the Focusrite Control Protocol: the
+	  Scarlett 16i16, 18i16 and 18i20 of the fourth generation and
+	  the ISA C8X. The kernel driver (sound/usb/fcp.c, in Linux
+	  since 6.14) only carries messages to and from the interface;
+	  what they mean is known here.
+
+	  fcp-server, started by udev for each such interface, reads
+	  its router, mixer and preamplifier settings and shows them as
+	  ALSA controls, the ones dawos-card-setup reads and writes.
+	  Without it the interface plays and records, with whatever
+	  routing it has in its memory, and nothing can be read or
+	  changed.
+
+	  fcp-tool lists the interfaces with the version of their
+	  firmware and updates it, from the files of the package
+	  scarlett4-firmware.
+
+	  https://github.com/geoffreybennett/fcp-support

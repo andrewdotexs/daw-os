@@ -46,3 +46,15 @@ if [[ -n ${found} ]]; then
 	echo "check-private: remove them (they belong in local/ or keys/), then try again." >&2
 	exit 1
 fi
+
+# The name an interface of Focusrite gives itself ends with digits of its
+# serial number. A reading of its mixer controls (amixer contents) holds
+# it as a string of bytes, in the control "Name": tools/audio-load.sh
+# leaves the value out, a reading made by hand does not.
+named=$(grep -rnIA2 "name='Name'\$" -- "${files[@]}" 2> /dev/null | grep -E 'values=0x' || true)
+if [[ -n ${named} ]]; then
+	echo "check-private: the name of an audio interface, which holds digits of its serial number:" >&2
+	echo "${named}" | cut -c 1-120 >&2
+	echo "check-private: replace the value of the control 'Name', then try again." >&2
+	exit 1
+fi
