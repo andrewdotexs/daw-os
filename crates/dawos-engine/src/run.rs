@@ -529,7 +529,14 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                 periods: if card.is_some() { options.periods } else { 0 },
                 threads,
                 start_ns,
-                warm_up_ns: options.warm_up_s * 1_000_000_000,
+                // On the timer there is no warm-up to ask for, and the
+                // first cycle is the one after the threads were set up:
+                // it is counted apart, as a warm-up of one period.
+                warm_up_ns: if card.is_some() {
+                    options.warm_up_s * 1_000_000_000
+                } else {
+                    period_ns
+                },
             },
         );
         let meter = match tracer {

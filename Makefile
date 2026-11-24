@@ -208,6 +208,11 @@ campaign: ## Step P0.7 on a real machine: make campaign HOST=<address> DO="--sta
 campaign-net: ## Network traffic for the campaign, from this PC, until the campaign ends: make campaign-net HOST=<address>
 	@tools/campaign-net.sh $(HOST)
 
+.PHONY: audio-hours
+audio-hours: ## Step P1.6e on a real machine: the engine on the sound card for hours, in the background: make audio-hours HOST=<address> DO="--start LABEL" (or --stop; nothing: the status)
+	@ssh -o ConnectTimeout=10 root@$(HOST) 'mkdir -p /var/lib/dawos && cat > /var/lib/dawos/audio-hours.sh.new && mv /var/lib/dawos/audio-hours.sh.new /var/lib/dawos/audio-hours.sh' < tools/audio-hours.sh
+	@ssh -o ConnectTimeout=10 root@$(HOST) sh /var/lib/dawos/audio-hours.sh $(or $(DO),--status)
+
 .PHONY: lint
 lint: engine-lint ## Run shellcheck, markdownlint, rustfmt and clippy, and look for addresses that must not be committed
 	shellcheck $(SHELL_SOURCES)
