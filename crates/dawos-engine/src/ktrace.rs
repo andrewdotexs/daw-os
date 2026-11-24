@@ -96,6 +96,9 @@ pub enum What {
     /// A thread is being woken by what runs on this CPU (`a`: the
     /// thread, whose name is in `comm`; `b`: the CPU it will run on).
     Waking,
+    /// A function another CPU asked this one to run begins (`a`: the
+    /// function): what a function call interrupt was sent for.
+    Call,
 }
 
 /// One record of the trace.
@@ -165,7 +168,7 @@ const fn vector(name: &'static str, words: &'static str) -> Wanted {
 
 /// Everything asked for. An event this kernel does not have is left
 /// out and named in the report.
-const WANTED: [Wanted; 24] = [
+const WANTED: [Wanted; 25] = [
     wanted(
         "raw_syscalls",
         "sys_enter",
@@ -235,6 +238,12 @@ const WANTED: [Wanted; 24] = [
         "contention_begin",
         What::LockWait,
         ["lock_addr", "flags", "", ""],
+    ),
+    wanted(
+        "csd",
+        "csd_function_entry",
+        What::Call,
+        ["func", "", "", ""],
     ),
     wanted(
         "sched",

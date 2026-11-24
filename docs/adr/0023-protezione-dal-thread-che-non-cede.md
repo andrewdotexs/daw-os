@@ -20,7 +20,7 @@ Il prompt della Fase 1 chiede che la protezione viva nel motore, che il sorvegli
 
 Ogni thread live confronta l'ora con la scadenza del calcolo tra un nodo e l'altro, senza syscall. Alla scadenza non prende altri nodi; il primo thread consegna ciò che è pronto e silenzio per il resto; il ciclo è contato come incompleto; tutti vanno all'attesa.
 
-- **Margine di partenza**: 150 µs prima della fine del quanto.
+- **Margine di partenza**: 150 µs prima della fine del quanto. _Confermato il 24 novembre 2026 sulle misure del passo P1.6e_: la scheda non ne chiede uno più largo; lo decide la durata dei nodi.
 - **Il margine deve superare il nodo più lungo**, finché il controllo non conosce la durata attesa di ogni nodo (dal passo P1.7). La misura del passo P1.3 non ha potuto dare il valore: con il backend `null` non c'è nulla da consegnare dopo il calcolo. Si misura con la scheda, nel passo P1.6 (punto aperto A-54).
 
 ### 2. Il sorvegliante
