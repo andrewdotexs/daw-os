@@ -119,6 +119,8 @@ pub enum Label {
     Ran([u8; 16]),
     /// A thread waited for a lock of the kernel that was taken.
     LockWait,
+    /// A function another CPU asked this one to run, by its address.
+    Call(u64),
 }
 
 /// The kinds of names, for the report.
@@ -138,9 +140,12 @@ impl Label {
             Self::Vector(_) | Self::DeviceIrq(_) | Self::PageFault | Self::Nmi(_) => {
                 Group::NotAskedFor
             }
-            Self::Softirq(_) | Self::Timer(_) | Self::Work(_) | Self::Ran(_) | Self::LockWait => {
-                Group::Inside
-            }
+            Self::Softirq(_)
+            | Self::Timer(_)
+            | Self::Work(_)
+            | Self::Ran(_)
+            | Self::LockWait
+            | Self::Call(_) => Group::Inside,
         }
     }
 
@@ -156,6 +161,9 @@ impl Label {
             Self::Work(function) => format!("work: {}", symbols.name(*function)),
             Self::Ran(comm) => format!("thread {}", name(comm)),
             Self::LockWait => "wait for a lock of the kernel".to_string(),
+            Self::Call(function) => {
+                format!("called from another CPU: {}", symbols.name(*function))
+            }
         }
     }
 }
@@ -186,6 +194,7 @@ fn label(event: &Event) -> Option<Label> {
         What::Timer => Label::Timer(event.a),
         What::Work => Label::Work(event.a),
         What::LockWait => Label::LockWait,
+        What::Call => Label::Call(event.a),
         What::SyscallExit | What::Switch | What::LockGot | What::Waking => return None,
     })
 }
@@ -634,11 +643,17 @@ impl Entries {
                     .gap_end
                     .saturating_sub(before.gap_ns + CLOCK_SLACK_NS);
                 let to = before.gap_end + CLOCK_SLACK_NS;
+                // The first entry into the kernel in the step; the
+                // function another CPU had run, when the step has one,
+                // says more than the interrupt that brought it.
+                let within = |entry: &&(u64, Label)| (from..=to).contains(&entry.0);
                 let cause = cpu
                     .tally
                     .in_compute
                     .iter()
-                    .find(|(time, _)| (from..=to).contains(time));
+                    .filter(within)
+                    .find(|(_, label)| matches!(label, Label::Call(_)))
+                    .or_else(|| cpu.tally.in_compute.iter().find(within));
                 if let Some((_, label)) = cause {
                     let explained = self.gaps_explained.entry(*label).or_insert((0, 0));
                     explained.0 += 1;
@@ -1448,6 +1463,33 @@ mod tests {
         assert_eq!(entries.worst_unexplained[0].gap_ns, 18_000);
     }
 
+    #[test]
+    fn a_step_made_by_a_function_another_cpu_asked_for_is_named_by_the_function() {
+        let mut cycles: Vec<Cycle> = (0..3).map(cycle).collect();
+        cycles[1].gap_ns = 1_900;
+        cycles[1].gap_end_ns = 50_000;
+        let mut events: Vec<Event> = (0..3).flat_map(healthy).collect();
+        let interrupt = What::Vector("function call interrupt");
+        events.push(event(cycles[1].woke + 48_300, OURS, interrupt, 251));
+        events.push(event(
+            cycles[1].woke + 48_500,
+            OURS,
+            What::Call,
+            0xffff_ffff_8123_4560,
+        ));
+        events.sort_by_key(|event| event.time_ns);
+        let entries = run(&cycles, &events);
+        // One entry not asked for; what it was for is told apart.
+        assert_eq!(entries.in_compute(), (0, 1));
+        let call = Label::Call(0xffff_ffff_8123_4560);
+        assert_eq!(count(&entries, Phase::Compute, call), 1);
+        assert_eq!(entries.gaps_explained.get(&call), Some(&(1, 1_900)));
+        let symbols = Symbols::from_text("ffffffff81234560 t flush_tlb_func\n");
+        assert_eq!(
+            call.words(&symbols),
+            "called from another CPU: flush_tlb_func"
+        );
+    }
     #[test]
     fn a_system_call_in_the_compute_phase_is_found() {
         let cycles: Vec<Cycle> = (0..3).map(cycle).collect();
