@@ -1,0 +1,24 @@
+# What the numbers too small for the normal form of a float cost, and
+# what taking them for zero saves (step P1.7d). For one live thread.
+#
+# Noise at 200 dB below full scale, lowered by another 580: 780 dB
+# below, about one part in ten to the thirty-nine, under the smallest
+# number a 32-bit float writes in its normal form. A filter keeps
+# computing with such numbers for as long as they come in, and a
+# processor does it tens of times more slowly than with the others.
+#
+# The engine has its live threads take them for zero (FTZ and DAZ): the
+# last gain then gives zeros, and the load costs what it always costs.
+# With "--keep-denormals" they are left as they are, and the cost of the
+# load says what that would mean for every plug-in fed with near
+# silence. The load is a light one on purpose: a hundred times its cost
+# still fits in a period.
+
+noise  faint    db=-200
+gain   lower1   db=-200
+gain   lower2   db=-200
+gain   lower3   db=-180
+load   filter   class=light
+peak   left
+connect faint -> lower1 -> lower2 -> lower3 -> filter:0 -> left
+connect lower3 -> filter:1

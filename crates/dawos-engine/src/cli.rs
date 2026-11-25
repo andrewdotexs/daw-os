@@ -28,6 +28,9 @@ pub struct GraphOptions {
     pub threads: usize,
     /// Microseconds kept free at the end of every period.
     pub margin_us: u64,
+    /// What a load is made of, when not the calibration of the
+    /// sources: see [`RunOptions::load_costs_ps`].
+    pub load_costs_ps: Option<[u32; 3]>,
 }
 
 /// Options of `run`.
@@ -91,6 +94,15 @@ pub struct RunOptions {
     /// The file that describes the graph the live threads run; `None`:
     /// no graph.
     pub graph: Option<String>,
+    /// What a load of the graph is made of, when not the calibration of
+    /// the sources: picoseconds per frame of a load before any
+    /// filtering, of a stage and of a trim (ADR 0011).
+    pub load_costs_ps: Option<[u32; 3]>,
+    /// Leave the numbers too small for the normal form as they are on
+    /// the live threads, instead of taking them for zero.
+    pub keep_denormals: bool,
+    /// Print what every node of the graph took, not only kind by kind.
+    pub graph_nodes: bool,
     /// The fault to inject, the thread it strikes and after how long.
     pub fault: Fault,
     pub fault_thread: usize,
@@ -150,6 +162,10 @@ Options of graph:
   --threads N        live threads to give the nodes to (default 4)
   --margin-us N      microseconds kept free at the end of a period
                      (default 150)
+  --load-costs FRAME,STAGE,TRIM
+                     what a load is made of, instead of the calibration
+                     of the sources: nanoseconds per frame of a load
+                     before any filtering, of one stage and of one trim
 
 Options of run:
   --backend NAME     source of the periods: null (a timer, no sound; the
@@ -216,6 +232,15 @@ Options of run:
                      those of the card (silence in, nothing out, with
                      the null back end). Not with --load: the load of a
                      graph is in its nodes
+  --graph-nodes      with --graph: print what every node took in the
+                     cycles, not only kind by kind
+  --load-costs FRAME,STAGE,TRIM
+                     with --graph: what a load is made of, instead of
+                     the calibration of the sources (see the command
+                     graph)
+  --keep-denormals   do not have the live threads take the numbers too
+                     small for the normal form of a float for zero (to
+                     see what computing with them costs)
   --fault NAME       make something go wrong: stuck-node, stuck-thread,
                      watchdog-off; with alsa also card-xrun (the engine
                      skips some periods) and card-lost (as if the card
@@ -309,6 +334,9 @@ impl Default for RunOptions {
             dispatch: true,
             trace_also: None,
             graph: None,
+            load_costs_ps: None,
+            keep_denormals: false,
+            graph_nodes: false,
         }
     }
 }
@@ -324,6 +352,7 @@ fn parse_graph<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<GraphOptio
         frames: None,
         threads: DEFAULT_GRAPH_THREADS,
         margin_us: DEFAULT_MARGIN_US,
+        load_costs_ps: None,
     };
     while let Some(option) = rest.next() {
         let mut value = |name: &str| rest.next().ok_or_else(|| format!("{name} needs a value"));
@@ -336,6 +365,7 @@ fn parse_graph<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<GraphOptio
             "--margin-us" => {
                 options.margin_us = number(value("--margin-us")?, "--margin-us", 0, 100_000)?;
             }
+            "--load-costs" => options.load_costs_ps = Some(load_costs(value("--load-costs")?)?),
             other if other.starts_with("--") => {
                 return Err(format!("unknown option '{other}'"));
             }
@@ -418,6 +448,9 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             }
             "--load" => options.load_percent = number(value("--load")?, "--load", 0, 300)?,
             "--graph" => options.graph = Some(value("--graph")?.to_string()),
+            "--load-costs" => options.load_costs_ps = Some(load_costs(value("--load-costs")?)?),
+            "--keep-denormals" => options.keep_denormals = true,
+            "--graph-nodes" => options.graph_nodes = true,
             "--fault" => {
                 options.fault = match value("--fault")? {
                     "none" => Fault::None,
@@ -452,6 +485,9 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
     }
     if options.trace_also.is_some() && !options.kernel_entries {
         return Err("--trace-also needs --kernel-entries".to_string());
+    }
+    if options.graph.is_none() && (options.load_costs_ps.is_some() || options.graph_nodes) {
+        return Err("--load-costs and --graph-nodes need --graph".to_string());
     }
     if options.graph.is_some() {
         if options.load_percent != 0 {
@@ -512,6 +548,33 @@ fn pair(text: &str, name: &str) -> Result<(usize, usize), String> {
 }
 
 /// A channel as people count them, from 1; returned from 0.
+/// The three costs of `--load-costs`, FRAME,STAGE,TRIM in nanoseconds
+/// with decimals, as picoseconds.
+fn load_costs(text: &str) -> Result<[u32; 3], String> {
+    let wrong = || {
+        format!(
+            "--load-costs: '{text}' is not FRAME,STAGE,TRIM, three numbers of nanoseconds between 0.001 and 1000"
+        )
+    };
+    let mut costs = [0_u32; 3];
+    let mut given = text.split(',');
+    for cost in &mut costs {
+        let ns: f64 = given
+            .next()
+            .and_then(|number| number.trim().parse().ok())
+            .ok_or_else(wrong)?;
+        if !(0.001..=1000.0).contains(&ns) {
+            return Err(wrong());
+        }
+        // Checked just above: it fits.
+        *cost = (ns * 1000.0).round() as u32;
+    }
+    if given.next().is_some() {
+        return Err(wrong());
+    }
+    Ok(costs)
+}
+
 fn channel(text: &str, name: &str) -> Result<usize, String> {
     number::<usize>(text, name, 1, 256).map(|channel| channel - 1)
 }
@@ -621,6 +684,7 @@ mod tests {
                 frames: Some(192),
                 threads: 2,
                 margin_us: 100,
+                load_costs_ps: None,
             })
         );
         let Command::Graph(options) = parse(&arguments("graph a.graph")).unwrap() else {
@@ -657,6 +721,16 @@ mod tests {
             ("run --fault explode", "unknown fault"),
             ("run --loud", "unknown option"),
             ("run --graph", "needs a value"),
+            ("run --graph-nodes", "need --graph"),
+            (
+                "run --graph a.graph --load-costs 1,2",
+                "not FRAME,STAGE,TRIM",
+            ),
+            (
+                "run --graph a.graph --load-costs 1,2,x",
+                "not FRAME,STAGE,TRIM",
+            ),
+            ("graph a.graph --load-costs 1,2,3,4", "not FRAME,STAGE,TRIM"),
             ("run --graph a.graph --load 10", "one or the other"),
             ("run --graph a.graph --fault stuck-node", "P1.7e"),
             ("graph", "needs the file"),

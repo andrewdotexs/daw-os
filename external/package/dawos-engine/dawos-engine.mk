@@ -21,6 +21,16 @@ DAWOS_ENGINE_DEPENDENCIES = host-rustc host-pkgconf alsa-lib
 # crate "cc" has one.
 DAWOS_ENGINE_OVERRIDE_SRCDIR_RSYNC_EXCLUSIONS = --exclude /target
 
+# The profile of crates/Cargo.toml, said again here: Buildroot gives
+# every cargo package its own (opt-level 2, no overflow checks) through
+# the environment, which wins over the file. The engine is measured as
+# its sources say it is built: opt-level 3, and an arithmetic overflow
+# stops it instead of going by unseen (choice of the user of 25 November
+# 2026; until then the image had Buildroot's profile).
+DAWOS_ENGINE_PROFILE = \
+	CARGO_PROFILE_RELEASE_OPT_LEVEL=3 \
+	CARGO_PROFILE_RELEASE_OVERFLOW_CHECKS=true
+
 # The environment Buildroot prepares for cargo packages: the Rust target
 # of the image, its linker, optimised code. "--offline --locked" and the
 # vendored sources: this step never reaches for the network, and builds
@@ -31,6 +41,7 @@ define DAWOS_ENGINE_BUILD_CMDS
 		exit 1; }
 	cd $(@D) && \
 		$(TARGET_MAKE_ENV) $(TARGET_CONFIGURE_OPTS) $(PKG_CARGO_ENV) \
+		$(DAWOS_ENGINE_PROFILE) \
 		cargo --config cargo/vendored.toml build --offline --locked --release \
 			--package dawos-engine
 endef

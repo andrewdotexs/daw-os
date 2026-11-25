@@ -105,8 +105,52 @@ pub fn current_cpu() -> Option<usize> {
     sys::current_cpu()
 }
 
+/// Have the calling thread take the numbers too small for the normal
+/// form of a float (denormals) for zero, as operands and as results, or
+/// stop doing so; returns whether it did before.
+///
+/// A filter fed with silence decays through those numbers, and a
+/// processor computes with them tens of times more slowly than with the
+/// others: an audio thread sets this once, when it starts (FTZ and DAZ
+/// of the vector unit). It is a setting of the thread, which a new
+/// thread takes from the one that makes it. No system call.
+pub fn flush_denormals(on: bool) -> bool {
+    sys::flush_denormals(on)
+}
+
 #[cfg(test)]
 mod tests {
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn denormals_are_flushed_on_the_thread_that_asks() {
+        // The smallest number in the normal form, halved: with the
+        // setting off the result is a denormal, with it on a zero.
+        let halve = |value: f32| std::hint::black_box(value) * std::hint::black_box(0.5);
+        let before = super::flush_denormals(false);
+        assert!(!before, "a new thread starts with the setting off");
+        assert!(halve(f32::MIN_POSITIVE) > 0.0);
+        assert!(!super::flush_denormals(true));
+        assert_eq!(halve(f32::MIN_POSITIVE), 0.0);
+        // And a denormal operand counts as zero.
+        let denormal = f32::from_bits(1);
+        assert_eq!(
+            std::hint::black_box(denormal) * std::hint::black_box(1.0e30),
+            0.0
+        );
+        // A thread starts with the setting of the thread that made it,
+        // and from then on has its own.
+        std::thread::spawn(move || {
+            assert_eq!(halve(f32::MIN_POSITIVE), 0.0);
+            assert!(super::flush_denormals(false));
+            assert!(halve(f32::MIN_POSITIVE) > 0.0);
+        })
+        .join()
+        .unwrap();
+        assert_eq!(halve(f32::MIN_POSITIVE), 0.0);
+        assert!(super::flush_denormals(false));
+        assert!(halve(f32::MIN_POSITIVE) > 0.0);
+    }
+
     use super::*;
 
     #[test]
