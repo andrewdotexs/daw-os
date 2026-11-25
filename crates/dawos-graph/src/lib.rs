@@ -30,7 +30,7 @@ pub mod kind;
 pub mod text;
 
 pub use compile::{compile, Compiled, Settings};
-pub use exec::{Inputs, Running};
+pub use exec::{Inputs, Running, Timed};
 pub use kind::{Costs, Kind};
 pub use text::{parse, Description};
 

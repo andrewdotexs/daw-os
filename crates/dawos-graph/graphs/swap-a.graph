@@ -1,0 +1,48 @@
+# One of two graphs that take each other's place while the cycle runs
+# (step P1.7e); the other is swap-b.graph. For four live threads.
+#
+# With "--count 5:6" the engine plays the count on output 5 of the card;
+# inside the interface it comes back on input 5. Both graphs take it
+# there, hold it in a delay line for 96 frames, hand it from thread to
+# thread and play it on output 6, where the engine checks it sample for
+# sample (see relay.graph).
+#
+# The delay line is the point. It has the same name and the same length
+# in both graphs: at a change it goes on with the 96 samples it holds.
+# Were it to start afresh, 96 samples of the count would be lost at
+# every change, and the engine would find the count out of place.
+#
+# What differs between the two graphs: here the hops are on threads 1, 2
+# and 3 in this order, and each thread is kept busy by a node that
+# computes nothing; there two hops change thread, and the work is in
+# other nodes.
+
+input   in5    channel=5
+delay   hold   frames=96
+gain    hop1   db=0  thread=1
+gain    hop2   db=0  thread=2
+gain    hop3   db=0  thread=3
+output  out6   channel=6
+connect in5 -> hold -> hop1 -> hop2 -> hop3 -> out6
+
+noise   n0     seed=1     thread=0
+spin    busy0  ns=1000    thread=0
+noise   n1     seed=2     thread=1
+spin    busy1  ns=1000    thread=1
+noise   n2     seed=3     thread=2
+spin    busy2  ns=1000    thread=2
+noise   n3     seed=4     thread=3
+spin    busy3  ns=1000    thread=3
+bus     mix
+peak    level
+connect n0 -> busy0 -> mix -> level
+connect n1 -> busy1 -> mix
+connect n2 -> busy2 -> mix
+connect n3 -> busy3 -> mix
+
+# The tone that comes back through the cable on input 3, on a meter
+# that both graphs have: its peak is kept across the changes.
+
+input   in3    channel=3
+peak    tone
+connect in3 -> tone

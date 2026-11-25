@@ -1,0 +1,37 @@
+# The other of the two graphs that take each other's place while the
+# cycle runs (step P1.7e): see swap-a.graph. For four live threads.
+#
+# The same way for the count, with the same delay line; the first two
+# hops are on the other's thread, so that at every change two nodes are
+# run by a thread that did not run them the cycle before.
+
+input   in5    channel=5
+delay   hold   frames=96
+gain    hop1   db=0  thread=2
+gain    hop2   db=0  thread=1
+gain    hop3   db=0  thread=3
+output  out6   channel=6
+connect in5 -> hold -> hop1 -> hop2 -> hop3 -> out6
+
+# Other work than in swap-a.graph, in nodes the other graph does not
+# have: they start afresh at every change. No load among them, for the
+# reason relay.graph has none: these two graphs must last the same on
+# any machine, and a virtual one without the vector unit of its
+# processor takes a thousand times as long over a filter.
+
+noise   left     seed=11
+spin    left.1   ns=1500
+delay   left.2   frames=200
+noise   right    seed=12
+spin    right.1  ns=700
+sine    hum      cycles=1  db=-20
+sum     pair
+bus     both
+peak    heard
+connect left -> left.1 -> left.2 -> both -> heard
+connect right -> right.1 -> pair -> both
+connect hum -> pair
+
+input   in3    channel=3
+peak    tone
+connect in3 -> tone

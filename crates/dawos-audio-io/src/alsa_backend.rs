@@ -83,6 +83,16 @@ pub struct CardStats {
     pub paused_restarts: AtomicU64,
     /// Periods of output that did not fit in the buffer whole.
     pub short_writes: AtomicU64,
+    /// Those of them that fell in the warm-up.
+    pub early_short_writes: AtomicU64,
+    /// The first of them: nanoseconds from the start of the run (0:
+    /// there was none).
+    pub first_short_ns: AtomicU64,
+    /// The first of them: periods served since the streams were last
+    /// started (1: it was the first).
+    pub first_short_period: AtomicU64,
+    /// The first of them: frames the card took of the period.
+    pub first_short_frames: AtomicU64,
     /// Cycles with a period stamp that could not be believed.
     pub bad_stamps: AtomicU64,
     /// The error number that made the card be given up, the last time
@@ -733,10 +743,25 @@ impl Backend for AlsaBackend {
         let frames = output.len() / self.shared.info.outputs.max(1);
         match seat.card.as_mut().map(|card| card.deliver_from(output)) {
             Some(Ok(written)) if written < frames => {
-                self.shared
-                    .stats
-                    .short_writes
-                    .fetch_add(1, Ordering::AcqRel);
+                // The frames that did not fit are not played: said, and
+                // said when, because at the start of the streams it is
+                // the interface that is not taking samples yet.
+                let stats = &self.shared.stats;
+                let since_start = clock::now()
+                    .saturating_sub(self.shared.start.load(Ordering::Acquire))
+                    .max(1);
+                if stats.short_writes.fetch_add(1, Ordering::AcqRel) == 0 {
+                    stats.first_short_ns.store(since_start, Ordering::Release);
+                    stats
+                        .first_short_period
+                        .store(seat.served, Ordering::Release);
+                    stats
+                        .first_short_frames
+                        .store(written as u64, Ordering::Release);
+                }
+                if since_start < self.shared.warm_up_ns.load(Ordering::Acquire) {
+                    stats.early_short_writes.fetch_add(1, Ordering::AcqRel);
+                }
             }
             Some(Ok(_)) | None => {}
             Some(Err(error)) => seat.pending = Some(error),

@@ -31,7 +31,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 
 use dawos_audio_io::{Backend, Disturbance, Wake};
-use dawos_graph::{Inputs, Running};
+use dawos_graph::Inputs;
 use dawos_rt::clock;
 use dawos_rt::cpu;
 use dawos_rt::dispatch::{self, Caught};
@@ -42,6 +42,7 @@ use dawos_rt::stats::Durations;
 use crate::meter::{self, Cycle};
 use crate::patch::Patch;
 use crate::plan::{Fault, Plan};
+use crate::swap::Switch;
 
 /// What the threads of the engine share. Read-only after start-up,
 /// except through atomics.
@@ -76,8 +77,9 @@ pub struct Shared {
     /// the back end has sound. Shared with the spare thread that may
     /// replace it; never waited for.
     pub patch: Option<Mutex<Patch>>,
-    /// The graph the threads run in every cycle, when the run has one.
-    pub graph: Option<Running>,
+    /// The graph the threads run in every cycle, when the run has one,
+    /// and the place for the graph that takes over from it.
+    pub graphs: Option<Switch>,
     /// The instant the warm-up ends: what happens to the graph before
     /// it is counted apart (an interface that is settling stops its
     /// streams, and cycles are cut for it). 0: there is none.
@@ -160,10 +162,12 @@ pub struct ThreadReport {
     /// warm-up and in it (the thread that holds the card counts them).
     pub graph_silent: u64,
     pub graph_silent_early: u64,
-    /// What each node of the graph took, in the order the thread runs
-    /// them (the inputs of the card are not timed: they are part of the
-    /// reading of the card).
-    pub graph_times: Vec<NodeTime>,
+    /// Times the thread found another graph in the place of the one of
+    /// the cycle before.
+    pub graph_changes: u64,
+    /// Cycles for which no graph could be had: none, by the order in
+    /// which a change is made.
+    pub graph_missing: u64,
 }
 
 /// How long a node of the graph took, over the cycles it was run in.
@@ -246,18 +250,28 @@ fn cycles(
         graph_starved: 0,
         graph_silent: 0,
         graph_silent_early: 0,
-        graph_times: Vec::new(),
+        graph_changes: 0,
+        graph_missing: 0,
     };
-    let graph = shared.graph.as_ref();
-    // Before the first cycle: the one allocation of the loop.
-    if let Some(graph) = graph {
-        report.graph_times = vec![NodeTime::default(); graph.nodes_of(slot_index).len()];
-    }
+    let graphs = shared.graphs.as_ref();
+    // The place of the graph of the cycle before.
+    let mut last_place: Option<usize> = None;
     // System calls stopped so far, to tell those of each cycle.
     let mut caught_before = dispatch::caught();
     let mut first = true;
     // Sound is the business of the first slot alone.
     let patch = shared.patch.as_ref().filter(|_| slot_index == 0);
+    // For a cycle in which the patch cannot be had: the card must be
+    // read and written all the same, or its input stays where it is and
+    // the wait for the next period returns at once (open point A-70).
+    // Before the first cycle: the allocations of the loop.
+    let (mut idle_input, idle_output) = if patch.is_some() {
+        let (inputs, outputs) = backend.channels();
+        let frames = shared.frames as usize;
+        (vec![0_i32; inputs * frames], vec![0_i32; outputs * frames])
+    } else {
+        (Vec::new(), Vec::new())
+    };
     // When the cycle before ended: a period due before then finds the
     // thread still busy.
     let mut last_finished: Option<u64> = None;
@@ -272,6 +286,24 @@ fn cycles(
             report.end = End::Retired;
             return report;
         }
+
+        // The graph of this cycle, held until the cycle ends: a change
+        // comes between two cycles, for every thread at the same one.
+        let held = graphs.map(|switch| switch.for_cycle(wake.index));
+        let graph = match &held {
+            Some(Some((place, guard))) => {
+                if last_place.is_some_and(|last| last != *place) {
+                    report.graph_changes += 1;
+                }
+                last_place = Some(*place);
+                guard.as_ref()
+            }
+            Some(None) => {
+                report.graph_missing += 1;
+                None
+            }
+            None => None,
+        };
 
         // ---- Compute phase: no system call from here to the next wait.
         let behind = last_finished.is_some_and(|finished| wake.due <= finished);
@@ -325,6 +357,7 @@ fn cycles(
                 }
             } else {
                 flags |= meter::NO_PATCH;
+                backend.capture(&mut idle_input);
             }
         }
         // Without a card, or without its input: the graph hears
@@ -412,7 +445,7 @@ fn cycles(
             // One reading of the clock per node: the end of a node is
             // the beginning of the next.
             let mut now = clock::now();
-            for (place, &node) in graph.nodes_of(slot_index).iter().enumerate() {
+            for &node in graph.nodes_of(slot_index) {
                 // The inputs of the card were run by `capture`.
                 if graph.is_input(node) || graph.is_abandoned(node) {
                     continue;
@@ -450,12 +483,7 @@ fn cycles(
                 let began = now;
                 graph.run(node, wake.index);
                 now = clock::now();
-                if let Some(time) = report.graph_times.get_mut(place) {
-                    let took = now - began;
-                    time.runs += 1;
-                    time.sum_ns += took;
-                    time.max_ns = time.max_ns.max(took);
-                }
+                graph.record(node, now - began);
                 report.graph_nodes += 1;
                 nodes_run = nodes_run.saturating_add(1);
                 if slot.generation() != generation {
@@ -507,6 +535,8 @@ fn cycles(
                     silent = Some(graph.deliver(wake.index, patch.output_mut(), channels));
                 }
                 backend.deliver(patch.output());
+            } else {
+                backend.deliver(&idle_output);
             }
         }
         // Without a card the outputs go nowhere: those not run in time
@@ -592,6 +622,10 @@ mod tests {
         cycles: u64,
         /// How long after it was due each period was taken.
         late: Vec<u64>,
+        /// Channels it has, and how many times it was read and written.
+        channels: usize,
+        captured: u64,
+        delivered: u64,
     }
 
     impl Backend for Queueing {
@@ -626,6 +660,87 @@ mod tests {
                 events: 0,
             }
         }
+
+        fn channels(&self) -> (usize, usize) {
+            (self.channels, self.channels)
+        }
+
+        fn capture(&mut self, input: &mut [i32]) {
+            assert_eq!(input.len(), self.channels * 96);
+            self.captured += 1;
+        }
+
+        fn deliver(&mut self, output: &[i32]) {
+            assert_eq!(output.len(), self.channels * 96);
+            self.delivered += 1;
+        }
+    }
+
+    fn shared(plan: Plan, period_ns: u64, margin_ns: u64, patch: Option<Mutex<Patch>>) -> Shared {
+        Shared {
+            slots: vec![Slot::new()],
+            plan,
+            stop: AtomicBool::new(false),
+            period_ns,
+            margin_ns,
+            frames: if patch.is_some() { 96 } else { 0 },
+            dry_at: AtomicU64::new(0),
+            dry_cycle: AtomicU64::new(0),
+            fault: Fault::None,
+            fault_thread: 0,
+            fault_cycle: 0,
+            fault_made: AtomicBool::new(false),
+            patch,
+            graphs: None,
+            judged_from_ns: AtomicU64::new(0),
+            graph_refused_early: AtomicU64::new(u64::MAX),
+            flush_denormals: true,
+        }
+    }
+
+    /// The patch is held by somebody else (a thread that went wrong
+    /// while it had it): the cycles have no sound, but the card is read
+    /// and written at every one of them all the same. Were it not, its
+    /// input would stay where it is, the wait for the next period would
+    /// return at once, and the thread would run cycles as fast as it
+    /// can (open point A-70).
+    #[test]
+    fn without_the_patch_the_card_is_still_read_and_written() {
+        const PERIOD: u64 = 2_000_000;
+        const CYCLES: u64 = 40;
+        let patch = Patch::new(&crate::patch::PatchConfig::default(), 2, 2, 96, 48_000)
+            .expect("a patch with nothing to do");
+        let shared = Arc::new(shared(
+            Plan::new(1, PERIOD, 0, Fault::None, 0, 0),
+            PERIOD,
+            150_000,
+            Some(Mutex::new(patch)),
+        ));
+        let mut backend = Queueing {
+            shared: Arc::clone(&shared),
+            start: clock::now(),
+            next: 0,
+            cycles: CYCLES,
+            late: Vec::new(),
+            channels: 2,
+            captured: 0,
+            delivered: 0,
+        };
+        let generation = shared.slots[0].generation();
+        // Half of the cycles with the patch held from here, half free.
+        let report = {
+            let held = shared.patch.as_ref().unwrap().lock().unwrap();
+            let shared = Arc::clone(&shared);
+            let handle = std::thread::spawn(move || {
+                let report = live_loop(&shared, 0, generation, None, &mut backend, None);
+                (report, backend.captured, backend.delivered)
+            });
+            std::thread::sleep(std::time::Duration::from_nanos(PERIOD * CYCLES / 2));
+            drop(held);
+            handle.join().unwrap()
+        };
+        assert_eq!(report.0.cycles, CYCLES);
+        assert_eq!((report.1, report.2), (CYCLES, CYCLES));
     }
 
     /// A thread with half as much work again as fits, in nodes longer
@@ -638,33 +753,23 @@ mod tests {
     fn a_thread_with_too_much_work_stays_behind_by_a_bounded_time() {
         const PERIOD: u64 = 5_000_000;
         const CYCLES: u64 = 80;
-        let shared = Arc::new(Shared {
-            slots: vec![Slot::new()],
-            // Fifty nodes of 150 us: 7.5 ms of work for 5 ms.
-            plan: Plan::new(1, PERIOD, 150, Fault::None, 0, 0),
-            stop: AtomicBool::new(false),
-            period_ns: PERIOD,
-            // Far shorter than a node.
-            margin_ns: 20_000,
-            frames: 0,
-            dry_at: AtomicU64::new(0),
-            dry_cycle: AtomicU64::new(0),
-            fault: Fault::None,
-            fault_thread: 0,
-            fault_cycle: 0,
-            fault_made: AtomicBool::new(false),
-            patch: None,
-            graph: None,
-            judged_from_ns: AtomicU64::new(0),
-            graph_refused_early: AtomicU64::new(u64::MAX),
-            flush_denormals: true,
-        });
+        // Fifty nodes of 150 us: 7.5 ms of work for 5 ms. A margin far
+        // shorter than a node.
+        let shared = Arc::new(shared(
+            Plan::new(1, PERIOD, 150, Fault::None, 0, 0),
+            PERIOD,
+            20_000,
+            None,
+        ));
         let mut backend = Queueing {
             shared: Arc::clone(&shared),
             start: clock::now(),
             next: 0,
             cycles: CYCLES,
             late: Vec::new(),
+            channels: 0,
+            captured: 0,
+            delivered: 0,
         };
         let generation = shared.slots[0].generation();
         let report = live_loop(&shared, 0, generation, None, &mut backend, None);
