@@ -1,0 +1,11 @@
+shape       load  xruns                      slips of the count      cut   late    left_us     ready   to_play  audio
+96:2          60  1 (0 in the warm-up)       1 (largest 6)             0      0     781.35    96-144     48-96  FAIL (1 xruns after the warm-up, 0 waits without a period, card lost 0
+64:3          60  0 (0 in the warm-up)       0 (largest 0)             0      0     515.77    64-112    80-128  PASS (no xrun; the tone is on input 3; the count comes back on input 5
+64:3          85  0 (0 in the warm-up)       0 (largest 0)        200007 200007     126.34    64-112    80-128  PASS (no xrun; the tone is on input 3; the count comes back on input 5
+96:3          85  0 (0 in the warm-up)       0 (largest 0)             1      1     123.29    96-144   144-192  PASS (no xrun; the tone is on input 3; the count comes back on input 5
+
+columns, all of the thread that holds the card: cut, its cycles ended by the compute
+  budget; late, its wake-ups of 20 us and more; left_us, the least time left before
+  the end of the period (negative: after it); ready and to_play, the frames ready
+  and the frames the card still had to play at a wake-up, least and most.
+finished_utc: 2026-11-25T07:50:08Z
