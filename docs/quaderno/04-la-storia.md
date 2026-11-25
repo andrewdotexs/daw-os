@@ -338,6 +338,8 @@ Il problema vero del passo è ciò che il thread bloccato **si tiene**: lo stato
 
 La prova è un nodo fatto apposta, la **trappola** (`trap`), che dopo dodici secondi non ritorna più. Sta su un thread; il conteggio passa da altri due. Ciò che ci si aspetta _(stima, scritta prima della misura)_: blocco visto in 6–8,5 ms, grafo senza il nodo in uso 16–25 ms dopo il blocco (limite 500), **e nessun campione del conteggio perso**.
 
+Il primo giro si è fermato alla macchina virtuale dell'utente, quella sera molto più lenta del solito: la trappola, che contava i cicli e non il tempo, non è mai scattata (corretto), e un thread del motore non è partito in tempo, per la seconda volta in un giorno (A-70: ora, dove il tempo non è tenuto, ha tre secondi in più e il rapporto dice di quanto ha tardato).
+
 Scrivendo il passo è caduta una frase del progetto di P1.1: la «dissolvenza» verso il silenzio. Non si può sfumare un suono che manca già da tre periodi.
 
 ### Che cosa viene dopo

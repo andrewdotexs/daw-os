@@ -80,10 +80,11 @@ pub enum Kind {
         ns_per_frame: u32,
     },
     /// A node that goes wrong, for the tests of the protection (ADR
-    /// 0023): it copies its input to its output for so many seconds,
-    /// then it never returns, holding what it was working on.
+    /// 0023): it copies its input to its output for so many seconds
+    /// from its first cycle, by the clock, then it never returns,
+    /// holding what it was working on.
     Trap {
-        /// Seconds of the run before it stops returning.
+        /// Seconds it works for before it stops returning.
         after_s: u32,
     },
     /// The filtering of a load with its size said outright, for the

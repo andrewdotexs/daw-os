@@ -106,9 +106,11 @@ enum State {
     Spin {
         ns: u64,
     },
-    /// Cycles left before it stops returning.
+    /// Nanoseconds it works for, counted from its first cycle (0: it
+    /// has not been run yet), before it stops returning.
     Trap {
-        left: u64,
+        after_ns: u64,
+        since: u64,
     },
 }
 
@@ -273,7 +275,8 @@ fn fresh(kind: &Kind, compiled: &Compiled) -> State {
             ns: u64::from(ns_per_frame) * u64::from(compiled.frames),
         },
         Kind::Trap { after_s } => State::Trap {
-            left: u64::from(after_s) * u64::from(compiled.rate) / u64::from(compiled.frames.max(1)),
+            after_ns: u64::from(after_s) * 1_000_000_000,
+            since: 0,
         },
     }
 }
@@ -748,8 +751,15 @@ impl Running {
                     std::hint::spin_loop();
                 }
             }
-            State::Trap { left } => {
-                if *left == 0 {
+            State::Trap { after_ns, since } => {
+                // By the clock, not by the cycles it was run in: where
+                // cycles are lost (a virtual machine) its time comes
+                // all the same.
+                let now = clock::now();
+                if *since == 0 {
+                    *since = now.max(1);
+                }
+                if now - *since >= *after_ns {
                     // Gone wrong, as a node stuck in its work is: its
                     // state, its output and its input held, and no
                     // return. Only the watchdog ends this for the rest
@@ -760,7 +770,6 @@ impl Running {
                         std::hint::spin_loop();
                     }
                 }
-                *left -= 1;
                 self.each(node, |sample| sample);
             }
         }
@@ -1085,9 +1094,9 @@ mod tests {
             1,
         );
         let mut output = [0_i32; 0];
-        // One second is 500 cycles of 96 frames: none of these is the
-        // last.
-        for cycle in 0..499 {
+        // Its time is counted by the clock from its first cycle: these
+        // cycles take a moment, not a second.
+        for cycle in 0..200 {
             graph.run_all(cycle, &[], &mut output, (0, 0));
         }
         assert!(peak_db(&graph, "p").abs() < 0.01);

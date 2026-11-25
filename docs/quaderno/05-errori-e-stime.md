@@ -97,6 +97,7 @@ Lo strumento che misura è codice anche lui, e sbaglia.
 | P1.7c | Il registro di un giro fallito in macchina virtuale perso lanciando la prova successiva | La prova stampa i dettagli di ogni caso sulla console |
 | P1.7d | Nella macchina virtuale emulata i carichi vettoriali sono centinaia di volte più lenti, e il cane da guardia li prende per thread bloccati | I grafi di prova dello scambio non usano carichi veri |
 | P1.7e | Due scritture corte passate inosservate, al mattino e al pomeriggio: erano in righe `settle`, che la prova audio non giudica e di cui non mostrava quel conto | Ogni riga della prova mostra le scritture corte, quando ce ne sono |
+| P1.7f | La trappola di prova contava i cicli eseguiti, non il tempo: in una macchina virtuale lenta «dodici secondi» non sono mai arrivati, e il caso è fallito | Va con l'orologio. Nella mia macchina virtuale era scattata tre secondi in ritardo, e non ci avevo dato peso: un numero strano che non fa fallire nulla va guardato lo stesso |
 
 **Che cosa dice questa tabella.** Due errori sono tornati più volte: le prove che dipendono dai tempi della macchina che le esegue, e l'uscita di una prova fallita non conservata. Il primo ha ora una regola (nelle prove automatiche si giudica la logica; i tempi si giudicano solo sul 285K), il secondo un rimedio (i dettagli sulla console).
 

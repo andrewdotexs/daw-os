@@ -210,7 +210,10 @@ run_case() {
 		# a slot no change of graph gets through.
 		case "${name}" in
 		trap*)
-			grep -q "^graph_node_given_up: ${TRAP_NODE};" "${dir}/${name}.txt" || result=FAIL
+			if ! grep -q "^graph_node_given_up: ${TRAP_NODE};" "${dir}/${name}.txt"; then
+				result=FAIL
+				graph="${graph}; the node '${TRAP_NODE}' was not given up"
+			fi
 			;;
 		esac
 		;;
@@ -401,10 +404,15 @@ if [ "${mode}" = loopback ]; then
 	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
 	run_case swap --seconds "${seconds}" --allow-xruns --threads 4 --graph "${GRAPHS}/swap-a.graph" \
 		--swap-graph "${GRAPHS}/swap-b.graph" --swap-every 1
-	# A node of the graph that never returns after twelve seconds (step
-	# P1.7f): given up by the watchdog, and left out of the graph.
+	# A node of the graph that never returns (step P1.7f): given up by
+	# the watchdog, and left out of the graph. Here after three seconds
+	# instead of twelve: on a machine that does not keep the time the
+	# watchdog spends its spare threads on threads that are only slow,
+	# and the sooner the trap is sprung the likelier one is left on its
+	# slot.
+	sed 's/after=12/after=3/' "${GRAPHS}/trap.graph" > "${dir}/trap.graph"
 	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
-	run_case trap --seconds 24 --allow-xruns --threads 4 --graph "${GRAPHS}/trap.graph"
+	run_case trap --seconds 12 --allow-xruns --threads 4 --graph "${dir}/trap.graph"
 	if [ "${loaded}" = yes ]; then
 		modprobe -r snd-aloop 2> /dev/null || true
 	fi

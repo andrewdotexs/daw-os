@@ -41,6 +41,12 @@ const MAX_EVENTS: usize = 8;
 /// and the first period: the time they have to be in place.
 const START_DELAY_MS: u64 = 300;
 
+/// Where the time is not kept (no `--require-rt`: a virtual machine, a
+/// busy PC), how much longer than that a thread may take to be in
+/// place. The periods start without it, and it joins the cycle in
+/// progress when it comes (open point A-70).
+const LATE_START_GRACE_MS: u64 = 3000;
+
 /// Limits of ADR 0023, counted from the beginning of the compute phase
 /// the thread never left.
 const CORE_FREE_LIMIT_MS: f64 = 15.0;
@@ -143,6 +149,10 @@ pub struct Outcome {
     pub never_returned: Vec<usize>,
     pub events: Vec<EventView>,
     pub watchdog_rounds: u64,
+    /// When not every thread was in place at the first period (allowed
+    /// without `--require-rt`): milliseconds after it that the last
+    /// was.
+    pub late_start_ms: Option<f64>,
     /// Whether systemd was listening for the engine's signs of life.
     pub systemd: bool,
     /// The kernel probe, when asked for.
@@ -791,9 +801,18 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     // ---- Everybody in place? Twice the threads (live and spare) plus
     // the watchdog.
     let expected = 2 * threads + 1;
-    while common.ready.load(Ordering::Acquire) < expected && clock::now() < start_ns {
+    let grace_ns = if options.realtime == Realtime::Required {
+        0
+    } else {
+        LATE_START_GRACE_MS * 1_000_000
+    };
+    while common.ready.load(Ordering::Acquire) < expected && clock::now() < start_ns + grace_ns {
         thread::sleep(Duration::from_millis(1));
     }
+    // Threads in place only after the first period, and how long after.
+    let late_start_ms = (clock::now() > start_ns && grace_ns > 0)
+        .then(|| (clock::now() - start_ns) as f64 / 1e6)
+        .filter(|_| common.ready.load(Ordering::Acquire) >= expected);
     let errors = common
         .errors
         .lock()
@@ -818,7 +837,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             // Who was missing cannot be told from a count, but how many
             // can: one thread on a busy CPU, or all of them.
             format!(
-                "the threads of the engine did not start in time: {ready} of {expected} were in place {START_DELAY_MS} ms after they were asked for{}",
+                "the threads of the engine did not start in time: {ready} of {expected} were in place {} ms after they were asked for{}",
+                START_DELAY_MS + grace_ns / 1_000_000,
                 if errors.is_empty() {
                     String::new()
                 } else {
@@ -1118,6 +1138,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         never_returned,
         events,
         watchdog_rounds: heartbeat.load(Ordering::Acquire),
+        late_start_ms,
         systemd: notifier.active(),
         kernel_probe,
         card,
@@ -1796,6 +1817,11 @@ fn print(outcome: &Outcome) {
         }
     );
     println!("watchdog_rounds: {}", outcome.watchdog_rounds);
+    if let Some(ms) = outcome.late_start_ms {
+        println!(
+            "threads_in_place_late: the last of them {ms:.0} ms after the first period (a busy machine; not allowed with --require-rt)"
+        );
+    }
     println!(
         "systemd_listening: {}",
         if outcome.systemd { "yes" } else { "no" }
@@ -1977,6 +2003,13 @@ fn print_graph(graph: &GraphOutcome, outcome: &Outcome) {
                 .collect()
         };
         println!("graph_changes_seen: {}", changes.join(", "));
+    }
+    for trap in &graph.traps {
+        if !graph.given_up.iter().any(|(name, _)| name == trap) {
+            println!(
+                "graph_node_not_given_up: {trap}; made to go wrong, and never found stuck (did its time come, and was a thread left on its slot?)"
+            );
+        }
     }
     for (name, after) in &graph.given_up {
         match after {
