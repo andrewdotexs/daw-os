@@ -374,7 +374,7 @@ Nella macchina virtuale, prima della riga del risultato, ci sono righe `DAWOS-AU
 
 **`dawos-latency-test`**: misura la latenza del giro completo con ogni forma del buffer e ogni frequenza.
 
-**`tools/audio-hours.sh`**: giri lunghi, di un'ora, a vuoto e sotto carico.
+**`tools/audio-hours.sh`** (`make audio-hours`): giri lunghi, di un'ora, mentre il resto della macchina lavora con il carico della campagna. Tre casi: `passthrough` (i thread non fanno che passare il suono), `loaded` (ogni thread occupato per il 60 % del periodo) e `swap` (due grafi che si scambiano ogni secondo). Ogni caso ha la sua riga `case_verdict`.
 
 ## Gli strumenti del grafo
 
@@ -389,6 +389,8 @@ Nella macchina virtuale, prima della riga del risultato, ci sono righe `DAWOS-AU
 | `cut`, `missed` | Cicli tagliati e periodi persi, su tutti i thread |
 | `waits`, `wait_max` | Attese tra thread, e la più lunga |
 | `starved` | Nodi il cui ingresso non è mai arrivato |
+
+**`tools/graph-accept.sh`**: non misura, giudica. Legge sul PC i file già raccolti della calibrazione, del grafo su 1–4 thread e dell'ora di scambio, li confronta con le soglie scritte nella guida del passo e stampa `criterion 7: PASS` o `FAIL` con ciò che non va. Tenere separato chi misura da chi giudica vuol dire poter rifare il giudizio, anche con soglie diverse, senza rifare la misura.
 
 **`tools/graph-calibrate.sh`**: la calibrazione del carico.
 

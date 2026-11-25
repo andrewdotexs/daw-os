@@ -349,11 +349,18 @@ Il primo giro si è fermato alla macchina virtuale dell'utente, quella sera molt
 
 Scrivendo il passo è caduta una frase del progetto di P1.1: la «dissolvenza» verso il silenzio. Non si può sfumare un suono che manca già da tre periodi.
 
+### P1.7g: l'accettazione del grafo
+
+_25 novembre: consegnato, da misurare._ Il criterio 7 chiede tre cose: lo stesso grafo su 1–4 processori con accelerazione e percorso critico misurati, lo scambio senza discontinuità, il carico calibrato. Sono già state misurate tutte, ma ognuna in un passo e con un'immagine diversa. Qui si rifanno sulla stessa immagine, senza toccare il motore, e uno script ne ricava un verdetto.
+
+Decisioni dell'utente: solo l'accettazione, senza codice nuovo; e lo scambio per **un'ora**, sotto il carico della campagna, come le altre accettazioni. Le soglie sono scritte prima della misura.
+
+Ciò che non si sa prevedere, ed è scritto: quante volte, in un'ora di scambi, liberare la memoria di un grafo vecchio manda un'interruzione ai processori live. La traccia del kernel non ha mai guardato uno scambio.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.7g | L'accettazione del grafo (criterio 7) |
 | P1.8 | Il driver della scheda: la latenza sulla quarta generazione (A-69), lo scatto del periodo (A-68) |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49) |
 | P1.10 | La campagna della Fase 1 |

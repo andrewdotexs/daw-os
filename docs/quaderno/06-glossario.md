@@ -166,3 +166,5 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **A-70** | Una volta, in macchina virtuale, i thread non sono partiti in tempo | Aperto: causa ignota |
 | **A-71** | Lo stadio costa il 14 % più che in C, e dipende dalla lunghezza del blocco | Aperto |
 | **A-72** | Una scrittura corta all'avvio dei flussi, circa un avvio su tredici a 48 kHz | Aperto: si sa quando (il primo periodo), non perché. P1.8 |
+| **A-73** | Il compilatore del grafo sottostima il ciclo su più thread, del 6–7 % su quattro | Aperto, Fase 2 |
+| **A-74** | Chi aspetta un nodo di un thread bloccato taglia i suoi cicli per intero | Aperto, Fase 2 |
