@@ -1,0 +1,367 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 96
+period_us: 2000.000
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 180
+load_percent: 0
+vector_unit: AVX2 and FMA
+denormals: taken for zero on the live threads (FTZ and DAZ)
+margin_us: 150
+fault: none
+watchdog_rounds: 90011
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin  behind
+0      first  stopped     90012       0          0        0      7.19     12.33      196.55      199.53      1800.47       0
+1      first  stopped     90012       0          0        0      7.24     12.36      192.91      194.32      1805.68       0
+2      first  stopped     90012       0          0        0      7.24     12.36      193.22      194.71      1805.29       0
+3      first  stopped     90012       0          0        0      7.24     12.37      193.48      194.88      1805.12       0
+
+graph_file: /usr/share/dawos/graphs/relay.graph
+graph_rate_hz: 48000
+graph_quantum_frames: 96 (a period of 2000.00 us)
+graph_nodes: 17 (4 noise, 4 spin, 2 input, 1 bus, 2 peak, 3 gain, 1 output)
+graph_buffers: 14 of 96 frames
+graph_threads: 4, 4 of them with nodes
+graph_costs: expected; a load is made of 2.3 ns per frame, 1.845 for every stage and 0.207 for every trim
+graph_work_us: 769.98 (every node, one after the other)
+graph_critical_path_us: 192.54 (n0 -> busy0 -> mix -> level)
+graph_makespan_us: 194.63 on 4 threads (speed-up 3.95; the critical path allows 3.99 at the most)
+graph_budget_us: 1850.00 (a period less 150 of margin): the graph fits
+
+threads (expected work in a cycle):
+thread   nodes    work_us  percent_of_period
+0            8     193.17                9.6
+1            3     192.27                9.6
+2            3     192.27                9.6
+3            3     192.27                9.6
+
+thread 0, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.18  n0                   noise    -
+     0.18    192.04  busy0                spin     n0
+   192.22      0.13  in5                  input    -
+   192.36      0.13  in3                  input    -
+   192.72      0.09  mix                  bus      busy0, busy1 (thread 1), busy2 (thread 2), busy3 (thread 3)
+   192.82      0.22  level                peak     mix
+   193.04      0.22  tone                 peak     in3
+   194.49      0.13  out6                 output   hop3 (thread 3)
+
+thread 1, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.18  n1                   noise    -
+     0.18    192.04  busy1                spin     n1
+   192.86      0.04  hop1                 gain     in5 (thread 0)
+
+thread 2, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.18  n2                   noise    -
+     0.18    192.04  busy2                spin     n2
+   193.40      0.04  hop2                 gain     hop1 (thread 1)
+
+thread 3, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.18  n3                   noise    -
+     0.18    192.04  busy3                spin     n3
+   193.95      0.04  hop3                 gain     hop2 (thread 2)
+
+the graph in the cycles (times in microseconds; cut, starved and silent after the warm-up):
+slot   kind    nodes_run    waits  wait_avg  wait_max    cut  starved  silent  cut_early  silent_early
+0      first      540072        0         -         -      0        0       0          0             0
+1      first      270036        0         -         -      0        0       0          0             0
+2      first      270036    75507      0.29      0.94      0        0       0          0             0
+3      first      270036    89837      0.57      1.37      0        0       0          0             0
+graph_refused: 0 after the warm-up, 0 in it (a buffer or a node in use by another thread when one asked for it)
+
+the nodes of the graph by kind (microseconds for a quantum; ns_per_frame from the average):
+kind                  nodes   expected        avg lowest_avg        max  ns_per_frame
+noise                     4      0.184      0.239      0.177      1.326         2.493
+spin_2000ns               4    192.040    192.100    192.062    192.761      2001.041
+bus                       1      0.098      0.356      0.356      0.711         3.710
+peak                      2      0.222      0.226      0.210      0.506         2.358
+gain                      3      0.046      0.203      0.189      0.828         2.110
+output                    1      0.136      0.172      0.172      0.400         1.789
+graph_critical_path_measured_us: 192.804 (the nodes of the chain, each on average; the compiler expected 192.544)
+graph_peak level: -0.1 dBFS
+graph_peak tone: -17.9 dBFS
+
+card_capture: hw:Gen,0
+card_playback: hw:Gen,0
+card_format: S32_LE, 48000 Hz, 26 inputs, 26 outputs
+card_period_frames: 96 (buffer: capture 288, playback 288)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 90013 with the card, 0 without
+warm_up_seconds: 60
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+card_followers: 270039 cycles after a tick of the card, 0 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 3, refused 0
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+count_on_input_6: way round 918 samples (19.125 ms), found at 0.020 s; at the end 918 samples (19.125 ms)
+count_slips_on_input_6: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_6: 8640170 in place, 0 out of place
+routes: none
+
+inputs listened to (dB relative to full scale; the first 60 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3           120    -17.9      -20.9      -20.9     -17.9     -17.9     1.0000
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+second by second (the warm-up is not in the table above):
+second  input    level     tone    share
+1           3    -21.0    -18.0   0.9899
+2           3    -20.9    -17.9   1.0000
+3           3    -20.9    -17.9   1.0000
+4           3    -20.9    -17.9   1.0000
+5           3    -20.9    -17.9   1.0000
+6           3    -20.9    -17.9   1.0000
+7           3    -20.9    -17.9   1.0000
+8           3    -20.9    -17.9   1.0000
+9           3    -20.9    -17.9   1.0000
+10          3    -20.9    -17.9   1.0000
+11          3    -20.9    -17.9   1.0000
+12          3    -20.9    -17.9   1.0000
+13          3    -20.9    -17.9   1.0000
+14          3    -20.9    -17.9   1.0000
+15          3    -20.9    -17.9   1.0000
+16          3    -20.9    -17.9   1.0000
+17          3    -20.9    -17.9   1.0000
+18          3    -20.9    -17.9   1.0000
+19          3    -20.9    -17.9   1.0000
+20          3    -20.9    -17.9   1.0000
+21          3    -20.9    -17.9   1.0000
+22          3    -20.9    -17.9   1.0000
+23          3    -20.9    -17.9   1.0000
+24          3    -20.9    -17.9   1.0000
+25          3    -20.9    -17.9   1.0000
+26          3    -20.9    -17.9   1.0000
+27          3    -20.9    -17.9   1.0000
+28          3    -20.9    -17.9   1.0000
+29          3    -20.9    -17.9   1.0000
+30          3    -20.9    -17.9   1.0000
+31          3    -20.9    -17.9   1.0000
+32          3    -20.9    -17.9   1.0000
+33          3    -20.9    -17.9   1.0000
+34          3    -20.9    -17.9   1.0000
+35          3    -20.9    -17.9   1.0000
+36          3    -20.9    -17.9   1.0000
+37          3    -20.9    -17.9   1.0000
+38          3    -20.9    -17.9   1.0000
+39          3    -20.9    -17.9   1.0000
+40          3    -20.9    -17.9   1.0000
+41          3    -20.9    -17.9   1.0000
+42          3    -20.9    -17.9   1.0000
+43          3    -20.9    -17.9   1.0000
+44          3    -20.9    -17.9   1.0000
+45          3    -20.9    -17.9   1.0000
+46          3    -20.9    -17.9   1.0000
+47          3    -20.9    -17.9   1.0000
+48          3    -20.9    -17.9   1.0000
+49          3    -20.9    -17.9   1.0000
+50          3    -20.9    -17.9   1.0000
+51          3    -20.9    -17.9   1.0000
+52          3    -20.9    -17.9   1.0000
+53          3    -20.9    -17.9   1.0000
+54          3    -20.9    -17.9   1.0000
+55          3    -20.9    -17.9   1.0000
+56          3    -20.9    -17.9   1.0000
+57          3    -20.9    -17.9   1.0000
+58          3    -20.9    -17.9   1.0000
+59          3    -20.9    -17.9   1.0000
+60          3    -20.9    -17.9   1.0000
+61          3    -20.9    -17.9   1.0000
+62          3    -20.9    -17.9   1.0000
+63          3    -20.9    -17.9   1.0000
+64          3    -20.9    -17.9   1.0000
+65          3    -20.9    -17.9   1.0000
+66          3    -20.9    -17.9   1.0000
+67          3    -20.9    -17.9   1.0000
+68          3    -20.9    -17.9   1.0000
+69          3    -20.9    -17.9   1.0000
+70          3    -20.9    -17.9   1.0000
+71          3    -20.9    -17.9   1.0000
+72          3    -20.9    -17.9   1.0000
+73          3    -20.9    -17.9   1.0000
+74          3    -20.9    -17.9   1.0000
+75          3    -20.9    -17.9   1.0000
+76          3    -20.9    -17.9   1.0000
+77          3    -20.9    -17.9   1.0000
+78          3    -20.9    -17.9   1.0000
+79          3    -20.9    -17.9   1.0000
+80          3    -20.9    -17.9   1.0000
+81          3    -20.9    -17.9   1.0000
+82          3    -20.9    -17.9   1.0000
+83          3    -20.9    -17.9   1.0000
+84          3    -20.9    -17.9   1.0000
+85          3    -20.9    -17.9   1.0000
+86          3    -20.9    -17.9   1.0000
+87          3    -20.9    -17.9   1.0000
+88          3    -20.9    -17.9   1.0000
+89          3    -20.9    -17.9   1.0000
+90          3    -20.9    -17.9   1.0000
+91          3    -20.9    -17.9   1.0000
+92          3    -20.9    -17.9   1.0000
+93          3    -20.9    -17.9   1.0000
+94          3    -20.9    -17.9   1.0000
+95          3    -20.9    -17.9   1.0000
+96          3    -20.9    -17.9   1.0000
+97          3    -20.9    -17.9   1.0000
+98          3    -20.9    -17.9   1.0000
+99          3    -20.9    -17.9   1.0000
+100         3    -20.9    -17.9   1.0000
+101         3    -20.9    -17.9   1.0000
+102         3    -20.9    -17.9   1.0000
+103         3    -20.9    -17.9   1.0000
+104         3    -20.9    -17.9   1.0000
+105         3    -20.9    -17.9   1.0000
+106         3    -20.9    -17.9   1.0000
+107         3    -20.9    -17.9   1.0000
+108         3    -20.9    -17.9   1.0000
+109         3    -20.9    -17.9   1.0000
+110         3    -20.9    -17.9   1.0000
+111         3    -20.9    -17.9   1.0000
+112         3    -20.9    -17.9   1.0000
+113         3    -20.9    -17.9   1.0000
+114         3    -20.9    -17.9   1.0000
+115         3    -20.9    -17.9   1.0000
+116         3    -20.9    -17.9   1.0000
+117         3    -20.9    -17.9   1.0000
+118         3    -20.9    -17.9   1.0000
+119         3    -20.9    -17.9   1.0000
+120         3    -20.9    -17.9   1.0000
+121         3    -20.9    -17.9   1.0000
+122         3    -20.9    -17.9   1.0000
+123         3    -20.9    -17.9   1.0000
+124         3    -20.9    -17.9   1.0000
+125         3    -20.9    -17.9   1.0000
+126         3    -20.9    -17.9   1.0000
+127         3    -20.9    -17.9   1.0000
+128         3    -20.9    -17.9   1.0000
+129         3    -20.9    -17.9   1.0000
+130         3    -20.9    -17.9   1.0000
+131         3    -20.9    -17.9   1.0000
+132         3    -20.9    -17.9   1.0000
+133         3    -20.9    -17.9   1.0000
+134         3    -20.9    -17.9   1.0000
+135         3    -20.9    -17.9   1.0000
+136         3    -20.9    -17.9   1.0000
+137         3    -20.9    -17.9   1.0000
+138         3    -20.9    -17.9   1.0000
+139         3    -20.9    -17.9   1.0000
+140         3    -20.9    -17.9   1.0000
+141         3    -20.9    -17.9   1.0000
+142         3    -20.9    -17.9   1.0000
+143         3    -20.9    -17.9   1.0000
+144         3    -20.9    -17.9   1.0000
+145         3    -20.9    -17.9   1.0000
+146         3    -20.9    -17.9   1.0000
+147         3    -20.9    -17.9   1.0000
+148         3    -20.9    -17.9   1.0000
+149         3    -20.9    -17.9   1.0000
+150         3    -20.9    -17.9   1.0000
+151         3    -20.9    -17.9   1.0000
+152         3    -20.9    -17.9   1.0000
+153         3    -20.9    -17.9   1.0000
+154         3    -20.9    -17.9   1.0000
+155         3    -20.9    -17.9   1.0000
+156         3    -20.9    -17.9   1.0000
+157         3    -20.9    -17.9   1.0000
+158         3    -20.9    -17.9   1.0000
+159         3    -20.9    -17.9   1.0000
+160         3    -20.9    -17.9   1.0000
+161         3    -20.9    -17.9   1.0000
+162         3    -20.9    -17.9   1.0000
+163         3    -20.9    -17.9   1.0000
+164         3    -20.9    -17.9   1.0000
+165         3    -20.9    -17.9   1.0000
+166         3    -20.9    -17.9   1.0000
+167         3    -20.9    -17.9   1.0000
+168         3    -20.9    -17.9   1.0000
+169         3    -20.9    -17.9   1.0000
+170         3    -20.9    -17.9   1.0000
+171         3    -20.9    -17.9   1.0000
+172         3    -20.9    -17.9   1.0000
+173         3    -20.9    -17.9   1.0000
+174         3    -20.9    -17.9   1.0000
+175         3    -20.9    -17.9   1.0000
+176         3    -20.9    -17.9   1.0000
+177         3    -20.9    -17.9   1.0000
+178         3    -20.9    -17.9   1.0000
+179         3    -20.9    -17.9   1.0000
+180         3    -20.9    -17.9   1.0000
+
+record_of_every_cycle: 360048 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 60012 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.52      1.00     17.00     33.75     35.50     37.64
+  wake-up                       3.09      7.19      7.25      8.00     11.50     12.25     12.33
+  input and patch               1.38      2.09      2.25      2.50      2.50      2.50      2.61
+  nodes                       193.10    193.25    193.84    193.84    193.84    193.84    193.84
+  output                        0.69      1.17      1.25      1.50      1.50      1.50      1.57
+  compute, whole              195.39    196.51    197.28    197.28    197.28    197.28    197.28
+  period_us: least 1964.05, most 2037.64 (nominal 2000.00)
+  wake_up_bands: under 5 us 192, 5 to 10 59527, 10 to 20 293, 20 to 50 0, 50 and over 0
+  least_margin_us: 1802.72
+  card_frames_at_the_wake_up: ready 107 to 127, to play 161 to 181
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 11.58 us
+record, slot 1: 60012 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.52      1.00     17.00     33.75     35.50     37.64
+  wake-up                       3.14      7.24      7.25      8.00     11.50     12.25     12.36
+  input and patch               0.12      0.28      0.50      0.75      0.75      0.75      0.84
+  nodes                       192.45    192.62    193.33    193.33    193.33    193.33    193.33
+  output                        0.01      0.01      0.25      0.25      0.25      0.25      0.32
+  compute, whole              192.65    192.91    193.62    193.62    193.62    193.62    193.62
+  period_us: least 1964.05, most 2037.64 (nominal 2000.00)
+  wake_up_bands: under 5 us 189, 5 to 10 59528, 10 to 20 295, 20 to 50 0, 50 and over 0
+  least_margin_us: 1806.38
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 11.63 us
+record, slot 2: 60012 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.52      1.00     17.00     33.75     35.50     37.64
+  wake-up                       3.13      7.24      7.25      8.00     11.50     12.25     12.36
+  input and patch               0.12      0.28      0.50      0.74      0.74      0.74      0.74
+  nodes                       192.56    192.92    193.69    193.69    193.69    193.69    193.69
+  output                        0.01      0.01      0.25      0.25      0.25      0.25      0.41
+  compute, whole              192.88    193.22    194.03    194.03    194.03    194.03    194.03
+  period_us: least 1964.05, most 2037.64 (nominal 2000.00)
+  wake_up_bands: under 5 us 189, 5 to 10 59528, 10 to 20 295, 20 to 50 0, 50 and over 0
+  least_margin_us: 1805.97
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 11.64 us
+record, slot 3: 60012 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.52      1.00     17.00     33.75     35.50     37.64
+  wake-up                       3.50      7.24      7.25      8.00     11.50     12.25     12.37
+  input and patch               0.11      0.28      0.50      0.75      0.75      0.75      0.94
+  nodes                       192.66    193.19    194.03    194.03    194.03    194.03    194.03
+  output                        0.01      0.01      0.25      0.25      0.25      0.25      0.42
+  compute, whole              192.85    193.48    194.23    194.23    194.23    194.23    194.23
+  period_us: least 1964.05, most 2037.64 (nominal 2000.00)
+  wake_up_bands: under 5 us 189, 5 to 10 59528, 10 to 20 295, 20 to 50 0, 50 and over 0
+  least_margin_us: 1805.77
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 11.65 us
+record, the 4 threads together: 60012 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.01      0.06      0.25      0.25      0.50      0.58      0.58
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+card_told_late_by_minute: 0 0 0 0 (from the first period, the warm-up too)
+audio: PASS (no xrun; the tone is on input 3; the count comes back on input 6 after 918 samples)
+compute: PASS (no system call in the compute phase)
+graph: PASS (1350180 nodes run in 90012 cycles of 15 nodes; 0 cycles cut, 0 of them waiting for another thread; 0 outputs left silent for a cycle; 0 times a buffer or a node was in use by another thread)

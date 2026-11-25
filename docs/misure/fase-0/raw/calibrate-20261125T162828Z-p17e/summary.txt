@@ -1,0 +1,36 @@
+at 96 kHz with 192 frames, nanoseconds per frame:
+load_costs: 1.839,1.861,0.209 (a load before any filtering, a stage, a trim)
+a_stage_in_a_cascade_of_4: 1.820
+a_stage_in_a_cascade_of_256: 1.854
+the_classes_with_the_figures_of_the_sources: light 9.953, medium 40.167, heavy 149.661
+  in the sources: graph_load_of_10_ns: 4 stages and 2 trims, expected 10.09 ns per frame
+  in the sources: graph_load_of_40_ns: 20 stages and 4 trims, expected 40.03 ns per frame
+  in the sources: graph_load_of_150_ns: 80 stages and 0 trims, expected 149.90 ns per frame
+
+the classes with the figures just measured, nanoseconds per frame:
+rate     frames        light     medium      heavy  made of
+48000    96            9.781     36.948    135.927  10: 4+3 40: 20+5 150: 79+5 
+96000    192          10.292     40.521    150.589  10: 4+3 40: 20+5 150: 79+5 
+192000   384          10.742     42.659    158.557  10: 4+3 40: 20+5 150: 79+5 
+
+dspbench_on_cpu_4: 0.4056 ns per frame and per stage of one instance; a vector of four: 1.622 (a stage here: 1.861)
+
+a light load fed with numbers too small for the normal form, nanoseconds per frame:
+denormals_taken_for_zero: 9.906
+denormals_kept: 690.984
+
+the other kinds, microseconds for a quantum of 96, 192 and 384 frames:
+node       kind               96        192        384
+source     noise           0.177      0.356      0.671
+tone       sine            0.776      1.493      2.998
+click      impulse         0.084      0.130      0.230
+softer     gain            0.055      0.064      0.081
+later      delay           0.188      0.234      0.476
+sum2       sum             0.068      0.076      0.119
+sum8       sum             0.147      0.167      0.249
+bus2       bus             0.086      0.118      0.226
+bus8       bus             0.190      0.274      0.545
+seen       peak            0.216      0.397      0.789
+wait       spin_10ns       1.024      1.972      3.900
+
+finished_utc: 2026-11-25T16:30:32Z
