@@ -1,6 +1,6 @@
 # ADR 0025 — Il grafo: ogni nodo ha il suo core, deciso alla compilazione
 
-- **Stato**: accettata dall'utente il 25 novembre 2026 (decisione D-10, per la parte che tocca il grafo). Il compilatore è nel passo [P1.7a](../fasi/fase-1/P1.7-il-grafo.md), l'esecuzione nel ciclo in P1.7c; la misura viene con P1.7d
+- **Stato**: accettata dall'utente il 25 novembre 2026 (decisione D-10, per la parte che tocca il grafo). Il compilatore è nel passo [P1.7a](../fasi/fase-1/P1.7-il-grafo.md), l'esecuzione nel ciclo in P1.7c, la misura con il carico vero in P1.7d
 - **Data**: 25 novembre 2026
 - **Origine**: domanda D-10 del documento 0 («modello di passaggio tra motore e host»), riproposta in [01-domande-da-d10-a-d21.md](../fasi/fase-1/01-domande-da-d10-a-d21.md); [ADR 0021](0021-core-live-senza-kernel.md); contraddizione C-01 del documento 0
 
@@ -46,9 +46,9 @@ I buffer e lo stato dei nodi stanno dietro lucchetti che vengono solo tentati, m
 
 ## Conseguenze
 
-- **L'assegnazione vale quanto i costi da cui parte.** Oggi sono stime, tranne il carico di R-04 che è calibrato per costare ciò che dichiara. La perdita per un ingresso da un altro thread, 1 µs, è una stima mia: P1.7d la misura.
+- **L'assegnazione vale quanto i costi da cui parte.** Dal passo P1.7d sono misurati sul 285K, tranne ingresso e uscita della scheda. La perdita per un ingresso da un altro thread è mezzo microsecondo: l'attesa media misurata (da 0,2 a 0,6 µs), non il solo costo di leggere un buffer scritto da un altro core, che è 0,1 µs. Con il carico vero il ciclo misurato sta entro il 3 % dal programma su carta, e l'accelerazione su quattro thread è 3,64 contro 3,72.
 - **Un grafo sbilanciato lascia core fermi.** Sedici tracce uguali si dividono bene; una traccia sola che pesa quanto tutte le altre fa il percorso critico, e gli altri core aspettano.
-- **Attesa attiva**: un thread che aspetta un ingresso tiene sveglio il suo core (rischio K-23). Con l'assegnazione per segmenti le attese sono poche; quante e quanto lunghe si misura in P1.7d.
+- **Attesa attiva**: un thread che aspetta un ingresso tiene sveglio il suo core (rischio K-23). Con l'assegnazione per segmenti le attese sono poche: misurate in P1.7d, una per ciclo o meno, da mezzo microsecondo a cinque in media e mai oltre 23 µs su un periodo di 2000.
 - **Cambiare grafo vuol dire ricompilare**, anche per spostare un solo nodo. È fuori dal tempo reale, e lo scambio è il sottopasso P1.7e.
 - **Il programma su carta è un'euristica**, non l'ottimo: l'ottimo è un problema difficile, e qui conta che il risultato sia ripetibile e spiegabile.
 

@@ -117,11 +117,15 @@ Calibrazione indicativa delle classi sul core live: 24, 96 e 359 stadi per 10, 4
 
 Il carico in forma di nodo nativo esiste dal passo [P1.7d](../fasi/fase-1/P1.7-il-grafo.md). Tre precisazioni su ciò che questa decisione lasciava aperto.
 
-- **Un'istanza stereo occupa un vettore intero**: è un banco di quattro bande in parallelo, sinistra e destra di ciascuna, otto valori. Uno «stadio» del nodo sono quindi quattro sezioni del secondo ordine, e costa quanto le quattro istanze affiancate di `dawos-dspbench`: 4 × 0,4174 = 1,67 ns per frame sul core live _(da confermare con la misura di P1.7d)_. I 24, 96 e 359 stadi della calibrazione indicativa diventano circa 6, 24 e 90.
+- **Un'istanza stereo occupa un vettore intero**: è un banco di quattro bande in parallelo, sinistra e destra di ciascuna, otto valori. Uno «stadio» del nodo sono quindi quattro sezioni del secondo ordine, e fa lo stesso lavoro delle quattro istanze affiancate di `dawos-dspbench`. **Misurato il 25 novembre 2026**: 1,845 ns per frame sul core live, contro 1,622 di `dawos-dspbench` sullo stesso core (0,4056 per istanza): il 14 % in più, per una copia tra registri che il compilatore di Rust lascia nella catena tra un frame e il successivo. I 24, 96 e 359 stadi della calibrazione indicativa diventano 4, 20 e 80, con 2, 4 e 0 ritocchi.
 - **Le sezioni sono passa-tutto**, con coefficienti diversi da banda a banda: stessa aritmetica del passa-basso di `dawos-dspbench`, ma il livello del segnale resta quello d'ingresso.
 - **Il costo dichiarato si raggiunge con stadi e ritocchi.** Uno stadio è troppo grosso per colpire 10 ns da solo (passi di 1,67): dopo gli stadi che ci stanno, il resto si copre con «ritocchi», moltiplicazioni semplici da qualche decimo di nanosecondo per frame. Il costo dichiarato è tutto il costo dell'istanza a 96 kHz con 192 frame, compresa la parte fissa di ogni nodo del grafo.
 
 **La calibrazione** sono tre cifre, in nanosecondi per frame su un core live: ciò che un'istanza costa prima di ogni filtro, ciò che aggiunge uno stadio, ciò che aggiunge un ritocco. Le misura `tools/graph-calibrate.sh` con il motore stesso; stanno in `Costs::default` del crate `dawos-graph`, e ogni rapporto del motore dice di quanti stadi e ritocchi è fatto ogni carico del grafo (righe `graph_load_of_…_ns`). Vanno rimisurate quando cambia il processore di riferimento, la frequenza fissata dal profilo, o il modo in cui il motore è compilato.
+
+**Le cifre del 25 novembre 2026** (misura `calibrate-20261125T143805Z-p17d`): 2,3, 1,845 e 0,207 ns per frame. Con quelle le tre classi sono venute entro il 3 %, il 2 % e lo 0,2 % dal costo dichiarato.
+
+**Il costo per frame dipende dalla lunghezza del blocco**: uno stadio costa 1,66 ns con 96 frame, 1,85 con 192, 1,95 con 384. Le classi costano quindi ciò che dichiarano a 96 kHz, dal 3 al 9 % in meno a 48 kHz e dal 6 al 7 % in più a 192 kHz. Per la variante stress a 192 kHz il carico va calibrato a quel quanto (punto aperto A-71).
 
 ## Conseguenze
 

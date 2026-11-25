@@ -977,7 +977,8 @@ mod tests {
         // One of its inputs comes from the other thread: the loss is
         // counted.
         let ready = |node: usize| graph.nodes[node].start_ns + graph.nodes[node].cost_ns;
-        assert!(graph.nodes[mix].start_ns >= ready(la).max(ready(lb)) + 1000);
+        let loss = Costs::default().other_thread_ns as u64;
+        assert!(graph.nodes[mix].start_ns >= ready(la).max(ready(lb)) + loss);
     }
 
     #[test]

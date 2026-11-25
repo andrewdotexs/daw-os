@@ -353,22 +353,28 @@ impl<'a> Given<'a> {
 }
 
 /// What each kind of node is expected to cost, to give the nodes to the
-/// threads before anything is measured, and what a load is made of to
-/// cost what it declares.
+/// threads, and what a load is made of to cost what it declares.
 ///
-/// The three figures of the load are the calibration of ADR 0011: they
-/// say how much filtering makes 10, 40 and 150 ns per frame on a live
-/// CPU of the reference machine. Until step P1.7d has measured them
-/// there, they are the figures of `dawos-dspbench` for a stage (0.4174
-/// ns for each of four instances in a vector, experiment E-06) and
-/// estimates for the rest, as are the costs of the other kinds.
+/// Measured on a live CPU of the reference machine (Core Ultra 9 285K at
+/// 4.6 GHz) in step P1.7d, on 25 November 2026, with the engine built
+/// as crates/Cargo.toml says: tools/graph-calibrate.sh, directory
+/// calibrate-20261125T143805Z-p17d of the measures. They are to be
+/// measured again when the processor, its frequency or the way the
+/// engine is built change. Only the cost of an input and of an output
+/// of the card is still an estimate.
+///
+/// The three figures of the load are the calibration of ADR 0011. They
+/// hold at 96 kHz with 192 frames, the quantum of the reference
+/// session: a stage costs less per frame in a shorter block and more in
+/// a longer one (1.66 ns with 96 frames, 1.95 with 384).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Costs {
     /// Nanoseconds every node costs whatever it does: finding it,
     /// counting it done.
     pub node_ns: f64,
     /// Nanoseconds lost when a node takes its input from a node of
-    /// another thread: the buffer is in the cache of another CPU.
+    /// another thread: the time until the thread sees that the other
+    /// is done, and the buffer in the cache of another CPU.
     pub other_thread_ns: f64,
     /// Nanoseconds per frame of an input or an output of the card: a
     /// conversion between integers and floating point.
@@ -404,20 +410,28 @@ pub struct Costs {
 impl Default for Costs {
     fn default() -> Self {
         Self {
-            node_ns: 50.0,
-            other_thread_ns: 1000.0,
+            node_ns: 40.0,
+            // What a thread waited, on average, for a node of another
+            // thread that was all but done: from 0.2 to 0.6 us in the
+            // measures of steps P1.7c and P1.7d. (Reading a buffer
+            // another CPU wrote costs 0.1 us more for every input: a
+            // bus with twelve such inputs took 1.17 us longer.)
+            other_thread_ns: 500.0,
             card_ns: 1.0,
-            gain_ns: 0.3,
-            sum_ns: 0.3,
-            bus_ns: 0.6,
-            delay_ns: 0.5,
-            sine_ns: 4.0,
-            impulse_ns: 0.3,
+            gain_ns: 0.06,
+            sum_ns: 0.06,
+            bus_ns: 0.15,
+            delay_ns: 1.0,
+            sine_ns: 7.7,
+            impulse_ns: 0.5,
             noise_ns: 1.5,
-            peak_ns: 0.5,
-            load_frame_ns: 2.2,
-            stage_ns: 1.67,
-            trim_ns: 0.34,
+            peak_ns: 1.9,
+            // The three cascades of calibrate.graph gave 1.92, 1.845
+            // and 0.207; the loads built from those cost 0.4 ns per
+            // frame more than the sum, and the first figure takes it.
+            load_frame_ns: 2.3,
+            stage_ns: 1.845,
+            trim_ns: 0.207,
         }
     }
 }
@@ -581,7 +595,8 @@ mod tests {
             assert!(f64::from(trims) * costs.trim_ns < costs.stage_ns + costs.trim_ns);
         }
         // A load too light for a stage is trims alone, and never nothing.
-        assert_eq!(costs.load_shape(3), (0, 2));
+        let (stages, trims) = costs.load_shape(3);
+        assert!(stages == 0 && trims >= 1, "{stages} and {trims}");
         assert_eq!(costs.load_shape(1), (0, 1));
         // With another calibration, another shape.
         let slower = Costs {
