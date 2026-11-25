@@ -1,0 +1,113 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 44100
+quantum_frames: 64
+period_us: 1451.247
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 120
+load_percent: 0
+margin_us: 150
+fault: none
+watchdog_rounds: 82744
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin
+0      first  stopped     82744       0          0        0      7.37     12.56        2.40        3.76      1436.13
+1      first  stopped     82744       0          0        0      7.39     12.60        0.43        0.95      1438.21
+2      first  stopped     82744       0          0        0      7.40     12.60        0.42        0.94      1438.13
+3      first  stopped     82744       0          0        0      7.40     12.58        0.43        0.97      1438.09
+
+card_capture: hw:Gen,0
+card_playback: hw:Gen,0
+card_format: S32_LE, 44100 Hz, 26 inputs, 26 outputs
+card_period_frames: 64 (buffer: capture 192, playback 192)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 82745 with the card, 0 without
+warm_up_seconds: 60
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0
+card_stamps_not_believed: 0
+card_followers: 248235 cycles after a tick of the card, 0 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 3, refused 0
+tone: output 3, 2067.19 Hz, peak 12 dB below full scale
+count_on_input_5: way round 354 samples (8.027 ms), found at 0.009 s; at the end 354 samples (8.027 ms)
+count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 5295198 in place, 0 out of place
+routes: none
+
+inputs listened to (dB relative to full scale; the first 60 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            60    -17.9      -20.9      -20.9     -17.9     -17.9     0.9999
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+record_of_every_cycle: 330976 cycles read, 0 dropped (rings of 4096 records, the fullest held 15)
+record, slot 0: 41401 cycles after the warm-up, 41343 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal     414.85    495.43    460.00    560.00    585.17    585.17    585.17
+  wake-up                       3.28      7.39      7.50     10.25     12.00     12.50     12.56
+  input and patch               0.75      1.45      1.50      1.75      1.93      1.93      1.93
+  nodes                         0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  output                        0.58      0.94      1.00      1.25      1.25      1.36      1.36
+  compute, whole                1.44      2.41      2.50      3.00      3.00      3.00      3.11
+  period_us: least 962.80, most 2036.42 (nominal 1451.25)
+  wake_up_bands: under 5 us 166, 5 to 10 40799, 10 to 20 436, 20 to 50 0, 50 and over 0
+  least_margin_us: 1436.13
+  card_frames_at_the_wake_up: ready 64 to 108, to play 84 to 128
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 10.23 us
+record, slot 1: 41401 cycles after the warm-up, 41343 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal     414.85    495.43    460.00    560.00    585.17    585.17    585.17
+  wake-up                       3.30      7.42      7.50     10.25     12.00     12.50     12.60
+  input and patch               0.07      0.41      0.50      0.66      0.66      0.66      0.66
+  nodes                         0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  output                        0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  compute, whole                0.09      0.43      0.50      0.68      0.68      0.68      0.68
+  period_us: least 962.80, most 2036.42 (nominal 1451.25)
+  wake_up_bands: under 5 us 164, 5 to 10 40796, 10 to 20 441, 20 to 50 0, 50 and over 0
+  least_margin_us: 1438.21
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 10.29 us
+record, slot 2: 41401 cycles after the warm-up, 41343 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal     414.85    495.43    460.00    560.00    585.17    585.17    585.17
+  wake-up                       3.43      7.42      7.50     10.25     12.00     12.50     12.60
+  input and patch               0.06      0.40      0.50      0.63      0.63      0.63      0.63
+  nodes                         0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  output                        0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  compute, whole                0.08      0.43      0.50      0.66      0.66      0.66      0.66
+  period_us: least 962.80, most 2036.42 (nominal 1451.25)
+  wake_up_bands: under 5 us 165, 5 to 10 40795, 10 to 20 441, 20 to 50 0, 50 and over 0
+  least_margin_us: 1438.13
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 10.30 us
+record, slot 3: 41401 cycles after the warm-up, 41343 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal     414.85    495.43    460.00    560.00    585.17    585.17    585.17
+  wake-up                       3.32      7.42      7.50     10.25     12.25     12.50     12.58
+  input and patch               0.07      0.41      0.50      0.66      0.66      0.66      0.66
+  nodes                         0.01      0.01      0.03      0.03      0.03      0.03      0.03
+  output                        0.01      0.01      0.02      0.02      0.02      0.02      0.02
+  compute, whole                0.09      0.43      0.50      0.68      0.68      0.68      0.68
+  period_us: least 962.80, most 2036.42 (nominal 1451.25)
+  wake_up_bands: under 5 us 165, 5 to 10 40795, 10 to 20 441, 20 to 50 0, 50 and over 0
+  least_margin_us: 1438.09
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 10.19 us
+record, the 4 threads together: 41401 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.01      0.04      0.25      0.25      0.39      0.39      0.39
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+card_told_late_by_minute: 0 0 0 (from the first period, the warm-up too)
+audio: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 354 samples)
+compute: PASS (no system call in the compute phase)

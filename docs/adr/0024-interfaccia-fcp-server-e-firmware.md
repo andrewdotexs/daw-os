@@ -1,6 +1,6 @@
 # ADR 0024 — L'interfaccia di quarta generazione: `fcp-support` e firmware nell'immagine
 
-- **Stato**: accettata dall'utente il 24 novembre 2026 nelle tre scelte che gli sono state poste (firmware nell'immagine, aggiornamento prima delle misure, nome del passo); le altre scelte sono mie, dichiarate nel [passo P1.12](../fasi/fase-1/P1.12-la-scarlett-di-quarta-generazione.md) e non contestate. Confermata nella parte che riguarda il passo P1.12a (24 novembre 2026: `fcp-server` attivo dall'avvio, firmware aggiornato, controlli letti); resta la misura di `fcp-server` acceso durante l'audio (P1.12c)
+- **Stato**: accettata dall'utente il 24 novembre 2026 nelle tre scelte che gli sono state poste (firmware nell'immagine, aggiornamento prima delle misure, nome del passo); le altre scelte sono mie, dichiarate nel [passo P1.12](../fasi/fase-1/P1.12-la-scarlett-di-quarta-generazione.md) e non contestate. Confermata nella parte che riguarda il passo P1.12a (24 novembre 2026: `fcp-server` attivo dall'avvio, firmware aggiornato, controlli letti); `fcp-server` acceso durante l'audio misurato in P1.12c (due ore sotto carico: non si vede)
 - **Data**: 24 novembre 2026
 - **Origine**: passo [P1.12](../fasi/fase-1/P1.12-la-scarlett-di-quarta-generazione.md); domanda D-28; prompt della Fase 1, che nomina `fcp-server`
 
