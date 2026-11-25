@@ -24,6 +24,7 @@ mod patch;
 mod plan;
 mod probe;
 mod run;
+mod swap;
 mod watchdog;
 
 use std::process::ExitCode;

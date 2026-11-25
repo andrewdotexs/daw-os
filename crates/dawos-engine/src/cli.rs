@@ -103,6 +103,10 @@ pub struct RunOptions {
     pub keep_denormals: bool,
     /// Print what every node of the graph took, not only kind by kind.
     pub graph_nodes: bool,
+    /// A second graph that takes the place of the first, and the first
+    /// of the second, every so many seconds (step P1.7e).
+    pub swap_graph: Option<String>,
+    pub swap_every_s: u64,
     /// The fault to inject, the thread it strikes and after how long.
     pub fault: Fault,
     pub fault_thread: usize,
@@ -238,6 +242,12 @@ Options of run:
                      with --graph: what a load is made of, instead of
                      the calibration of the sources (see the command
                      graph)
+  --swap-graph FILE  with --graph: a second graph, which takes the place
+                     of the first while the cycle runs, and the first of
+                     the second, again and again. A node with the same
+                     name, kind and parameters in both goes on with what
+                     it was; the others start afresh
+  --swap-every N     seconds between two changes (default 1)
   --keep-denormals   do not have the live threads take the numbers too
                      small for the normal form of a float for zero (to
                      see what computing with them costs)
@@ -337,6 +347,8 @@ impl Default for RunOptions {
             load_costs_ps: None,
             keep_denormals: false,
             graph_nodes: false,
+            swap_graph: None,
+            swap_every_s: 1,
         }
     }
 }
@@ -451,6 +463,10 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             "--load-costs" => options.load_costs_ps = Some(load_costs(value("--load-costs")?)?),
             "--keep-denormals" => options.keep_denormals = true,
             "--graph-nodes" => options.graph_nodes = true,
+            "--swap-graph" => options.swap_graph = Some(value("--swap-graph")?.to_string()),
+            "--swap-every" => {
+                options.swap_every_s = number(value("--swap-every")?, "--swap-every", 1, 86_400)?
+            }
             "--fault" => {
                 options.fault = match value("--fault")? {
                     "none" => Fault::None,
@@ -486,8 +502,10 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
     if options.trace_also.is_some() && !options.kernel_entries {
         return Err("--trace-also needs --kernel-entries".to_string());
     }
-    if options.graph.is_none() && (options.load_costs_ps.is_some() || options.graph_nodes) {
-        return Err("--load-costs and --graph-nodes need --graph".to_string());
+    if options.graph.is_none()
+        && (options.load_costs_ps.is_some() || options.graph_nodes || options.swap_graph.is_some())
+    {
+        return Err("--load-costs, --graph-nodes and --swap-graph need --graph".to_string());
     }
     if options.graph.is_some() {
         if options.load_percent != 0 {
@@ -722,6 +740,11 @@ mod tests {
             ("run --loud", "unknown option"),
             ("run --graph", "needs a value"),
             ("run --graph-nodes", "need --graph"),
+            ("run --swap-graph b.graph", "need --graph"),
+            (
+                "run --graph a.graph --swap-graph b.graph --swap-every 0",
+                "not between",
+            ),
             (
                 "run --graph a.graph --load-costs 1,2",
                 "not FRAME,STAGE,TRIM",

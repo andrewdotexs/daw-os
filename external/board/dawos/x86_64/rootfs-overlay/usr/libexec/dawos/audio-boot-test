@@ -5,8 +5,8 @@
 # The marker file is removed before anything else, so the test runs once.
 # The outcome is printed on the console as one line the test reads:
 #
-#   DAWOS-AUDIO-TEST result=pass passed=8 cases=8
-#   DAWOS-AUDIO-TEST result=fail passed=6 cases=8
+#   DAWOS-AUDIO-TEST result=pass passed=9 cases=9
+#   DAWOS-AUDIO-TEST result=fail passed=7 cases=9
 #
 # Before it, for every case, some lines of what the engine said, after a
 # line "DAWOS-AUDIO-DETAIL case": they stay in the log of the console,
@@ -50,7 +50,7 @@ $(awk '
 	/^slot +kind/ || /^the graph in the cycles/ { print "  " $0; inside = 1; next }
 	inside && NF == 0 { inside = 0 }
 	inside { print "  " $0; next }
-	/^(live_threads|scheduling|denormals|card_|count_|graph_refused|graph_peak|k04|audio|compute|graph):/ { print "  " $0 }
+	/^(live_threads|scheduling|denormals|card_xruns|card_recoveries|card_lost|card_short_writes|card_followers|count_[a-z_0-9]*|graph_refused|graph_change[a-z_]*|graph_peak [a-z0-9_.]*|k04|audio|compute|graph):/ { print "  " $0 }
 	/^slot [0-9]+ cycle / { print "  " $0 }' "${file}")"
 	done
 fi

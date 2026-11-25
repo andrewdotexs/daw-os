@@ -25,8 +25,10 @@ use crate::notify::Notifier;
 use crate::patch::{Heard, Patch, PatchConfig};
 use crate::plan::{Fault, Plan};
 use crate::probe::{BurstKind, Counted, Timed};
+use crate::swap::{Swapper, Switch};
 use crate::watchdog::{watchdog_loop, Event, Spare, Watch, STUCK_PERIODS};
-use dawos_graph::{Kind, Running};
+use dawos_graph::{Compiled, Kind, Running};
+use dawos_rt::stats::Durations;
 
 /// Priority of the watchdog: above the live threads and above anything
 /// else on the CPUs it runs on.
@@ -175,6 +177,27 @@ pub struct GraphOutcome {
     /// average, in nanoseconds.
     pub critical_expected_ns: u64,
     pub critical_measured_ns: f64,
+    /// The changes of graph, when the run had them.
+    pub swaps: Option<SwapOutcome>,
+}
+
+/// The changes of graph of a run (step P1.7e).
+pub struct SwapOutcome {
+    /// The file of the graph that took turns with the first.
+    pub file: String,
+    /// Seconds between two changes.
+    pub every_s: u64,
+    /// Changes made.
+    pub done: u64,
+    /// Why the changes stopped, when they did.
+    pub stalled: Option<String>,
+    /// How long it took to read, compile and build a graph; and from
+    /// the offer of a graph to every thread running it.
+    pub prepare: Durations,
+    pub passing: Durations,
+    /// At the last change: nodes that went on with what they were, of
+    /// how many.
+    pub kept: (usize, usize),
 }
 
 /// A node of the graph in the cycles.
@@ -404,9 +427,21 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         )?),
         None => None,
     };
+    // The graph that takes its place now and then: read and checked
+    // here too, so that a mistake in it stops the run before it starts.
+    let swap_compiled = match &options.swap_graph {
+        Some(file) => Some(crate::graph::load(
+            file,
+            threads,
+            format,
+            options.load_costs_ps,
+        )?),
+        None => None,
+    };
     let on_the_card = |wanted: fn(&Kind) -> Option<u32>| -> Vec<usize> {
         compiled
             .iter()
+            .chain(swap_compiled.iter())
             .flat_map(|compiled| &compiled.nodes)
             .filter_map(|node| wanted(&node.kind))
             .map(|channel| channel as usize - 1)
@@ -525,7 +560,9 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         fault_cycle,
         fault_made: AtomicBool::new(false),
         patch,
-        graph: compiled.as_ref().map(Running::new),
+        graphs: compiled
+            .as_ref()
+            .map(|compiled| Switch::new(Running::new(compiled))),
         judged_from_ns: AtomicU64::new(0),
         graph_refused_early: AtomicU64::new(u64::MAX),
         flush_denormals: !options.keep_denormals,
@@ -781,12 +818,29 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     notifier.ready();
     let end_ns = start_ns + options.seconds * 1_000_000_000;
     let mut last_heartbeat = 0;
+    // The changes of graph, when the run has them: made from here,
+    // between two looks at the clock.
+    let mut swapper = match (&options.graph, &options.swap_graph, &compiled) {
+        (Some(first), Some(second), Some(compiled)) => Some(Swapper::new(
+            [first.clone(), second.clone()],
+            compiled.clone(),
+            threads,
+            format,
+            options.load_costs_ps,
+            options.swap_every_s,
+            start_ns,
+        )),
+        _ => None,
+    };
     while clock::now() < end_ns {
         thread::sleep(Duration::from_millis(100));
         let now = heartbeat.load(Ordering::Acquire);
         if now != last_heartbeat {
             last_heartbeat = now;
             notifier.alive();
+        }
+        if let (Some(swapper), Some(switch)) = (swapper.as_mut(), shared.graphs.as_ref()) {
+            swapper.tick(switch, &shared.slots, || clock::now() >= end_ns);
         }
     }
 
@@ -896,63 +950,84 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         })
         .collect();
 
-    let graph_outcome = compiled
-        .as_ref()
-        .zip(shared.graph.as_ref())
-        .map(|(compiled, graph)| {
-            // Never marked: the run ended in the warm-up, all of it.
-            let early = shared
-                .graph_refused_early
-                .load(Ordering::Acquire)
-                .min(graph.refused());
-            // What every node took: each thread timed its own, in
-            // the order it runs them.
-            let mut times = vec![NodeTime::default(); compiled.nodes.len()];
-            for report in &reports {
-                for (place, &node) in graph.nodes_of(report.slot).iter().enumerate() {
-                    if let (Some(time), Some(took)) =
-                        (times.get_mut(node), report.graph_times.get(place))
-                    {
-                        time.runs += took.runs;
-                        time.sum_ns += took.sum_ns;
-                        time.max_ns = time.max_ns.max(took.max_ns);
-                    }
-                }
-            }
-            let timed: Vec<TimedNode> = compiled
-                .nodes
-                .iter()
-                .zip(&times)
-                .map(|(node, time)| TimedNode {
+    let graph_outcome =
+        compiled
+            .as_ref()
+            .zip(shared.graphs.as_ref())
+            .and_then(|(first, switch)| {
+                let guard = switch.in_use()?;
+                let graph = guard.as_ref()?;
+                // The graph in use at the end, as it was compiled.
+                let compiled = swapper.as_ref().map_or(first, |swapper| &swapper.compiled);
+                let total_refused =
+                    graph.refused() + swapper.as_ref().map_or(0, |swapper| swapper.refused);
+                // Never marked: the run ended in the warm-up, all of it.
+                let early = shared
+                    .graph_refused_early
+                    .load(Ordering::Acquire)
+                    .min(total_refused);
+                let row = |compiled: &Compiled, node: &dawos_graph::Timed| TimedNode {
                     name: node.name.clone(),
                     kind: kind_label(&node.kind),
                     thread: node.thread,
-                    expected_ns: node.cost_ns,
-                    time: *time,
+                    expected_ns: compiled
+                        .nodes
+                        .iter()
+                        .find(|known| known.name == node.name)
+                        .map_or(0, |known| known.cost_ns),
+                    time: NodeTime {
+                        runs: node.runs,
+                        sum_ns: node.sum_ns,
+                        max_ns: node.max_ns,
+                    },
+                };
+                // What every node took: those of the graph in use, then those
+                // that only the graphs before it had.
+                let mut timed: Vec<TimedNode> = graph
+                    .timed()
+                    .iter()
+                    .map(|node| row(compiled, node))
+                    .collect();
+                let in_use = timed.len();
+                for (before, nodes) in swapper.iter().flat_map(|swapper| swapper.gone.iter().rev())
+                {
+                    for node in nodes {
+                        if !timed.iter().any(|known| known.name == node.name) {
+                            timed.push(row(before, node));
+                        }
+                    }
+                }
+                Some(GraphOutcome {
+                    file: options.graph.clone().unwrap_or_default(),
+                    summary: first.summary(options.margin_us),
+                    nodes: compiled
+                        .nodes
+                        .iter()
+                        .filter(|node| !matches!(node.kind, Kind::Input { .. }))
+                        .count(),
+                    refused: total_refused - early,
+                    refused_early: early,
+                    peaks: graph.peaks(),
+                    frames: compiled.frames,
+                    critical_expected_ns: compiled.critical_ns,
+                    critical_measured_ns: compiled
+                        .critical_path
+                        .iter()
+                        .filter_map(|node| timed[..in_use].get(*node))
+                        .map(TimedNode::mean_ns)
+                        .sum(),
+                    timed,
+                    swaps: swapper.as_ref().map(|swapper| SwapOutcome {
+                        file: options.swap_graph.clone().unwrap_or_default(),
+                        every_s: options.swap_every_s,
+                        done: swapper.done,
+                        stalled: swapper.stalled.clone(),
+                        prepare: swapper.prepare.clone(),
+                        passing: swapper.passing.clone(),
+                        kept: swapper.kept,
+                    }),
                 })
-                .collect();
-            GraphOutcome {
-                file: options.graph.clone().unwrap_or_default(),
-                summary: compiled.summary(options.margin_us),
-                nodes: compiled
-                    .nodes
-                    .iter()
-                    .filter(|node| !matches!(node.kind, Kind::Input { .. }))
-                    .count(),
-                refused: graph.refused() - early,
-                refused_early: early,
-                peaks: graph.peaks(),
-                frames: compiled.frames,
-                critical_expected_ns: compiled.critical_ns,
-                critical_measured_ns: compiled
-                    .critical_path
-                    .iter()
-                    .filter_map(|node| timed.get(*node))
-                    .map(TimedNode::mean_ns)
-                    .sum(),
-                timed,
-            }
-        });
+            });
     Ok(Outcome {
         format,
         live_cpus,
@@ -1197,7 +1272,33 @@ fn graph_verdict(outcome: &Outcome) -> Verdict {
             graph.refused_early
         ));
     }
+    let missing = sum(|report| report.graph_missing);
     let tolerant = outcome.options.allow_xruns || outcome.options.fault != Fault::None;
+    if let Some(swaps) = &graph.swaps {
+        what.push_str(&format!(
+            "; {} changes of graph, the last keeping {} nodes of {}",
+            swaps.done, swaps.kept.0, swaps.kept.1
+        ));
+        if let Some(why) = &swaps.stalled {
+            what.push_str(&format!("; then the changes stopped: {why}"));
+        }
+        if swaps.done == 0 {
+            return Verdict::Fail(format!("{what}: no change was made"));
+        }
+        // Changes that stop are a failure where the time is kept. Where
+        // it is not (a virtual machine), the watchdog takes threads
+        // that are only slow for stuck ones until no spare thread is
+        // left, and a slot without a thread never gets to the cycle of
+        // a change: that says nothing of the change.
+        if swaps.stalled.is_some() && !tolerant {
+            return Verdict::Fail(what);
+        }
+    }
+    // A cycle that finds no graph is a mistake in the order of a change,
+    // whatever the machine.
+    if missing > 0 {
+        return Verdict::Fail(format!("{what}; {missing} cycles found no graph"));
+    }
     if !tolerant && (cut > 0 || silent > 0 || graph.refused > 0) {
         return Verdict::Fail(what);
     }
@@ -1721,6 +1822,43 @@ fn print_graph(graph: &GraphOutcome, outcome: &Outcome) {
         "graph_refused: {} after the warm-up, {} in it (a buffer or a node in use by another thread when one asked for it)",
         graph.refused, graph.refused_early
     );
+    if let Some(swaps) = &graph.swaps {
+        println!();
+        println!("graph_swap_file: {}", swaps.file);
+        println!(
+            "graph_changes: {} made, one every {} s{}",
+            swaps.done,
+            swaps.every_s,
+            swaps
+                .stalled
+                .as_ref()
+                .map_or_else(String::new, |why| format!("; then they stopped: {why}"))
+        );
+        println!(
+            "graph_change_kept: {} nodes of {} went on with what they were, at the last change",
+            swaps.kept.0, swaps.kept.1
+        );
+        println!(
+            "graph_change_prepared_us: avg {} max {} (to read, compile and build a graph, outside the cycle)",
+            us(swaps.prepare.mean_ns()),
+            us(swaps.prepare.max_ns())
+        );
+        println!(
+            "graph_change_passed_us: avg {} max {} (from the offer of a graph to every thread running it)",
+            us(swaps.passing.mean_ns()),
+            us(swaps.passing.max_ns())
+        );
+        let changes: Vec<String> = {
+            let mut reports: Vec<&ThreadReport> = outcome.reports.iter().collect();
+            reports.sort_by_key(|report| (report.slot, report.spare));
+            reports
+                .iter()
+                .map(|report| format!("slot {} {}", report.slot, report.graph_changes))
+                .collect()
+        };
+        println!("graph_changes_seen: {}", changes.join(", "));
+    }
+
     // Kind by kind, in the order of the graph: what the compiler
     // expected of a node and what the nodes took.
     println!();
@@ -2203,6 +2341,58 @@ mod tests {
         assert_eq!(peak_db(&outcome, "heard"), f64::NEG_INFINITY);
     }
 
+    /// Two graphs take each other's place every second. Every thread
+    /// sees every change, no cycle is left without a graph, the nodes
+    /// the two have in common go on with what they were, and what the
+    /// nodes of both took is in the report.
+    #[test]
+    fn a_graph_takes_the_place_of_another_while_the_cycle_runs() {
+        let _alone = alone();
+        let common = "impulse click every=1 db=-20\ndelay hold frames=480 thread=1\n\
+                      peak heard thread=0\nconnect click -> hold -> heard\n";
+        let first = GraphFile::new(
+            "swap-a",
+            &format!("{common}noise only_a\npeak pa\nconnect only_a -> pa\n"),
+        );
+        let second = GraphFile::new(
+            "swap-b",
+            &format!("{common}sine only_b\ngain gb\npeak pb\nconnect only_b -> gb -> pb\n"),
+        );
+        let options = RunOptions {
+            swap_graph: Some(second.0.to_str().unwrap().to_string()),
+            swap_every_s: 1,
+            seconds: 4,
+            ..first.options(2)
+        };
+        let outcome = execute(&options).expect("the run did not start");
+        let graph = outcome.graph.as_ref().expect("a graph");
+        let swaps = graph.swaps.as_ref().expect("the changes");
+        assert!(swaps.stalled.is_none(), "{:?}", swaps.stalled);
+        assert!((2..=4).contains(&swaps.done), "{} changes", swaps.done);
+        // The impulse, the delay line and the meter stay; of the five
+        // or six nodes of a graph, three.
+        assert_eq!(swaps.kept.0, 3);
+        for report in &outcome.reports {
+            assert_eq!(report.graph_missing, 0);
+            assert_eq!(report.graph_changes, swaps.done, "slot {}", report.slot);
+        }
+        // The click went through the delay line all along.
+        assert!((peak_db(&outcome, "heard") + 20.0).abs() < 0.01);
+        // Nodes of both graphs were timed.
+        for name in ["hold", "only_a", "only_b", "gb"] {
+            let node = graph
+                .timed
+                .iter()
+                .find(|node| node.name == name)
+                .unwrap_or_else(|| panic!("no times for {name}"));
+            assert!(node.time.runs > 0, "{name}");
+        }
+        // The meters of a graph that was in use only for a while are
+        // gone with it, and it is so said: the graph at the end has
+        // one of the two.
+        assert!(!matches!(graph_verdict(&outcome), Verdict::NotAsked));
+    }
+
     #[test]
     fn a_graph_with_a_mistake_stops_the_run_before_it_starts() {
         let file = GraphFile::new("wrong", "gain g thread=7\n");
@@ -2211,6 +2401,13 @@ mod tests {
         let mut none = file.options(2);
         none.graph = Some("/nonexistent/x.graph".to_string());
         assert!(execute(&none).is_err());
+        // The graph that would take its place is read before the start
+        // too.
+        let good = GraphFile::new("good", "noise n\npeak p\nconnect n -> p\n");
+        let mut swapped = good.options(2);
+        swapped.swap_graph = Some(file.0.to_str().unwrap().to_string());
+        let error = execute(&swapped).err().expect("an error");
+        assert!(error.contains("line 1"), "{error}");
     }
 
     #[test]

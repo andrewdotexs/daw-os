@@ -41,13 +41,13 @@
 
 use std::f64::consts::TAU;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Mutex, RwLock, RwLockReadGuard};
+use std::sync::{Arc, Mutex, RwLock, RwLockReadGuard};
 
 use dawos_rt::clock;
 use dawos_rt::dsp::{Cascade, Frame, LANES};
 
 use crate::compile::Compiled;
-use crate::kind::{Kind, Pitch};
+use crate::kind::{Costs, Kind, Pitch};
 
 /// Full scale of a 32-bit sample of the card.
 const FULL_SCALE: f32 = 2_147_483_648.0;
@@ -108,21 +108,62 @@ enum State {
     },
 }
 
-/// A node as it is run.
+/// A node as it is run: where it sits in this graph, and its cell.
 struct Live {
     name: String,
+    kind: Kind,
+    /// The live thread that runs it.
+    thread: usize,
     /// The buffer of each input; `None`: silence.
     inputs: Vec<Option<usize>>,
     /// The buffer of each output.
     outputs: Vec<usize>,
     /// The nodes it waits for.
     waits_for: Vec<usize>,
+    /// What it is from one cycle to the next. A graph that takes the
+    /// place of another shares the cells of the nodes that stay: the
+    /// same name, the same kind, the same parameters (step P1.7e).
+    cell: Arc<Cell>,
+}
+
+/// What a node is from one cycle to the next, whatever graph it is in.
+struct Cell {
     /// The cycle it was last run for, plus one; 0: never.
     done: AtomicU64,
     /// Given up by the watchdog: nobody runs it again, and nobody waits
     /// for it.
     abandoned: AtomicBool,
     state: Mutex<State>,
+    /// How often it was run, for how long in all and at the most, in
+    /// nanoseconds: written by the thread that runs it.
+    runs: AtomicU64,
+    sum_ns: AtomicU64,
+    max_ns: AtomicU64,
+}
+
+impl std::ops::Deref for Live {
+    type Target = Cell;
+
+    fn deref(&self) -> &Cell {
+        &self.cell
+    }
+}
+
+/// How long a node took, over the cycles it was run in.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Timed {
+    /// The name of the node in the description.
+    pub name: String,
+    /// Its kind, with its parameters.
+    pub kind: Kind,
+    /// The live thread that runs it in this graph.
+    pub thread: usize,
+    /// Cycles it was run in.
+    pub runs: u64,
+    /// Nanoseconds in all.
+    pub sum_ns: u64,
+    /// Nanoseconds of the longest run.
+    pub max_ns: u64,
 }
 
 /// How the inputs of a node stand for a cycle.
@@ -147,6 +188,13 @@ pub struct Running {
     buffers: Vec<RwLock<Vec<f32>>>,
     /// A quantum of silence, for an input nothing is connected to.
     silence: Vec<f32>,
+    /// What the graph was compiled for: a graph that takes its place
+    /// keeps the state of its nodes only if these are the same.
+    rate: u32,
+    frames: u32,
+    costs: Costs,
+    /// Nodes that took their cell from the graph before.
+    kept: usize,
     /// Buffers and states that could not be had.
     refused: AtomicU64,
     /// Outputs of the card left silent because their node had not been
@@ -159,81 +207,126 @@ fn factor(db: f64) -> f64 {
     10.0_f64.powf(db / 20.0)
 }
 
+/// What a node of kind `kind` starts from.
+fn fresh(kind: &Kind, compiled: &Compiled) -> State {
+    let frames = compiled.frames as usize;
+    match *kind {
+        Kind::Input { channel } => State::Input {
+            channel: channel as usize - 1,
+        },
+        Kind::Output { channel } => State::Output {
+            channel: channel as usize - 1,
+            staged: vec![0; frames],
+        },
+        // Samples are 32-bit: the factor is too.
+        Kind::Gain { db } => State::Gain {
+            factor: factor(db) as f32,
+        },
+        Kind::Sum => State::Nothing,
+        Kind::Bus => State::Bus {
+            sum: vec![0.0; frames],
+        },
+        Kind::Delay { frames: by } => State::Delay {
+            line: vec![0.0; by as usize],
+            at: 0,
+        },
+        Kind::Sine { pitch, db } => State::Sine {
+            phase: 0.0,
+            step: match pitch {
+                Pitch::Hz(hz) => TAU * hz / f64::from(compiled.rate),
+                Pitch::Cycles(cycles) => TAU * f64::from(cycles) / f64::from(compiled.frames),
+            },
+            level: factor(db),
+        },
+        Kind::Impulse { every, db } => State::Impulse {
+            every,
+            until_next: 0,
+            level: factor(db) as f32,
+        },
+        Kind::Noise { db, seed } => State::Noise {
+            // Never zero, and far apart for seeds that are
+            // close.
+            state: (seed.wrapping_add(1)).wrapping_mul(0x9e37_79b9_7f4a_7c15) | 1,
+            level: factor(db) as f32,
+        },
+        Kind::Peak => State::Peak { peak: 0.0 },
+        Kind::Load { ns_per_frame } => {
+            let (stages, trims) = compiled.costs.load_shape(ns_per_frame);
+            State::Cascade {
+                cascade: Cascade::new(stages, trims),
+                work: vec![[0.0; LANES]; frames],
+            }
+        }
+        Kind::Cascade { stages, trims } => State::Cascade {
+            cascade: Cascade::new(stages, trims),
+            work: vec![[0.0; LANES]; frames],
+        },
+        Kind::Spin { ns_per_frame } => State::Spin {
+            ns: u64::from(ns_per_frame) * u64::from(compiled.frames),
+        },
+    }
+}
+
 impl Running {
     /// The graph `compiled`, ready for its first cycle. Everything a
     /// cycle needs is allocated here.
     #[must_use]
     pub fn new(compiled: &Compiled) -> Self {
+        Self::build(compiled, None)
+    }
+
+    /// The graph `compiled`, to take the place of `previous` at the
+    /// boundary of a period. A node with the name, the kind and the
+    /// parameters of a node of `previous` goes on with what that node
+    /// was: the memory of its filters, its delay line, its phase, its
+    /// peak. Every other node starts afresh. Nothing is kept when the
+    /// two graphs were compiled for another rate, another quantum or
+    /// other costs. Outside the real-time path: it allocates.
+    #[must_use]
+    pub fn after(compiled: &Compiled, previous: &Self) -> Self {
+        Self::build(compiled, Some(previous))
+    }
+
+    fn build(compiled: &Compiled, previous: Option<&Self>) -> Self {
         let frames = compiled.frames as usize;
+        let previous = previous.filter(|previous| {
+            previous.rate == compiled.rate
+                && previous.frames == compiled.frames
+                && previous.costs == compiled.costs
+        });
+        let mut kept = 0;
         let nodes: Vec<Live> = compiled
             .nodes
             .iter()
             .map(|node| {
-                let state = match node.kind {
-                    Kind::Input { channel } => State::Input {
-                        channel: channel as usize - 1,
-                    },
-                    Kind::Output { channel } => State::Output {
-                        channel: channel as usize - 1,
-                        staged: vec![0; frames],
-                    },
-                    // Samples are 32-bit: the factor is too.
-                    Kind::Gain { db } => State::Gain {
-                        factor: factor(db) as f32,
-                    },
-                    Kind::Sum => State::Nothing,
-                    Kind::Bus => State::Bus {
-                        sum: vec![0.0; frames],
-                    },
-                    Kind::Delay { frames: by } => State::Delay {
-                        line: vec![0.0; by as usize],
-                        at: 0,
-                    },
-                    Kind::Sine { pitch, db } => State::Sine {
-                        phase: 0.0,
-                        step: match pitch {
-                            Pitch::Hz(hz) => TAU * hz / f64::from(compiled.rate),
-                            Pitch::Cycles(cycles) => {
-                                TAU * f64::from(cycles) / f64::from(compiled.frames)
-                            }
-                        },
-                        level: factor(db),
-                    },
-                    Kind::Impulse { every, db } => State::Impulse {
-                        every,
-                        until_next: 0,
-                        level: factor(db) as f32,
-                    },
-                    Kind::Noise { db, seed } => State::Noise {
-                        // Never zero, and far apart for seeds that are
-                        // close.
-                        state: (seed.wrapping_add(1)).wrapping_mul(0x9e37_79b9_7f4a_7c15) | 1,
-                        level: factor(db) as f32,
-                    },
-                    Kind::Peak => State::Peak { peak: 0.0 },
-                    Kind::Load { ns_per_frame } => {
-                        let (stages, trims) = compiled.costs.load_shape(ns_per_frame);
-                        State::Cascade {
-                            cascade: Cascade::new(stages, trims),
-                            work: vec![[0.0; LANES]; frames],
-                        }
+                let stays = previous.and_then(|previous| {
+                    previous
+                        .nodes
+                        .iter()
+                        .find(|old| old.name == node.name && old.kind == node.kind)
+                });
+                let cell = match stays {
+                    Some(old) => {
+                        kept += 1;
+                        Arc::clone(&old.cell)
                     }
-                    Kind::Cascade { stages, trims } => State::Cascade {
-                        cascade: Cascade::new(stages, trims),
-                        work: vec![[0.0; LANES]; frames],
-                    },
-                    Kind::Spin { ns_per_frame } => State::Spin {
-                        ns: u64::from(ns_per_frame) * u64::from(compiled.frames),
-                    },
+                    None => Arc::new(Cell {
+                        done: AtomicU64::new(0),
+                        abandoned: AtomicBool::new(false),
+                        state: Mutex::new(fresh(&node.kind, compiled)),
+                        runs: AtomicU64::new(0),
+                        sum_ns: AtomicU64::new(0),
+                        max_ns: AtomicU64::new(0),
+                    }),
                 };
                 Live {
                     name: node.name.clone(),
+                    kind: node.kind,
+                    thread: node.thread,
                     inputs: node.inputs.clone(),
                     outputs: node.outputs.clone(),
                     waits_for: node.waits_for.clone(),
-                    done: AtomicU64::new(0),
-                    abandoned: AtomicBool::new(false),
-                    state: Mutex::new(state),
+                    cell,
                 }
             })
             .collect();
@@ -255,9 +348,63 @@ impl Running {
                 .map(|_| RwLock::new(vec![0.0; frames]))
                 .collect(),
             silence: vec![0.0; frames],
+            rate: compiled.rate,
+            frames: compiled.frames,
+            costs: compiled.costs,
+            kept,
             refused: AtomicU64::new(0),
             late_outputs: AtomicU64::new(0),
         }
+    }
+
+    /// Nodes that went on from the graph before with what they were.
+    #[must_use]
+    pub fn kept(&self) -> usize {
+        self.kept
+    }
+
+    /// Nodes in the graph.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+
+    /// Whether the graph has no node.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+
+    /// Node `node` took `ns` nanoseconds in a cycle. By the thread that
+    /// ran it: three stores, no lock.
+    #[inline]
+    pub fn record(&self, node: usize, ns: u64) {
+        let cell = &self.nodes[node].cell;
+        cell.runs
+            .store(cell.runs.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+        cell.sum_ns
+            .store(cell.sum_ns.load(Ordering::Relaxed) + ns, Ordering::Relaxed);
+        if ns > cell.max_ns.load(Ordering::Relaxed) {
+            cell.max_ns.store(ns, Ordering::Relaxed);
+        }
+    }
+
+    /// How long every node took so far, in the order of the compiled
+    /// graph. A node that came from the graph before brings its times
+    /// with it. Not for a live thread: it allocates.
+    #[must_use]
+    pub fn timed(&self) -> Vec<Timed> {
+        self.nodes
+            .iter()
+            .map(|node| Timed {
+                name: node.name.clone(),
+                kind: node.kind,
+                thread: node.thread,
+                runs: node.runs.load(Ordering::Relaxed),
+                sum_ns: node.sum_ns.load(Ordering::Relaxed),
+                max_ns: node.max_ns.load(Ordering::Relaxed),
+            })
+            .collect()
     }
 
     /// The nodes of live thread `thread`, in the order it runs them;
@@ -836,6 +983,80 @@ mod tests {
             assert_eq!(pair[0], pair[1], "frame {frame}");
             assert_eq!(pair[0] != 0, frame % 5 == 0, "frame {frame}");
         }
+    }
+
+    fn compiled_for(text: &str, frames: u32) -> Compiled {
+        let settings = Settings {
+            threads: 1,
+            rate: 48_000,
+            frames,
+            costs: Costs::default(),
+        };
+        compile(&parse(text).unwrap(), &settings).unwrap()
+    }
+
+    /// Where a click every 1000 frames, delayed by 100, is heard on
+    /// output 1 over 25 cycles: `first` runs the first twelve, and
+    /// `second`, when there is one, takes its place for the others.
+    fn clicks(first: &Running, second: Option<&Running>) -> Vec<usize> {
+        let frames = FRAMES as usize;
+        let mut heard = Vec::new();
+        for cycle in 0..25 {
+            let graph = second.filter(|_| cycle >= 12).unwrap_or(first);
+            let mut output = vec![0_i32; frames];
+            graph.run_all(cycle, &[], &mut output, (0, 1));
+            for (frame, &sample) in output.iter().enumerate() {
+                if sample != 0 {
+                    heard.push(cycle as usize * frames + frame);
+                }
+            }
+        }
+        heard
+    }
+
+    const CLICK: &str = "impulse click every=1000 db=0\ndelay late frames=100\n\
+                         output out channel=1\nconnect click -> late -> out\n";
+
+    #[test]
+    fn a_graph_that_takes_the_place_of_another_goes_on_where_it_was() {
+        // The same chain, and two nodes more.
+        let more = format!("{CLICK}noise extra\npeak seen\nconnect extra -> seen\n");
+        let first = Running::new(&compiled_for(CLICK, FRAMES));
+        let second = Running::after(&compiled_for(&more, FRAMES), &first);
+        assert_eq!((second.len(), second.kept()), (5, 3));
+        // The impulse counts on and the delay line gives back what it
+        // held: the clicks fall where they would have without a change.
+        assert_eq!(clicks(&first, Some(&second)), [100, 1100, 2100]);
+        // And the nodes that stayed bring their times with them.
+        let place = |graph: &Running, name: &str| {
+            graph
+                .timed()
+                .iter()
+                .position(|node| node.name == name)
+                .unwrap()
+        };
+        first.record(place(&first, "late"), 30);
+        second.record(place(&second, "late"), 50);
+        let timed = &second.timed()[place(&second, "late")];
+        assert_eq!((timed.runs, timed.sum_ns, timed.max_ns), (2, 80, 50));
+        assert_eq!(second.timed()[place(&second, "seen")].runs, 0);
+    }
+
+    #[test]
+    fn a_node_that_changed_starts_afresh() {
+        // The delay is another: 50 frames. The impulse and the output
+        // stay, the line is empty again.
+        let shorter = CLICK.replace("frames=100", "frames=50");
+        let first = Running::new(&compiled_for(CLICK, FRAMES));
+        let second = Running::after(&compiled_for(&shorter, FRAMES), &first);
+        assert_eq!(second.kept(), 2);
+        // The click of frame 2000 goes into the new line: it comes 50
+        // frames later, not 100. (The one of frame 1000 was out of the
+        // old line before the change.)
+        assert_eq!(clicks(&first, Some(&second)), [100, 1100, 2050]);
+        // Compiled for another quantum, nothing can be kept.
+        let other = Running::after(&compiled_for(CLICK, 2 * FRAMES), &first);
+        assert_eq!(other.kept(), 0);
     }
 
     /// Four threads, each with its own nodes, spinning for what they

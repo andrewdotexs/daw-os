@@ -51,7 +51,7 @@
 # never yielding, and one of the threads that follow it never yielding
 # (step P1.6b; not with --threads 1).
 #
-# And in both, two cases with a graph (step P1.7c):
+# And in both, three cases with a graph (steps P1.7c and P1.7e):
 #
 #   graph   the copy of input 3 to output 5 is made by a graph
 #           (passthrough.graph) instead of the engine's own route: the
@@ -62,6 +62,12 @@
 #           checks it on input 6, sample for sample. Output 6 reaches
 #           input 6 as output 5 reaches input 5. Always with four live
 #           threads: the graph gives each its part.
+#   swap    the same count, through two graphs that take each other's
+#           place every second while the cycle runs (swap-a.graph and
+#           swap-b.graph). Both hold the count in a delay line of 96
+#           frames, which goes on with what it holds at every change:
+#           were it to start afresh, the count would be found out of
+#           place. The changes must all go through.
 #
 # In every case the engine has the kernel stop the system calls of the
 # compute phase, and a call stopped where none was asked for fails the
@@ -365,6 +371,9 @@ if [ "${mode}" = loopback ]; then
 	run_case graph --seconds "${seconds}" --allow-xruns --graph "${GRAPHS}/passthrough.graph"
 	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
 	run_case relay --seconds "${seconds}" --allow-xruns --threads 4 --graph "${GRAPHS}/relay.graph"
+	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
+	run_case swap --seconds "${seconds}" --allow-xruns --threads 4 --graph "${GRAPHS}/swap-a.graph" \
+		--swap-graph "${GRAPHS}/swap-b.graph" --swap-every 1
 	if [ "${loaded}" = yes ]; then
 		modprobe -r snd-aloop 2> /dev/null || true
 	fi
@@ -406,8 +415,8 @@ else
 		run_case "plain-${rate}" --rate "${rate}" --warm-up "${warm_up}" \
 			--seconds "$((seconds + warm_up))" --require-rt
 	done
-	# With a graph (step P1.7c), at the first rate: two minutes each
-	# after the warm-up.
+	# With a graph (steps P1.7c and P1.7e), at the first rate: two
+	# minutes each after the warm-up.
 	settle "${first}"
 	sound="--tone 3 --tone-cycles 3 --listen 3,5"
 	run_case "graph-${first}" --rate "${first}" --warm-up "${warm_up}" \
@@ -415,6 +424,10 @@ else
 	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
 	run_case "relay-${first}" --rate "${first}" --warm-up "${warm_up}" \
 		--seconds "$((120 + warm_up))" --require-rt --threads 4 --graph "${GRAPHS}/relay.graph"
+	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
+	run_case "swap-${first}" --rate "${first}" --warm-up "${warm_up}" \
+		--seconds "$((120 + warm_up))" --require-rt --threads 4 --graph "${GRAPHS}/swap-a.graph" \
+		--swap-graph "${GRAPHS}/swap-b.graph" --swap-every 1
 	if [ "${faults}" = yes ]; then
 		settle "${first}"
 		run_case "kernel-entries-${first}" --rate "${first}" --warm-up 8 --seconds 38 --require-rt \
