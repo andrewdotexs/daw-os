@@ -58,6 +58,10 @@ pub struct PatchConfig {
     pub bursts: Option<(usize, usize, BurstKind)>,
     /// How long the run lasts, in seconds: the room for the bursts.
     pub seconds: u64,
+    /// The inputs a graph reads and the outputs it writes (step P1.7c).
+    /// An output of the graph carries nothing else.
+    pub graph_inputs: Vec<usize>,
+    pub graph_outputs: Vec<usize>,
 }
 
 /// A sudden change in the time the tone takes to come back: samples were
@@ -234,6 +238,19 @@ impl Patch {
             if taken.contains(&output) {
                 return Err(format!("--burst: output {} is already in use", output + 1));
             }
+            taken.push(output);
+        }
+        for &input in &config.graph_inputs {
+            input_exists(input, "--graph")?;
+        }
+        for &output in &config.graph_outputs {
+            output_exists(output, "--graph")?;
+            if taken.contains(&output) {
+                return Err(format!(
+                    "--graph: output {} is already in use, by the tone, a route, the count or the bursts",
+                    output + 1
+                ));
+            }
         }
         let angle = TAU * config.tone_hz / f64::from(rate);
         Ok(Self {
@@ -317,10 +334,28 @@ impl Patch {
         &mut self.input
     }
 
+    /// The input of the cycle, as the back end wrote it.
+    #[must_use]
+    pub fn input(&self) -> &[i32] {
+        &self.input
+    }
+
     /// What goes to the back end at the end of the cycle.
     #[must_use]
     pub fn output(&self) -> &[i32] {
         &self.output
+    }
+
+    /// The same, for the graph to write its outputs after
+    /// [`Patch::process`].
+    pub fn output_mut(&mut self) -> &mut [i32] {
+        &mut self.output
+    }
+
+    /// Channels in a frame of the input and of the output.
+    #[must_use]
+    pub const fn channels(&self) -> (usize, usize) {
+        (self.inputs, self.outputs)
     }
 
     /// One quantum: from the input just read to the output to deliver.
@@ -524,6 +559,8 @@ mod tests {
             count_key: 0x5a5a,
             bursts: None,
             seconds: 0,
+            graph_inputs: Vec::new(),
+            graph_outputs: Vec::new(),
         }
     }
 
@@ -777,5 +814,12 @@ mod tests {
             "already carries the tone",
         );
         wrong(|config| config.listen = vec![12], "--listen: input 13");
+        // A graph: its channels must be there, and its outputs free.
+        wrong(|config| config.graph_inputs = vec![8], "--graph: input 9");
+        wrong(|config| config.graph_outputs = vec![8], "--graph: output 9");
+        wrong(
+            |config| config.graph_outputs = vec![2],
+            "--graph: output 3 is already in use",
+        );
     }
 }

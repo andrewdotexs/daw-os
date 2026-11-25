@@ -67,6 +67,9 @@ dependencies = [
 [[package]]
 name = "dawos-graph"
 version = "0.1.0"
+dependencies = [
+ "dawos-rt",
+]
 
 [[package]]
 name = "dawos-rt"

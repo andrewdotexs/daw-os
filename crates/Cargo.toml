@@ -6,8 +6,8 @@
 #                   it is the only crate allowed to contain unsafe code.
 #   dawos-audio-io  the audio back ends behind one interface ("null" and
 #                   "alsa"; "file" in step P1.7).
-#   dawos-graph     the audio graph: its description, its checks and
-#                   its compilation, outside the real-time path.
+#   dawos-graph     the audio graph: its description, its checks, its
+#                   compilation, and the form the live threads run.
 #   dawos-engine    the process and its command line.
 [workspace]
 resolver = "2"

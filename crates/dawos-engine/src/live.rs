@@ -17,11 +17,21 @@
 //! the end of its own period. A thread whose work does not fit is cut
 //! there, as before, and takes from what the card has left to play no
 //! more than that half period.
+//!
+//! **The graph** (step P1.7c). When the run has one, each thread runs
+//! the nodes the compiler gave it, in their order. A node whose inputs
+//! come from another thread is not started until they are written: the
+//! thread spins, reading the marks of the nodes it waits for, with no
+//! system call, until they are there or the budget is over. The thread
+//! that holds the card runs the inputs of the graph right after it has
+//! read the card, and takes the outputs right before it writes it: an
+//! output whose node was not run in time is silence for that cycle.
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 
 use dawos_audio_io::{Backend, Disturbance, Wake};
+use dawos_graph::{Inputs, Running};
 use dawos_rt::clock;
 use dawos_rt::dispatch::{self, Caught};
 use dawos_rt::ring::Writer;
@@ -65,6 +75,15 @@ pub struct Shared {
     /// the back end has sound. Shared with the spare thread that may
     /// replace it; never waited for.
     pub patch: Option<Mutex<Patch>>,
+    /// The graph the threads run in every cycle, when the run has one.
+    pub graph: Option<Running>,
+    /// The instant the warm-up ends: what happens to the graph before
+    /// it is counted apart (an interface that is settling stops its
+    /// streams, and cycles are cut for it). 0: there is none.
+    pub judged_from_ns: AtomicU64,
+    /// What the graph had refused when the warm-up ended; `u64::MAX`
+    /// until then.
+    pub graph_refused_early: AtomicU64,
 }
 
 impl Shared {
@@ -120,6 +139,22 @@ pub struct ThreadReport {
     pub caught_calls: Vec<Caught>,
     /// System calls made on purpose in the compute phase (a test).
     pub calls_on_purpose: u64,
+    /// Nodes of the graph run.
+    pub graph_nodes: u64,
+    /// How long the thread spun for the inputs of a node that another
+    /// thread writes: of the nodes it had to wait for.
+    pub graph_waits: Durations,
+    /// Cycles in which this thread did not get to the end of its nodes
+    /// of the graph, after the warm-up and in it.
+    pub graph_cut: u64,
+    pub graph_cut_early: u64,
+    /// Of those after the warm-up: the cycles in which the inputs of a
+    /// node were not there when the budget was over, or were gone.
+    pub graph_starved: u64,
+    /// Outputs of the card the graph left silent for a cycle, after the
+    /// warm-up and in it (the thread that holds the card counts them).
+    pub graph_silent: u64,
+    pub graph_silent_early: u64,
 }
 
 /// How a live thread ended.
@@ -180,7 +215,15 @@ fn cycles(
         caught: 0,
         caught_calls: Vec::new(),
         calls_on_purpose: 0,
+        graph_nodes: 0,
+        graph_waits: Durations::new(),
+        graph_cut: 0,
+        graph_cut_early: 0,
+        graph_starved: 0,
+        graph_silent: 0,
+        graph_silent_early: 0,
     };
+    let graph = shared.graph.as_ref();
     // System calls stopped so far, to tell those of each cycle.
     let mut caught_before = dispatch::caught();
     let mut first = true;
@@ -242,13 +285,23 @@ fn cycles(
         if behind {
             flags |= meter::BEHIND;
         }
+        let mut captured_for_graph = false;
         if let Some(patch) = patch {
             if let Ok(mut patch) = patch.try_lock() {
                 backend.capture(patch.input_mut());
                 patch.process();
+                if let Some(graph) = graph {
+                    graph.capture(wake.index, patch.input(), patch.channels().0);
+                    captured_for_graph = true;
+                }
             } else {
                 flags |= meter::NO_PATCH;
             }
+        }
+        // Without a card, or without its input: the graph hears
+        // silence.
+        if let Some(graph) = graph.filter(|_| slot_index == 0 && !captured_for_graph) {
+            graph.capture(wake.index, &[], 0);
         }
         if slot_index == 0
             && wake.index >= shared.fault_cycle
@@ -263,27 +316,42 @@ fn cycles(
             flags |= meter::DISTURBED;
         }
         let captured = clock::now();
+        // What happens to the graph in the warm-up is counted apart.
+        let judged = wake.woke >= shared.judged_from_ns.load(Ordering::Relaxed);
+        if let Some(graph) = graph.filter(|_| slot_index == 0 && judged) {
+            // Once: what had been refused until here.
+            if shared.graph_refused_early.load(Ordering::Relaxed) == u64::MAX {
+                let _ = shared.graph_refused_early.compare_exchange(
+                    u64::MAX,
+                    graph.refused(),
+                    Ordering::AcqRel,
+                    Ordering::Relaxed,
+                );
+            }
+        }
 
         let mut incomplete = false;
         let mut nodes_run = 0_u16;
         // The longest step between two readings of the clock inside the
         // nodes, and when it ended.
         let mut gap = (0_u64, 0_u64);
-        for (index, node) in nodes.iter().enumerate() {
-            if node.is_abandoned() {
-                continue;
-            }
-            // The compute budget: past the deadline no node is started.
-            // The threads that do not hold the card keep to what the one
-            // that does has read of it.
-            let limit = if slot_index == 0 {
+        // The compute budget: past the deadline no node is started.
+        // The threads that do not hold the card keep to what the one
+        // that does has read of it.
+        let limit = || {
+            if slot_index == 0 {
                 deadline
             } else {
                 shared.dry(wake.index).map_or(deadline, |dry| {
                     deadline.min(dry.saturating_sub(shared.margin_ns))
                 })
-            };
-            if clock::now() >= limit {
+            }
+        };
+        for (index, node) in nodes.iter().enumerate() {
+            if node.is_abandoned() {
+                continue;
+            }
+            if clock::now() >= limit() {
                 incomplete = true;
                 break;
             }
@@ -307,6 +375,63 @@ fn cycles(
             }
         }
         dispatch::in_node(None);
+
+        // The nodes of the graph this thread was given, in their order.
+        // The watchdog does not know them one by one yet (step P1.7e):
+        // a thread stuck in one is a thread stuck outside any node.
+        if let Some(graph) = graph.filter(|_| !incomplete) {
+            for &node in graph.nodes_of(slot_index) {
+                // The inputs of the card were run by `capture`.
+                if graph.is_input(node) || graph.is_abandoned(node) {
+                    continue;
+                }
+                let mut now = clock::now();
+                let mut inputs = graph.inputs_of(node, wake.index);
+                if inputs == Inputs::NotYet {
+                    // Another thread is still writing what this node
+                    // reads: spin, with an eye on the budget.
+                    let began = now;
+                    while now < limit() {
+                        std::hint::spin_loop();
+                        inputs = graph.inputs_of(node, wake.index);
+                        now = clock::now();
+                        if inputs != Inputs::NotYet {
+                            break;
+                        }
+                    }
+                    if inputs == Inputs::Ready {
+                        report.graph_waits.add(now - began);
+                    }
+                }
+                // Not there when the budget was over; or the others are
+                // at a later cycle already, and this thread is behind:
+                // the sooner it ends this cycle, the sooner it is back
+                // with them.
+                if inputs != Inputs::Ready {
+                    report.graph_starved += u64::from(judged);
+                    incomplete = true;
+                    break;
+                }
+                if now >= limit() {
+                    incomplete = true;
+                    break;
+                }
+                graph.run(node, wake.index);
+                report.graph_nodes += 1;
+                nodes_run = nodes_run.saturating_add(1);
+                if slot.generation() != generation {
+                    report.end = End::Retired;
+                    return report;
+                }
+            }
+        }
+        if graph.is_some() && incomplete {
+            if judged {
+                report.graph_cut += 1;
+            } else {
+                report.graph_cut_early += 1;
+            }
+        }
         if call_on_purpose && nodes.is_empty() {
             report.calls_on_purpose += 1;
             std::thread::yield_now();
@@ -333,9 +458,26 @@ fn cycles(
 
         // The output, before the period ends: whatever the nodes did or
         // did not finish.
+        let mut silent = None;
         if let Some(patch) = patch {
-            if let Ok(patch) = patch.try_lock() {
+            if let Ok(mut patch) = patch.try_lock() {
+                if let Some(graph) = graph {
+                    // What the graph did not finish stays as the patch
+                    // left it: silence.
+                    let channels = patch.channels().1;
+                    silent = Some(graph.deliver(wake.index, patch.output_mut(), channels));
+                }
                 backend.deliver(patch.output());
+            }
+        }
+        // Without a card the outputs go nowhere: those not run in time
+        // are counted all the same.
+        if let Some(graph) = graph.filter(|_| slot_index == 0) {
+            let silent = silent.unwrap_or_else(|| graph.deliver(wake.index, &mut [], 0));
+            if judged {
+                report.graph_silent += u64::from(silent);
+            } else {
+                report.graph_silent_early += u64::from(silent);
             }
         }
 
@@ -473,6 +615,9 @@ mod tests {
             fault_cycle: 0,
             fault_made: AtomicBool::new(false),
             patch: None,
+            graph: None,
+            judged_from_ns: AtomicU64::new(0),
+            graph_refused_early: AtomicU64::new(u64::MAX),
         });
         let mut backend = Queueing {
             shared: Arc::clone(&shared),

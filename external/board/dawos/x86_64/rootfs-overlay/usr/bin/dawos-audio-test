@@ -51,9 +51,24 @@
 # never yielding, and one of the threads that follow it never yielding
 # (step P1.6b; not with --threads 1).
 #
+# And in both, two cases with a graph (step P1.7c):
+#
+#   graph   the copy of input 3 to output 5 is made by a graph
+#           (passthrough.graph) instead of the engine's own route: the
+#           tone must be on both inputs as in the plain run;
+#   relay   the engine plays a count on output 5, a graph for four live
+#           threads (relay.graph) takes it on input 5, hands it from
+#           thread to thread and plays it on output 6, and the engine
+#           checks it on input 6, sample for sample. Output 6 reaches
+#           input 6 as output 5 reaches input 5. Always with four live
+#           threads: the graph gives each its part.
+#
 # In every case the engine has the kernel stop the system calls of the
 # compute phase, and a call stopped where none was asked for fails the
-# case.
+# case. A case with a graph also has the engine's verdict "graph:": on
+# the interface every cycle must compute the whole graph, and no thread
+# may find a buffer of it in use by another; on the software card, where
+# the time is not kept, it is enough that the graph was run.
 #
 # Results go to /var/lib/dawos/measure/audio-<time>[-LABEL].
 
@@ -62,6 +77,7 @@ set -u
 PROG=dawos-audio-test
 BASE=/var/lib/dawos/measure
 ENGINE=${DAWOS_ENGINE:-dawos-engine}
+GRAPHS=${DAWOS_GRAPHS_DIR:-/usr/share/dawos/graphs}
 SETUP=${DAWOS_CARD_SETUP:-dawos-card-setup}
 CARDS_DIR=${DAWOS_CARDS_DIR:-/usr/share/dawos/cards}
 
@@ -100,7 +116,7 @@ field() {
 # Column $2 of the row of the first live thread in the thread table.
 thread_column() {
 	awk -v column="$2" '
-		/^slot +kind/ { inside = 1; next }
+		/^slot +kind +end/ { inside = 1; next }
 		inside && NF == 0 { inside = 0 }
 		inside && $1 == "0" && $3 != "never" { value = $column }
 		END { print value }' "$1"
@@ -115,15 +131,22 @@ heard() {
 		inside && $1 == input { printf "input %s tone %s to %s dB share %s", $1, $6, $7, $8 }' "$1"
 }
 
+# What the engine does with the sound in a case: the tone on output 3,
+# input 3 copied to output 5, both inputs measured. A case with a graph
+# sets its own before run_case, which puts this back.
+PLAIN_SOUND="--tone 3 --tone-cycles 3 --route 3:5 --listen 3,5"
+sound=${PLAIN_SOUND}
+
 # Run one case: $1 name, the rest are options of "dawos-engine run". The
 # verdict is the engine's own line "audio:".
 run_case() {
 	name=$1
 	shift
 	cases=$((cases + 1))
-	# shellcheck disable=SC2086  # device_options is several words
-	"${ENGINE}" run --backend alsa ${device_options} --tone 3 --tone-cycles 3 --route 3:5 --listen 3,5 --each-second "$@" \
+	# shellcheck disable=SC2086  # device_options and sound are several words
+	"${ENGINE}" run --backend alsa ${device_options} ${sound} --each-second "$@" \
 		> "${dir}/${name}.txt" 2> "${dir}/${name}.err"
+	sound=${PLAIN_SOUND}
 	audio=$(field "${dir}/${name}.txt" audio)
 	k04=$(field "${dir}/${name}.txt" k04)
 	result=FAIL
@@ -148,6 +171,18 @@ run_case() {
 	compute=$(field "${dir}/${name}.txt" compute)
 	case "${compute}" in
 	FAIL*) result=FAIL ;;
+	esac
+	# A case with a graph (step P1.7c): the engine's own verdict,
+	# "graph:", must be there and must not be FAIL.
+	graph=
+	case " $* " in
+	*" --graph "*)
+		graph=$(field "${dir}/${name}.txt" graph)
+		case "${graph}" in
+		PASS*) ;;
+		*) result=FAIL ;;
+		esac
+		;;
 	esac
 	entries=
 	case " $* " in
@@ -183,6 +218,12 @@ run_case() {
 		[ -n "${k04}" ] && printf '; k04 %s' "${k04%% *}"
 		[ -n "${entries}" ] && printf '; in the compute phase: %s' "${entries}"
 		printf '; compute %s' "${compute:-not watched}"
+		counted=$(sed -n 's/^count_on_input_\([0-9]*\): \(way round [0-9]* samples\).*/count on input \1: \2/p' "${dir}/${name}.txt")
+		[ -n "${counted}" ] && printf '; %s, slips %s, out of place %s' "${counted}" \
+			"$(sed -n 's/^count_slips_on_input_[0-9]*: \([0-9]*\) .*/\1/p' "${dir}/${name}.txt")" \
+			"$(sed -n 's/^count_samples_on_input_[0-9]*: .* in place, \([0-9]*\) out of place.*/\1/p' "${dir}/${name}.txt")"
+		[ -n "${graph}" ] && printf '; graph %s' "${graph}"
+		[ -z "${graph}" ] && case " $* " in *" --graph "*) printf '; graph: no verdict' ;; esac
 		# Why, in the engine's own words.
 		[ "${result}" = FAIL ] && printf '; audio: %s' "${audio:-no verdict: $(tail -n 1 "${dir}/${name}.err")}"
 		printf '\n'
@@ -320,6 +361,10 @@ if [ "${mode}" = loopback ]; then
 	run_case stuck-node --seconds 8 --allow-xruns --fault stuck-node --fault-thread 0
 	run_case kernel-entries --seconds 8 --allow-xruns --kernel-entries
 	run_case syscall --seconds 8 --allow-xruns --fault syscall
+	sound="--tone 3 --tone-cycles 3 --listen 3,5"
+	run_case graph --seconds "${seconds}" --allow-xruns --graph "${GRAPHS}/passthrough.graph"
+	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
+	run_case relay --seconds "${seconds}" --allow-xruns --threads 4 --graph "${GRAPHS}/relay.graph"
 	if [ "${loaded}" = yes ]; then
 		modprobe -r snd-aloop 2> /dev/null || true
 	fi
@@ -361,6 +406,15 @@ else
 		run_case "plain-${rate}" --rate "${rate}" --warm-up "${warm_up}" \
 			--seconds "$((seconds + warm_up))" --require-rt
 	done
+	# With a graph (step P1.7c), at the first rate: two minutes each
+	# after the warm-up.
+	settle "${first}"
+	sound="--tone 3 --tone-cycles 3 --listen 3,5"
+	run_case "graph-${first}" --rate "${first}" --warm-up "${warm_up}" \
+		--seconds "$((120 + warm_up))" --require-rt --graph "${GRAPHS}/passthrough.graph"
+	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
+	run_case "relay-${first}" --rate "${first}" --warm-up "${warm_up}" \
+		--seconds "$((120 + warm_up))" --require-rt --threads 4 --graph "${GRAPHS}/relay.graph"
 	if [ "${faults}" = yes ]; then
 		settle "${first}"
 		run_case "kernel-entries-${first}" --rate "${first}" --warm-up 8 --seconds 38 --require-rt \

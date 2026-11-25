@@ -1,0 +1,51 @@
+# The count of the engine handed from one live thread to the next, and
+# work for every thread meanwhile (step P1.7c). For four live threads.
+#
+# With "--count 5:6" the engine plays the count on output 5 of the card;
+# inside the interface it comes back on input 5 (the file
+# MODEL.test-loop.conf). The graph takes it there, on the thread that
+# holds the card, and hands it to thread 1, then 2, then 3, then back to
+# the thread of the card, which plays it on output 6: it comes back on
+# input 6, where the engine checks it sample for sample. A gain of 0 dB
+# changes nothing: a sample that is late, lost or wrong anywhere on the
+# way is one the count finds out of place.
+#
+# Every hop waits for the hop before, on another thread: it is the wait
+# without system calls of ADR 0025.
+
+input   in5    channel=5
+gain    hop1   db=0  thread=1
+gain    hop2   db=0  thread=2
+gain    hop3   db=0  thread=3
+output  out6   channel=6
+connect in5 -> hop1 -> hop2 -> hop3 -> out6
+
+# Work on every thread: a load of 2000 ns per frame keeps a thread busy
+# for about a tenth of a period at 44.1 and 48 kHz, a fifth at 88.2 and
+# 96 kHz, two fifths above.
+
+noise   n0     seed=1     thread=0
+load    busy0  ns=2000    thread=0
+noise   n1     seed=2     thread=1
+load    busy1  ns=2000    thread=1
+noise   n2     seed=3     thread=2
+load    busy2  ns=2000    thread=2
+noise   n3     seed=4     thread=3
+load    busy3  ns=2000    thread=3
+bus     mix
+peak    level
+connect n0 -> busy0:0 -> mix -> level
+connect n1 -> busy1:0 -> mix
+connect n2 -> busy2:0 -> mix
+connect n3 -> busy3:0 -> mix
+connect n0 -> busy0:1
+connect n1 -> busy1:1
+connect n2 -> busy2:1
+connect n3 -> busy3:1
+
+# The tone that comes back through the cable on input 3, on a meter of
+# the graph: it should read what "--listen 3" reads.
+
+input   in3    channel=3
+peak    tone
+connect in3 -> tone
