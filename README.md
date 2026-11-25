@@ -26,6 +26,7 @@ make qemu-test
 
 ## Documentazione
 
+- [Il quaderno: che cosa stiamo costruendo, come lo proviamo, dove abbiamo sbagliato; con il glossario](docs/quaderno/README.md)
 - [Documento 0: revisione critica, interfacce trasversali, piano della Fase 0, domande aperte](docs/00-revisione-specifiche-fase0.md)
 - [Registro delle modifiche del documento 0 verso la versione 1](docs/01-registro-modifiche-v1.md)
 - [Punti aperti: che cosa è in sospeso e in quale passo si chiude](docs/02-punti-aperti.md)
