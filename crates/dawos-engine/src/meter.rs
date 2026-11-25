@@ -67,6 +67,28 @@ pub const INCOMPLETE: u16 = 0x100;
 pub const NO_PATCH: u16 = 0x200;
 /// A fault was asked for in this cycle (a test).
 pub const DISTURBED: u16 = 0x400;
+/// The cycle began behind: its period was due before the cycle before
+/// had ended, so the thread did not sleep and what lies between the
+/// instant the period was due and the start of the cycle is not a
+/// wake-up. It happens when a thread works for most of a period and the
+/// card tells of the next one early (open point A-68), or after a cycle
+/// that ran long.
+pub const BEHIND: u16 = 0x800;
+
+/// The instant a cycle had to end by: a period after it really began,
+/// no later than half a period past the end of its own period, and no
+/// later than the instant the card would have played all it had (ADR
+/// 0023: the compute budget, as it is counted from step P1.7b).
+/// `frames`: those of a period; 0 without a card.
+#[must_use]
+pub fn allowed_end(cycle: &Cycle, period_ns: u64, frames: u32) -> u64 {
+    let own = (cycle.woke + period_ns).min(cycle.due + period_ns * 3 / 2);
+    if frames == 0 || cycle.output_queued == 0 {
+        own
+    } else {
+        own.min(cycle.due + u64::from(cycle.output_queued) * period_ns / u64::from(frames))
+    }
+}
 
 /// One cycle of one live thread, as the thread wrote it.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -174,8 +196,11 @@ pub enum Kind {
     CardLate,
     /// Periods went by because the cycle before ended after its period.
     ThreadLate,
-    /// It ended after its own period.
+    /// It ended after the instant it had to end by.
     Overrun,
+    /// It began behind: its period was due before the cycle before had
+    /// ended.
+    Behind,
     /// It woke more than 20 us after the period was due.
     WokeLate,
 }
@@ -196,7 +221,7 @@ pub enum XrunCause {
 }
 
 impl Kind {
-    const ALL: [Self; 10] = [
+    const ALL: [Self; 11] = [
         Self::AfterXrun(XrunCause::AskedFor),
         Self::AfterXrun(XrunCause::Thread),
         Self::AfterXrun(XrunCause::NotTheThread),
@@ -206,6 +231,7 @@ impl Kind {
         Self::CardLate,
         Self::ThreadLate,
         Self::Overrun,
+        Self::Behind,
         Self::WokeLate,
     ];
 
@@ -225,7 +251,8 @@ impl Kind {
             Self::CardBack => "a card was taken into use",
             Self::CardLate => "the card told of the period late",
             Self::ThreadLate => "periods went by, the cycle before ran over",
-            Self::Overrun => "ended after its period",
+            Self::Overrun => "ended after the instant it had to end by",
+            Self::Behind => "began behind, the period was due before the cycle before ended",
             Self::WokeLate => "woke more than 20 us late",
         }
     }
@@ -259,6 +286,9 @@ pub struct ThreadFigures {
     pub period_least_ns: u64,
     pub period_most_ns: u64,
     pub wake_up: Durations,
+    /// Cycles that began behind, and how long after the instant their
+    /// period was due: they are not among the wake-ups.
+    pub behind: Durations,
     /// The parts of the compute phase, and the whole of it.
     pub input: Durations,
     pub nodes: Durations,
@@ -296,6 +326,7 @@ impl ThreadFigures {
             period_least_ns: u64::MAX,
             period_most_ns: 0,
             wake_up: Durations::new(),
+            behind: Durations::new(),
             input: Durations::new(),
             nodes: Durations::new(),
             output: Durations::new(),
@@ -320,14 +351,16 @@ pub struct MeterReport {
     pub threads: Vec<ThreadFigures>,
     /// Cycles to look at, by kind (the order of `Kind::ALL`): after the
     /// warm-up and in it.
-    pub counts: [u64; 10],
-    pub early_counts: [u64; 10],
+    pub counts: [u64; 11],
+    pub early_counts: [u64; 11],
     /// The first of them, one by one.
     pub kept: Vec<Notable>,
     pub early_kept: Vec<Notable>,
     pub ring_records: u64,
     /// Whether the run had a sound card.
     pub card: bool,
+    /// Frames in a period; 0 without a card.
+    pub frames: u32,
     /// Periods the card told late, minute by minute from the first
     /// period, warm-up and all, up to the last minute that had cycles:
     /// how an interface settles shows here.
@@ -364,8 +397,8 @@ pub struct Meter {
     buffer_frames: u32,
     frames: u32,
     warm_up_end_ns: u64,
-    counts: [u64; 10],
-    early_counts: [u64; 10],
+    counts: [u64; 11],
+    early_counts: [u64; 11],
     kept: Vec<Notable>,
     early_kept: Vec<Notable>,
     start_ns: u64,
@@ -414,8 +447,8 @@ impl Meter {
             buffer_frames: shape.frames * shape.periods,
             frames: shape.frames,
             warm_up_end_ns: shape.start_ns + shape.warm_up_ns,
-            counts: [0; 10],
-            early_counts: [0; 10],
+            counts: [0; 11],
+            early_counts: [0; 11],
             kept: Vec::with_capacity(KEPT * Kind::ALL.len()),
             early_kept: Vec::with_capacity(KEPT_EARLY * Kind::ALL.len()),
             start_ns: shape.start_ns,
@@ -475,7 +508,9 @@ impl Meter {
 
         if early {
             figures.early_cycles += 1;
-            figures.early_worst_wake_ns = figures.early_worst_wake_ns.max(cycle.wake_up_ns());
+            if !cycle.has(BEHIND) {
+                figures.early_worst_wake_ns = figures.early_worst_wake_ns.max(cycle.wake_up_ns());
+            }
         } else {
             figures.cycles += 1;
             figures.missed += u64::from(cycle.missed);
@@ -487,15 +522,20 @@ impl Meter {
                 figures.on_the_clock += 1;
             } else {
                 let wake_up = cycle.wake_up_ns();
-                figures.wake_up.add(wake_up);
-                let band = match wake_up {
-                    0..5_000 => 0,
-                    5_000..10_000 => 1,
-                    10_000..LATE_WAKE_NS => 2,
-                    LATE_WAKE_NS..WAKE_LIMIT_NS => 3,
-                    _ => 4,
-                };
-                figures.wake_bands[band] += 1;
+                if cycle.has(BEHIND) {
+                    // The thread did not sleep: not a wake-up.
+                    figures.behind.add(wake_up);
+                } else {
+                    figures.wake_up.add(wake_up);
+                    let band = match wake_up {
+                        0..5_000 => 0,
+                        5_000..10_000 => 1,
+                        10_000..LATE_WAKE_NS => 2,
+                        LATE_WAKE_NS..WAKE_LIMIT_NS => 3,
+                        _ => 4,
+                    };
+                    figures.wake_bands[band] += 1;
+                }
                 figures.input.add(u64::from(cycle.captured_ns));
                 figures.nodes.add(u64::from(
                     cycle.computed_ns.saturating_sub(cycle.captured_ns),
@@ -504,7 +544,8 @@ impl Meter {
                     cycle.finished_ns.saturating_sub(cycle.computed_ns),
                 ));
                 figures.compute.add(u64::from(cycle.finished_ns));
-                let margin = (cycle.due + period) as i64 - cycle.finished() as i64;
+                let margin =
+                    allowed_end(&cycle, period, self.frames) as i64 - cycle.finished() as i64;
                 figures.least_margin_ns = figures.least_margin_ns.min(margin);
                 if self.buffer_frames != 0 {
                     figures.input_ready.0 = figures.input_ready.0.min(cycle.input_ready);
@@ -578,7 +619,8 @@ impl Meter {
     fn judge(&self, cycle: &Cycle, before: Option<&Cycle>) -> Option<Kind> {
         let period = self.period_ns;
         // The cycle before ended in time for the card to be served.
-        let before_in_time = before.map(|before| before.finished() <= before.due + period);
+        let before_in_time =
+            before.map(|before| before.finished() <= allowed_end(before, period, self.frames));
         if cycle.has(u16::from(Wake::AFTER_XRUN)) {
             let cause = match before {
                 None => XrunCause::Unknown,
@@ -616,8 +658,11 @@ impl Meter {
                 _ => Kind::CardLate,
             });
         }
-        if cycle.finished() > cycle.due + period {
+        if cycle.finished() > allowed_end(cycle, period, self.frames) {
             return Some(Kind::Overrun);
+        }
+        if cycle.has(BEHIND) {
+            return Some(Kind::Behind);
         }
         if cycle.wake_up_ns() > LATE_WAKE_NS {
             return Some(Kind::WokeLate);
@@ -666,6 +711,11 @@ impl Meter {
             early_kept: self.early_kept,
             ring_records,
             card: self.buffer_frames != 0,
+            frames: if self.buffer_frames == 0 {
+                0
+            } else {
+                self.frames
+            },
             card_late_by_minute: self.card_late_by_minute[..self.minutes].to_vec(),
             wake_spread: self.wake_spread,
             live_threads: self.threads,
@@ -745,7 +795,7 @@ pub fn row(name: &str, durations: &Durations) {
     );
 }
 
-fn counts_in_words(counts: &[u64; 10]) -> String {
+fn counts_in_words(counts: &[u64; 11]) -> String {
     let words: Vec<String> = Kind::ALL
         .iter()
         .zip(counts)
@@ -759,8 +809,8 @@ fn counts_in_words(counts: &[u64; 10]) -> String {
     }
 }
 
-fn print_cycle(prefix: &str, cycle: &Cycle, period_ns: u64, card: bool) {
-    let margin = (cycle.due + period_ns) as i64 - cycle.finished() as i64;
+fn print_cycle(prefix: &str, cycle: &Cycle, period_ns: u64, card: bool, frames: u32) {
+    let margin = allowed_end(cycle, period_ns, frames) as i64 - cycle.finished() as i64;
     let fill = if card {
         format!(
             "; card: {} frames ready, {} to play",
@@ -770,7 +820,12 @@ fn print_cycle(prefix: &str, cycle: &Cycle, period_ns: u64, card: bool) {
         String::new()
     };
     println!(
-        "{prefix}woke {:.2} us after the period was due; input {:.2}, nodes {:.2} ({} of them), output {:.2} us; ended {:.2} us {} the end of its period{fill}",
+        "{prefix}{} {:.2} us after the period was due; input {:.2}, nodes {:.2} ({} of them), output {:.2} us; ended {:.2} us {} the instant it had to end by{fill}",
+        if cycle.has(BEHIND) {
+            "began, without a sleep,"
+        } else {
+            "woke"
+        },
         us(cycle.wake_up_ns()),
         us(u64::from(cycle.captured_ns)),
         us(u64::from(cycle.computed_ns.saturating_sub(cycle.captured_ns))),
@@ -781,7 +836,7 @@ fn print_cycle(prefix: &str, cycle: &Cycle, period_ns: u64, card: bool) {
     );
 }
 
-fn print_notable(notable: &Notable, start_ns: u64, period_ns: u64, card: bool) {
+fn print_notable(notable: &Notable, start_ns: u64, period_ns: u64, card: bool, frames: u32) {
     let cycle = &notable.cycle;
     let stretch = notable.before.map_or_else(String::new, |before| {
         let gap = cycle.due.saturating_sub(before.due);
@@ -801,9 +856,9 @@ fn print_notable(notable: &Notable, start_ns: u64, period_ns: u64, card: bool) {
         stretch,
         cycle.missed,
     );
-    print_cycle("      it: ", cycle, period_ns, card);
+    print_cycle("      it: ", cycle, period_ns, card, frames);
     if let Some(before) = &notable.before {
-        print_cycle("      the one before: ", before, period_ns, card);
+        print_cycle("      the one before: ", before, period_ns, card, frames);
     }
 }
 
@@ -856,6 +911,13 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
             "  wake_up_bands: under 5 us {}, 5 to 10 {}, 10 to 20 {}, 20 to 50 {}, 50 and over {}",
             bands[0], bands[1], bands[2], bands[3], bands[4]
         );
+        if figures.behind.count() > 0 {
+            println!(
+                "  began_behind: {} cycles, {:.2} us after the period was due at the most (no sleep before them: not wake-ups)",
+                figures.behind.count(),
+                us(figures.behind.max_ns().unwrap_or(0))
+            );
+        }
         if figures.least_margin_ns != i64::MAX {
             println!(
                 "  least_margin_us: {:.2}",
@@ -908,7 +970,7 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
         );
     }
     for notable in &report.kept {
-        print_notable(notable, start_ns, period_ns, report.card);
+        print_notable(notable, start_ns, period_ns, report.card, report.frames);
     }
     if total > report.kept.len() as u64 {
         println!(
@@ -919,7 +981,7 @@ pub fn print(report: &MeterReport, start_ns: u64, period_ns: u64) {
     if !report.early_kept.is_empty() {
         println!("in the warm-up, {} of them:", report.early_kept.len());
         for notable in &report.early_kept {
-            print_notable(notable, start_ns, period_ns, report.card);
+            print_notable(notable, start_ns, period_ns, report.card, report.frames);
         }
     }
     if let Some(kernel) = &report.kernel {
@@ -1010,11 +1072,78 @@ mod tests {
         assert_eq!(figures.wake_bands, [1000, 0, 0, 0, 0]);
         assert_eq!(figures.compute.max_ns(), Some(6_000));
         assert_eq!(figures.nodes.max_ns(), Some(3_000));
-        assert_eq!(figures.least_margin_ns, (PERIOD - 9_000) as i64);
+        // A period from the instant it woke, less its 6 us of work.
+        assert_eq!(figures.least_margin_ns, (PERIOD - 6_000) as i64);
         assert_eq!(figures.period_off.count(), 999);
         assert_eq!(figures.period_off.max_ns(), Some(0));
         assert_eq!(report.counts.iter().sum::<u64>(), 0);
         assert!(report.kept.is_empty());
+    }
+
+    #[test]
+    fn a_cycle_has_a_period_from_its_start_within_bounds() {
+        // Without a card: a period after it began.
+        let mut cycle = healthy(1);
+        cycle.output_queued = 0;
+        assert_eq!(allowed_end(&cycle, PERIOD, 0), cycle.woke + PERIOD);
+        // With a card that has two periods left to play: the same.
+        let cycle = healthy(1);
+        assert_eq!(allowed_end(&cycle, PERIOD, FRAMES), cycle.woke + PERIOD);
+        // Begun 0.8 of a period after it was due: half a period past
+        // the end of its own period, no more.
+        let mut behind = healthy(1);
+        behind.woke = behind.due + PERIOD * 8 / 10;
+        behind.output_queued = 3 * FRAMES;
+        assert_eq!(
+            allowed_end(&behind, PERIOD, FRAMES),
+            behind.due + PERIOD * 3 / 2
+        );
+        // The card has a quarter of a period left to play: by then.
+        let mut dry = healthy(1);
+        dry.output_queued = FRAMES / 4;
+        assert_eq!(allowed_end(&dry, PERIOD, FRAMES), dry.due + PERIOD / 4);
+    }
+
+    #[test]
+    fn a_cycle_that_began_behind_is_not_a_late_wake_up() {
+        // The thread works for 0.85 of a period; the card tells of
+        // period 6 half a period early, while the thread is at work;
+        // the thread goes on with cycle 6 as soon as it has done.
+        let mut cycles: Vec<Cycle> = (0..10).map(healthy).collect();
+        let work = (PERIOD * 85 / 100) as u32;
+        for cycle in &mut cycles {
+            cycle.computed_ns = work - 1_000;
+            cycle.finished_ns = work;
+            cycle.output_queued = 3 * FRAMES;
+        }
+        for cycle in &mut cycles[6..] {
+            cycle.due -= PERIOD / 2;
+        }
+        // Cycle 5 ended 0.85 of a period after it woke; cycle 6 was due
+        // half a period after cycle 5.
+        cycles[6].woke = cycles[5].woke + u64::from(work) + 500;
+        cycles[6].flags |= BEHIND;
+        // Cycles 7 and 8 too, less and less; cycle 9 sleeps again.
+        cycles[7].woke = cycles[6].woke + u64::from(work) + 500;
+        cycles[7].flags |= BEHIND;
+        cycles[8].woke = cycles[7].woke + u64::from(work) + 500;
+        cycles[8].flags |= BEHIND;
+        cycles[9].woke = cycles[9].due.max(cycles[8].woke + u64::from(work)) + 3_000;
+        let report = run(&cycles, 0);
+        let figures = &report.threads[0];
+        assert_eq!(report.counts[Kind::Behind.place()], 3);
+        assert_eq!(report.counts[Kind::WokeLate.place()], 0);
+        assert_eq!(report.counts[Kind::Overrun.place()], 0);
+        assert_eq!(figures.behind.count(), 3);
+        // Seven wake-ups, all of them short.
+        assert_eq!(figures.wake_up.count(), 7);
+        assert_eq!(figures.wake_bands[3] + figures.wake_bands[4], 0);
+        // The cycle before 6 was not behind: 0.35 of a period.
+        assert_eq!(
+            figures.behind.max_ns(),
+            Some(cycles[6].woke - cycles[6].due)
+        );
+        assert!(figures.least_margin_ns > 0, "{}", figures.least_margin_ns);
     }
 
     #[test]
