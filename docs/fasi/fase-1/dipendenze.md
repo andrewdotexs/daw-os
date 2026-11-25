@@ -45,4 +45,4 @@ Non sono crate e il motore non li collega: stanno nell'immagine accanto a lui. D
 
 | Passo | Bisogno | Candidato |
 | --- | --- | --- |
-| P1.7 | Leggere il file che descrive il grafo | Da proporre; oppure un formato abbastanza semplice da leggere a mano |
+| P1.7 | Leggere il file che descrive il grafo | **Nessun crate** (scelta dell'utente del 25 novembre 2026): un formato di testo nostro, una riga per nodo, letto da `dawos-graph`. Scartati `toml` e `serde_json`, con la decina di dipendenze che portano |

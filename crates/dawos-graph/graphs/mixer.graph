@@ -1,0 +1,41 @@
+# A small mixer: eight inputs of the card, each with its gain, meet on a
+# bus that goes out softer on outputs 1 and 2, with a meter on the way.
+#
+# Everything is light: it stays on the thread that holds the card,
+# because moving a node to another thread costs more than it saves.
+
+input   in1  channel=1
+input   in2  channel=2
+input   in3  channel=3
+input   in4  channel=4
+input   in5  channel=5
+input   in6  channel=6
+input   in7  channel=7
+input   in8  channel=8
+
+gain    g1   db=-3
+gain    g2   db=-3
+gain    g3   db=-6
+gain    g4   db=-6
+gain    g5   db=-9
+gain    g6   db=-9
+gain    g7   db=-12
+gain    g8   db=-12
+
+bus     mix
+gain    master  db=-6
+peak    meter
+output  left    channel=1
+output  right   channel=2
+
+connect in1 -> g1 -> mix
+connect in2 -> g2 -> mix
+connect in3 -> g3 -> mix
+connect in4 -> g4 -> mix
+connect in5 -> g5 -> mix
+connect in6 -> g6 -> mix
+connect in7 -> g7 -> mix
+connect in8 -> g8 -> mix
+connect mix -> master -> left
+connect master -> right
+connect master -> meter

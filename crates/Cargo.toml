@@ -6,10 +6,12 @@
 #                   it is the only crate allowed to contain unsafe code.
 #   dawos-audio-io  the audio back ends behind one interface ("null" and
 #                   "alsa"; "file" in step P1.7).
+#   dawos-graph     the audio graph: its description, its checks and
+#                   its compilation, outside the real-time path.
 #   dawos-engine    the process and its command line.
 [workspace]
 resolver = "2"
-members = ["dawos-rt", "dawos-audio-io", "dawos-engine"]
+members = ["dawos-rt", "dawos-audio-io", "dawos-graph", "dawos-engine"]
 
 [workspace.package]
 version = "0.1.0"
@@ -26,6 +28,7 @@ libc = { version = "=0.2.191", default-features = false }
 alsa = { version = "=0.12.1" }
 dawos-rt = { path = "dawos-rt" }
 dawos-audio-io = { path = "dawos-audio-io" }
+dawos-graph = { path = "dawos-graph" }
 
 [workspace.lints.rust]
 unsafe_op_in_unsafe_fn = "deny"

@@ -9,8 +9,25 @@ use dawos_audio_io::Format;
 pub enum Command {
     Help,
     Version,
-    /// Boxed: far larger than the other two.
+    /// Boxed: far larger than the others.
     Run(Box<RunOptions>),
+    Graph(GraphOptions),
+}
+
+/// Options of `graph`: compile the description of a graph and say what
+/// came out, without running anything.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct GraphOptions {
+    /// The file that describes the graph.
+    pub file: String,
+    /// Sample rate in hertz.
+    pub rate: u32,
+    /// Frames per period; `None`: the quantum of 2 ms for the rate.
+    pub frames: Option<u32>,
+    /// Live threads to give the nodes to.
+    pub threads: usize,
+    /// Microseconds kept free at the end of every period.
+    pub margin_us: u64,
 }
 
 /// Options of `run`.
@@ -117,8 +134,19 @@ pub enum Realtime {
 pub const USAGE: &str = "\
 Usage:
   dawos-engine run [OPTIONS]   run the cycle on the live CPUs and report
+  dawos-engine graph FILE [OPTIONS]
+                               compile the description of a graph and say
+                               what each live thread would run, without
+                               running it
   dawos-engine --version
   dawos-engine --help
+
+Options of graph:
+  --rate HZ          sample rate the graph is compiled for (default 48000)
+  --quantum N        samples per period (default: 2 ms of them)
+  --threads N        live threads to give the nodes to (default 4)
+  --margin-us N      microseconds kept free at the end of a period
+                     (default 150)
 
 Options of run:
   --backend NAME     source of the periods: null (a timer, no sound; the
@@ -229,6 +257,7 @@ pub fn parse(arguments: &[String]) -> Result<Command, String> {
         None | Some("--help" | "-h" | "help") => Ok(Command::Help),
         Some("--version" | "-V") => Ok(Command::Version),
         Some("run") => parse_run(rest).map(|options| Command::Run(Box::new(options))),
+        Some("graph") => parse_graph(rest).map(Command::Graph),
         Some(other) => Err(format!("unknown command '{other}'")),
     }
 }
@@ -272,6 +301,42 @@ impl Default for RunOptions {
             trace_also: None,
         }
     }
+}
+
+/// Live threads a graph is compiled for when nothing is said: the live
+/// CPUs of the reference machine (profile 285k).
+const DEFAULT_GRAPH_THREADS: usize = 4;
+
+fn parse_graph<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<GraphOptions, String> {
+    let mut options = GraphOptions {
+        file: String::new(),
+        rate: 48_000,
+        frames: None,
+        threads: DEFAULT_GRAPH_THREADS,
+        margin_us: DEFAULT_MARGIN_US,
+    };
+    while let Some(option) = rest.next() {
+        let mut value = |name: &str| rest.next().ok_or_else(|| format!("{name} needs a value"));
+        match option {
+            "--rate" => options.rate = number(value("--rate")?, "--rate", 8_000, 768_000)?,
+            "--quantum" => {
+                options.frames = Some(number(value("--quantum")?, "--quantum", 8, 65_536)?);
+            }
+            "--threads" => options.threads = number(value("--threads")?, "--threads", 1, 64)?,
+            "--margin-us" => {
+                options.margin_us = number(value("--margin-us")?, "--margin-us", 0, 100_000)?;
+            }
+            other if other.starts_with("--") => {
+                return Err(format!("unknown option '{other}'"));
+            }
+            file if options.file.is_empty() => options.file = file.to_string(),
+            other => return Err(format!("one graph at a time: what is '{other}'?")),
+        }
+    }
+    if options.file.is_empty() {
+        return Err("graph needs the file that describes the graph".to_string());
+    }
+    Ok(options)
 }
 
 fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, String> {
@@ -516,6 +581,31 @@ mod tests {
     }
 
     #[test]
+    fn graph_takes_a_file_and_what_to_compile_for() {
+        let command = parse(&arguments(
+            "graph tracks.graph --rate 96000 --threads 2 --quantum 192 --margin-us 100",
+        ))
+        .unwrap();
+        assert_eq!(
+            command,
+            Command::Graph(GraphOptions {
+                file: "tracks.graph".to_string(),
+                rate: 96_000,
+                frames: Some(192),
+                threads: 2,
+                margin_us: 100,
+            })
+        );
+        let Command::Graph(options) = parse(&arguments("graph a.graph")).unwrap() else {
+            panic!("not a graph");
+        };
+        assert_eq!(
+            (options.rate, options.frames, options.threads),
+            (48_000, None, 4)
+        );
+    }
+
+    #[test]
     fn mistakes_are_named() {
         for (text, expected) in [
             ("walk", "unknown command"),
@@ -539,6 +629,10 @@ mod tests {
             ),
             ("run --fault explode", "unknown fault"),
             ("run --loud", "unknown option"),
+            ("graph", "needs the file"),
+            ("graph a.graph b.graph", "one graph at a time"),
+            ("graph a.graph --threads 0", "not between"),
+            ("graph a.graph --loud", "unknown option"),
         ] {
             let error = parse(&arguments(text)).expect_err(text);
             assert!(error.contains(expected), "'{text}' gave '{error}'");

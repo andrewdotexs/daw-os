@@ -60,8 +60,13 @@ name = "dawos-engine"
 version = "0.1.0"
 dependencies = [
  "dawos-audio-io",
+ "dawos-graph",
  "dawos-rt",
 ]
+
+[[package]]
+name = "dawos-graph"
+version = "0.1.0"
 
 [[package]]
 name = "dawos-rt"
