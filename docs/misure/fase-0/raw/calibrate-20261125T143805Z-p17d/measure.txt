@@ -1,0 +1,144 @@
+dawos-engine 0.1.0
+backend: null
+rate_hz: 96000
+quantum_frames: 192
+period_us: 2000.000
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 20
+load_percent: 0
+vector_unit: AVX2 and FMA
+denormals: taken for zero on the live threads (FTZ and DAZ)
+margin_us: 150
+fault: none
+watchdog_rounds: 10010
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin  behind
+0      first  stopped     10010       0          0        0      1.89      2.84      168.61      176.97      1823.03       0
+
+graph_file: /usr/share/dawos/graphs/calibrate.graph
+graph_rate_hz: 96000
+graph_quantum_frames: 192 (a period of 2000.00 us)
+graph_nodes: 24 (2 noise, 5 cascade, 3 load, 1 spin, 1 sine, 3 bus, 4 peak, 1 gain, 1 delay, 1 impulse, 2 sum)
+graph_buffers: 28 of 192 frames
+graph_threads: 1, 1 of them with nodes
+graph_costs: expected; a load is made of 2.2 ns per frame, 1.67 for every stage and 0.34 for every trim
+graph_load_of_10_ns: 4 stages and 3 trims, expected 9.90 ns per frame
+graph_load_of_40_ns: 22 stages and 3 trims, expected 39.96 ns per frame
+graph_load_of_150_ns: 88 stages and 2 trims, expected 149.84 ns per frame
+graph_work_us: 156.74 (every node, one after the other)
+graph_critical_path_us: 84.88 (source -> stages256 -> loads -> heard)
+graph_makespan_us: 156.74 on 1 thread (speed-up 1.00; the critical path allows 1.84 at the most)
+graph_budget_us: 1850.00 (a period less 150 of margin): the graph fits
+
+threads (expected work in a cycle):
+thread   nodes    work_us  percent_of_period
+0           24     156.74                7.8
+
+thread 0, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.33  source               noise    -
+     0.33     82.50  stages256            cascade  source
+    82.84     28.76  heavy                load     source
+   111.61     20.94  stages               cascade  source
+   132.55      7.67  medium               load     source
+   140.22      4.60  trims                cascade  source
+   144.82      1.90  light                load     source
+   146.72      1.70  stages4              cascade  source
+   148.43      0.33  hiss                 noise    -
+   148.77      1.97  wait                 spin     hiss
+   150.74      0.42  frame                cascade  source
+   151.16      0.81  tone                 sine     -
+   151.98      1.89  loads                bus      stages256, heavy, stages, medium, trims, light, stages4, frame
+   153.87      0.14  heard                peak     loads
+   154.02      0.10  softer               gain     tone
+   154.12      0.14  later                delay    softer
+   154.27      0.28  bus2                 bus      wait, tone
+   154.55      0.10  click                impulse  -
+   154.66      0.16  sum2                 sum      later, click
+   154.82      0.97  bus8                 bus      hiss, wait, tone, softer, later, bus2, click, sum2
+   155.80      0.14  seenbus              peak     bus8
+   155.94      0.51  sum8                 sum      hiss, wait, tone, softer, later, bus2, click, sum2
+   156.45      0.14  seen8                peak     sum8
+   156.60      0.14  seen                 peak     sum2
+
+the graph in the cycles (times in microseconds; cut, starved and silent after the warm-up):
+slot   kind    nodes_run    waits  wait_avg  wait_max    cut  starved  silent  cut_early  silent_early
+0      first      240240        0         -         -      0        0       0          0             0
+graph_refused: 0 after the warm-up, 0 in it (a buffer or a node in use by another thread when one asked for it)
+
+the nodes of the graph by kind (microseconds for a quantum; ns_per_frame from the average):
+kind                  nodes   expected        avg lowest_avg        max  ns_per_frame
+noise                     2      0.338      0.316      0.315      0.875         1.645
+cascade_256+0             1     82.506     91.189     91.189     98.795       474.941
+load_150ns                1     28.769     31.696     31.696     32.627       165.086
+cascade_64+0              1     20.943     23.041     23.041     23.472       120.008
+load_40ns                 1      7.672      8.361      8.361      8.850        43.545
+cascade_0+64              1      4.600      2.917      2.917      3.591        15.191
+load_10ns                 1      1.901      1.981      1.981      2.207        10.316
+cascade_4+0               1      1.705      1.748      1.748      2.022         9.102
+spin_10ns                 1      1.970      1.973      1.973      2.107        10.278
+cascade_0+0               1      0.422      0.369      0.369      0.458         1.923
+sine                      1      0.818      1.471      1.471      2.979         7.663
+bus                       3      1.048      0.297      0.125      0.976         1.546
+peak                      4      0.146      0.397      0.395      0.472         2.066
+gain                      1      0.108      0.052      0.052      0.092         0.269
+delay                     1      0.146      0.238      0.238      0.457         1.239
+impulse                   1      0.108      0.137      0.137      0.331         0.711
+sum                       2      0.338      0.123      0.072      0.237         0.640
+graph_critical_path_measured_us: 92.404 (the nodes of the chain, each on average; the compiler expected 84.883)
+
+the nodes of the graph one by one (microseconds for a quantum):
+node                 kind                 thread       runs   expected        avg        max
+source               noise                     0      10010      0.338      0.315      0.875
+stages256            cascade_256+0             0      10010     82.506     91.189     98.795
+heavy                load_150ns                0      10010     28.769     31.696     32.627
+stages               cascade_64+0              0      10010     20.943     23.041     23.472
+medium               load_40ns                 0      10010      7.672      8.361      8.850
+trims                cascade_0+64              0      10010      4.600      2.917      3.591
+light                load_10ns                 0      10010      1.901      1.981      2.207
+stages4              cascade_4+0               0      10010      1.705      1.748      2.022
+hiss                 noise                     0      10010      0.338      0.317      0.351
+wait                 spin_10ns                 0      10010      1.970      1.973      2.107
+frame                cascade_0+0               0      10010      0.422      0.369      0.458
+tone                 sine                      0      10010      0.818      1.471      2.979
+loads                bus                       0      10010      1.893      0.502      0.976
+heard                peak                      0      10010      0.146      0.398      0.432
+softer               gain                      0      10010      0.108      0.052      0.092
+later                delay                     0      10010      0.146      0.238      0.457
+bus2                 bus                       0      10010      0.280      0.125      0.270
+click                impulse                   0      10010      0.108      0.137      0.331
+sum2                 sum                       0      10010      0.165      0.072      0.204
+bus8                 bus                       0      10010      0.972      0.263      0.418
+seenbus              peak                      0      10010      0.146      0.395      0.415
+sum8                 sum                       0      10010      0.511      0.174      0.237
+seen8                peak                      0      10010      0.146      0.397      0.416
+seen                 peak                      0      10010      0.146      0.396      0.472
+graph_peak heard: 11.4 dBFS
+graph_peak seenbus: 4.3 dBFS
+graph_peak seen8: 4.3 dBFS
+graph_peak seen: -8.5 dBFS
+
+record_of_every_cycle: 10010 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 10010 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.35      1.89      2.00      2.25      2.50      2.75      2.84
+  input and patch               0.01      0.04      0.25      0.25      0.25      0.25      0.41
+  nodes                       168.10    168.55    170.00    176.91    176.91    176.91    176.91
+  output                        0.01      0.01      0.06      0.06      0.06      0.06      0.06
+  compute, whole              168.16    168.61    170.00    176.97    176.97    176.97    176.97
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 10010, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1823.03
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 0.00 us
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+compute: PASS (no system call in the compute phase)
+graph: PASS (240240 nodes run in 10010 cycles of 24 nodes; 0 cycles cut, 0 of them waiting for another thread; 0 outputs left silent for a cycle; 0 times a buffer or a node was in use by another thread)

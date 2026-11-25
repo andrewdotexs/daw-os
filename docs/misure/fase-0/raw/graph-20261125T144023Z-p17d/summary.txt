@@ -1,0 +1,15 @@
+load_costs: 1.922,1.845,0.207 (from /var/lib/dawos/measure/calibrate-20261125T143805Z-p17d/load-costs.txt)
+threads   expected_us  slowest_avg  slowest_max  speed_up   critical    cut  missed     waits  wait_max  starved  graph
+1              287.43       289.87       322.97      1.00     45.720      0       0         0         -        0  PASS (990726 nodes run in 15011 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+2              145.73       149.63       173.81      1.94     46.955      0       0     14428     22.70        0  PASS (990726 nodes run in 15011 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+3               99.96       103.17       118.64      2.81     46.966      0       0      1429     13.62        0  PASS (990726 nodes run in 15011 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+4               77.28        79.67        89.69      3.64     47.250      0       0      7210     11.54        0  PASS (990792 nodes run in 15012 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+
+columns: expected_us, how long the compiler expects a cycle to last on so many threads;
+  slowest_avg and slowest_max, the compute phase of the thread where it was longest, on
+  average and at the most; speed_up, slowest_avg of the first row over that of this one;
+  critical, the longest chain of nodes that wait for each other, as its nodes took; cut,
+  cycles ended by the compute budget, all threads; missed, periods gone by unserved;
+  waits, nodes a thread had to wait for, and wait_max the longest of those waits;
+  starved, nodes whose inputs never came. Microseconds.
+finished_utc: 2026-11-25T14:42:25Z

@@ -1,0 +1,90 @@
+dawos-engine 0.1.0
+backend: null
+rate_hz: 96000
+quantum_frames: 192
+period_us: 2000.000
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 20
+load_percent: 0
+vector_unit: AVX2 and FMA
+denormals: kept as they are (--keep-denormals)
+margin_us: 150
+fault: none
+watchdog_rounds: 10008
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin  behind
+0      first  stopped     10008       0          0        0      1.48      5.86      135.06      136.63      1863.37       0
+
+graph_file: /usr/share/dawos/graphs/denormals.graph
+graph_rate_hz: 96000
+graph_quantum_frames: 192 (a period of 2000.00 us)
+graph_nodes: 6 (1 noise, 3 gain, 1 load, 1 peak)
+graph_buffers: 6 of 192 frames
+graph_threads: 1, 1 of them with nodes
+graph_costs: expected; a load is made of 1.922 ns per frame, 1.845 for every stage and 0.207 for every trim
+graph_load_of_10_ns: 4 stages and 3 trims, expected 9.92 ns per frame
+graph_work_us: 2.71 (every node, one after the other)
+graph_critical_path_us: 2.71 (faint -> lower1 -> lower2 -> lower3 -> filter -> left)
+graph_makespan_us: 2.71 on 1 thread (speed-up 1.00; the critical path allows 1.00 at the most)
+graph_budget_us: 1850.00 (a period less 150 of margin): the graph fits
+
+threads (expected work in a cycle):
+thread   nodes    work_us  percent_of_period
+0            6       2.71                0.1
+
+thread 0, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.33  faint                noise    -
+     0.33      0.10  lower1               gain     faint
+     0.44      0.10  lower2               gain     lower1
+     0.55      0.10  lower3               gain     lower2
+     0.66      1.90  filter               load     lower3
+     2.56      0.14  left                 peak     filter
+
+the graph in the cycles (times in microseconds; cut, starved and silent after the warm-up):
+slot   kind    nodes_run    waits  wait_avg  wait_max    cut  starved  silent  cut_early  silent_early
+0      first       60048        0         -         -      0        0       0          0             0
+graph_refused: 0 after the warm-up, 0 in it (a buffer or a node in use by another thread when one asked for it)
+
+the nodes of the graph by kind (microseconds for a quantum; ns_per_frame from the average):
+kind                  nodes   expected        avg lowest_avg        max  ns_per_frame
+noise                     1      0.338      0.316      0.316      0.702         1.644
+gain                      3      0.108      0.526      0.051      1.541         2.739
+load_10ns                 1      1.905    132.679    132.679    132.941       691.034
+peak                      1      0.146      0.396      0.396      0.471         2.060
+graph_critical_path_measured_us: 134.967 (the nodes of the chain, each on average; the compiler expected 2.713)
+
+the nodes of the graph one by one (microseconds for a quantum):
+node                 kind                 thread       runs   expected        avg        max
+faint                noise                     0      10008      0.338      0.316      0.702
+lower1               gain                      0      10008      0.108      0.051      0.139
+lower2               gain                      0      10008      0.108      0.052      0.147
+lower3               gain                      0      10008      0.108      1.475      1.541
+filter               load_10ns                 0      10008      1.905    132.679    132.941
+left                 peak                      0      10008      0.146      0.396      0.471
+graph_peak left: -774.5 dBFS
+
+record_of_every_cycle: 10008 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 10008 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.33      1.48      1.50      1.75      2.00      2.25      5.86
+  input and patch               0.01      0.04      0.25      0.25      0.25      0.25      0.42
+  nodes                       134.88    135.00    136.15    136.15    136.15    136.15    136.15
+  output                        0.01      0.01      0.06      0.06      0.06      0.06      0.06
+  compute, whole              134.94    135.06    136.63    136.63    136.63    136.63    136.63
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 10007, 5 to 10 1, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1863.37
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 0.00 us
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+compute: PASS (no system call in the compute phase)
+graph: PASS (60048 nodes run in 10008 cycles of 6 nodes; 0 cycles cut, 0 of them waiting for another thread; 0 outputs left silent for a cycle; 0 times a buffer or a node was in use by another thread)
