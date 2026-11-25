@@ -162,4 +162,4 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **A-69** | La latenza più lunga sulla quarta generazione | Aperto, P1.8 |
 | **A-70** | Una volta, in macchina virtuale, i thread non sono partiti in tempo | Aperto: causa ignota |
 | **A-71** | Lo stadio costa il 14 % più che in C, e dipende dalla lunghezza del blocco | Aperto |
-| **A-72** | Una scrittura corta all'avvio dei flussi, tre volte in un giorno | Aperto: il motore ora annota quando capita |
+| **A-72** | Una scrittura corta all'avvio dei flussi, circa un avvio su tredici a 48 kHz | Aperto: si sa quando (il primo periodo), non perché. P1.8 |

@@ -268,7 +268,7 @@ Lungo la strada: l'immagine compilava il motore con un livello di ottimizzazione
 
 ### P1.7e: un grafo al posto di un altro
 
-_25 novembre, 285K: prima misura fatta, seconda in corso._ Lo scambio del grafo mentre il ciclo gira. Due «posti» per un grafo; quello nuovo si costruisce nel posto libero, fuori dal tempo reale; si nomina un ciclo tre periodi più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Decisioni dell'utente: lo stato passa **per nome del nodo**, e lo scambio per ora lo chiede **la riga di comando**, per le prove.
+_25 novembre, 285K._ Lo scambio del grafo mentre il ciclo gira. Due «posti» per un grafo; quello nuovo si costruisce nel posto libero, fuori dal tempo reale; si nomina un ciclo tre periodi più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Decisioni dell'utente: lo stato passa **per nome del nodo**, e lo scambio per ora lo chiede **la riga di comando**, per le prove.
 
 La prova è il caso `swap`: il conteggio attraverso due grafi che si scambiano ogni secondo, con una linea di ritardo che deve conservare il suo contenuto da un grafo all'altro. Se uno scambio perde o inventa anche un solo campione, il conteggio lo dice.
 
@@ -283,6 +283,8 @@ La prova è il caso `swap`: il conteggio attraverso due grafi che si scambiano o
 Lo scambio fa ciò che deve. Ma la prova audio ha dato **dieci casi su undici**: in un caso che non c'entra con il grafo la scheda ha rifiutato una volta un periodo in uscita, una **scrittura corta**. Cercando nei file della giornata ne sono saltate fuori altre due, in righe che la prova non giudicava e che nessuno aveva guardato. Tutte e tre sembrano cadere all'avvio dei flussi _(ipotesi)_: è il punto aperto A-72.
 
 Decisioni dell'utente: le scritture corte del riscaldamento si contano a parte, come gli xrun; il motore annota quando capita la prima; la prova audio si rifà, e il passo si chiude con quella.
+
+La seconda misura: undici casi su undici, lo scambio identico alla prima (1012 campioni, 8 642 764 al loro posto, nessuno fuori posto). E una scrittura corta, in un altro caso, questa volta con lo strumento acceso: **al periodo 1 dopo l'avvio dei flussi, a un millisecondo dall'inizio, zero frame presi su 96**. È ciò che l'ipotesi diceva. In tutta la giornata, quattro su 52 avvii a 48 kHz. Il perché è del passo sul driver.
 
 ### Che cosa viene dopo
 
