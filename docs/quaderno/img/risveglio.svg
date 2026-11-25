@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" width="760" height="300" role="img" aria-label="Il ritardo di risveglio massimo sui processori live, contro il limite di 50 microsecondi" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Il ritardo di risveglio massimo sui processori live, contro il limite di 50 microsecondi</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#666666"/></marker></defs>
+<rect x="0.5" y="0.5" width="759" height="299" rx="8" fill="#ffffff" stroke="#d9d9d9"/>
+<text x="24" y="34" font-size="15" text-anchor="start" fill="#191919" font-weight="600">Il ritardo di risveglio peggiore sui processori live</text>
+<text x="24" y="54" font-size="11.5" text-anchor="start" fill="#666666">Il massimo di ogni misura lunga, in microsecondi; il limite è 50</text>
+<line x1="330" y1="78" x2="330" y2="254" stroke="#d9d9d9" stroke-width="1"/>
+<text x="330" y="270" font-size="11" text-anchor="middle" fill="#666666">0</text>
+<line x1="395.455" y1="78" x2="395.455" y2="254" stroke="#d9d9d9" stroke-width="1"/>
+<text x="395.455" y="270" font-size="11" text-anchor="middle" fill="#666666">10</text>
+<line x1="460.909" y1="78" x2="460.909" y2="254" stroke="#d9d9d9" stroke-width="1"/>
+<text x="460.909" y="270" font-size="11" text-anchor="middle" fill="#666666">20</text>
+<line x1="526.364" y1="78" x2="526.364" y2="254" stroke="#d9d9d9" stroke-width="1"/>
+<text x="526.364" y="270" font-size="11" text-anchor="middle" fill="#666666">30</text>
+<line x1="591.818" y1="78" x2="591.818" y2="254" stroke="#d9d9d9" stroke-width="1"/>
+<text x="591.818" y="270" font-size="11" text-anchor="middle" fill="#666666">40</text>
+<line x1="657.273" y1="78" x2="657.273" y2="254" stroke="#d9d9d9" stroke-width="1"/>
+<text x="657.273" y="270" font-size="11" text-anchor="middle" fill="#666666">50</text>
+<line x1="657.273" y1="66" x2="657.273" y2="254" stroke="#dc3c3d" stroke-width="1.5"/>
+<text x="651.273" y="74" font-size="11.5" text-anchor="end" fill="#191919">limite: 50 µs</text>
+<text x="316" y="96" font-size="11.5" text-anchor="end" fill="#191919">Campagna di 24 ore (P0.7)</text>
+<text x="316" y="111" font-size="10.5" text-anchor="end" fill="#666666">timer, sotto carico</text>
+<path d="M330,88 h131.491 a4,4 0 0 1 4,4 v12 a4,4 0 0 1 -4,4 h-131.491 z" fill="#257de0"/>
+<text x="473.491" y="102" font-size="11.5" text-anchor="start" fill="#191919">20,70</text>
+<text x="316" y="140" font-size="11.5" text-anchor="end" fill="#191919">24 ore con il driver grafico (P1.0)</text>
+<text x="316" y="155" font-size="10.5" text-anchor="end" fill="#666666">timer, sotto carico</text>
+<path d="M330,132 h39.92 a4,4 0 0 1 4,4 v12 a4,4 0 0 1 -4,4 h-39.92 z" fill="#257de0"/>
+<text x="381.92" y="146" font-size="11.5" text-anchor="start" fill="#191919">6,71</text>
+<text x="316" y="184" font-size="11.5" text-anchor="end" fill="#191919">Due ore sulla scheda, 2ª generazione (P1.6e)</text>
+<text x="316" y="199" font-size="10.5" text-anchor="end" fill="#666666">il motore, sotto carico</text>
+<path d="M330,176 h99.4836 a4,4 0 0 1 4,4 v12 a4,4 0 0 1 -4,4 h-99.4836 z" fill="#257de0"/>
+<text x="441.484" y="190" font-size="11.5" text-anchor="start" fill="#191919">15,81</text>
+<text x="316" y="228" font-size="11.5" text-anchor="end" fill="#191919">Due ore sulla scheda, 4ª generazione (P1.12c)</text>
+<text x="316" y="243" font-size="10.5" text-anchor="end" fill="#666666">il motore, sotto carico</text>
+<path d="M330,220 h92.6764 a4,4 0 0 1 4,4 v12 a4,4 0 0 1 -4,4 h-92.6764 z" fill="#257de0"/>
+<text x="434.676" y="234" font-size="11.5" text-anchor="start" fill="#191919">14,77</text>
+<text x="24" y="296" font-size="11" text-anchor="start" fill="#666666">Le prime due misurano un timer sullo stesso processore; le altre due il motore svegliato dalla scheda.</text>
+</svg>

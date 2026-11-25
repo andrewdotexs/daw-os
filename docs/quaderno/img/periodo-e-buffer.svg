@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" role="img" aria-label="Frame, periodo e buffer con la forma 96:3 a 48 kHz" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Frame, periodo e buffer con la forma 96:3 a 48 kHz</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#666666"/></marker></defs>
+<rect x="0.5" y="0.5" width="759" height="329" rx="8" fill="#ffffff" stroke="#d9d9d9"/>
+<text x="24" y="34" font-size="15" text-anchor="start" fill="#191919" font-weight="600">Frame, periodo e buffer: la forma 96:3 a 48 kHz</text>
+<text x="24" y="72" font-size="12" text-anchor="start" fill="#666666">Un periodo: 96 frame, 2 ms</text>
+<rect x="24" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="33" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="42" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="51" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="60" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="69" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="78" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="87" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="96" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="105" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="114" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="123" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="132" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="141" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="150" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="159" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="168" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="177" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="186" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="195" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="204" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="213" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="222" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<rect x="231" y="82" width="7" height="26" rx="1.5" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="246" y="100" font-size="14" text-anchor="start" fill="#666666">…</text>
+<text x="270" y="92" font-size="11.5" text-anchor="start" fill="#666666">un frame: un campione per canale,</text>
+<text x="270" y="107" font-size="11.5" text-anchor="start" fill="#666666">nello stesso istante (1/48 000 di secondo)</text>
+<text x="24" y="152" font-size="12" text-anchor="start" fill="#666666">Il buffer di uscita: tre periodi, 288 frame, 6 ms</text>
+<rect x="150" y="166" width="142" height="56" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="221" y="190.4" font-size="12" text-anchor="middle" fill="#191919">periodo 1</text>
+<text x="221" y="206" font-size="12" text-anchor="middle" fill="#191919">sta suonando</text>
+<rect x="296" y="166" width="142" height="56" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="367" y="190.4" font-size="12" text-anchor="middle" fill="#191919">periodo 2</text>
+<text x="367" y="206" font-size="12" text-anchor="middle" fill="#191919">pronto</text>
+<rect x="442" y="166" width="142" height="56" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="513" y="190.4" font-size="12" text-anchor="middle" fill="#191919">periodo 3</text>
+<text x="513" y="206" font-size="12" text-anchor="middle" fill="#191919">pronto</text>
+<rect x="588" y="166" width="142" height="56" rx="4" fill="#f4f4f4" stroke="#d9d9d9" stroke-width="1"/>
+<text x="659" y="190.4" font-size="12" text-anchor="middle" fill="#191919">il prossimo</text>
+<text x="659" y="206" font-size="12" text-anchor="middle" fill="#191919">lo scrive il motore</text>
+<rect x="24" y="166" width="104" height="56" rx="4" fill="#fcebc4" stroke="#f2a600" stroke-width="1"/>
+<text x="76" y="190.4" font-size="12" text-anchor="middle" fill="#191919">la scheda</text>
+<text x="76" y="206" font-size="12" text-anchor="middle" fill="#191919">consuma da qui</text>
+<line x1="148" y1="194" x2="130" y2="194" stroke="#666666" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="586" y1="244" x2="586" y2="226" stroke="#666666" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="586" y="260" font-size="11.5" text-anchor="middle" fill="#666666">il motore scrive qui, un periodo ogni 2 ms</text>
+<text x="24" y="290" font-size="11.5" text-anchor="start" fill="#666666">Ogni campione che il motore scrive aspetta in coda dietro a ciò che c'è già: più il buffer è lungo, più tempo ha</text>
+<text x="24" y="304.95" font-size="11.5" text-anchor="start" fill="#666666">il motore prima che la scheda resti senza (xrun), e più tardi si sente il suono. Con due periodi non si regge.</text>
+</svg>

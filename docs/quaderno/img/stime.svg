@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 540" width="760" height="540" role="img" aria-label="Quanto hanno sbagliato le stime: misurato diviso previsto" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Quanto hanno sbagliato le stime: misurato diviso previsto</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#666666"/></marker></defs>
+<rect x="0.5" y="0.5" width="759" height="539" rx="8" fill="#ffffff" stroke="#d9d9d9"/>
+<text x="24" y="34" font-size="15" text-anchor="start" fill="#191919" font-weight="600">Quanto hanno sbagliato le stime: misurato diviso previsto</text>
+<text x="24" y="54" font-size="11.5" text-anchor="start" fill="#666666">Scala logaritmica: 1 è la stima giusta, 2 il doppio del previsto, 0,5 la metà. Per un intervallo, il suo centro.</text>
+<rect x="386.866" y="78" width="78.2678" height="376" rx="0" fill="#f4f4f4"/>
+<text x="426" y="72" font-size="10.5" text-anchor="middle" fill="#666666">entro un fattore due</text>
+<line x1="296" y1="78" x2="296" y2="454" stroke="#d9d9d9" stroke-width="1"/>
+<text x="296" y="470" font-size="11" text-anchor="middle" fill="#666666">0,1</text>
+<line x1="335.134" y1="78" x2="335.134" y2="454" stroke="#d9d9d9" stroke-width="1"/>
+<text x="335.134" y="470" font-size="11" text-anchor="middle" fill="#666666">0,2</text>
+<line x1="386.866" y1="78" x2="386.866" y2="454" stroke="#d9d9d9" stroke-width="1"/>
+<text x="386.866" y="470" font-size="11" text-anchor="middle" fill="#666666">0,5</text>
+<line x1="426" y1="78" x2="426" y2="454" stroke="#666666" stroke-width="1.2"/>
+<text x="426" y="470" font-size="11" text-anchor="middle" fill="#666666">1</text>
+<line x1="465.134" y1="78" x2="465.134" y2="454" stroke="#d9d9d9" stroke-width="1"/>
+<text x="465.134" y="470" font-size="11" text-anchor="middle" fill="#666666">2</text>
+<line x1="516.866" y1="78" x2="516.866" y2="454" stroke="#d9d9d9" stroke-width="1"/>
+<text x="516.866" y="470" font-size="11" text-anchor="middle" fill="#666666">5</text>
+<line x1="556" y1="78" x2="556" y2="454" stroke="#d9d9d9" stroke-width="1"/>
+<text x="556" y="470" font-size="11" text-anchor="middle" fill="#666666">10</text>
+<text x="280" y="98" font-size="11.5" text-anchor="end" fill="#191919">Grafo su un thread (P1.7c)</text>
+<line x1="426" y1="94" x2="425.848" y2="94" stroke="#257de0" stroke-width="2"/>
+<circle cx="425.848" cy="94" r="5" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="98" font-size="10.5" text-anchor="start" fill="#666666">289,38 µs contro 290,16</text>
+<text x="280" y="121" font-size="11.5" text-anchor="end" fill="#191919">Giro del conteggio su quattro thread (P1.7c)</text>
+<line x1="426" y1="117" x2="426" y2="117" stroke="#257de0" stroke-width="2"/>
+<circle cx="426" cy="117" r="5" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="121" font-size="10.5" text-anchor="start" fill="#666666">916 campioni, come calcolato</text>
+<text x="280" y="144" font-size="11.5" text-anchor="end" fill="#191919">Giro attraverso lo scambio (P1.7e)</text>
+<line x1="426" y1="140" x2="426" y2="140" stroke="#257de0" stroke-width="2"/>
+<circle cx="426" cy="140" r="5" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="144" font-size="10.5" text-anchor="start" fill="#666666">1012 campioni, come calcolato</text>
+<text x="280" y="167" font-size="11.5" text-anchor="end" fill="#191919">Grafo su quattro thread (P1.7e)</text>
+<line x1="426" y1="163" x2="429.474" y2="163" stroke="#f47230" stroke-width="2"/>
+<circle cx="429.474" cy="163" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="167" font-size="10.5" text-anchor="start" fill="#666666">80,61 µs contro 75,80</text>
+<text x="280" y="190" font-size="11.5" text-anchor="end" fill="#191919">Uno stadio rispetto al nucleo in C (P1.7d)</text>
+<line x1="426" y1="186" x2="431.626" y2="186" stroke="#f47230" stroke-width="2"/>
+<circle cx="431.626" cy="186" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="190" font-size="10.5" text-anchor="start" fill="#666666">1,845 ns contro 1,67</text>
+<text x="280" y="213" font-size="11.5" text-anchor="end" fill="#191919">Potenza della fase di carico pieno (P0.7)</text>
+<line x1="426" y1="209" x2="409.758" y2="209" stroke="#f47230" stroke-width="2"/>
+<circle cx="409.758" cy="209" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="213" font-size="10.5" text-anchor="start" fill="#666666">120 W contro 160</text>
+<text x="280" y="236" font-size="11.5" text-anchor="end" fill="#191919">Parte fissa di un carico (P1.7d)</text>
+<line x1="426" y1="232" x2="400.803" y2="232" stroke="#f47230" stroke-width="2"/>
+<circle cx="400.803" cy="232" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="236" font-size="10.5" text-anchor="start" fill="#666666">1,92 ns contro 2,5–3,5</text>
+<text x="280" y="259" font-size="11.5" text-anchor="end" fill="#191919">Gradi per watt (P0.4b)</text>
+<line x1="426" y1="255" x2="397.16" y2="255" stroke="#f47230" stroke-width="2"/>
+<circle cx="397.16" cy="255" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="259" font-size="10.5" text-anchor="start" fill="#666666">0,30 °C/W contro 0,5</text>
+<text x="280" y="282" font-size="11.5" text-anchor="end" fill="#191919">Un ritocco (P1.7d)</text>
+<line x1="426" y1="278" x2="388.808" y2="278" stroke="#f47230" stroke-width="2"/>
+<circle cx="388.808" cy="278" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="282" font-size="10.5" text-anchor="start" fill="#666666">0,207 ns contro 0,3–0,5</text>
+<text x="280" y="305" font-size="11.5" text-anchor="end" fill="#191919">Convertitori e cavo (P1.5)</text>
+<line x1="426" y1="301" x2="358.026" y2="301" stroke="#f47230" stroke-width="2"/>
+<circle cx="358.026" cy="301" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="305" font-size="10.5" text-anchor="start" fill="#666666">0,6 ms contro 1–3</text>
+<text x="280" y="328" font-size="11.5" text-anchor="end" fill="#191919">Costruire un grafo (P1.7e)</text>
+<line x1="426" y1="324" x2="356.757" y2="324" stroke="#f47230" stroke-width="2"/>
+<circle cx="356.757" cy="324" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="328" font-size="10.5" text-anchor="start" fill="#666666">20 e 68 µs contro 100–200</text>
+<text x="280" y="351" font-size="11.5" text-anchor="end" fill="#191919">Un guadagno (P1.7d)</text>
+<line x1="426" y1="347" x2="335.134" y2="347" stroke="#f47230" stroke-width="2"/>
+<circle cx="335.134" cy="347" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="351" font-size="10.5" text-anchor="start" fill="#666666">0,06 ns contro 0,3</text>
+<text x="280" y="374" font-size="11.5" text-anchor="end" fill="#191919">Risveglio dallo stato C1 (P0.6b)</text>
+<line x1="426" y1="370" x2="312.242" y2="370" stroke="#f47230" stroke-width="2"/>
+<circle cx="312.242" cy="370" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="374" font-size="10.5" text-anchor="start" fill="#666666">0,1–0,3 µs contro 1–2</text>
+<text x="280" y="397" font-size="11.5" text-anchor="end" fill="#191919">Una sinusoide (P1.7d)</text>
+<line x1="426" y1="393" x2="462.976" y2="393" stroke="#f47230" stroke-width="2"/>
+<circle cx="462.976" cy="393" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="397" font-size="10.5" text-anchor="start" fill="#666666">7,7 ns contro 4</text>
+<text x="280" y="420" font-size="11.5" text-anchor="end" fill="#191919">Un misuratore (P1.7d)</text>
+<line x1="426" y1="416" x2="501.372" y2="416" stroke="#f47230" stroke-width="2"/>
+<circle cx="501.372" cy="416" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="420" font-size="10.5" text-anchor="start" fill="#666666">1,9 ns contro 0,5</text>
+<text x="280" y="443" font-size="11.5" text-anchor="end" fill="#191919">Ritardo con il disco cifrato (P0.6d)</text>
+<line x1="426" y1="439" x2="525.002" y2="439" stroke="#f47230" stroke-width="2"/>
+<circle cx="525.002" cy="439" r="5" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
+<text x="570" y="443" font-size="10.5" text-anchor="start" fill="#666666">57,75 µs contro meno di 10</text>
+<circle cx="30" cy="494" r="5" fill="#257de0"/>
+<text x="42" y="498" font-size="11.5" text-anchor="start" fill="#191919">conti su meccanismi nostri, di cui si conosce ogni passaggio</text>
+<circle cx="30" cy="514" r="5" fill="#f47230"/>
+<text x="42" y="518" font-size="11.5" text-anchor="start" fill="#191919">tempi di ciò che sta sotto: processore, driver, firmware, interfaccia</text>
+</svg>

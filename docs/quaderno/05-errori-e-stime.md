@@ -36,6 +36,10 @@ Ciò che era stato scritto come attesa, e ciò che è stato misurato sul 285K.
 | P1.7e | Leggere, compilare e costruire un grafo di 17 nodi costa 100–200 µs | 20 µs in media e 55 al massimo nella prima misura, 68 e 299 nella seconda | La stima veniva dall'ambiente di sviluppo. La seconda misura dice anche che una misura sola non bastava per chiamarla sbagliata: c'è di mezzo la lettura di un file |
 | P1.7e | Con i costi misurati scritti nei sorgenti, il ciclo vero sta entro il 3 % del programma del compilatore | +1,0 % su un thread, +6,3 % su quattro | I costi sono misurati su un thread solo: un bus che legge dodici ingressi scritti da altri thread costa 1,72 µs e non 0,50 |
 
+![Per sedici stime, il rapporto tra misurato e previsto su una scala logaritmica da un decimo a dieci](img/stime.svg)
+
+**Figura 5.1.** Misurato diviso previsto, per le stime che avevano un numero. I conti sui meccanismi nostri stanno sull'uno; gli altri vanno da un settimo a quasi sei volte il previsto.
+
 **Che cosa dice questa tabella.** Le stime sbagliano in tutte e due le direzioni, e non di poco: un fattore due o tre è normale, un fattore dieci capita. Sbagliano di più dove non c'era un dato vicino (i costi dei nodi «a occhio») e di meno dove si partiva da una misura (i tempi del grafo in P1.7a, giusti alla cifra). Nessuna di queste stime è stata usata per decidere: per questo sbagliarle è costato poco.
 
 ## Diagnosi partite dall'ipotesi sbagliata
