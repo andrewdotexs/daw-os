@@ -35,6 +35,10 @@ const WATCHDOG_PRIORITY: u8 = 95;
 /// How many stuck threads one run can record.
 const MAX_EVENTS: usize = 8;
 
+/// Milliseconds between the moment the threads of a run are asked for
+/// and the first period: the time they have to be in place.
+const START_DELAY_MS: u64 = 300;
+
 /// Limits of ADR 0023, counted from the beginning of the compute phase
 /// the thread never left.
 const CORE_FREE_LIMIT_MS: f64 = 15.0;
@@ -577,7 +581,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
 
     // The periods start a little from now: time for every thread to be
     // in place and waiting.
-    let start_ns = clock::now() + 300_000_000;
+    let start_ns = clock::now() + START_DELAY_MS * 1_000_000;
     if let Some(card) = &card {
         card.set_start(start_ns);
         card.set_warm_up(options.warm_up_s * 1_000_000_000);
@@ -740,7 +744,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         .lock()
         .map(|errors| errors.clone())
         .unwrap_or_default();
-    let late = common.ready.load(Ordering::Acquire) < expected;
+    let ready = common.ready.load(Ordering::Acquire);
+    let late = ready < expected;
     if !errors.is_empty() || late {
         shared.stop.store(true, Ordering::Release);
         if let Some(card) = &card {
@@ -755,7 +760,16 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             let _ = handle.join();
         }
         return Err(if late {
-            "the threads of the engine did not start in time".to_string()
+            // Who was missing cannot be told from a count, but how many
+            // can: one thread on a busy CPU, or all of them.
+            format!(
+                "the threads of the engine did not start in time: {ready} of {expected} were in place {START_DELAY_MS} ms after they were asked for{}",
+                if errors.is_empty() {
+                    String::new()
+                } else {
+                    format!("; {}", errors.join("; "))
+                }
+            )
         } else {
             errors.join("; ")
         });

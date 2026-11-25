@@ -7,6 +7,10 @@
 #
 #   DAWOS-AUDIO-TEST result=pass passed=8 cases=8
 #   DAWOS-AUDIO-TEST result=fail passed=6 cases=8
+#
+# Before it, for every case, some lines of what the engine said, after a
+# line "DAWOS-AUDIO-DETAIL case": they stay in the log of the console,
+# for when a case has to be understood.
 
 set -u
 
@@ -24,7 +28,34 @@ else
 	result=fail
 fi
 counts=$(echo "${output}" | sed -n 's/^verdict: [A-Z]* (\([0-9]*\) of \([0-9]*\) cases)$/passed=\1 cases=\2/p')
+
+# What the engine said in every case, in short: nobody can go and read
+# the files of a virtual machine that is switched off when the test
+# ends. For each case: what it wrote as errors, the table of its
+# threads, what the watchdog did, the lines about the card and the
+# graph, its verdicts.
+details=
+directory=$(echo "${output}" | sed -n 's/^directory: //p' | head -n 1)
+if [ -d "${directory}" ]; then
+	for file in "${directory}"/*.txt; do
+		name=${file##*/}
+		name=${name%.txt}
+		case "${name}" in
+		meta | summary | settle-* | routing-*) continue ;;
+		esac
+		details="${details}
+DAWOS-AUDIO-DETAIL ${name}
+$(sed 's/^/  stderr: /' "${file%.txt}.err" 2> /dev/null)
+$(awk '
+	/^slot +kind/ || /^the graph in the cycles/ { print "  " $0; inside = 1; next }
+	inside && NF == 0 { inside = 0 }
+	inside { print "  " $0; next }
+	/^(live_threads|scheduling|denormals|card_|count_|graph_refused|graph_peak|k04|audio|compute|graph):/ { print "  " $0 }
+	/^slot [0-9]+ cycle / { print "  " $0 }' "${file}")"
+	done
+fi
 report="${output}
+${details}
 DAWOS-AUDIO-TEST result=${result} ${counts:-passed=0 cases=0}"
 echo "${report}"
 
