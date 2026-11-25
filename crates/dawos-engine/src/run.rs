@@ -19,7 +19,7 @@ use dawos_rt::{clock, topology};
 
 use crate::cli::{BackendKind, Realtime, RunOptions};
 use crate::ktrace::Tracer;
-use crate::live::{live_loop, End, Shared, ThreadReport};
+use crate::live::{live_loop, End, NodeTime, Shared, ThreadReport};
 use crate::meter::{self, Meter, MeterReport, Shape, RING_RECORDS};
 use crate::notify::Notifier;
 use crate::patch::{Heard, Patch, PatchConfig};
@@ -160,6 +160,50 @@ pub struct GraphOutcome {
     /// The highest sample every meter of the graph saw, by the name of
     /// its node; full scale is 1.
     pub peaks: Vec<(String, f32)>,
+    /// What every node was expected to take and what it took, in the
+    /// order of the compiled graph (the inputs of the card are not
+    /// timed).
+    pub timed: Vec<TimedNode>,
+    /// Frames in a quantum.
+    pub frames: u32,
+    /// The longest chain of nodes that wait for each other: what the
+    /// compiler expected of it, and the sum of what its nodes took on
+    /// average, in nanoseconds.
+    pub critical_expected_ns: u64,
+    pub critical_measured_ns: f64,
+}
+
+/// A node of the graph in the cycles.
+pub struct TimedNode {
+    pub name: String,
+    /// Its kind, with its size for the kinds that have one.
+    pub kind: String,
+    pub thread: usize,
+    /// Nanoseconds the compiler expected.
+    pub expected_ns: u64,
+    pub time: NodeTime,
+}
+
+impl TimedNode {
+    /// Nanoseconds a run took on average (0 when it never ran).
+    fn mean_ns(&self) -> f64 {
+        if self.time.runs == 0 {
+            0.0
+        } else {
+            self.time.sum_ns as f64 / self.time.runs as f64
+        }
+    }
+}
+
+/// The kind of a node as the report names it: the word of the
+/// description, and the size of the kinds that have one.
+fn kind_label(kind: &Kind) -> String {
+    match kind {
+        Kind::Load { ns_per_frame } => format!("load_{ns_per_frame}ns"),
+        Kind::Cascade { stages, trims } => format!("cascade_{stages}+{trims}"),
+        Kind::Spin { ns_per_frame } => format!("spin_{ns_per_frame}ns"),
+        other => other.word().to_string(),
+    }
 }
 
 /// One intervention of the watchdog, with times in milliseconds from the
@@ -344,8 +388,16 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     }
     // ---- The graph: read, checked and given to the threads here, with
     // all the time it takes.
+    // Asked of the processor here, once, before any live thread: the
+    // filters of a load then find the answer ready.
+    let _ = dawos_rt::dsp::vector_unit();
     let compiled = match &options.graph {
-        Some(file) => Some(crate::graph::load(file, threads, format)?),
+        Some(file) => Some(crate::graph::load(
+            file,
+            threads,
+            format,
+            options.load_costs_ps,
+        )?),
         None => None,
     };
     let on_the_card = |wanted: fn(&Kind) -> Option<u32>| -> Vec<usize> {
@@ -472,6 +524,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         graph: compiled.as_ref().map(Running::new),
         judged_from_ns: AtomicU64::new(0),
         graph_refused_early: AtomicU64::new(u64::MAX),
+        flush_denormals: !options.keep_denormals,
     });
     let spares: Arc<Vec<Spare>> = Arc::new((0..threads).map(|_| Spare::default()).collect());
     let events: Arc<Vec<Event>> = Arc::new((0..MAX_EVENTS).map(|_| Event::default()).collect());
@@ -829,6 +882,63 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         })
         .collect();
 
+    let graph_outcome = compiled
+        .as_ref()
+        .zip(shared.graph.as_ref())
+        .map(|(compiled, graph)| {
+            // Never marked: the run ended in the warm-up, all of it.
+            let early = shared
+                .graph_refused_early
+                .load(Ordering::Acquire)
+                .min(graph.refused());
+            // What every node took: each thread timed its own, in
+            // the order it runs them.
+            let mut times = vec![NodeTime::default(); compiled.nodes.len()];
+            for report in &reports {
+                for (place, &node) in graph.nodes_of(report.slot).iter().enumerate() {
+                    if let (Some(time), Some(took)) =
+                        (times.get_mut(node), report.graph_times.get(place))
+                    {
+                        time.runs += took.runs;
+                        time.sum_ns += took.sum_ns;
+                        time.max_ns = time.max_ns.max(took.max_ns);
+                    }
+                }
+            }
+            let timed: Vec<TimedNode> = compiled
+                .nodes
+                .iter()
+                .zip(&times)
+                .map(|(node, time)| TimedNode {
+                    name: node.name.clone(),
+                    kind: kind_label(&node.kind),
+                    thread: node.thread,
+                    expected_ns: node.cost_ns,
+                    time: *time,
+                })
+                .collect();
+            GraphOutcome {
+                file: options.graph.clone().unwrap_or_default(),
+                summary: compiled.summary(options.margin_us),
+                nodes: compiled
+                    .nodes
+                    .iter()
+                    .filter(|node| !matches!(node.kind, Kind::Input { .. }))
+                    .count(),
+                refused: graph.refused() - early,
+                refused_early: early,
+                peaks: graph.peaks(),
+                frames: compiled.frames,
+                critical_expected_ns: compiled.critical_ns,
+                critical_measured_ns: compiled
+                    .critical_path
+                    .iter()
+                    .filter_map(|node| timed.get(*node))
+                    .map(TimedNode::mean_ns)
+                    .sum(),
+                timed,
+            }
+        });
     Ok(Outcome {
         format,
         live_cpus,
@@ -861,28 +971,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         card,
         start_ns,
         meter,
-        graph: compiled
-            .as_ref()
-            .zip(shared.graph.as_ref())
-            .map(|(compiled, graph)| {
-                // Never marked: the run ended in the warm-up, all of it.
-                let early = shared
-                    .graph_refused_early
-                    .load(Ordering::Acquire)
-                    .min(graph.refused());
-                GraphOutcome {
-                    file: options.graph.clone().unwrap_or_default(),
-                    summary: compiled.summary(options.margin_us),
-                    nodes: compiled
-                        .nodes
-                        .iter()
-                        .filter(|node| !matches!(node.kind, Kind::Input { .. }))
-                        .count(),
-                    refused: graph.refused() - early,
-                    refused_early: early,
-                    peaks: graph.peaks(),
-                }
-            }),
+        graph: graph_outcome,
     })
 }
 
@@ -1430,6 +1519,22 @@ fn print(outcome: &Outcome) {
     }
     println!("seconds: {}", options.seconds);
     println!("load_percent: {}", options.load_percent);
+    println!(
+        "vector_unit: {}",
+        if dawos_rt::dsp::vector_unit() {
+            "AVX2 and FMA"
+        } else {
+            "neither AVX2 nor FMA: the filters of a load run a value at a time"
+        }
+    );
+    println!(
+        "denormals: {}",
+        if options.keep_denormals {
+            "kept as they are (--keep-denormals)"
+        } else {
+            "taken for zero on the live threads (FTZ and DAZ)"
+        }
+    );
     println!("margin_us: {}", options.margin_us);
     println!(
         "fault: {}",
@@ -1602,6 +1707,76 @@ fn print_graph(graph: &GraphOutcome, outcome: &Outcome) {
         "graph_refused: {} after the warm-up, {} in it (a buffer or a node in use by another thread when one asked for it)",
         graph.refused, graph.refused_early
     );
+    // Kind by kind, in the order of the graph: what the compiler
+    // expected of a node and what the nodes took.
+    println!();
+    println!("the nodes of the graph by kind (microseconds for a quantum; ns_per_frame from the average):");
+    println!(
+        "{:<20} {:>6} {:>10} {:>10} {:>10} {:>10} {:>13}",
+        "kind", "nodes", "expected", "avg", "lowest_avg", "max", "ns_per_frame"
+    );
+    let mut kinds: Vec<&str> = Vec::new();
+    for node in &graph.timed {
+        if node.time.runs > 0 && !kinds.contains(&node.kind.as_str()) {
+            kinds.push(&node.kind);
+        }
+    }
+    let micro = |ns: f64| format!("{:.3}", ns / 1000.0);
+    for kind in kinds {
+        let nodes: Vec<&TimedNode> = graph
+            .timed
+            .iter()
+            .filter(|node| node.kind == kind && node.time.runs > 0)
+            .collect();
+        let count = nodes.len() as f64;
+        let mean = nodes.iter().map(|node| node.mean_ns()).sum::<f64>() / count;
+        println!(
+            "{:<20} {:>6} {:>10} {:>10} {:>10} {:>10} {:>13.3}",
+            kind,
+            nodes.len(),
+            micro(
+                nodes
+                    .iter()
+                    .map(|node| node.expected_ns as f64)
+                    .sum::<f64>()
+                    / count
+            ),
+            micro(mean),
+            micro(
+                nodes
+                    .iter()
+                    .map(|node| node.mean_ns())
+                    .fold(f64::INFINITY, f64::min)
+            ),
+            micro(nodes.iter().map(|node| node.time.max_ns).max().unwrap_or(0) as f64),
+            mean / f64::from(graph.frames.max(1)),
+        );
+    }
+    println!(
+        "graph_critical_path_measured_us: {} (the nodes of the chain, each on average; the compiler expected {})",
+        micro(graph.critical_measured_ns),
+        micro(graph.critical_expected_ns as f64)
+    );
+    if outcome.options.graph_nodes {
+        println!();
+        println!("the nodes of the graph one by one (microseconds for a quantum):");
+        println!(
+            "{:<20} {:<20} {:>6} {:>10} {:>10} {:>10} {:>10}",
+            "node", "kind", "thread", "runs", "expected", "avg", "max"
+        );
+        for node in graph.timed.iter().filter(|node| node.time.runs > 0) {
+            println!(
+                "{:<20} {:<20} {:>6} {:>10} {:>10} {:>10} {:>10}",
+                node.name,
+                node.kind,
+                node.thread,
+                node.time.runs,
+                micro(node.expected_ns as f64),
+                micro(node.mean_ns()),
+                micro(node.time.max_ns as f64),
+            );
+        }
+    }
     for (name, peak) in &graph.peaks {
         println!(
             "graph_peak {name}: {} dBFS",
@@ -1990,13 +2165,13 @@ mod tests {
     #[test]
     fn a_graph_that_does_not_fit_is_cut_and_said() {
         let _alone = alone();
-        // 30 ms of load in periods of 20: thread 1 never gets to the
+        // 30 ms of work in periods of 20: thread 1 never gets to the
         // gain, and thread 0 waits for it in vain.
         let file = GraphFile::new(
             "heavy",
-            "noise n thread=1\nload a ns=15625 thread=1\nload b ns=15625 thread=1\n\
+            "noise n thread=1\nspin a ns=15625 thread=1\nspin b ns=15625 thread=1\n\
              gain late thread=1\npeak heard thread=0\n\
-             connect n -> a:0 -> b:0 -> late -> heard\nconnect n -> a:1 -> b:1\n",
+             connect n -> a -> b -> late -> heard\n",
         );
         let outcome = execute(&file.options(2)).expect("the run did not start");
         assert!(summary_of(&outcome).contains("THE GRAPH DOES NOT FIT"));

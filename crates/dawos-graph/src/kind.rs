@@ -71,6 +71,23 @@ pub enum Kind {
         /// Nanoseconds per frame it is calibrated for.
         ns_per_frame: u32,
     },
+    /// A node that computes nothing: it copies its input to its output
+    /// and keeps the CPU busy for so many nanoseconds per frame,
+    /// whatever the machine and however the program was built. For the
+    /// tests, and to see what the graph itself costs.
+    Spin {
+        /// Nanoseconds per frame it lasts.
+        ns_per_frame: u32,
+    },
+    /// The filtering of a load with its size said outright, for the
+    /// calibration: so many stages and so many trims (see
+    /// `dawos_rt::dsp`).
+    Cascade {
+        /// All-pass sections one after the other.
+        stages: u32,
+        /// Plain multiplications after them.
+        trims: u32,
+    },
 }
 
 /// How many inputs a kind of node has.
@@ -102,13 +119,15 @@ impl Kind {
             Self::Noise { .. } => "noise",
             Self::Peak => "peak",
             Self::Load { .. } => "load",
+            Self::Cascade { .. } => "cascade",
+            Self::Spin { .. } => "spin",
         }
     }
 
     /// The words of every kind.
-    pub const WORDS: [&'static str; 11] = [
+    pub const WORDS: [&'static str; 13] = [
         "input", "output", "gain", "sum", "bus", "delay", "sine", "impulse", "noise", "peak",
-        "load",
+        "load", "cascade", "spin",
     ];
 
     /// How many inputs it has.
@@ -118,11 +137,13 @@ impl Kind {
             Self::Input { .. } | Self::Sine { .. } | Self::Impulse { .. } | Self::Noise { .. } => {
                 Inputs::Fixed(0)
             }
-            Self::Output { .. } | Self::Gain { .. } | Self::Delay { .. } | Self::Peak => {
-                Inputs::Fixed(1)
-            }
+            Self::Output { .. }
+            | Self::Gain { .. }
+            | Self::Delay { .. }
+            | Self::Peak
+            | Self::Spin { .. } => Inputs::Fixed(1),
             Self::Sum | Self::Bus => Inputs::Any,
-            Self::Load { .. } => Inputs::Fixed(2),
+            Self::Load { .. } | Self::Cascade { .. } => Inputs::Fixed(2),
         }
     }
 
@@ -131,7 +152,7 @@ impl Kind {
     pub fn outputs(&self) -> u32 {
         match self {
             Self::Output { .. } | Self::Peak => 0,
-            Self::Load { .. } => 2,
+            Self::Load { .. } | Self::Cascade { .. } => 2,
             _ => 1,
         }
     }
@@ -233,6 +254,15 @@ impl Kind {
                 };
                 Self::Load { ns_per_frame }
             }
+            "spin" => Self::Spin {
+                ns_per_frame: given
+                    .whole("ns", 1, 1_000_000)?
+                    .ok_or_else(|| Error::new(line, "a spin needs ns=N, nanoseconds per frame"))?,
+            },
+            "cascade" => Self::Cascade {
+                stages: given.whole("stages", 0, 100_000)?.unwrap_or(0),
+                trims: given.whole("trims", 0, 100_000)?.unwrap_or(0),
+            },
             _ => {
                 return Err(Error::new(
                     line,
@@ -323,9 +353,15 @@ impl<'a> Given<'a> {
 }
 
 /// What each kind of node is expected to cost, to give the nodes to the
-/// threads before anything is measured. All of them are estimates but
-/// the load, which is calibrated to cost what it says (step P1.7c
-/// replaces the others with measures).
+/// threads before anything is measured, and what a load is made of to
+/// cost what it declares.
+///
+/// The three figures of the load are the calibration of ADR 0011: they
+/// say how much filtering makes 10, 40 and 150 ns per frame on a live
+/// CPU of the reference machine. Until step P1.7d has measured them
+/// there, they are the figures of `dawos-dspbench` for a stage (0.4174
+/// ns for each of four instances in a vector, experiment E-06) and
+/// estimates for the rest, as are the costs of the other kinds.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Costs {
     /// Nanoseconds every node costs whatever it does: finding it,
@@ -353,6 +389,16 @@ pub struct Costs {
     pub noise_ns: f64,
     /// Nanoseconds per frame of a peak meter.
     pub peak_ns: f64,
+    /// Nanoseconds per frame of a load before any filtering: from two
+    /// channels to the eight values of a vector and back, and what
+    /// every node costs, spread over the frames of the quantum the
+    /// calibration is made at (192 at 96 kHz, the reference session of
+    /// requirement R-04).
+    pub load_frame_ns: f64,
+    /// Nanoseconds per frame of one stage of a load.
+    pub stage_ns: f64,
+    /// Nanoseconds per frame of one trim of a load.
+    pub trim_ns: f64,
 }
 
 impl Default for Costs {
@@ -369,11 +415,38 @@ impl Default for Costs {
             impulse_ns: 0.3,
             noise_ns: 1.5,
             peak_ns: 0.5,
+            load_frame_ns: 2.2,
+            stage_ns: 1.67,
+            trim_ns: 0.34,
         }
     }
 }
 
 impl Costs {
+    /// How many stages and how many trims make a load of `ns_per_frame`
+    /// nanoseconds per frame: as many stages as fit, and trims for what
+    /// is left, to the nearest. At least one of the two, so that a load
+    /// always computes something.
+    #[must_use]
+    pub fn load_shape(&self, ns_per_frame: u32) -> (u32, u32) {
+        let room = (f64::from(ns_per_frame) - self.load_frame_ns).max(0.0);
+        let stages = (room / self.stage_ns).floor();
+        let trims = ((room - stages * self.stage_ns) / self.trim_ns).round();
+        // Counts of some thousands at the most: nothing is lost.
+        let (stages, trims) = (stages as u32, trims as u32);
+        if stages + trims == 0 {
+            (0, 1)
+        } else {
+            (stages, trims)
+        }
+    }
+
+    /// Nanoseconds per frame of a cascade of `stages` and `trims`.
+    #[must_use]
+    pub fn cascade_ns(&self, stages: u32, trims: u32) -> f64 {
+        self.load_frame_ns + f64::from(stages) * self.stage_ns + f64::from(trims) * self.trim_ns
+    }
+
     /// Nanoseconds a node of kind `kind` with `inputs` inputs connected
     /// is expected to take over `frames` frames. Never zero.
     #[must_use]
@@ -388,9 +461,21 @@ impl Costs {
             Kind::Impulse { .. } => self.impulse_ns,
             Kind::Noise { .. } => self.noise_ns,
             Kind::Peak => self.peak_ns,
-            Kind::Load { ns_per_frame } => f64::from(*ns_per_frame),
+            Kind::Load { ns_per_frame } => {
+                let (stages, trims) = self.load_shape(*ns_per_frame);
+                self.cascade_ns(stages, trims)
+            }
+            Kind::Cascade { stages, trims } => self.cascade_ns(*stages, *trims),
+            Kind::Spin { ns_per_frame } => f64::from(*ns_per_frame),
         };
-        let total = self.node_ns + per_frame * f64::from(frames);
+        // A load costs what it declares, all of it: what every node
+        // costs is inside its cost per frame, as the calibration
+        // measures it at the quantum of the reference session.
+        let fixed = match kind {
+            Kind::Load { .. } | Kind::Cascade { .. } => 0.0,
+            _ => self.node_ns,
+        };
+        let total = fixed + per_frame * f64::from(frames);
         // Costs are small positive numbers: the conversion cannot lose
         // anything that matters.
         (total.round() as u64).max(1)
@@ -410,7 +495,7 @@ mod tests {
 
     #[test]
     fn every_kind_is_read_from_its_word() {
-        let cases: [(&str, &[(&str, &str)]); 11] = [
+        let cases: [(&str, &[(&str, &str)]); 13] = [
             ("input", &[("channel", "3")]),
             ("output", &[("channel", "5")]),
             ("gain", &[("db", "-6")]),
@@ -422,6 +507,8 @@ mod tests {
             ("noise", &[]),
             ("peak", &[]),
             ("load", &[("class", "medium")]),
+            ("cascade", &[("stages", "64")]),
+            ("spin", &[("ns", "100")]),
         ];
         for (word, parameters) in cases {
             let kind = Kind::from_words(word, parameters, 1).unwrap();
@@ -466,6 +553,12 @@ mod tests {
         let load = Kind::Load { ns_per_frame: 10 };
         assert_eq!(load.inputs(), Inputs::Fixed(2));
         assert_eq!(load.outputs(), 2);
+        let cascade = Kind::Cascade {
+            stages: 3,
+            trims: 0,
+        };
+        assert_eq!(cascade.inputs(), Inputs::Fixed(2));
+        assert_eq!(cascade.outputs(), 2);
         assert_eq!(Kind::Sum.inputs(), Inputs::Any);
         assert_eq!(Kind::Peak.outputs(), 0);
         assert!(Kind::Peak.is_sink());
@@ -474,11 +567,46 @@ mod tests {
     }
 
     #[test]
+    fn a_load_is_made_to_cost_what_it_declares() {
+        let costs = Costs::default();
+        // Whatever the calibration, the classes of ADR 0011 come within
+        // half a trim of what they declare.
+        for ns in [10, 33, 40, 150, 2000] {
+            let (stages, trims) = costs.load_shape(ns);
+            let made = costs.cascade_ns(stages, trims);
+            assert!(
+                (made - f64::from(ns)).abs() <= costs.trim_ns / 2.0 + 1e-9,
+                "{ns} ns: {stages} stages and {trims} trims make {made}"
+            );
+            assert!(f64::from(trims) * costs.trim_ns < costs.stage_ns + costs.trim_ns);
+        }
+        // A load too light for a stage is trims alone, and never nothing.
+        assert_eq!(costs.load_shape(3), (0, 2));
+        assert_eq!(costs.load_shape(1), (0, 1));
+        // With another calibration, another shape.
+        let slower = Costs {
+            stage_ns: 3.0,
+            ..costs
+        };
+        assert!(slower.load_shape(150).0 < costs.load_shape(150).0);
+    }
+
+    #[test]
     fn a_load_costs_its_class_times_the_frames() {
         let costs = Costs::default();
         let heavy = Kind::Load { ns_per_frame: 150 };
-        // 96 frames at 150 ns, and the 50 of every node.
-        assert_eq!(costs.of(&heavy, 2, 96), 14_450);
+        // 96 frames at 150 ns, to a trim.
+        let cost = costs.of(&heavy, 2, 96) as f64;
+        assert!((cost - 14_400.0).abs() < 96.0 * costs.trim_ns, "{cost}");
+        // A cascade costs by what it is made of.
+        let cascade = Kind::Cascade {
+            stages: 10,
+            trims: 0,
+        };
+        assert_eq!(
+            costs.of(&cascade, 2, 100),
+            (100.0 * (costs.load_frame_ns + 10.0 * costs.stage_ns)).round() as u64
+        );
         // A sum costs by the input.
         assert!(costs.of(&Kind::Sum, 8, 96) > costs.of(&Kind::Sum, 2, 96));
         assert!(costs.of(&Kind::Peak, 0, 0) >= 1);

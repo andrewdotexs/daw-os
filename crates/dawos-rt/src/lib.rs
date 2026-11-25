@@ -1,8 +1,9 @@
 //! The real-time core of dawOS.
 //!
 //! Everything a thread on a live CPU needs and may use: the clock, the
-//! placement of a thread on a CPU with a real-time priority, and
-//! statistics that never allocate.
+//! placement of a thread on a CPU with a real-time priority, statistics
+//! that never allocate, and the code written for the vector unit (the
+//! filter of the reference load, module `dsp`).
 //!
 //! Rules of this crate (question D-18 and ADR 0021):
 //!
@@ -11,12 +12,15 @@
 //! - `unsafe` code lives in the module `sys` only, one call to the C
 //!   library per function (or, for the handler of the system calls the
 //!   kernel stops, one reading or one writing of the state the kernel
-//!   hands it), each with its reason written next to it;
+//!   hands it; or the call of a function compiled for AVX2 and FMA; or
+//!   the two instructions that read and write the control register of
+//!   the vector unit), each with its reason written next to it;
 //! - no type from `std::sync` that can block, no channel.
 
 pub mod clock;
 pub mod cpu;
 pub mod dispatch;
+pub mod dsp;
 pub mod files;
 pub mod gate;
 pub mod pcm_timer;

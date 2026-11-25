@@ -113,6 +113,16 @@ Altre due cose che la misura ha mostrato e che servono al motore:
 
 Calibrazione indicativa delle classi sul core live: 24, 96 e 359 stadi per 10, 40 e 150 ns (0,4174 ns per stadio). Quella vera si fa con il nodo nativo, nella Fase 1.
 
+## Il nodo nativo e la sua calibrazione (passo P1.7d, 25 novembre 2026)
+
+Il carico in forma di nodo nativo esiste dal passo [P1.7d](../fasi/fase-1/P1.7-il-grafo.md). Tre precisazioni su ciò che questa decisione lasciava aperto.
+
+- **Un'istanza stereo occupa un vettore intero**: è un banco di quattro bande in parallelo, sinistra e destra di ciascuna, otto valori. Uno «stadio» del nodo sono quindi quattro sezioni del secondo ordine, e costa quanto le quattro istanze affiancate di `dawos-dspbench`: 4 × 0,4174 = 1,67 ns per frame sul core live _(da confermare con la misura di P1.7d)_. I 24, 96 e 359 stadi della calibrazione indicativa diventano circa 6, 24 e 90.
+- **Le sezioni sono passa-tutto**, con coefficienti diversi da banda a banda: stessa aritmetica del passa-basso di `dawos-dspbench`, ma il livello del segnale resta quello d'ingresso.
+- **Il costo dichiarato si raggiunge con stadi e ritocchi.** Uno stadio è troppo grosso per colpire 10 ns da solo (passi di 1,67): dopo gli stadi che ci stanno, il resto si copre con «ritocchi», moltiplicazioni semplici da qualche decimo di nanosecondo per frame. Il costo dichiarato è tutto il costo dell'istanza a 96 kHz con 192 frame, compresa la parte fissa di ogni nodo del grafo.
+
+**La calibrazione** sono tre cifre, in nanosecondi per frame su un core live: ciò che un'istanza costa prima di ogni filtro, ciò che aggiunge uno stadio, ciò che aggiunge un ritocco. Le misura `tools/graph-calibrate.sh` con il motore stesso; stanno in `Costs::default` del crate `dawos-graph`, e ogni rapporto del motore dice di quanti stadi e ritocchi è fatto ogni carico del grafo (righe `graph_load_of_…_ns`). Vanno rimisurate quando cambia il processore di riferimento, la frequenza fissata dal profilo, o il modo in cui il motore è compilato.
+
 ## Conseguenze
 
 - K-02 scende da «non misurabile» a «misurabile e al limite sul dominio anticipativo».

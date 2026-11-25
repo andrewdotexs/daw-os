@@ -33,6 +33,7 @@ use std::sync::Mutex;
 use dawos_audio_io::{Backend, Disturbance, Wake};
 use dawos_graph::{Inputs, Running};
 use dawos_rt::clock;
+use dawos_rt::cpu;
 use dawos_rt::dispatch::{self, Caught};
 use dawos_rt::ring::Writer;
 use dawos_rt::slot::Slot;
@@ -84,6 +85,10 @@ pub struct Shared {
     /// What the graph had refused when the warm-up ended; `u64::MAX`
     /// until then.
     pub graph_refused_early: AtomicU64,
+    /// Whether the threads of the cycle take the numbers too small for
+    /// the normal form of a float for zero (FTZ and DAZ): on, unless
+    /// the run asks to see what those numbers cost.
+    pub flush_denormals: bool,
 }
 
 impl Shared {
@@ -155,6 +160,20 @@ pub struct ThreadReport {
     /// warm-up and in it (the thread that holds the card counts them).
     pub graph_silent: u64,
     pub graph_silent_early: u64,
+    /// What each node of the graph took, in the order the thread runs
+    /// them (the inputs of the card are not timed: they are part of the
+    /// reading of the card).
+    pub graph_times: Vec<NodeTime>,
+}
+
+/// How long a node of the graph took, over the cycles it was run in.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct NodeTime {
+    /// Cycles it was run in.
+    pub runs: u64,
+    /// Nanoseconds in all, and the longest run.
+    pub sum_ns: u64,
+    pub max_ns: u64,
 }
 
 /// How a live thread ended.
@@ -179,6 +198,11 @@ pub fn live_loop(
     backend: &mut dyn Backend,
     record: Option<&mut Writer>,
 ) -> ThreadReport {
+    // A setting of this thread, for as long as it lives: a filter fed
+    // with silence must not slow down on the way to zero.
+    if shared.flush_denormals {
+        cpu::flush_denormals(true);
+    }
     let mut report = cycles(shared, slot_index, generation, first_cycle, backend, record);
     // Out of the cycle: system calls go through, and memory may be
     // asked for.
@@ -222,8 +246,13 @@ fn cycles(
         graph_starved: 0,
         graph_silent: 0,
         graph_silent_early: 0,
+        graph_times: Vec::new(),
     };
     let graph = shared.graph.as_ref();
+    // Before the first cycle: the one allocation of the loop.
+    if let Some(graph) = graph {
+        report.graph_times = vec![NodeTime::default(); graph.nodes_of(slot_index).len()];
+    }
     // System calls stopped so far, to tell those of each cycle.
     let mut caught_before = dispatch::caught();
     let mut first = true;
@@ -380,12 +409,14 @@ fn cycles(
         // The watchdog does not know them one by one yet (step P1.7e):
         // a thread stuck in one is a thread stuck outside any node.
         if let Some(graph) = graph.filter(|_| !incomplete) {
-            for &node in graph.nodes_of(slot_index) {
+            // One reading of the clock per node: the end of a node is
+            // the beginning of the next.
+            let mut now = clock::now();
+            for (place, &node) in graph.nodes_of(slot_index).iter().enumerate() {
                 // The inputs of the card were run by `capture`.
                 if graph.is_input(node) || graph.is_abandoned(node) {
                     continue;
                 }
-                let mut now = clock::now();
                 let mut inputs = graph.inputs_of(node, wake.index);
                 if inputs == Inputs::NotYet {
                     // Another thread is still writing what this node
@@ -416,7 +447,15 @@ fn cycles(
                     incomplete = true;
                     break;
                 }
+                let began = now;
                 graph.run(node, wake.index);
+                now = clock::now();
+                if let Some(time) = report.graph_times.get_mut(place) {
+                    let took = now - began;
+                    time.runs += 1;
+                    time.sum_ns += took;
+                    time.max_ns = time.max_ns.max(took);
+                }
                 report.graph_nodes += 1;
                 nodes_run = nodes_run.saturating_add(1);
                 if slot.generation() != generation {
@@ -618,6 +657,7 @@ mod tests {
             graph: None,
             judged_from_ns: AtomicU64::new(0),
             graph_refused_early: AtomicU64::new(u64::MAX),
+            flush_denormals: true,
         });
         let mut backend = Queueing {
             shared: Arc::clone(&shared),

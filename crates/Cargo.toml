@@ -39,7 +39,9 @@ all = { level = "deny", priority = -1 }
 undocumented_unsafe_blocks = "deny"
 
 # The engine is always measured as it will run: optimised, with the
-# checks that catch arithmetic mistakes left on.
+# checks that catch arithmetic mistakes left on. The image build says
+# the same again (external/package/dawos-engine/dawos-engine.mk):
+# Buildroot would otherwise put its own profile in the place of this.
 [profile.release]
 opt-level = 3
 overflow-checks = true

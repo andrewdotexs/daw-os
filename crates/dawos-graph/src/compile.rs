@@ -102,6 +102,9 @@ pub struct Compiled {
     pub makespan_ns: u64,
     /// What is odd without being wrong.
     pub warnings: Vec<String>,
+    /// The costs the graph was compiled with: they also say what every
+    /// load is made of.
+    pub costs: Costs,
 }
 
 /// Where an input comes from: a node of the description, one of its
@@ -569,6 +572,7 @@ pub fn compile(description: &Description, settings: &Settings) -> Result<Compile
         critical_path,
         makespan_ns: end.iter().copied().max().unwrap_or(0),
         warnings,
+        costs: settings.costs,
     })
 }
 
@@ -655,8 +659,29 @@ impl Compiled {
         )?;
         writeln!(
             text,
-            "graph_costs: expected, not measured (the loads are calibrated to cost what they say)"
+            "graph_costs: expected; a load is made of {} ns per frame, {} for every stage and {} for every trim",
+            self.costs.load_frame_ns, self.costs.stage_ns, self.costs.trim_ns
         )?;
+        // What each load of the graph is made of: the calibration of
+        // ADR 0011, to be read in every report.
+        let mut loads: Vec<u32> = self
+            .nodes
+            .iter()
+            .filter_map(|node| match node.kind {
+                Kind::Load { ns_per_frame } => Some(ns_per_frame),
+                _ => None,
+            })
+            .collect();
+        loads.sort_unstable();
+        loads.dedup();
+        for ns in loads {
+            let (stages, trims) = self.costs.load_shape(ns);
+            writeln!(
+                text,
+                "graph_load_of_{ns}_ns: {stages} stages and {trims} trims, expected {:.2} ns per frame",
+                self.costs.cascade_ns(stages, trims)
+            )?;
+        }
         writeln!(
             text,
             "graph_work_us: {} (every node, one after the other)",

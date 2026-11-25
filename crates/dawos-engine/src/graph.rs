@@ -11,13 +11,24 @@ use crate::cli::GraphOptions;
 /// The graph of `file`, compiled for `threads` live threads and
 /// `format`, or what is wrong with the file. Outside the real-time
 /// path: it reads a file and allocates.
-pub fn load(file: &str, threads: usize, format: Format) -> Result<Compiled, String> {
+pub fn load(
+    file: &str,
+    threads: usize,
+    format: Format,
+    load_costs_ps: Option<[u32; 3]>,
+) -> Result<Compiled, String> {
     let text = std::fs::read_to_string(file).map_err(|error| format!("{file}: {error}"))?;
+    let mut costs = Costs::default();
+    if let Some([frame, stage, trim]) = load_costs_ps {
+        costs.load_frame_ns = f64::from(frame) / 1000.0;
+        costs.stage_ns = f64::from(stage) / 1000.0;
+        costs.trim_ns = f64::from(trim) / 1000.0;
+    }
     let settings = Settings {
         threads,
         rate: format.rate,
         frames: format.frames,
-        costs: Costs::default(),
+        costs,
     };
     let description = parse(&text).map_err(|error| format!("{file}: {error}"))?;
     compile(&description, &settings).map_err(|error| format!("{file}: {error}"))
@@ -32,7 +43,12 @@ pub fn describe(options: &GraphOptions) -> Result<String, String> {
             .frames
             .unwrap_or(Format::default_frames(options.rate)),
     };
-    let compiled = load(&options.file, options.threads, format)?;
+    let compiled = load(
+        &options.file,
+        options.threads,
+        format,
+        options.load_costs_ps,
+    )?;
     Ok(format!(
         "graph: {}\n{}",
         options.file,
@@ -51,6 +67,7 @@ mod tests {
             frames: None,
             threads: 4,
             margin_us: 150,
+            load_costs_ps: None,
         }
     }
 

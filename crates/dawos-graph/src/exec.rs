@@ -33,16 +33,18 @@
 //! samples go through an input and an output node unchanged, to the
 //! bit.
 //!
-//! The load is a stand-in until step P1.7d: it copies its two inputs to
-//! its two outputs and keeps the CPU busy for the time it is declared to
-//! cost. The filtering it will do, calibrated against dawos-dspbench,
-//! comes there.
+//! A load is real filtering, as much of it as costs what the load
+//! declares: a cascade of all-pass sections on the vector unit (see
+//! `dawos_rt::dsp`), with the number of stages and of trims the
+//! calibration gives (ADR 0011, step P1.7d). What comes out of a load
+//! is its input with the phases turned, no louder.
 
 use std::f64::consts::TAU;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Mutex, RwLock};
+use std::sync::{Mutex, RwLock, RwLockReadGuard};
 
 use dawos_rt::clock;
+use dawos_rt::dsp::{Cascade, Frame, LANES};
 
 use crate::compile::Compiled;
 use crate::kind::{Kind, Pitch};
@@ -94,8 +96,14 @@ enum State {
     Peak {
         peak: f32,
     },
+    /// The filtering of a load, and a frame of the vector unit for
+    /// every frame of the quantum.
+    Cascade {
+        cascade: Cascade,
+        work: Vec<Frame>,
+    },
     /// Nanoseconds to keep the CPU busy for in a cycle.
-    Load {
+    Spin {
         ns: u64,
     },
 }
@@ -137,6 +145,8 @@ pub struct Running {
     inputs: Vec<usize>,
     outputs: Vec<usize>,
     buffers: Vec<RwLock<Vec<f32>>>,
+    /// A quantum of silence, for an input nothing is connected to.
+    silence: Vec<f32>,
     /// Buffers and states that could not be had.
     refused: AtomicU64,
     /// Outputs of the card left silent because their node had not been
@@ -201,7 +211,18 @@ impl Running {
                         level: factor(db) as f32,
                     },
                     Kind::Peak => State::Peak { peak: 0.0 },
-                    Kind::Load { ns_per_frame } => State::Load {
+                    Kind::Load { ns_per_frame } => {
+                        let (stages, trims) = compiled.costs.load_shape(ns_per_frame);
+                        State::Cascade {
+                            cascade: Cascade::new(stages, trims),
+                            work: vec![[0.0; LANES]; frames],
+                        }
+                    }
+                    Kind::Cascade { stages, trims } => State::Cascade {
+                        cascade: Cascade::new(stages, trims),
+                        work: vec![[0.0; LANES]; frames],
+                    },
+                    Kind::Spin { ns_per_frame } => State::Spin {
                         ns: u64::from(ns_per_frame) * u64::from(compiled.frames),
                     },
                 };
@@ -233,6 +254,7 @@ impl Running {
             buffers: (0..compiled.buffers)
                 .map(|_| RwLock::new(vec![0.0; frames]))
                 .collect(),
+            silence: vec![0.0; frames],
             refused: AtomicU64::new(0),
             late_outputs: AtomicU64::new(0),
         }
@@ -326,6 +348,20 @@ impl Running {
             Err(_) => {
                 self.refuse();
                 false
+            }
+        }
+    }
+
+    /// The buffer input `port` of `node` reads, held for reading; none
+    /// when nothing is connected there, or when it cannot be had.
+    #[inline]
+    fn input(&self, node: &Live, port: usize) -> Option<RwLockReadGuard<'_, Vec<f32>>> {
+        let buffer = node.inputs.get(port).copied().flatten()?;
+        match self.buffers[buffer].try_read() {
+            Ok(buffer) => Some(buffer),
+            Err(_) => {
+                self.refuse();
+                None
             }
         }
     }
@@ -436,7 +472,11 @@ impl Running {
             State::Delay { line, at } => self.each(node, |sample| {
                 let late = line[*at];
                 line[*at] = sample;
-                *at = (*at + 1) % line.len();
+                // Not a remainder: a division for every sample.
+                *at += 1;
+                if *at == line.len() {
+                    *at = 0;
+                }
                 late
             }),
             State::Sine { phase, step, level } => self.write(node, 0, |output| {
@@ -481,15 +521,24 @@ impl Running {
                     }
                 });
             }
-            State::Load { ns } => {
-                let end = clock::now() + *ns;
-                for port in 0..2 {
-                    self.write(node, port, |output| {
-                        if !self.read(node, port, |input| output.copy_from_slice(input)) {
-                            output.fill(0.0);
-                        }
-                    });
+            State::Cascade { cascade, work } => {
+                let left = self.input(node, 0);
+                let right = self.input(node, 1);
+                let left = left.as_deref().map_or(&self.silence[..], Vec::as_slice);
+                let right = right.as_deref().map_or(&self.silence[..], Vec::as_slice);
+                match (
+                    self.buffers[node.outputs[0]].try_write(),
+                    self.buffers[node.outputs[1]].try_write(),
+                ) {
+                    (Ok(mut out_left), Ok(mut out_right)) => {
+                        cascade.run(left, right, &mut out_left, &mut out_right, work);
+                    }
+                    _ => self.refuse(),
                 }
+            }
+            State::Spin { ns } => {
+                let end = clock::now() + *ns;
+                self.each(node, |sample| sample);
                 while clock::now() < end {
                     std::hint::spin_loop();
                 }
@@ -744,6 +793,51 @@ mod tests {
         assert!(graph.ready(p, 5));
     }
 
+    #[test]
+    fn a_load_filters_both_channels_and_is_no_louder() {
+        // Noise on the left, an impulse on the right, through a load of
+        // each class, to two outputs.
+        let graph = running(
+            "noise n db=-6\nimpulse i every=7 db=-6\nload a class=light\nload b class=medium\n\
+             load c class=heavy\noutput l channel=1\noutput r channel=2\npeak in\npeak out\n\
+             connect n -> a:0 -> b:0 -> c:0 -> l\nconnect i -> a:1\nconnect a:1 -> b:1\n\
+             connect b:1 -> c:1\nconnect c:1 -> r\nconnect n -> in\nconnect c:0 -> out\n",
+            1,
+        );
+        let frames = FRAMES as usize;
+        let mut power = (0.0_f64, 0.0_f64);
+        for cycle in 0..50 {
+            let mut output = vec![0_i32; frames * 2];
+            graph.run_all(cycle, &[], &mut output, (0, 2));
+            for frame in output.chunks(2) {
+                power.0 += (f64::from(frame[0]) / f64::from(FULL_SCALE)).powi(2);
+                power.1 += (f64::from(frame[1]) / f64::from(FULL_SCALE)).powi(2);
+            }
+        }
+        // Both channels carry something, and not the same thing.
+        assert!(power.0 > 1.0 && power.1 > 0.1, "{power:?}");
+        assert!((power.0 - power.1).abs() > 0.1);
+        // No louder than what went in, by more than the phases allow.
+        assert!(peak_db(&graph, "out") < peak_db(&graph, "in") + 6.0);
+        assert_eq!(graph.refused(), 0);
+    }
+
+    #[test]
+    fn a_cascade_of_nothing_but_trims_and_a_spin_give_back_their_input() {
+        let graph = running(
+            "impulse i every=5 db=-3\ncascade c stages=0 trims=3\nspin s ns=5\n\
+             output a channel=1\noutput b channel=2\n\
+             connect i -> c:0 -> a\nconnect i -> s -> b\n",
+            1,
+        );
+        let mut output = vec![0_i32; FRAMES as usize * 2];
+        graph.run_all(0, &[], &mut output, (0, 2));
+        for (frame, pair) in output.chunks(2).enumerate() {
+            assert_eq!(pair[0], pair[1], "frame {frame}");
+            assert_eq!(pair[0] != 0, frame % 5 == 0, "frame {frame}");
+        }
+    }
+
     /// Four threads, each with its own nodes, spinning for what they
     /// wait for as the engine does: every cycle every node is run, and
     /// the signal crosses the threads whole.
@@ -752,9 +846,9 @@ mod tests {
         let mut text = String::from("bus mix\npeak meter\nconnect mix -> meter\n");
         for track in 0..8 {
             text.push_str(&format!(
-                "impulse t{track} every=1 db=-30\nload t{track}.a ns=20 thread={}\n\
-                 load t{track}.b ns=20 thread={}\n\
-                 connect t{track} -> t{track}.a:0 -> t{track}.b:0 -> mix\n",
+                "impulse t{track} every=1 db=-30\nspin t{track}.a ns=20 thread={}\n\
+                 spin t{track}.b ns=20 thread={}\n\
+                 connect t{track} -> t{track}.a -> t{track}.b -> mix\n",
                 track % 4,
                 (track + 1) % 4
             ));

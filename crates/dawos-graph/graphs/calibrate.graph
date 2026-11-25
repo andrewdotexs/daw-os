@@ -1,0 +1,94 @@
+# What a load is made of, and what every kind of node costs (step
+# P1.7d). For one live thread: every node after the other, each timed
+# by the engine ("--graph-nodes" prints them one by one).
+#
+# The calibration of ADR 0011 comes from the three cascades of a known
+# size, run at 96 kHz with 192 frames, the quantum of the reference
+# session of requirement R-04:
+#
+#   frame    a load with no filtering: its cost over the frames is what
+#            a load costs before any stage;
+#   stages   64 stages more: the difference, over 64 and over the
+#            frames, is a stage;
+#   trims    64 trims more: the same for a trim.
+#
+# "stages4" and "stages256" say whether a stage costs the same in a
+# short and in a long cascade. The three loads are the classes as the
+# calibration in use makes them: they should cost 10, 40 and 150 ns per
+# frame.
+
+noise    source   db=-12
+cascade  frame      stages=0    trims=0
+cascade  stages     stages=64   trims=0
+cascade  trims      stages=0    trims=64
+cascade  stages4    stages=4    trims=0
+cascade  stages256  stages=256  trims=0
+load     light    class=light
+load     medium   class=medium
+load     heavy    class=heavy
+bus      loads
+peak     heard
+connect source -> frame:0 -> loads -> heard
+connect source -> frame:1
+connect source -> stages:0 -> loads
+connect source -> stages:1
+connect source -> trims:0 -> loads
+connect source -> trims:1
+connect source -> stages4:0 -> loads
+connect source -> stages4:1
+connect source -> stages256:0 -> loads
+connect source -> stages256:1
+connect source -> light:0 -> loads
+connect source -> light:1
+connect source -> medium:0 -> loads
+connect source -> medium:1
+connect source -> heavy:0 -> loads
+connect source -> heavy:1
+connect frame:1 -> loads
+connect stages:1 -> loads
+connect trims:1 -> loads
+connect stages4:1 -> loads
+connect stages256:1 -> loads
+connect light:1 -> loads
+connect medium:1 -> loads
+connect heavy:1 -> loads
+
+# The other kinds, each once or twice: a generator of each sort, and
+# what takes a signal in. The sum and the bus with two inputs and with
+# eight, to tell what an input costs from what the node costs.
+
+sine     tone     cycles=3
+impulse  click    every=48
+noise    hiss     seed=7
+gain     softer   db=-6
+delay    later    frames=480
+sum      sum2
+sum      sum8
+bus      bus2
+bus      bus8
+peak     seen
+spin     wait     ns=10
+connect tone -> softer -> later -> sum2 -> seen
+connect click -> sum2
+connect hiss -> wait -> bus2
+connect tone -> bus2
+connect tone -> sum8
+connect click -> sum8
+connect hiss -> sum8
+connect softer -> sum8
+connect later -> sum8
+connect sum2 -> sum8
+connect wait -> sum8
+connect bus2 -> sum8
+connect tone -> bus8
+connect click -> bus8
+connect hiss -> bus8
+connect softer -> bus8
+connect later -> bus8
+connect sum2 -> bus8
+connect wait -> bus8
+connect bus2 -> bus8
+peak     seen8
+peak     seenbus
+connect sum8 -> seen8
+connect bus8 -> seenbus

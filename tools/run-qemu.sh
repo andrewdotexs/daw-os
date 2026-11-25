@@ -699,6 +699,16 @@ fi
 if [[ -z ${report} ]]; then
 	echo "FAIL: no boot report within ${timeout_s}s; last lines of the console:" >&2
 	tail -n 25 "${log}" | tr -d '\r' >&2
+	# The audio test runs once, at the first boot: a machine that
+	# restarts meanwhile never reports it, and with a boot profile
+	# restarts are let through (see reboot_option). Say so: it is not a
+	# slow run.
+	if [[ -n ${audio_test} ]]; then
+		boots=$(grep -a -c 'DAWOS-BOOT-REPORT' "${log}" || true)
+		if ((boots > 1)); then
+			echo "the machine started ${boots} times: it restarted by itself during the audio test" >&2
+		fi
+	fi
 	if [[ -s ${qemu_err} ]]; then
 		echo "QEMU messages:" >&2
 		cat "${qemu_err}" >&2

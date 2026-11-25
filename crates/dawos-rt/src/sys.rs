@@ -2,9 +2,11 @@
 //!
 //! The only module of the workspace with `unsafe` code. Each function
 //! wraps one call, checks its result and hands out plain Rust types.
-//! Two of them make no call: they read and write the registers of a
-//! thread in the state the kernel hands a signal handler (see
-//! `dispatch`).
+//! Some make no call. Two read and write the registers of a thread in
+//! the state the kernel hands a signal handler (see `dispatch`); one
+//! calls the filter cascade in the form compiled for AVX2 and FMA, once
+//! the processor has said it has both (see `dsp`); one reads and writes
+//! the control register of the vector unit.
 
 use std::io;
 use std::sync::atomic::AtomicU32;
@@ -481,5 +483,87 @@ pub(crate) fn answer_stopped_call(context: *mut libc::c_void, result: i64) {
     // system call leaves its result.
     unsafe {
         (*context.cast::<libc::ucontext_t>()).uc_mcontext.gregs[libc::REG_RAX as usize] = result;
+    }
+}
+
+/// Whether the processor has AVX2 and FMA. The standard library asks the
+/// processor once (an instruction, not a system call) and remembers.
+pub(crate) fn has_avx2_and_fma() -> bool {
+    #[cfg(target_arch = "x86_64")]
+    {
+        std::is_x86_feature_detected!("avx2") && std::is_x86_feature_detected!("fma")
+    }
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        false
+    }
+}
+
+/// Run a filter cascade over a block: with the vector instructions
+/// where the processor has them, a value at a time elsewhere.
+#[inline]
+pub(crate) fn cascade(stages: &mut [crate::dsp::Stage], block: crate::dsp::Block<'_>) {
+    #[cfg(target_arch = "x86_64")]
+    if has_avx2_and_fma() {
+        // SAFETY: `run_vector` is an ordinary safe function but for the
+        // instructions it is compiled to, AVX2 and FMA, and the
+        // processor was just asked for both.
+        unsafe { crate::dsp::run_vector(stages, block) };
+        return;
+    }
+    crate::dsp::run_plain(stages, block);
+}
+
+/// Bits of the control register of the vector unit (MXCSR): a result
+/// too small for the normal form becomes zero (FTZ), and an operand in
+/// that form counts as zero (DAZ).
+#[cfg(target_arch = "x86_64")]
+const FLUSH_TO_ZERO: u32 = 1 << 15;
+#[cfg(target_arch = "x86_64")]
+const DENORMALS_ARE_ZERO: u32 = 1 << 6;
+
+/// Have the calling thread treat the numbers too small for the normal
+/// form (denormals) as zero, or not; returns whether it did before. A
+/// setting of the thread: every thread has its own, copied when it is
+/// made from the thread that makes it.
+pub(crate) fn flush_denormals(on: bool) -> bool {
+    #[cfg(target_arch = "x86_64")]
+    {
+        let mut control: u32 = 0;
+        // SAFETY: `stmxcsr` writes the four bytes of the register at
+        // the address it is given, a local variable of that size, and
+        // `ldmxcsr` reads them back from there. Only the two bits named
+        // above are changed: the rounding mode and the masks of the
+        // exceptions stay as the thread had them. The code compiled
+        // from Rust assumes the default floating-point environment;
+        // with these two bits set it sees a zero where it would have
+        // seen a number below 1.2e-38, and nothing else changes.
+        unsafe {
+            core::arch::asm!(
+                "stmxcsr dword ptr [{address}]",
+                address = in(reg) &raw mut control,
+                options(nostack),
+            );
+        }
+        let before = control & (FLUSH_TO_ZERO | DENORMALS_ARE_ZERO) != 0;
+        if on {
+            control |= FLUSH_TO_ZERO | DENORMALS_ARE_ZERO;
+        } else {
+            control &= !(FLUSH_TO_ZERO | DENORMALS_ARE_ZERO);
+        }
+        // SAFETY: as above; the register is read from a local variable.
+        unsafe {
+            core::arch::asm!(
+                "ldmxcsr dword ptr [{address}]",
+                address = in(reg) &raw const control,
+                options(nostack, readonly),
+            );
+        }
+        before
+    }
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        let _ = on;
+        false
     }
 }
