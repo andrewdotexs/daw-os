@@ -13,6 +13,7 @@
 
 mod cli;
 mod entries;
+mod graph;
 mod ktrace;
 mod live;
 mod meter;
@@ -36,6 +37,16 @@ fn main() -> ExitCode {
             println!("dawos-engine {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
+        Ok(cli::Command::Graph(options)) => match graph::describe(&options) {
+            Ok(text) => {
+                print!("{text}");
+                ExitCode::SUCCESS
+            }
+            Err(message) => {
+                eprintln!("dawos-engine: {message}");
+                ExitCode::FAILURE
+            }
+        },
         Ok(cli::Command::Run(options)) => match run::run(&options) {
             Ok(()) => ExitCode::SUCCESS,
             Err(message) => {

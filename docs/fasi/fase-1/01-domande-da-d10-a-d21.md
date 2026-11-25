@@ -30,7 +30,7 @@ In tutti i casi l'utente ha scelto l'alternativa raccomandata.
 | D-26, come partono i thread live (nuova) | Fase 1 | **Adesso** |
 | D-27, alsa-lib o interfaccia del kernel (nuova) | Fase 1 | **Adesso**, come punto di partenza |
 | D-28, quale Scarlett (nuova) | Fase 1 | **Adesso** |
-| D-10, passaggio tra motore e host | Fase 4, ma condiziona il grafo | Prima di P1.7 |
+| D-10, passaggio tra motore e host | Fase 4, ma condiziona il grafo | **Decisa il 25 novembre 2026** per il grafo: assegnazione statica |
 | D-16, carico di R-04 | Chiusa ([ADR 0011](../../adr/0011-r04-carico-sintetico.md)) | — |
 | D-12, D-13, D-15, D-20, D-21 | Fase 2 | All'apertura della Fase 2 |
 | D-19, trasporto MCP | Fase 2 o 3 | Più avanti |
@@ -136,6 +136,8 @@ Raccomandazione aggiornata in breve; le ripropongo per intero all'apertura della
 **Raccomandazione di allora**: A, passaggio sincrono sullo stesso core, con assegnazione statica dei segmenti ai core.
 
 **Aggiornamento**: l'ADR 0021 la rende quasi obbligata. Un host libero di girare su un core scelto dal kernel (B) richiede un risveglio tra processi dentro il calcolo, che l'ADR esclude; C resta escluso. Con A, il thread live dell'host di un plugin deve stare sveglio in attesa attiva sullo stesso core per il solo tratto in cui tocca a lui, e dormire nell'attesa del ciclo: è il caso che la contraddizione C-01 del documento 0 sollevava, e va progettato nella Fase 4. **Per la Fase 1 conta solo questo**: il grafo assegna i nodi ai core quando viene compilato, non a ogni ciclo. Lo chiedo prima di P1.7.
+
+**Decisione dell'utente, 25 novembre 2026**: assegnazione statica, per la parte che tocca il grafo. Ogni nodo ha il suo core, deciso alla compilazione; un thread che aspetta un ingresso da un altro resta in attesa attiva. Scartate la coda comune dei nodi pronti e l'assegnazione statica con furto di lavoro come riserva. È l'[ADR 0025](../../adr/0025-grafo-assegnazione-statica.md). Il passaggio tra motore e host di un plugin resta da progettare in Fase 4.
 
 ### D-12 — Codifica del piano di controllo e del journal
 

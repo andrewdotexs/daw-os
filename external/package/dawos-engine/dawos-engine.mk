@@ -35,10 +35,16 @@ define DAWOS_ENGINE_BUILD_CMDS
 			--package dawos-engine
 endef
 
+# With the engine, the graphs that come with its sources: the ones the
+# tests and the measures of step P1.7 run (dawos-engine graph FILE says
+# what each live thread would do with one).
 define DAWOS_ENGINE_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 \
 		$(@D)/target/$(RUSTC_TARGET_NAME)/release/dawos-engine \
 		$(TARGET_DIR)/usr/bin/dawos-engine
+	$(INSTALL) -d $(TARGET_DIR)/usr/share/dawos/graphs
+	$(INSTALL) -m 0644 $(@D)/dawos-graph/graphs/*.graph \
+		$(TARGET_DIR)/usr/share/dawos/graphs/
 endef
 
 $(eval $(generic-package))

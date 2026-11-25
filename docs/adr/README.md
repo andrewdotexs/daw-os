@@ -28,6 +28,7 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0022](0022-driver-grafico-all-avvio.md) | Driver grafico caricato a ogni avvio | P1.0, A-43 | Accettata il 20 novembre 2026 per il profilo `285k`; cambia la decisione di A-02; misura lunga da fare |
 | [0023](0023-protezione-dal-thread-che-non-cede.md) | Protezione dal thread live che non cede | K-04, A-18, prompt della Fase 1 | Accettata il 21 novembre 2026; verificata sul 285K con la prova d'urto del passo P1.3 |
 | [0024](0024-interfaccia-fcp-server-e-firmware.md) | L'interfaccia di quarta generazione: `fcp-support` e firmware nell'immagine | P1.12, D-28 | Accettata il 24 novembre 2026; da confermare con le misure sul 285K |
+| [0025](0025-grafo-assegnazione-statica.md) | Il grafo: ogni nodo ha il suo core, deciso alla compilazione | D-10, P1.7 | Accettata il 25 novembre 2026; il compilatore è in P1.7a, la misura in P1.7c |
 
 ## Corrispondenza con il documento di progetto
 

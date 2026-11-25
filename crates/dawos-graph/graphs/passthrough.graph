@@ -1,0 +1,9 @@
+# What dawos-audio-test does today without a graph: the tone that comes
+# back through the cable on input 3 goes to output 5, as it is, and
+# comes back on input 5 inside the interface.
+#
+# One chain, all of it on the thread that holds the sound card.
+
+input   in3    channel=3
+output  out5   channel=5
+connect in3 -> out5

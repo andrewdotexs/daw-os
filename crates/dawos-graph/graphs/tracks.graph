@@ -1,0 +1,157 @@
+# Sixteen tracks side by side, each a source and three instances of the
+# reference load of requirement R-04 one after the other (ADR 0011: of
+# ten instances six are light, three medium, one heavy), all meeting on
+# one bus with a meter.
+#
+# It is the shape the acceptance of step P1.7 needs: the same graph on
+# one, two, three and four live threads. The tracks do not wait for each
+# other, so the work can be shared; inside a track every instance waits
+# for the one before, and that chain is the least a cycle can last.
+
+noise   t1      seed=1
+load    t1.1     class=light
+load    t1.2     class=light
+load    t1.3     class=light
+connect t1 -> t1.1:0 -> t1.2:0 -> t1.3:0 -> mix
+connect t1 -> t1.1:1
+connect t1.1:1 -> t1.2:1
+connect t1.2:1 -> t1.3:1
+
+noise   t2      seed=2
+load    t2.1     class=light
+load    t2.2     class=light
+load    t2.3     class=light
+connect t2 -> t2.1:0 -> t2.2:0 -> t2.3:0 -> mix
+connect t2 -> t2.1:1
+connect t2.1:1 -> t2.2:1
+connect t2.2:1 -> t2.3:1
+
+noise   t3      seed=3
+load    t3.1     class=medium
+load    t3.2     class=medium
+load    t3.3     class=medium
+connect t3 -> t3.1:0 -> t3.2:0 -> t3.3:0 -> mix
+connect t3 -> t3.1:1
+connect t3.1:1 -> t3.2:1
+connect t3.2:1 -> t3.3:1
+
+noise   t4      seed=4
+load    t4.1     class=heavy
+load    t4.2     class=light
+load    t4.3     class=light
+connect t4 -> t4.1:0 -> t4.2:0 -> t4.3:0 -> mix
+connect t4 -> t4.1:1
+connect t4.1:1 -> t4.2:1
+connect t4.2:1 -> t4.3:1
+
+noise   t5      seed=5
+load    t5.1     class=light
+load    t5.2     class=light
+load    t5.3     class=light
+connect t5 -> t5.1:0 -> t5.2:0 -> t5.3:0 -> mix
+connect t5 -> t5.1:1
+connect t5.1:1 -> t5.2:1
+connect t5.2:1 -> t5.3:1
+
+noise   t6      seed=6
+load    t6.1     class=light
+load    t6.2     class=medium
+load    t6.3     class=medium
+connect t6 -> t6.1:0 -> t6.2:0 -> t6.3:0 -> mix
+connect t6 -> t6.1:1
+connect t6.1:1 -> t6.2:1
+connect t6.2:1 -> t6.3:1
+
+noise   t7      seed=7
+load    t7.1     class=medium
+load    t7.2     class=heavy
+load    t7.3     class=light
+connect t7 -> t7.1:0 -> t7.2:0 -> t7.3:0 -> mix
+connect t7 -> t7.1:1
+connect t7.1:1 -> t7.2:1
+connect t7.2:1 -> t7.3:1
+
+noise   t8      seed=8
+load    t8.1     class=light
+load    t8.2     class=light
+load    t8.3     class=light
+connect t8 -> t8.1:0 -> t8.2:0 -> t8.3:0 -> mix
+connect t8 -> t8.1:1
+connect t8.1:1 -> t8.2:1
+connect t8.2:1 -> t8.3:1
+
+noise   t9      seed=9
+load    t9.1     class=light
+load    t9.2     class=light
+load    t9.3     class=medium
+connect t9 -> t9.1:0 -> t9.2:0 -> t9.3:0 -> mix
+connect t9 -> t9.1:1
+connect t9.1:1 -> t9.2:1
+connect t9.2:1 -> t9.3:1
+
+noise   t10      seed=10
+load    t10.1    class=medium
+load    t10.2    class=medium
+load    t10.3    class=heavy
+connect t10 -> t10.1:0 -> t10.2:0 -> t10.3:0 -> mix
+connect t10 -> t10.1:1
+connect t10.1:1 -> t10.2:1
+connect t10.2:1 -> t10.3:1
+
+noise   t11      seed=11
+load    t11.1    class=light
+load    t11.2    class=light
+load    t11.3    class=light
+connect t11 -> t11.1:0 -> t11.2:0 -> t11.3:0 -> mix
+connect t11 -> t11.1:1
+connect t11.1:1 -> t11.2:1
+connect t11.2:1 -> t11.3:1
+
+noise   t12      seed=12
+load    t12.1    class=light
+load    t12.2    class=light
+load    t12.3    class=light
+connect t12 -> t12.1:0 -> t12.2:0 -> t12.3:0 -> mix
+connect t12 -> t12.1:1
+connect t12.1:1 -> t12.2:1
+connect t12.2:1 -> t12.3:1
+
+noise   t13      seed=13
+load    t13.1    class=medium
+load    t13.2    class=medium
+load    t13.3    class=medium
+connect t13 -> t13.1:0 -> t13.2:0 -> t13.3:0 -> mix
+connect t13 -> t13.1:1
+connect t13.1:1 -> t13.2:1
+connect t13.2:1 -> t13.3:1
+
+noise   t14      seed=14
+load    t14.1    class=heavy
+load    t14.2    class=light
+load    t14.3    class=light
+connect t14 -> t14.1:0 -> t14.2:0 -> t14.3:0 -> mix
+connect t14 -> t14.1:1
+connect t14.1:1 -> t14.2:1
+connect t14.2:1 -> t14.3:1
+
+noise   t15      seed=15
+load    t15.1    class=light
+load    t15.2    class=light
+load    t15.3    class=light
+connect t15 -> t15.1:0 -> t15.2:0 -> t15.3:0 -> mix
+connect t15 -> t15.1:1
+connect t15.1:1 -> t15.2:1
+connect t15.2:1 -> t15.3:1
+
+noise   t16      seed=16
+load    t16.1    class=light
+load    t16.2    class=medium
+load    t16.3    class=medium
+connect t16 -> t16.1:0 -> t16.2:0 -> t16.3:0 -> mix
+connect t16 -> t16.1:1
+connect t16.1:1 -> t16.2:1
+connect t16.2:1 -> t16.3:1
+
+bus     mix
+peak    meter
+connect mix -> meter
