@@ -88,6 +88,9 @@ pub struct RunOptions {
     pub margin_us: u64,
     /// Share of the period each thread keeps busy, in percent.
     pub load_percent: u64,
+    /// The file that describes the graph the live threads run; `None`:
+    /// no graph.
+    pub graph: Option<String>,
     /// The fault to inject, the thread it strikes and after how long.
     pub fault: Fault,
     pub fault_thread: usize,
@@ -207,6 +210,12 @@ Options of run:
                      the end of the period (default 150)
   --load PERCENT     keep each thread busy for this share of the period,
                      0 to 300 (default 0)
+  --graph FILE       run this graph in every cycle, compiled for the
+                     live threads of the run (the command graph says
+                     what comes of it). Its inputs and outputs are
+                     those of the card (silence in, nothing out, with
+                     the null back end). Not with --load: the load of a
+                     graph is in its nodes
   --fault NAME       make something go wrong: stuck-node, stuck-thread,
                      watchdog-off; with alsa also card-xrun (the engine
                      skips some periods) and card-lost (as if the card
@@ -299,6 +308,7 @@ impl Default for RunOptions {
             kernel_entries: false,
             dispatch: true,
             trace_also: None,
+            graph: None,
         }
     }
 }
@@ -407,6 +417,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                 options.margin_us = number(value("--margin-us")?, "--margin-us", 0, 100_000)?
             }
             "--load" => options.load_percent = number(value("--load")?, "--load", 0, 300)?,
+            "--graph" => options.graph = Some(value("--graph")?.to_string()),
             "--fault" => {
                 options.fault = match value("--fault")? {
                     "none" => Fault::None,
@@ -441,6 +452,22 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
     }
     if options.trace_also.is_some() && !options.kernel_entries {
         return Err("--trace-also needs --kernel-entries".to_string());
+    }
+    if options.graph.is_some() {
+        if options.load_percent != 0 {
+            return Err(
+                "--graph and --load: one or the other, the load of a graph is in its nodes"
+                    .to_string(),
+            );
+        }
+        // The watchdog gives up the test node of these faults; giving
+        // up a node of a graph comes with step P1.7e.
+        if matches!(options.fault, Fault::StuckNode | Fault::WatchdogOff) {
+            return Err(
+                "--graph: not with the faults stuck-node and watchdog-off yet (step P1.7e)"
+                    .to_string(),
+            );
+        }
     }
     if options.kernel_entries && !options.record {
         return Err(
@@ -629,6 +656,9 @@ mod tests {
             ),
             ("run --fault explode", "unknown fault"),
             ("run --loud", "unknown option"),
+            ("run --graph", "needs a value"),
+            ("run --graph a.graph --load 10", "one or the other"),
+            ("run --graph a.graph --fault stuck-node", "P1.7e"),
             ("graph", "needs the file"),
             ("graph a.graph b.graph", "one graph at a time"),
             ("graph a.graph --threads 0", "not between"),

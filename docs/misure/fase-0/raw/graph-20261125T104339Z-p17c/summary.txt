@@ -1,0 +1,12 @@
+threads   expected_us  slowest_avg  slowest_max     cut  missed      waits   wait_max  starved  graph
+1              290.16       289.38       292.12       0       0          0          -        0  PASS (990792 nodes run in 15012 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+2              147.10       147.13       148.34       0       0      14839       0.97        0  PASS (990792 nodes run in 15012 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+3              100.96       101.41       103.82       0       0          0          -        0  PASS (990726 nodes run in 15011 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+4               77.95        77.59        80.20       0       0       3529       0.61        0  PASS (990792 nodes run in 15012 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+
+columns: expected_us, how long the compiler expects a cycle to last on so many threads;
+  slowest_avg and slowest_max, the compute phase of the thread where it was longest, on
+  average and at the most; cut, cycles ended by the compute budget, all threads; missed,
+  periods gone by unserved; waits, nodes a thread had to wait for, and wait_max the
+  longest of those waits; starved, nodes whose inputs never came. Microseconds.
+finished_utc: 2026-11-25T10:45:41Z

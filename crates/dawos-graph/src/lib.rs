@@ -13,19 +13,24 @@
 //!    given to one live thread for good (decision D-10: the assignment
 //!    is made here, never during a cycle) and every output port given a
 //!    buffer;
-//! 3. the form the live threads run (step P1.7b).
+//! 3. the **running graph** ([`exec`]): the buffers, what each node
+//!    keeps from one cycle to the next, and the marks by which a thread
+//!    knows that what it waits for is ready.
 //!
-//! Everything in this crate happens outside the real-time path: it
-//! reads text, allocates, and takes the time it takes. What the live
-//! threads get is finished before the cycle that first uses it.
+//! The first two happen outside the real-time path: they read text,
+//! allocate, and take the time they take. The third is built there too,
+//! and finished before the cycle that first uses it; what the live
+//! threads call in it neither allocates nor blocks.
 
 #![forbid(unsafe_code)]
 
 pub mod compile;
+pub mod exec;
 pub mod kind;
 pub mod text;
 
 pub use compile::{compile, Compiled, Settings};
+pub use exec::{Inputs, Running};
 pub use kind::{Costs, Kind};
 pub use text::{parse, Description};
 

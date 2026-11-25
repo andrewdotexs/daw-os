@@ -1,13 +1,15 @@
 //! `dawos-engine`: the audio engine of dawOS.
 //!
-//! Phase 1, step P1.4: the cycle, its protection, and a sound card. One
-//! command, `run`, starts the live threads, each with the two-phase
-//! cycle of ADR 0021; a watchdog outside the live CPUs and one spare
-//! thread per live CPU (ADR 0023); and, on request, a fault to prove
-//! that the protection works. The periods come from a timer (back end
-//! `null`, one thread per live CPU) or from a sound card (back end
-//! `alsa`, one live thread yet), with a test tone, copies from inputs to
-//! outputs and a measure of what comes in. No graph yet.
+//! Phase 1: the cycle, its protection, a sound card and a graph. The
+//! command `run` starts the live threads, each with the two-phase cycle
+//! of ADR 0021; a watchdog outside the live CPUs and one spare thread
+//! per live CPU (ADR 0023); and, on request, a fault to prove that the
+//! protection works. The periods come from a timer (back end `null`) or
+//! from a sound card (back end `alsa`: the first live thread holds the
+//! card, the others follow its cycle), with a test tone, copies from
+//! inputs to outputs and a measure of what comes in. With `--graph` the
+//! threads run a graph in every cycle, each the nodes it was given
+//! (ADR 0025); the command `graph` says what a graph compiles to.
 
 #![forbid(unsafe_code)]
 

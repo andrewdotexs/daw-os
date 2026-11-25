@@ -26,6 +26,7 @@ use crate::patch::{Heard, Patch, PatchConfig};
 use crate::plan::{Fault, Plan};
 use crate::probe::{BurstKind, Counted, Timed};
 use crate::watchdog::{watchdog_loop, Event, Spare, Watch, STUCK_PERIODS};
+use dawos_graph::{Kind, Running};
 
 /// Priority of the watchdog: above the live threads and above anything
 /// else on the CPUs it runs on.
@@ -138,6 +139,27 @@ pub struct Outcome {
     pub start_ns: u64,
     /// What the record of every cycle says, when it was kept.
     pub meter: Option<MeterReport>,
+    /// The graph, when the run had one.
+    pub graph: Option<GraphOutcome>,
+}
+
+/// The graph of a run, and what became of it.
+pub struct GraphOutcome {
+    /// The file that describes it.
+    pub file: String,
+    /// What the compiler says of it.
+    pub summary: String,
+    /// Nodes the threads run in a cycle when they run them all: every
+    /// node but the inputs of the card.
+    pub nodes: usize,
+    /// Buffers and nodes that were in use by another thread when one
+    /// asked for them: none in a healthy run. After the warm-up, and
+    /// in it.
+    pub refused: u64,
+    pub refused_early: u64,
+    /// The highest sample every meter of the graph saw, by the name of
+    /// its node; full scale is 1.
+    pub peaks: Vec<(String, f32)>,
 }
 
 /// One intervention of the watchdog, with times in milliseconds from the
@@ -193,6 +215,14 @@ pub fn run(options: &RunOptions) -> Result<(), String> {
         Verdict::Fail(text) => {
             println!("compute: FAIL ({text})");
             failures.push("system calls in the compute phase are not as ADR 0021 requires");
+        }
+    }
+    match graph_verdict(&outcome) {
+        Verdict::NotAsked => {}
+        Verdict::Pass(text) => println!("graph: PASS ({text})"),
+        Verdict::Fail(text) => {
+            println!("graph: FAIL ({text})");
+            failures.push("the graph was not computed whole in every cycle");
         }
     }
     if failures.is_empty() {
@@ -312,6 +342,20 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     if options.fault != Fault::None && options.fault_after_s >= options.seconds {
         return Err("--fault-after must be less than --seconds".to_string());
     }
+    // ---- The graph: read, checked and given to the threads here, with
+    // all the time it takes.
+    let compiled = match &options.graph {
+        Some(file) => Some(crate::graph::load(file, threads, format)?),
+        None => None,
+    };
+    let on_the_card = |wanted: fn(&Kind) -> Option<u32>| -> Vec<usize> {
+        compiled
+            .iter()
+            .flat_map(|compiled| &compiled.nodes)
+            .filter_map(|node| wanted(&node.kind))
+            .map(|channel| channel as usize - 1)
+            .collect()
+    };
 
     // ---- The handler of the system calls the kernel stops in the
     // compute phase: one for the process, before any thread exists.
@@ -384,6 +428,14 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                     0
                 },
                 warm_up_seconds: u32::try_from(options.warm_up_s).unwrap_or(u32::MAX),
+                graph_inputs: on_the_card(|kind| match kind {
+                    Kind::Input { channel } => Some(*channel),
+                    _ => None,
+                }),
+                graph_outputs: on_the_card(|kind| match kind {
+                    Kind::Output { channel } => Some(*channel),
+                    _ => None,
+                }),
             },
             card.info().inputs,
             card.info().outputs,
@@ -417,6 +469,9 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         fault_cycle,
         fault_made: AtomicBool::new(false),
         patch,
+        graph: compiled.as_ref().map(Running::new),
+        judged_from_ns: AtomicU64::new(0),
+        graph_refused_early: AtomicU64::new(u64::MAX),
     });
     let spares: Arc<Vec<Spare>> = Arc::new((0..threads).map(|_| Spare::default()).collect());
     let events: Arc<Vec<Event>> = Arc::new((0..MAX_EVENTS).map(|_| Event::default()).collect());
@@ -473,6 +528,11 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     if let Some(card) = &card {
         card.set_start(start_ns);
         card.set_warm_up(options.warm_up_s * 1_000_000_000);
+        // No live thread runs yet: they read it from their first cycle.
+        shared.judged_from_ns.store(
+            start_ns + options.warm_up_s * 1_000_000_000,
+            Ordering::Release,
+        );
     }
     let common = Arc::new(Common {
         shared: Arc::clone(&shared),
@@ -801,6 +861,28 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         card,
         start_ns,
         meter,
+        graph: compiled
+            .as_ref()
+            .zip(shared.graph.as_ref())
+            .map(|(compiled, graph)| {
+                // Never marked: the run ended in the warm-up, all of it.
+                let early = shared
+                    .graph_refused_early
+                    .load(Ordering::Acquire)
+                    .min(graph.refused());
+                GraphOutcome {
+                    file: options.graph.clone().unwrap_or_default(),
+                    summary: compiled.summary(options.margin_us),
+                    nodes: compiled
+                        .nodes
+                        .iter()
+                        .filter(|node| !matches!(node.kind, Kind::Input { .. }))
+                        .count(),
+                    refused: graph.refused() - early,
+                    refused_early: early,
+                    peaks: graph.peaks(),
+                }
+            }),
     })
 }
 
@@ -973,6 +1055,50 @@ fn compute_verdict(outcome: &Outcome) -> Verdict {
     } else {
         Verdict::Fail(text)
     }
+}
+
+/// Whether every cycle computed the whole graph (step P1.7c).
+///
+/// A run that is meant to be healthy fails for a cycle that did not get
+/// to the end of the graph, and for a buffer or a node that was in use
+/// when a thread asked for it (the cycles of two threads overlapped: one
+/// was a period behind). Not so a run with a fault made on purpose, nor
+/// one where xruns are allowed: a virtual machine does not keep the
+/// time, and there it is enough that the graph was run.
+fn graph_verdict(outcome: &Outcome) -> Verdict {
+    let Some(graph) = &outcome.graph else {
+        return Verdict::NotAsked;
+    };
+    let sum = |of: fn(&ThreadReport) -> u64| outcome.reports.iter().map(of).sum::<u64>();
+    let cycles = outcome
+        .reports
+        .iter()
+        .filter(|report| report.slot == 0)
+        .map(|report| report.cycles)
+        .sum::<u64>();
+    let run = sum(|report| report.graph_nodes);
+    let cut = sum(|report| report.graph_cut);
+    let starved = sum(|report| report.graph_starved);
+    let silent = sum(|report| report.graph_silent);
+    if run == 0 {
+        return Verdict::Fail("no node of the graph was ever run".to_string());
+    }
+    let mut what = format!(
+        "{run} nodes run in {cycles} cycles of {} nodes; {cut} cycles cut, {starved} of them waiting for another thread; {silent} outputs left silent for a cycle; {} times a buffer or a node was in use by another thread",
+        graph.nodes, graph.refused
+    );
+    let early = sum(|report| report.graph_cut_early);
+    if early + graph.refused_early > 0 {
+        what.push_str(&format!(
+            "; in the warm-up {early} cycles cut, {} times in use",
+            graph.refused_early
+        ));
+    }
+    let tolerant = outcome.options.allow_xruns || outcome.options.fault != Fault::None;
+    if !tolerant && (cut > 0 || silent > 0 || graph.refused > 0) {
+        return Verdict::Fail(what);
+    }
+    Verdict::Pass(what)
 }
 
 fn verdict(outcome: &Outcome) -> Verdict {
@@ -1397,6 +1523,10 @@ fn print(outcome: &Outcome) {
         );
     }
 
+    if let Some(graph) = &outcome.graph {
+        print_graph(graph, outcome);
+    }
+
     if let Some(card) = &outcome.card {
         print_card(card, options);
     }
@@ -1424,6 +1554,58 @@ fn print(outcome: &Outcome) {
             event.core_free_ms,
             event.spare_ms.map_or_else(|| "never".to_string(), |ms| format!("{ms:.2}")),
             if event.demote_errors == 0 { "" } else { " (moving the thread failed)" },
+        );
+    }
+}
+
+/// The graph of the run: what the compiler made of it, then what the
+/// threads did with it.
+fn print_graph(graph: &GraphOutcome, outcome: &Outcome) {
+    println!();
+    println!("graph_file: {}", graph.file);
+    print!("{}", graph.summary);
+    println!();
+    println!("the graph in the cycles (times in microseconds; cut, starved and silent after the warm-up):");
+    println!(
+        "{:<6} {:<6} {:>10} {:>8} {:>9} {:>9} {:>6} {:>8} {:>7} {:>10} {:>13}",
+        "slot",
+        "kind",
+        "nodes_run",
+        "waits",
+        "wait_avg",
+        "wait_max",
+        "cut",
+        "starved",
+        "silent",
+        "cut_early",
+        "silent_early"
+    );
+    let mut reports: Vec<&ThreadReport> = outcome.reports.iter().collect();
+    reports.sort_by_key(|report| (report.slot, report.spare));
+    for report in reports {
+        println!(
+            "{:<6} {:<6} {:>10} {:>8} {:>9} {:>9} {:>6} {:>8} {:>7} {:>10} {:>13}",
+            report.slot,
+            if report.spare { "spare" } else { "first" },
+            report.graph_nodes,
+            report.graph_waits.count(),
+            us(report.graph_waits.mean_ns()),
+            us(report.graph_waits.max_ns()),
+            report.graph_cut,
+            report.graph_starved,
+            report.graph_silent,
+            report.graph_cut_early,
+            report.graph_silent_early,
+        );
+    }
+    println!(
+        "graph_refused: {} after the warm-up, {} in it (a buffer or a node in use by another thread when one asked for it)",
+        graph.refused, graph.refused_early
+    );
+    for (name, peak) in &graph.peaks {
+        println!(
+            "graph_peak {name}: {} dBFS",
+            decibels(20.0 * f64::from(*peak).log10())
         );
     }
 }
@@ -1718,6 +1900,128 @@ mod tests {
             fault_thread: 1,
             ..RunOptions::default()
         }
+    }
+
+    /// A graph in a file of its own, gone when the test ends.
+    struct GraphFile(std::path::PathBuf);
+
+    impl GraphFile {
+        fn new(name: &str, text: &str) -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "dawos-run-test-{}-{name}.graph",
+                std::process::id()
+            ));
+            std::fs::write(&path, text).unwrap();
+            Self(path)
+        }
+
+        fn options(&self, threads: usize) -> RunOptions {
+            RunOptions {
+                graph: Some(self.0.to_str().unwrap().to_string()),
+                threads: Some(threads),
+                load_percent: 0,
+                ..options(Fault::None)
+            }
+        }
+    }
+
+    impl Drop for GraphFile {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+        }
+    }
+
+    fn peak_db(outcome: &Outcome, name: &str) -> f64 {
+        let graph = outcome.graph.as_ref().expect("a graph");
+        let peak = graph
+            .peaks
+            .iter()
+            .find(|(node, _)| node == name)
+            .expect("the meter")
+            .1;
+        20.0 * f64::from(peak).log10()
+    }
+
+    /// A signal handed from thread to thread, every thread waiting for
+    /// the one before: it reaches the meter whole, and nothing of the
+    /// graph is ever refused.
+    #[test]
+    fn a_graph_is_run_by_the_threads_it_was_compiled_for() {
+        let _alone = alone();
+        let file = GraphFile::new(
+            "relay",
+            "impulse click every=1 db=-20\n\
+             gain hop1 db=-1 thread=1\ngain hop2 db=-1 thread=2\ngain hop3 db=-1 thread=0\n\
+             peak heard thread=1\noutput out channel=1\n\
+             connect click -> hop1 -> hop2 -> hop3 -> heard\nconnect hop3 -> out\n",
+        );
+        let outcome = execute(&file.options(3)).expect("the run did not start");
+        let graph = outcome.graph.as_ref().expect("a graph");
+        // Every node but none is an input: six a cycle.
+        assert_eq!(graph.nodes, 6);
+        // The impulse reached the meter through the three gains, on
+        // three threads: at least one cycle was whole. Times are not
+        // judged here: on a machine that does other things a thread is
+        // kept off its CPU for whole periods, and the cycles of the
+        // others are cut while they wait for it.
+        assert!((peak_db(&outcome, "heard") + 23.0).abs() < 0.01);
+        assert_eq!(outcome.reports.len(), 3);
+        for report in &outcome.reports {
+            assert!(report.graph_nodes > 0, "slot {}", report.slot);
+        }
+        // Threads 0 and 2 wait for another thread in every cycle, by
+        // the order of their nodes.
+        let waited: u64 = outcome
+            .reports
+            .iter()
+            .map(|report| report.graph_waits.count() + report.graph_starved)
+            .sum();
+        assert!(waited > 0);
+        assert!(summary_of(&outcome).contains("graph_nodes: 6"));
+    }
+
+    fn summary_of(outcome: &Outcome) -> &str {
+        &outcome.graph.as_ref().expect("a graph").summary
+    }
+
+    /// A graph with more work than a period holds: the budget cuts the
+    /// cycles, the thread that waits for the node that never comes
+    /// gives up at its own limit, and the run fails for it.
+    #[test]
+    fn a_graph_that_does_not_fit_is_cut_and_said() {
+        let _alone = alone();
+        // 30 ms of load in periods of 20: thread 1 never gets to the
+        // gain, and thread 0 waits for it in vain.
+        let file = GraphFile::new(
+            "heavy",
+            "noise n thread=1\nload a ns=15625 thread=1\nload b ns=15625 thread=1\n\
+             gain late thread=1\npeak heard thread=0\n\
+             connect n -> a:0 -> b:0 -> late -> heard\nconnect n -> a:1 -> b:1\n",
+        );
+        let outcome = execute(&file.options(2)).expect("the run did not start");
+        assert!(summary_of(&outcome).contains("THE GRAPH DOES NOT FIT"));
+        let of = |slot: usize| {
+            outcome
+                .reports
+                .iter()
+                .find(|report| report.slot == slot)
+                .expect("the thread")
+        };
+        assert!(of(1).incomplete > 0);
+        assert!(of(0).graph_starved > 0);
+        assert!(matches!(graph_verdict(&outcome), Verdict::Fail(_)));
+        // Nothing reached the meter.
+        assert_eq!(peak_db(&outcome, "heard"), f64::NEG_INFINITY);
+    }
+
+    #[test]
+    fn a_graph_with_a_mistake_stops_the_run_before_it_starts() {
+        let file = GraphFile::new("wrong", "gain g thread=7\n");
+        let error = execute(&file.options(2)).err().expect("an error");
+        assert!(error.contains("line 1"), "{error}");
+        let mut none = file.options(2);
+        none.graph = Some("/nonexistent/x.graph".to_string());
+        assert!(execute(&none).is_err());
     }
 
     #[test]

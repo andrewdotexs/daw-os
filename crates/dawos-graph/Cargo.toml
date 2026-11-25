@@ -1,6 +1,6 @@
 [package]
 name = "dawos-graph"
-description = "dawOS audio graph: its description, its checks and its compilation, outside the real-time path"
+description = "dawOS audio graph: its description, its compilation, and the form the live threads run"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,6 +8,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+dawos-rt.workspace = true
 
 [lints]
 workspace = true

@@ -1,6 +1,6 @@
 # ADR 0025 — Il grafo: ogni nodo ha il suo core, deciso alla compilazione
 
-- **Stato**: accettata dall'utente il 25 novembre 2026 (decisione D-10, per la parte che tocca il grafo). Il compilatore è nel passo [P1.7a](../fasi/fase-1/P1.7-il-grafo.md); l'esecuzione nel ciclo, e con essa la misura, vengono con P1.7c e P1.7d
+- **Stato**: accettata dall'utente il 25 novembre 2026 (decisione D-10, per la parte che tocca il grafo). Il compilatore è nel passo [P1.7a](../fasi/fase-1/P1.7-il-grafo.md), l'esecuzione nel ciclo in P1.7c; la misura viene con P1.7d
 - **Data**: 25 novembre 2026
 - **Origine**: domanda D-10 del documento 0 («modello di passaggio tra motore e host»), riproposta in [01-domande-da-d10-a-d21.md](../fasi/fase-1/01-domande-da-d10-a-d21.md); [ADR 0021](0021-core-live-senza-kernel.md); contraddizione C-01 del documento 0
 
@@ -21,6 +21,12 @@ La domanda non riguarda solo la Fase 1. Dalla Fase 4 certi nodi saranno plugin o
 5. **Non si usano più thread di quanti servono.** Il programma si fa per un thread, per due, fino a tutti, e si tiene il più corto; a parità, quello su meno thread.
 6. **Una descrizione può fissare il thread di un nodo** (`thread=N`): serve alle prove, e in Fase 4 ai segmenti esterni.
 7. **Il grafo non ha vie di ritorno**: un cerchio tra nodi è un errore. Una linea di ritardo non lo apre, per ora.
+
+## Come si aspetta (dal passo P1.7c)
+
+Ogni nodo porta il numero dell'ultimo ciclo per cui è stato eseguito. Un thread, prima di un nodo, legge i numeri dei nodi che quel nodo aspetta: se sono tutti al ciclo corrente lo esegue; se qualcuno manca gira a vuoto rileggendoli, fino al bilancio del ciclo ([ADR 0023](0023-protezione-dal-thread-che-non-cede.md)); se qualcuno è già a un ciclo successivo il thread è indietro, e chiude il ciclo. Un nodo i cui ingressi non arrivano in tempo è un ciclo tagliato.
+
+I buffer e lo stato dei nodi stanno dietro lucchetti che vengono solo tentati, mai attesi: nessun `unsafe` fuori da `dawos-rt::sys`, e un errore nell'ordine diventa un contatore (`graph_refused`) invece di una corsa sui dati. Il costo, un paio di operazioni atomiche per buffer, lo misura P1.7d.
 
 ## Perché
 
@@ -50,5 +56,6 @@ La domanda non riguarda solo la Fase 1. Dalla Fase 4 certi nodi saranno plugin o
 
 - Se in P1.7d l'accelerazione misurata su quattro core è molto sotto quella prevista sulla carta.
 - Se le attese attive tra thread scaldano i core live o tolgono il riposo (K-23).
+- Se i lucchetti tentati costano troppo rispetto ai nodi leggeri: allora un tipo «buffer del grafo» dentro `dawos-rt`, con il suo `unsafe` documentato.
 - In Fase 4, quando esistono i segmenti esterni: il passaggio sincrono sullo stesso core va progettato lì.
 - Se serve un ritorno nel grafo (un effetto in retroazione): allora una linea di ritardo di almeno un periodo deve poter aprire il cerchio.
