@@ -1,10 +1,27 @@
 //! The cycle of one live thread: two phases (ADR 0021), a compute budget
 //! (ADR 0023, first line).
+//!
+//! **The budget** (as counted from step P1.7b, choice of the user of 25
+//! November 2026). A cycle may compute for a period less the margin
+//! **from the instant it really began**, and never past the instant the
+//! card would have played all it had, less the margin. Not from the
+//! instant the period was due: a USB card tells of its periods in
+//! blocks of a millisecond, and now and then tells of one a millisecond
+//! early, while a busy thread is still at the cycle before (open point
+//! A-68). Counted from that instant the cycle after would lose the time
+//! the thread was still busy, though the card had never had so much left
+//! to play.
+//!
+//! One more bound keeps a thread that is behind from falling further
+//! behind at every cycle: no cycle ends later than half a period past
+//! the end of its own period. A thread whose work does not fit is cut
+//! there, as before, and takes from what the card has left to play no
+//! more than that half period.
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 
-use dawos_audio_io::{Backend, Disturbance};
+use dawos_audio_io::{Backend, Disturbance, Wake};
 use dawos_rt::clock;
 use dawos_rt::dispatch::{self, Caught};
 use dawos_rt::ring::Writer;
@@ -26,8 +43,17 @@ pub struct Shared {
     pub stop: AtomicBool,
     /// Length of a period in nanoseconds.
     pub period_ns: u64,
-    /// How long before the end of the period a thread stops taking nodes.
+    /// How long before the instant a cycle has to end by a thread stops
+    /// taking nodes.
     pub margin_ns: u64,
+    /// Frames in a period: what turns the frames a card has left to play
+    /// into time. 0 without a card.
+    pub frames: u32,
+    /// The instant the card would have played all it had, as the thread
+    /// that holds it read at the start of a cycle, and that cycle plus
+    /// one (0: none yet). The other threads keep to it too.
+    pub dry_at: AtomicU64,
+    pub dry_cycle: AtomicU64,
     /// The fault to inject, the thread it strikes and the cycle.
     pub fault: Fault,
     pub fault_thread: usize,
@@ -39,6 +65,26 @@ pub struct Shared {
     /// the back end has sound. Shared with the spare thread that may
     /// replace it; never waited for.
     pub patch: Option<Mutex<Patch>>,
+}
+
+impl Shared {
+    /// The thread that holds the card says when the card runs dry in
+    /// cycle `cycle`.
+    #[inline]
+    fn tell_dry(&self, cycle: u64, at: u64) {
+        self.dry_at.store(at, Ordering::Release);
+        self.dry_cycle.store(cycle + 1, Ordering::Release);
+    }
+
+    /// When the card runs dry in cycle `cycle`, if the thread that holds
+    /// it has said so yet. A thread that asks a moment too soon gets
+    /// nothing and keeps to its own budget until it asks again, between
+    /// two nodes.
+    #[inline]
+    fn dry(&self, cycle: u64) -> Option<u64> {
+        (self.dry_cycle.load(Ordering::Acquire) == cycle + 1)
+            .then(|| self.dry_at.load(Ordering::Acquire))
+    }
 }
 
 /// What one thread measured. Owned by the thread while it runs, handed
@@ -56,14 +102,17 @@ pub struct ThreadReport {
     pub missed: u64,
     /// Cycles cut short by the compute budget.
     pub incomplete: u64,
-    /// How late each wake-up was.
+    /// How late each wake-up was: of the cycles the thread slept before.
     pub lateness: Durations,
+    /// Cycles that began behind: their period was due before the cycle
+    /// before had ended, and the thread did not sleep.
+    pub behind: u64,
     /// How long each compute phase lasted.
     pub compute: Durations,
-    /// The shortest time left before the end of the period, in
-    /// nanoseconds; `None` when a cycle ended after its period.
+    /// The shortest time left before the instant a cycle had to end by,
+    /// in nanoseconds; `None` when a cycle ended after it.
     pub least_margin_ns: Option<u64>,
-    /// Cycles that ended after their period.
+    /// Cycles that ended after the instant they had to end by.
     pub overruns: u64,
     /// System calls stopped in the compute phase, and the first of
     /// them one by one.
@@ -124,6 +173,7 @@ fn cycles(
         missed: 0,
         incomplete: 0,
         lateness: Durations::new(),
+        behind: 0,
         compute: Durations::new(),
         least_margin_ns: Some(u64::MAX),
         overruns: 0,
@@ -136,6 +186,9 @@ fn cycles(
     let mut first = true;
     // Sound is the business of the first slot alone.
     let patch = shared.patch.as_ref().filter(|_| slot_index == 0);
+    // When the cycle before ended: a period due before then finds the
+    // thread still busy.
+    let mut last_finished: Option<u64> = None;
 
     loop {
         // ---- Wait phase: the one blocking call of the cycle.
@@ -149,8 +202,23 @@ fn cycles(
         }
 
         // ---- Compute phase: no system call from here to the next wait.
-        let period_end = wake.due + shared.period_ns;
-        let deadline = period_end.saturating_sub(shared.margin_ns);
+        let behind = last_finished.is_some_and(|finished| wake.due <= finished);
+        // The cycle has to end a period after it really began, no later
+        // than half a period into the next one, and before the card has
+        // played all it had.
+        let mut allowed_end =
+            (wake.woke + shared.period_ns).min(wake.due + shared.period_ns * 3 / 2);
+        if slot_index == 0
+            && shared.frames > 0
+            && wake.output_queued > 0
+            && wake.events & (Wake::ON_THE_CLOCK | Wake::STALLED) == 0
+        {
+            let dry = wake.due
+                + u64::from(wake.output_queued) * shared.period_ns / u64::from(shared.frames);
+            shared.tell_dry(wake.index, dry);
+            allowed_end = allowed_end.min(dry);
+        }
+        let deadline = allowed_end.saturating_sub(shared.margin_ns);
         slot.enter_compute(wake.index, wake.woke);
         // From here to the end of the nodes the kernel stops every
         // system call of this thread (when it was asked to: one store
@@ -171,6 +239,9 @@ fn cycles(
         // patch that cannot be had (a thread went wrong while holding
         // it) is a cycle without sound, not a wait.
         let mut flags = u16::from(wake.events);
+        if behind {
+            flags |= meter::BEHIND;
+        }
         if let Some(patch) = patch {
             if let Ok(mut patch) = patch.try_lock() {
                 backend.capture(patch.input_mut());
@@ -203,7 +274,16 @@ fn cycles(
                 continue;
             }
             // The compute budget: past the deadline no node is started.
-            if clock::now() >= deadline {
+            // The threads that do not hold the card keep to what the one
+            // that does has read of it.
+            let limit = if slot_index == 0 {
+                deadline
+            } else {
+                shared.dry(wake.index).map_or(deadline, |dry| {
+                    deadline.min(dry.saturating_sub(shared.margin_ns))
+                })
+            };
+            if clock::now() >= limit {
                 incomplete = true;
                 break;
             }
@@ -263,10 +343,20 @@ fn cycles(
         report.cycles += 1;
         report.missed += wake.missed;
         report.incomplete += u64::from(incomplete);
-        report.lateness.add(wake.lateness_ns());
+        if behind {
+            report.behind += 1;
+        } else {
+            report.lateness.add(wake.lateness_ns());
+        }
         report.compute.add(finished.saturating_sub(wake.woke));
-        if finished <= period_end {
-            let margin = period_end - finished;
+        if slot_index != 0 {
+            if let Some(dry) = shared.dry(wake.index) {
+                allowed_end = allowed_end.min(dry);
+            }
+        }
+        last_finished = Some(finished);
+        if finished <= allowed_end {
+            let margin = allowed_end - finished;
             report.least_margin_ns = report.least_margin_ns.map(|least| least.min(margin));
         } else {
             report.least_margin_ns = None;
@@ -300,5 +390,115 @@ fn cycles(
             record.push(&cycle.to_record());
         }
         slot.enter_wait();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use dawos_audio_io::Format;
+
+    use super::*;
+
+    /// A source of periods that, like a sound card, never drops one: a
+    /// period already due when the thread comes to wait is handed over
+    /// at once, with the instant it was due.
+    struct Queueing {
+        shared: Arc<Shared>,
+        start: u64,
+        next: u64,
+        cycles: u64,
+        /// How long after it was due each period was taken.
+        late: Vec<u64>,
+    }
+
+    impl Backend for Queueing {
+        fn name(&self) -> &'static str {
+            "queueing"
+        }
+
+        fn format(&self) -> Format {
+            Format {
+                rate: 48_000,
+                frames: 96,
+            }
+        }
+
+        fn wait(&mut self) -> Wake {
+            if self.next == self.cycles {
+                self.shared.stop.store(true, Ordering::Release);
+            }
+            let due = self.start + (self.next + 1) * self.shared.period_ns;
+            clock::sleep_until(due);
+            let woke = clock::now();
+            self.late.push(woke - due);
+            let index = self.next;
+            self.next += 1;
+            Wake {
+                index,
+                due,
+                woke,
+                missed: 0,
+                input_ready: 0,
+                output_queued: 0,
+                events: 0,
+            }
+        }
+    }
+
+    /// A thread with half as much work again as fits, in nodes longer
+    /// than the margin: every cycle is cut by the budget, and ends a
+    /// little after it. The thread begins its cycles behind, by a time
+    /// that stays within bounds: it does not fall further back at every
+    /// cycle, as it would with a budget counted from its real start and
+    /// nothing else.
+    #[test]
+    fn a_thread_with_too_much_work_stays_behind_by_a_bounded_time() {
+        const PERIOD: u64 = 5_000_000;
+        const CYCLES: u64 = 80;
+        let shared = Arc::new(Shared {
+            slots: vec![Slot::new()],
+            // Fifty nodes of 150 us: 7.5 ms of work for 5 ms.
+            plan: Plan::new(1, PERIOD, 150, Fault::None, 0, 0),
+            stop: AtomicBool::new(false),
+            period_ns: PERIOD,
+            // Far shorter than a node.
+            margin_ns: 20_000,
+            frames: 0,
+            dry_at: AtomicU64::new(0),
+            dry_cycle: AtomicU64::new(0),
+            fault: Fault::None,
+            fault_thread: 0,
+            fault_cycle: 0,
+            fault_made: AtomicBool::new(false),
+            patch: None,
+        });
+        let mut backend = Queueing {
+            shared: Arc::clone(&shared),
+            start: clock::now(),
+            next: 0,
+            cycles: CYCLES,
+            late: Vec::new(),
+        };
+        let generation = shared.slots[0].generation();
+        let report = live_loop(&shared, 0, generation, None, &mut backend, None);
+        assert_eq!(report.cycles, CYCLES);
+        assert!(
+            report.incomplete * 10 >= CYCLES * 9,
+            "{} cycles cut of {CYCLES}",
+            report.incomplete
+        );
+        assert!(report.behind * 2 >= CYCLES, "{} behind", report.behind);
+        // With nothing to bound it the thread would be 130 us further
+        // behind at every cycle, nearly two periods by the end, and none
+        // of the last twenty cycles would begin less than a period after
+        // it was due. Bounded, it keeps coming back to about half a
+        // period behind. On a machine at work the thread is held back
+        // for milliseconds at a time and takes some cycles to come back:
+        // a few of the twenty are enough to tell.
+        let last = &backend.late[backend.late.len() - 20..];
+        let in_bounds = last.iter().filter(|late| **late < PERIOD).count();
+        assert!(in_bounds >= 3, "{last:?}");
     }
 }

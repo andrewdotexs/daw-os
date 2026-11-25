@@ -394,6 +394,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     };
 
     let fault_cycle = options.fault_after_s * 1_000_000_000 / period_ns;
+    // With a card, what it has left to play bounds the compute budget.
+    let card_frames = if patch.is_some() { format.frames } else { 0 };
     let shared = Arc::new(Shared {
         slots: (0..threads).map(|_| Slot::new()).collect(),
         plan: Plan::new(
@@ -407,6 +409,9 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         stop: AtomicBool::new(false),
         period_ns,
         margin_ns: options.margin_us * 1_000,
+        frames: card_frames,
+        dry_at: AtomicU64::new(0),
+        dry_cycle: AtomicU64::new(0),
         fault: options.fault,
         fault_thread: options.fault_thread,
         fault_cycle,
@@ -1343,7 +1348,7 @@ fn print(outcome: &Outcome) {
     println!();
     println!("threads (delays and times in microseconds):");
     println!(
-        "{:<6} {:<6} {:<8} {:>8} {:>7} {:>10} {:>8} {:>9} {:>9} {:>11} {:>11} {:>12}",
+        "{:<6} {:<6} {:<8} {:>8} {:>7} {:>10} {:>8} {:>9} {:>9} {:>11} {:>11} {:>12} {:>7}",
         "slot",
         "kind",
         "end",
@@ -1355,13 +1360,14 @@ fn print(outcome: &Outcome) {
         "late_max",
         "compute_avg",
         "compute_max",
-        "least_margin"
+        "least_margin",
+        "behind"
     );
     let mut reports: Vec<&ThreadReport> = outcome.reports.iter().collect();
     reports.sort_by_key(|report| (report.slot, report.spare));
     for report in reports {
         println!(
-            "{:<6} {:<6} {:<8} {:>8} {:>7} {:>10} {:>8} {:>9} {:>9} {:>11} {:>11} {:>12}",
+            "{:<6} {:<6} {:<8} {:>8} {:>7} {:>10} {:>8} {:>9} {:>9} {:>11} {:>11} {:>12} {:>7}",
             report.slot,
             if report.spare { "spare" } else { "first" },
             match report.end {
@@ -1381,6 +1387,7 @@ fn print(outcome: &Outcome) {
             } else {
                 us(report.least_margin_ns)
             },
+            report.behind,
         );
     }
     for slot in &outcome.never_returned {

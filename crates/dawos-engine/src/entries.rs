@@ -224,6 +224,9 @@ struct Span {
     /// The cycle began as any other: with a card behind it and nothing
     /// to recover from.
     ordinary: bool,
+    /// The thread did not sleep before it: its period was due before
+    /// the cycle before had ended.
+    behind: bool,
 }
 
 /// What is gathered about the cycle in course on one CPU, and the wait
@@ -320,6 +323,8 @@ pub struct CpuFigures {
     /// For compute, delivery and wait: cycles with no system call, with
     /// one, two, three, four or more.
     pub syscalls_per_cycle: [[u64; 5]; 3],
+    /// Cycles that began behind, with no wake-up to speak of.
+    pub behind: u64,
     /// Ordinary wake-ups, and their path.
     pub wake_ups: u64,
     pub to_first_irq: Durations,
@@ -392,6 +397,7 @@ impl Entries {
                     cpu,
                     cycles: 0,
                     syscalls_per_cycle: [[0; 5]; 3],
+                    behind: 0,
                     wake_ups: 0,
                     to_first_irq: Durations::new(),
                     to_cpu: Durations::new(),
@@ -454,6 +460,7 @@ impl Entries {
             gap_ns: u64::from(cycle.gap_ns),
             gap_end: cycle.woke + u64::from(cycle.gap_end_ns),
             ordinary: cycle.flags & 0xff == 0,
+            behind: cycle.flags & crate::meter::BEHIND != 0,
         });
     }
 
@@ -680,8 +687,11 @@ impl Entries {
             }
         }
 
-        // The wake-up of the cycle after.
-        if after.ordinary {
+        // The wake-up of the cycle after, unless the thread did not sleep
+        // before it: a cycle that began behind has no wake-up.
+        if after.ordinary && after.behind {
+            cpu.behind += 1;
+        } else if after.ordinary {
             let tally = &cpu.tally;
             let wake_up = after.woke.saturating_sub(after.due);
             cpu.wake_ups += 1;
@@ -1059,6 +1069,12 @@ pub fn print(entries: &Entries, trace: &TraceFigures, symbols: &Symbols, start_n
             "kernel_entries, the wake-up of slot {slot} (CPU {}), {} of them; microseconds from the instant the period was due:",
             cpu.cpu, cpu.wake_ups
         );
+        if cpu.behind > 0 {
+            println!(
+                "  and {} cycles that began behind, with no sleep before them: not wake-ups",
+                cpu.behind
+            );
+        }
         meter::heading();
         meter::row("to the first interrupt", &cpu.to_first_irq);
         meter::row("to the thread on the CPU", &cpu.to_cpu);

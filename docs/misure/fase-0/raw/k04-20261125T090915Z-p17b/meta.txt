@@ -1,0 +1,12 @@
+started_utc: 2026-11-25T09:09:15Z
+label: p17b
+kernel: Linux 6.18.64-dawos #3 SMP PREEMPT_RT Sun Nov 22 05:01:13 CET 2026
+image: 0.0.1.20261125090400
+profile: 285k
+tune: ok
+virtual: none
+engine: dawos-engine 0.1.0
+live_cpus: 4-7
+struck_thread: 1 (CPU 5)
+fair_server_runtime_ns_on_cpu_5: 0
+uptime_s: 30

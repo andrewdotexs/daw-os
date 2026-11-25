@@ -111,20 +111,23 @@ fi
 
 # Of the thread that holds the card (slot 0), from the record of every
 # cycle: the cycles ended by the compute budget, the wake-ups of 20
-# microseconds and more, the least time left before the end of the
-# period, the frames ready and the frames still to play at a wake-up.
+# microseconds and more, the cycles that began behind (their period was
+# due before the cycle before had ended: no sleep, not a wake-up), the
+# least time left before the instant a cycle had to end by, the frames
+# ready and the frames still to play at a wake-up.
 slot0() {
 	awk -v what="$2" '
 		/^record, slot 0:/ { inside = 1; next }
 		/^record, / { inside = 0 }
 		inside && what == "cut" && $1 == "periods_gone_by:" { sub(";", "", $8); print $8 }
 		inside && what == "late" && $1 == "wake_up_bands:" { sub(",", "", $17); print $17 + $21 }
+		inside && what == "behind" && $1 == "began_behind:" { print $2 }
 		inside && what == "margin" && $1 == "least_margin_us:" { print $2 }
 		inside && what == "ready" && $1 == "card_frames_at_the_wake_up:" { sub(",", "", $5); print $3 "-" $5 }
 		inside && what == "to_play" && $1 == "card_frames_at_the_wake_up:" { print $8 "-" $10 }' "$1" | head -n 1
 }
 
-row='%-10s %5s  %-26s %-20s %6s %6s %10s %9s %9s  %s\n'
+row='%-10s %5s  %-26s %-20s %6s %6s %7s %10s %9s %9s  %s\n'
 
 # One case: $1 frames of a period at 48 kHz, $2 periods, $3 load.
 run() {
@@ -140,6 +143,7 @@ run() {
 		"$(field "${dir}/${name}.txt" count_slips_on_input_5 | sed 's/;.*//; s/ samples//')" \
 		"$(slot0 "${dir}/${name}.txt" cut)" \
 		"$(slot0 "${dir}/${name}.txt" late)" \
+		"$(behind=$(slot0 "${dir}/${name}.txt" behind) && echo "${behind:-0}")" \
 		"$(slot0 "${dir}/${name}.txt" margin)" \
 		"$(slot0 "${dir}/${name}.txt" ready)" \
 		"$(slot0 "${dir}/${name}.txt" to_play)" \
@@ -148,7 +152,7 @@ run() {
 
 {
 	# shellcheck disable=SC2059  # the format is in a variable on purpose
-	printf "${row}" "shape" "load" "xruns" "slips of the count" "cut" "late" "left_us" "ready" "to_play" "audio"
+	printf "${row}" "shape" "load" "xruns" "slips of the count" "cut" "late" "behind" "left_us" "ready" "to_play" "audio"
 	# The interface needs some seconds after a change of rate, and the
 	# streams of the runs that count must start afresh.
 	# shellcheck disable=SC2086  # device is several words
@@ -165,8 +169,9 @@ run() {
 {
 	echo
 	echo "columns, all of the thread that holds the card: cut, its cycles ended by the compute"
-	echo "  budget; late, its wake-ups of 20 us and more; left_us, the least time left before"
-	echo "  the end of the period (negative: after it); ready and to_play, the frames ready"
-	echo "  and the frames the card still had to play at a wake-up, least and most."
+	echo "  budget; late, its wake-ups of 20 us and more; behind, its cycles whose period was due"
+	echo "  before the cycle before had ended; left_us, the least time left before the instant a"
+	echo "  cycle had to end by (negative: after it); ready and to_play, the frames ready and the"
+	echo "  frames the card still had to play at a wake-up, least and most."
 	echo "finished_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } | tee -a "${dir}/summary.txt"
