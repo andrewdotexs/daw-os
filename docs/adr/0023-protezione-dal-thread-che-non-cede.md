@@ -52,7 +52,7 @@ systemd sorveglia il motore: il thread delle statistiche segnala di essere vivo 
 | Il sorvegliante rileva il blocco | Entro 11 ms | 8,00 ms |
 | Il core live torna ai thread del kernel | Entro 15 ms | 8,03 ms |
 | Il thread di riserva è al lavoro | Entro 50 ms | 10,67 ms |
-| Il grafo senza il nodo è in uso | Entro 500 ms | Fatto in P1.7f; da misurare |
+| Il grafo senza il nodo è in uso | Entro 500 ms | 16,14 ms (P1.7f, 25 novembre 2026) |
 | Riavvio della macchina | Mai | Nessuno |
 
 Durante il blocco un lavoro chiesto al kernel su ogni core è rimasto in coda al più 6,68 ms.

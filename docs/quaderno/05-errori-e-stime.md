@@ -144,6 +144,7 @@ Per giustizia, e perché dicono dove le stime sono affidabili.
 - **L'esito di P1.7b**: un ciclo partito indietro al 60 %, qualcuno all'85 %, nessuno tagliato.
 - **Lo scambio del grafo** (P1.7e): giro di 1012 campioni, 179 scambi, nessun campione fuori posto.
 - **Quando cade la scrittura corta** (P1.7e): «al periodo 1, zero frame», scritto prima della seconda misura.
+- **Il nodo che non ritorna** (P1.7f): il grafo senza di lui in uso dopo 16,14 ms, contro 16–27 attesi; tre buffer trovati occupati, contro tre o quattro; nessun campione perso sugli altri thread.
 - **Il costo dello stato C1E** (P0.6b): stimato e misurato concordano.
 - **Tre gesti incerti che hanno funzionato**: trovare la radice per etichetta dentro la riga di comando del kernel (P0.5b), spostare da fuori un thread real-time che non cede (P1.3), il driver grafico caricato all'avvio che si comporta come quello caricato a mano (P1.0).
 

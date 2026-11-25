@@ -61,5 +61,5 @@
 <text x="626" y="150" font-size="10.5" text-anchor="start" fill="#666666">sente la sorgente</text>
 <rect x="24" y="328" width="14" height="14" rx="3" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
 <text x="46" y="340" font-size="11.5" text-anchor="start" fill="#666666">tenuto dal thread bloccato: in Rust sicuro non gli si può togliere</text>
-<text x="24" y="364" font-size="11.5" text-anchor="start" fill="#666666">Dal blocco al punto 2 passano 6–8,5 ms; dal punto 2 al punto 3 una decina di millisecondi (P1.7f, da misurare).</text>
+<text x="24" y="364" font-size="11.5" text-anchor="start" fill="#666666">Misurato (P1.7f): dal blocco al punto 2 passano 6,97 ms; il punto 3 arriva 16,14 ms dopo il blocco.</text>
 </svg>
