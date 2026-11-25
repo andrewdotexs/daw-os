@@ -37,6 +37,10 @@ Il **profilo di avvio** `285k` li divide così _(verificato dalla riga di comand
 | **io** | 20–23 | Le interruzioni delle periferiche, tra cui quella della scheda audio |
 | **anticipativo** | 0–3 e 8–15 (quattro P-core e otto E-core) | Il calcolo che non deve essere pronto entro il periodo: in futuro, le tracce non suonate dal vivo |
 
+![I 24 processori del 285K colorati per dominio](img/domini-285k.svg)
+
+**Figura 1.1.** I processori del 285K e il dominio di ognuno. I quattro P-core live sono gli unici su cui gira il ciclo audio.
+
 L'interfaccia audio è una Focusrite Scarlett 18i20: prima quella di seconda generazione, dal 24 novembre 2026 quella di quarta, che è l'interfaccia del resto della fase.
 
 Lo sviluppo si fa su un altro computer, il **PC di sviluppo**, dove si costruisce l'immagine e la si prova in una macchina virtuale prima di mandarla al 285K.

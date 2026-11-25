@@ -4,6 +4,38 @@ Ogni passo ha una voce: che cosa si è fatto, che cosa è venuto fuori, che cosa
 
 Le sigle dei passi: `P0.n` è la Fase 0, `P1.n` la Fase 1; una lettera in fondo (`P1.7c`) è un sottopasso, chiuso e misurato per conto suo.
 
+## I passi in una tabella
+
+| Passo | Quando | Dove | In una riga |
+| --- | --- | --- | --- |
+| P0.1 | 13 novembre | PC | L'ambiente per costruire l'immagine |
+| P0.2 | 13 novembre | PC | La prima immagine che parte; il rapporto d'avvio |
+| P0.3 | 13 novembre | PC | Il kernel real-time e gli strumenti di misura |
+| P0.4a | 13 novembre | 285K | L'installazione sulla macchina vera |
+| P0.4b | 15 novembre | 285K | Nessun rumore dal firmware; il limite di potenza a 160 W |
+| P0.5a–f | 15 novembre | PC e 285K | Radice verificata, avvio firmato, due slot, aggiornamenti |
+| P0.6a | 16 novembre | 285K | I profili di avvio; il fair server trovato e spento |
+| P0.6b | 16 novembre | 285K | Riposo in C1, frequenza fissa, il prezzo del fair server spento |
+| P0.6c | 17 novembre | 285K | I gruppi di controllo, il driver grafico |
+| P0.6d | 17 novembre | 285K | Quanto vale un E-core; il disco cifrato |
+| P0.6e | 18 novembre | 285K | La configurazione ferma |
+| P0.7 | 19 novembre | 285K | 24 ore sotto carico: massimo 20,70 µs |
+| P0.8 | 19 novembre | — | La chiusura della Fase 0 |
+| P1.0 | 21 novembre | 285K | La coda spiegata: la grafica senza driver. Massimo 6,71 µs |
+| P1.1 | 21 novembre | carta | Il progetto del ciclo e della protezione |
+| P1.2 | 22 novembre | PC e 285K | Lo scheletro del motore |
+| P1.3 | 22 novembre | 285K | Il ciclo e il cane da guardia: blocco visto in 8 ms |
+| P1.4 | 22 novembre | 285K | La scheda; tre periodi; il riscaldamento |
+| P1.5 | 23 novembre | 285K | La latenza: 5,5–7,8 ms sulla seconda generazione |
+| P1.6a–e | 23–24 novembre | 285K | Il registro dei cicli; nessuna chiamata di sistema nel calcolo; due ore senza xrun |
+| P1.12a–c | 24–25 novembre | 285K | La quarta generazione: 8,6–10,9 ms |
+| P1.7a | 25 novembre | PC | Il grafo sulla carta |
+| P1.7b | 25 novembre | 285K | Il bilancio dall'inizio vero del ciclo |
+| P1.7c | 25 novembre | 285K | Il grafo nel ciclo: entro mezzo microsecondo dal previsto |
+| P1.7d | 25 novembre | 285K | Il carico vero, calibrato |
+| P1.7e | 25 novembre | 285K | Lo scambio del grafo: 179 scambi, nessun campione perso |
+| P1.7f | 25 novembre | consegnato | Il nodo che non ritorna |
+
 ## La Fase 0: la piattaforma
 
 Dal 13 al 19 novembre 2026. La domanda della fase: **si può avere, su questa macchina, un insieme di processori su cui un thread riparte sempre entro 50 microsecondi?** La risposta è stata sì, con un massimo misurato di 20,70 µs in 24 ore sotto carico, sceso a 6,71 µs dopo una scoperta fatta all'inizio della Fase 1.
@@ -125,6 +157,10 @@ _21 novembre, 285K._ Prima di cominciare il motore si torna sulla coda della cam
 
 Con il driver `xe` caricato a ogni avvio (ADR 0022), le 24 ore rifatte danno un massimo di **6,71 µs contro 20,70**, e uno su centomila oltre 3,00 µs contro 5,75.
 
+![Barre del ritardo di risveglio massimo in quattro misure lunghe, tutte sotto il limite di 50 microsecondi](img/risveglio.svg)
+
+**Figura 4.1.** Il ritardo di risveglio peggiore in quattro misure lunghe. La scoperta di P1.0 lo ha portato da 20,70 a 6,71 µs.
+
 Nello stesso passo: la verifica del firmware a ogni avvio (il campo `firmware=` del rapporto) e la prima prova con la Scarlett, che suona e registra per 23 minuti senza interruzioni mentre il ritardo sui processori live non supera 5,63 µs.
 
 ### P1.1: il progetto del ciclo
@@ -220,6 +256,10 @@ _24–25 novembre, 285K._ Arriva l'interfaccia nuova e il passo, previsto per do
 | 96 kHz | 8,71–9,72 ms | sì |
 | 192 kHz | 8,55–9,67 ms | sì |
 
+![Intervalli di latenza per frequenza sulle due interfacce, con il limite di 10 millisecondi](img/latenza.svg)
+
+**Figura 4.2.** La latenza del giro per il cavo sulle due interfacce. La quarta generazione supera il limite a 44,1 e 48 kHz.
+
 Il giro è 3,1 ms più lungo che sulla seconda generazione, e **R-01 non è rispettato a 44,1 e 48 kHz** (punto aperto A-69, rinviato al passo sul driver). La regola trovata: giro = buffer + una costante del driver, 3,4–3,7 ms qui contro 0,4–0,5 là.
 
 Le due ore passano senza xrun né slittamenti. Ma lo strumento contava 44 «risvegli da 50 µs in su» che non erano risvegli: undici volte all'ora il driver annuncia un periodo un millisecondo prima del solito, mentre i thread stanno ancora calcolando (A-68). Da qui parte P1.7b.
@@ -268,7 +308,7 @@ Lungo la strada: l'immagine compilava il motore con un livello di ottimizzazione
 
 ### P1.7e: un grafo al posto di un altro
 
-_25 novembre, 285K: prima misura fatta, seconda in corso._ Lo scambio del grafo mentre il ciclo gira. Due «posti» per un grafo; quello nuovo si costruisce nel posto libero, fuori dal tempo reale; si nomina un ciclo tre periodi più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Decisioni dell'utente: lo stato passa **per nome del nodo**, e lo scambio per ora lo chiede **la riga di comando**, per le prove.
+_25 novembre, 285K._ Lo scambio del grafo mentre il ciclo gira. Due «posti» per un grafo; quello nuovo si costruisce nel posto libero, fuori dal tempo reale; si nomina un ciclo tre periodi più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Decisioni dell'utente: lo stato passa **per nome del nodo**, e lo scambio per ora lo chiede **la riga di comando**, per le prove.
 
 La prova è il caso `swap`: il conteggio attraverso due grafi che si scambiano ogni secondo, con una linea di ritardo che deve conservare il suo contenuto da un grafo all'altro. Se uno scambio perde o inventa anche un solo campione, il conteggio lo dice.
 
@@ -280,15 +320,32 @@ La prova è il caso `swap`: il conteggio attraverso due grafi che si scambiano o
 | Costruire un grafo nuovo | 20 µs in media | 100–200 µs |
 | Dall'offerta a tutti i thread sul grafo nuovo | 5,4 ms | Circa 6 ms |
 
+![Barre della durata del ciclo prevista e misurata su uno, due, tre e quattro thread](img/thread-1-4.svg)
+
+**Figura 4.3.** Lo stesso grafo su 1–4 thread, con i costi misurati scritti nei sorgenti: la previsione regge su un thread e si allarga con il numero dei thread.
+
 Lo scambio fa ciò che deve. Ma la prova audio ha dato **dieci casi su undici**: in un caso che non c'entra con il grafo la scheda ha rifiutato una volta un periodo in uscita, una **scrittura corta**. Cercando nei file della giornata ne sono saltate fuori altre due, in righe che la prova non giudicava e che nessuno aveva guardato. Tutte e tre sembrano cadere all'avvio dei flussi _(ipotesi)_: è il punto aperto A-72.
 
 Decisioni dell'utente: le scritture corte del riscaldamento si contano a parte, come gli xrun; il motore annota quando capita la prima; la prova audio si rifà, e il passo si chiude con quella.
+
+La seconda misura: undici casi su undici, lo scambio identico alla prima (1012 campioni, 8 642 764 al loro posto, nessuno fuori posto). E una scrittura corta, in un altro caso, questa volta con lo strumento acceso: **al periodo 1 dopo l'avvio dei flussi, a un millisecondo dall'inizio, zero frame presi su 96**. È ciò che l'ipotesi diceva. In tutta la giornata, quattro su 52 avvii a 48 kHz. Il perché è del passo sul driver.
+
+### P1.7f: il nodo che non ritorna
+
+_25 novembre: consegnato, da misurare sul 285K._ La protezione K-04 incontra il grafo. Un nodo che smette di ritornare viene **abbandonato** dal cane da guardia: silenzio da subito per chi lo aspettava. Poi il motore toglie il nodo dalla descrizione, ricompila e scambia: il nodo sparisce.
+
+Il problema vero del passo è ciò che il thread bloccato **si tiene**: lo stato del nodo, i buffer su cui lavorava, e il grafo intero. Nessuno dei tre gli si può togliere. Le risposte: il nodo non lo chiede più nessuno; i buffer diventano silenzio per chi li legge; e il grafo si tiene con un riferimento contato, così il thread bloccato si porta via il suo senza fermare gli scambi degli altri.
+
+La prova è un nodo fatto apposta, la **trappola** (`trap`), che dopo dodici secondi non ritorna più. Sta su un thread; il conteggio passa da altri due. Ciò che ci si aspetta _(stima, scritta prima della misura)_: blocco visto in 6–8,5 ms, grafo senza il nodo in uso 16–25 ms dopo il blocco (limite 500), **e nessun campione del conteggio perso**.
+
+Il primo giro si è fermato alla macchina virtuale dell'utente, quella sera molto più lenta del solito: la trappola, che contava i cicli e non il tempo, non è mai scattata (corretto), e un thread del motore non è partito in tempo, per la seconda volta in un giorno (A-70: ora, dove il tempo non è tenuto, ha tre secondi in più e il rapporto dice di quanto ha tardato).
+
+Scrivendo il passo è caduta una frase del progetto di P1.1: la «dissolvenza» verso il silenzio. Non si può sfumare un suono che manca già da tre periodi.
 
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.7f | Il nodo abbandonato dalla protezione K-04 diventa silenzio e poi sparisce dal grafo |
 | P1.7g | L'accettazione del grafo (criterio 7) |
 | P1.8 | Il driver della scheda: la latenza sulla quarta generazione (A-69), lo scatto del periodo (A-68) |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49) |

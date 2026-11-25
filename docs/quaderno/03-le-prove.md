@@ -12,6 +12,10 @@ Una prova passa per tre luoghi, sempre in quest'ordine:
 
 Se una prova fallisce in un luogo non si passa al successivo.
 
+![Tre riquadri, PC di sviluppo, macchina virtuale e 285K, con i comandi di ognuno e il ritorno delle misure](img/dove-gira.svg)
+
+**Figura 3.1.** I tre luoghi di una prova e ciò che si lancia in ognuno.
+
 | Comando | Dove | Che cosa fa |
 | --- | --- | --- |
 | `make engine-test` | PC | Le prove automatiche del motore (vedi sotto) |
@@ -24,6 +28,25 @@ Se una prova fallisce in un luogo non si passa al successivo.
 | `ssh root@INDIRIZZO …` | sul 285K | Lancia uno strumento di misura |
 | `make measure-fetch HOST=INDIRIZZO` | dal 285K al PC | Copia i file delle misure in `docs/misure/fase-0/raw/`, dopo aver controllato che non contengano dati privati |
 | `tools/close-step.sh SIGLA COMMIT TITOLO NOTA` | PC | Chiude un passo: lo unisce al ramo principale e gli mette un'etichetta |
+
+## Quale strumento per quale domanda
+
+| La domanda | Lo strumento | La riga o la colonna da guardare |
+| --- | --- | --- |
+| Il sistema è partito sano? | `make qemu-test`, `make remote-test` | Il rapporto d'avvio: `failed_units=0`, `tune=ok` |
+| Il firmware ruba tempo ai processori? | `dawos-hwnoise` | `max_single_noise_us`, `smi_count` |
+| Il sistema operativo disturba i processori live? | `dawos-osnoise` | Le interruzioni per tipo: solo `LOC` è ammessa |
+| Quanto tarda un thread a ripartire? | `rtla timerlat`, `cyclictest`; nel motore, la tabella dei thread | `Ret user` e `Max`; `late_avg`, `late_max`, `wake_up_bands` |
+| Il motore perde periodi? | `dawos-engine run`, `dawos-audio-test` | `missed`, `card_xruns` |
+| Il suono arriva intero? | Il tono e il conteggio | `share`, `slips`, `count_samples_on_input_N` |
+| Quanto è lungo il giro? | `dawos-latency-test` | `cable:`, `inside:`; `count_on_input_N` |
+| Il motore entra nel kernel mentre calcola? | `--kernel-entries`; il verdetto `compute` | `kernel_entries_in_compute`, `syscalls_stopped_in_compute` |
+| Un thread bloccato viene sostituito in tempo? | `dawos-k04-test`; i casi `stuck-…` e `trap` | Le righe «noticed after …», il verdetto `k04` |
+| Il grafo ci sta nel periodo? | `dawos-engine graph FILE` | `graph_makespan_us`, `graph_budget_us` |
+| Il grafo vero dura quanto previsto? | `tools/graph-threads.sh` | `expected_us` contro `slowest_avg`; `speed_up` |
+| Un carico costa ciò che dichiara? | `tools/graph-calibrate.sh` | `the_classes_with_the_figures_of_the_sources` |
+| Uno scambio di grafo perde campioni? | Il caso `swap` | `count_samples_on_input_6`, `graph_changes` |
+| La forma del buffer regge sotto carico? | `tools/audio-shapes.sh` | `xruns`, `cut`, `left_us` |
 
 ## Le prove automatiche
 
@@ -263,6 +286,8 @@ slot   kind    nodes_run    waits  wait_avg  wait_max    cut  starved  silent  c
 
 Altre righe: `graph_refused` (lucchetti trovati occupati: zero in un giro sano), `graph_peak NOME` (il picco visto da un misuratore, in dBFS), la tabella **«the nodes of the graph by kind»** (per ogni tipo di nodo: quanti, costo previsto, misurato in media, il più basso, il massimo, nanosecondi per frame), `graph_critical_path_measured_us` (il percorso critico come somma dei tempi misurati dei suoi nodi).
 
+Con un nodo abbandonato: `graph_node_given_up` dice quale, e dopo quanti millisecondi dal blocco del suo thread tutti i thread eseguivano un grafo senza di lui (limite 500).
+
 Con uno scambio di grafi (`--swap-graph`): `graph_changes` (scambi fatti), `graph_change_kept` (nodi che hanno proseguito con il loro stato), `graph_change_prepared_us` (tempo per leggere, compilare e costruire un grafo), `graph_change_passed_us` (dall'offerta del grafo a tutti i thread che lo eseguono).
 
 ### Il registro dei cicli e gli ingressi nel kernel
@@ -292,7 +317,7 @@ Alla fine il motore si giudica da solo, con righe `nome: PASS (…)` o `FAIL (�
 
 | Verdetto | Che cosa giudica |
 | --- | --- |
-| `k04` | Con un guasto voluto: il cane da guardia se n'è accorto, ha liberato il processore e messo al lavoro la riserva entro i limiti |
+| `k04` | Con un guasto voluto: il cane da guardia se n'è accorto, ha liberato il processore e messo al lavoro la riserva entro i limiti; se il guasto è in un nodo del grafo, anche il grafo senza quel nodo è arrivato in tempo |
 | `audio` | La scheda ha fatto ciò che era chiesto: nessun xrun e nessuna scrittura corta dopo il riscaldamento, il tono dove deve essere, il conteggio trovato, nessuno slittamento sopra il limite |
 | `compute` | Nessuna chiamata di sistema nella fase di calcolo |
 | `graph` | Ogni ciclo ha calcolato tutto il grafo; nessun lucchetto rifiutato; gli scambi sono andati a buon fine |
@@ -314,6 +339,7 @@ Dove i tempi non contano (macchina virtuale, opzione `--allow-xruns`) i verdetti
 | `graph` | La copia da 3 a 5 fatta da un grafo invece che dal motore |
 | `relay` | Il conteggio passato da un thread all'altro attraverso quattro thread |
 | `swap` | Il conteggio attraverso due grafi che si scambiano ogni secondo |
+| `trap` | Un nodo del grafo che dopo dodici secondi non ritorna più: il cane da guardia lo abbandona, il motore mette in uso il grafo senza di lui, e il conteggio, che passa da altri thread, non deve perdere un campione |
 
 La riga `settle-FREQUENZA` non è un caso: sono otto secondi di motore per far assestare l'interfaccia dopo un cambio di frequenza.
 

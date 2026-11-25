@@ -1,0 +1,10 @@
+started_utc: 2026-11-25T19:28:43Z
+label: p17f
+kernel: Linux 6.18.64-dawos #3 SMP PREEMPT_RT Sun Nov 22 05:01:13 CET 2026 x86_64 GNU/Linux
+image: 0.0.1.20261125191600
+engine: dawos-engine 0.1.0
+graph: /usr/share/dawos/graphs/tracks.graph
+rate: 96000
+threads: 1 2 3 4
+seconds: 30
+load_costs: as in the sources (from the sources of the engine)

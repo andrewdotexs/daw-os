@@ -71,6 +71,45 @@ pub struct Description {
     pub links: Vec<Link>,
 }
 
+impl Description {
+    /// The description without the nodes named in `names`, and without
+    /// every connection from them or to them: what was connected after
+    /// them hears silence there. A name that is not in the description
+    /// changes nothing.
+    #[must_use]
+    pub fn without(&self, names: &[String]) -> Self {
+        // The place each node that stays has afterwards.
+        let mut places = Vec::with_capacity(self.nodes.len());
+        let mut nodes = Vec::new();
+        for node in &self.nodes {
+            if names.contains(&node.name) {
+                places.push(None);
+            } else {
+                places.push(Some(nodes.len()));
+                nodes.push(node.clone());
+            }
+        }
+        let links = self
+            .links
+            .iter()
+            .filter_map(|link| {
+                Some(Link {
+                    from: End {
+                        node: places[link.from.node]?,
+                        ..link.from
+                    },
+                    to: End {
+                        node: places[link.to.node]?,
+                        ..link.to
+                    },
+                    line: link.line,
+                })
+            })
+            .collect();
+        Self { nodes, links }
+    }
+}
+
 /// A name and maybe a port, as written in a chain.
 struct Written<'a> {
     name: &'a str,
@@ -242,6 +281,36 @@ mod tests {
         assert_eq!(description.links[1].from.node, 1);
         assert_eq!(description.links[1].to.node, 2);
         assert_eq!(description.links[1].line, 6);
+    }
+
+    #[test]
+    fn a_description_without_a_node_has_no_connection_to_it() {
+        let description = parse(
+            "input in3 channel=3\n\
+             gain soft db=-6\n\
+             gain other\n\
+             output out5 channel=5\n\
+             output out6 channel=6\n\
+             connect in3 -> soft -> out5\n\
+             connect in3 -> other -> out6\n",
+        )
+        .unwrap();
+        let without = description.without(&["soft".to_string()]);
+        let names: Vec<&str> = without
+            .nodes
+            .iter()
+            .map(|node| node.name.as_str())
+            .collect();
+        assert_eq!(names, ["in3", "other", "out5", "out6"]);
+        // in3 -> other and other -> out6, with the places they have now.
+        let ends: Vec<(usize, usize)> = without
+            .links
+            .iter()
+            .map(|link| (link.from.node, link.to.node))
+            .collect();
+        assert_eq!(ends, [(0, 1), (1, 3)]);
+        // A name that is not there changes nothing.
+        assert_eq!(description.without(&["nobody".to_string()]), description);
     }
 
     #[test]

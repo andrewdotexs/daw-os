@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 378" width="760" height="378" role="img" aria-label="Un grafo su quattro thread live: il conteggio passato di mano" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Un grafo su quattro thread live: il conteggio passato di mano</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#666666"/></marker></defs>
+<rect x="0.5" y="0.5" width="759" height="377" rx="8" fill="#ffffff" stroke="#d9d9d9"/>
+<text x="24" y="34" font-size="15" text-anchor="start" fill="#191919" font-weight="600">Un grafo su quattro thread: ogni nodo ha il suo thread</text>
+<text x="24" y="54" font-size="11.5" text-anchor="start" fill="#666666">relay.graph: il conteggio entra dall'ingresso 5, passa da tre thread, esce sull'uscita 6.</text>
+<rect x="24" y="74" width="712" height="50" rx="4" fill="#f4f4f4" stroke="#d9d9d9" stroke-width="1"/>
+<text x="36" y="96" font-size="12" text-anchor="start" fill="#191919" font-weight="600">thread 0</text>
+<text x="36" y="112" font-size="10.5" text-anchor="start" fill="#666666">tiene la scheda</text>
+<rect x="24" y="130" width="712" height="50" rx="4" fill="#ffffff" stroke="#d9d9d9" stroke-width="1"/>
+<text x="36" y="152" font-size="12" text-anchor="start" fill="#191919" font-weight="600">thread 1</text>
+<text x="36" y="168" font-size="10.5" text-anchor="start" fill="#666666">segue la scheda</text>
+<rect x="24" y="186" width="712" height="50" rx="4" fill="#f4f4f4" stroke="#d9d9d9" stroke-width="1"/>
+<text x="36" y="208" font-size="12" text-anchor="start" fill="#191919" font-weight="600">thread 2</text>
+<text x="36" y="224" font-size="10.5" text-anchor="start" fill="#666666">segue la scheda</text>
+<rect x="24" y="242" width="712" height="50" rx="4" fill="#ffffff" stroke="#d9d9d9" stroke-width="1"/>
+<text x="36" y="264" font-size="12" text-anchor="start" fill="#191919" font-weight="600">thread 3</text>
+<text x="36" y="280" font-size="10.5" text-anchor="start" fill="#666666">segue la scheda</text>
+<rect x="150" y="82" width="78" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="189" y="95.7" font-size="11" text-anchor="middle" fill="#191919">in5</text>
+<text x="189" y="110" font-size="11" text-anchor="middle" fill="#191919">ingresso</text>
+<rect x="262" y="138" width="78" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="301" y="151.7" font-size="11" text-anchor="middle" fill="#191919">hop1</text>
+<text x="301" y="166" font-size="11" text-anchor="middle" fill="#191919">guadagno</text>
+<rect x="374" y="194" width="78" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="413" y="207.7" font-size="11" text-anchor="middle" fill="#191919">hop2</text>
+<text x="413" y="222" font-size="11" text-anchor="middle" fill="#191919">guadagno</text>
+<rect x="486" y="250" width="78" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="525" y="263.7" font-size="11" text-anchor="middle" fill="#191919">hop3</text>
+<text x="525" y="278" font-size="11" text-anchor="middle" fill="#191919">guadagno</text>
+<rect x="598" y="82" width="78" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="637" y="95.7" font-size="11" text-anchor="middle" fill="#191919">out6</text>
+<text x="637" y="110" font-size="11" text-anchor="middle" fill="#191919">uscita</text>
+<rect x="262" y="82" width="78" height="34" rx="4" fill="#f4f4f4" stroke="#666666" stroke-width="1"/>
+<text x="301" y="95.7" font-size="11" text-anchor="middle" fill="#191919">busy0</text>
+<text x="301" y="110" font-size="11" text-anchor="middle" fill="#191919">lavoro</text>
+<rect x="150" y="138" width="78" height="34" rx="4" fill="#f4f4f4" stroke="#666666" stroke-width="1"/>
+<text x="189" y="151.7" font-size="11" text-anchor="middle" fill="#191919">busy1</text>
+<text x="189" y="166" font-size="11" text-anchor="middle" fill="#191919">lavoro</text>
+<rect x="150" y="194" width="78" height="34" rx="4" fill="#f4f4f4" stroke="#666666" stroke-width="1"/>
+<text x="189" y="207.7" font-size="11" text-anchor="middle" fill="#191919">busy2</text>
+<text x="189" y="222" font-size="11" text-anchor="middle" fill="#191919">lavoro</text>
+<rect x="150" y="250" width="78" height="34" rx="4" fill="#f4f4f4" stroke="#666666" stroke-width="1"/>
+<text x="189" y="263.7" font-size="11" text-anchor="middle" fill="#191919">busy3</text>
+<text x="189" y="278" font-size="11" text-anchor="middle" fill="#191919">lavoro</text>
+<path d="M228,99 H245.0 V155 H260" stroke="#f47230" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+<path d="M340,155 H357.0 V211 H372" stroke="#f47230" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+<path d="M452,211 H469.0 V267 H484" stroke="#f47230" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+<path d="M564,267 H581.0 V99 H596" stroke="#f47230" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+<text x="413" y="316" font-size="11.5" text-anchor="middle" fill="#666666">ogni freccia arancione è un passaggio tra thread: chi riceve aspetta girando a vuoto,</text>
+<text x="413" y="332" font-size="11.5" text-anchor="middle" fill="#666666">senza entrare nel kernel, finché il nodo prima ha scritto il suo segno per questo ciclo</text>
+<text x="24" y="360" font-size="11.5" text-anchor="start" fill="#666666">Misurato (P1.7c): un'attesa dura meno di un microsecondo; 8 640 172 campioni al loro posto, nessuno fuori posto.</text>
+</svg>

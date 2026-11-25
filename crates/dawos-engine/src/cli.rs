@@ -514,11 +514,11 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                     .to_string(),
             );
         }
-        // The watchdog gives up the test node of these faults; giving
-        // up a node of a graph comes with step P1.7e.
+        // These faults are made in the test nodes of --load. The node
+        // of a graph that goes wrong is one of its own, of kind "trap".
         if matches!(options.fault, Fault::StuckNode | Fault::WatchdogOff) {
             return Err(
-                "--graph: not with the faults stuck-node and watchdog-off yet (step P1.7e)"
+                "--graph: not with the faults stuck-node and watchdog-off; a graph goes wrong with a node of kind trap"
                     .to_string(),
             );
         }
@@ -755,7 +755,7 @@ mod tests {
             ),
             ("graph a.graph --load-costs 1,2,3,4", "not FRAME,STAGE,TRIM"),
             ("run --graph a.graph --load 10", "one or the other"),
-            ("run --graph a.graph --fault stuck-node", "P1.7e"),
+            ("run --graph a.graph --fault stuck-node", "kind trap"),
             ("graph", "needs the file"),
             ("graph a.graph b.graph", "one graph at a time"),
             ("graph a.graph --threads 0", "not between"),

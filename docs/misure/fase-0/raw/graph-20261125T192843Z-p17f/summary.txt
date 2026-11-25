@@ -1,0 +1,15 @@
+load_costs: as in the sources (from the sources of the engine)
+threads   expected_us  slowest_avg  slowest_max  speed_up   critical    cut  missed     waits  wait_max  starved  graph
+1              287.00       289.39       334.41      1.00     45.634      0       0         0         -        0  PASS (990264 nodes run in 15004 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+2              144.45       148.21       171.40      1.95     46.895      0       0      5740     23.24        0  PASS (990066 nodes run in 15001 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+3               99.08       104.22       116.95      2.78     47.589      0       0      2125     14.31        0  PASS (990066 nodes run in 15001 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+4               75.80        81.19        90.29      3.56     48.336      0       0     11826     12.80        0  PASS (990066 nodes run in 15001 cycles of 66 nodes; 0 cycles cut, 0 of them wait
+
+columns: expected_us, how long the compiler expects a cycle to last on so many threads;
+  slowest_avg and slowest_max, the compute phase of the thread where it was longest, on
+  average and at the most; speed_up, slowest_avg of the first row over that of this one;
+  critical, the longest chain of nodes that wait for each other, as its nodes took; cut,
+  cycles ended by the compute budget, all threads; missed, periods gone by unserved;
+  waits, nodes a thread had to wait for, and wait_max the longest of those waits;
+  starved, nodes whose inputs never came. Microseconds.
+finished_utc: 2026-11-25T19:30:45Z

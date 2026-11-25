@@ -34,6 +34,8 @@ Scelte dell'utente del 25 novembre 2026: un nodo che resta, cioè con lo stesso 
 
 Ci sono due posti per un grafo. Il nuovo si costruisce fuori dal tempo reale nel posto libero, condividendo con il vecchio le celle dei nodi che restano; poi si nomina un ciclo, qualche periodo più avanti, e da quel ciclo ogni thread esegue il nuovo. Un thread guarda quale grafo eseguire una volta sola, a inizio ciclo, senza attese. Quando tutti sono passati, chi ha chiesto lo scambio libera il vecchio.
 
+**Dal passo P1.7f** un thread tiene il grafo del suo ciclo con un riferimento contato, non con un lucchetto sul posto: un thread bloccato in un nodo (ADR 0023) non lascia mai il suo, e con un lucchetto nessuno scambio sarebbe più stato possibile dopo di lui. Il grafo che quel thread tiene non viene liberato; il posto sì. Lo stesso scambio serve a mettere in uso il grafo senza il nodo abbandonato.
+
 ## Perché
 
 - **È ciò che la Fase 4 richiede**: con una coda comune l'host di un plugin non saprebbe su quale core aspettare.

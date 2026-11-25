@@ -16,6 +16,10 @@ Dal basso verso l'alto: prima il suono come numeri, poi il tempo, poi la macchin
 
 **Buffer.** La coda di campioni tra il programma e la scheda, lunga un numero intero di periodi. La «forma» `96:3` vuol dire periodi da 96 frame, tre periodi nel buffer. Più è lunga, più tempo ha il programma prima che la scheda resti senza; ma ogni campione ci passa dentro, e quindi più è lunga, più tardi si sente.
 
+![Un periodo fatto di 96 frame e un buffer di tre periodi tra il motore e la scheda](img/periodo-e-buffer.svg)
+
+**Figura 2.1.** Frame, periodo e buffer con la forma `96:3`. La scheda consuma da una parte, il motore scrive dall'altra.
+
 **Latenza.** Il tempo tra un suono che entra e lo stesso suono che esce. È la somma di ciò che sta nei buffer in ingresso e in uscita, dei convertitori della scheda e di ciò che il bus USB aggiunge. Per chi suona ascoltandosi conta: sopra una decina di millisecondi si sente il ritardo. Il requisito **R-01** chiede di restare entro 10 ms.
 
 **Xrun.** La scheda è rimasta senza campioni da suonare (_underrun_) o senza posto per quelli registrati (_overrun_). È il difetto che si sente. Il driver ferma i flussi, il programma li deve far ripartire: si chiama **recupero**.
@@ -58,6 +62,10 @@ In più `irqaffinity` manda le interruzioni delle periferiche su altri processor
 
 **Fase di attesa e fase di calcolo.** La regola su cui si regge il motore (ADR 0021): un thread live fa **una sola chiamata bloccante per ciclo**, quella con cui aspetta il periodo. Da lì alla fine del calcolo non entra più nel kernel: niente chiamate di sistema, niente allocazioni di memoria, niente attese su lucchetti. Ogni ingresso nel kernel è un punto in cui il thread può essere trattenuto per un tempo che non controlla.
 
+![Un ciclo lungo l'asse del tempo: attesa, risveglio, ingresso, nodi, uscita, attesa, con il bilancio e la scadenza](img/ciclo.svg)
+
+**Figura 2.2.** Un ciclo del motore. Tra il risveglio e la fine dell'uscita il thread non entra nel kernel.
+
 **Syscall User Dispatch.** Un meccanismo di Linux con cui un thread chiede al kernel di **fermare le proprie chiamate di sistema** e di consegnargli un segnale al loro posto. Il motore lo accende durante la fase di calcolo: una chiamata fatta lì viene fermata, contata, riconosciuta per nome e poi eseguita. Così la regola delle due fasi non è una promessa, è una cosa che il verdetto `compute:` controlla a ogni giro.
 
 **Orologi che non coincidono.** Il computer conta il tempo con il suo quarzo, la scheda audio con il proprio, il bus USB con un terzo. Differiscono di qualche parte per milione. Non è un difetto, ma fa sì che ogni tanto un periodo sia annunciato un po' prima o un po' dopo del solito: è il punto aperto A-68.
@@ -86,9 +94,17 @@ In più `irqaffinity` manda le interruzioni delle periferiche su altri processor
 
 **USB audio.** Sul bus USB l'audio viaggia in pacchetti a cadenza fissa: uno ogni 125 µs (_microframe_). Il driver di Linux li raggruppa in **URB**; per l'ingresso, in blocchi di otto pacchetti, cioè un millisecondo. Ne segue che il driver «vede» arrivare l'audio **a scatti di un millisecondo**: un periodo che non è un multiplo di un millisecondo arriva a intervalli irregolari.
 
+![Pacchetti USB raggruppati in blocchi da un millisecondo, e i periodi annunciati dai blocchi](img/usb-blocchi.svg)
+
+**Figura 2.3.** Perché il periodo arriva «a scatti»: il driver vede l'audio a blocchi di un millisecondo.
+
 **Retroazione implicita.** Il modo in cui la Scarlett tiene in passo uscita e ingresso: il computer manda in uscita tanti campioni quanti ne ha appena ricevuti in ingresso. Funziona, ma il driver di Linux in questa modalità rinuncia a un'ottimizzazione di latenza: sulla quarta generazione il giro dentro il computer è 3,5 ms più lungo che sulla seconda (punto aperto A-69).
 
 **Routing e loopback.** La Scarlett ha un mixer interno che decide quale segnale va dove. Per le prove serve che un'uscita torni su un ingresso: **con un cavo** (uscita 3 → ingresso 3, attraverso i convertitori) o **dentro l'interfaccia**, senza convertitori, bit per bit (canali 5 e 6). I file `*.test-loop.conf` mettono l'interfaccia in questo stato e la prova lo ripristina alla fine.
+
+![Il percorso di un campione dal motore all'uscita e di ritorno dall'ingresso, per il cavo e dentro l'interfaccia](img/giro.svg)
+
+**Figura 2.4.** I due giri delle prove: per il cavo, attraverso i convertitori, e dentro l'interfaccia, bit per bit.
 
 **fcp-server.** La Scarlett di quarta generazione si comanda con un protocollo di Focusrite (FCP). Il kernel porta solo i messaggi; un programma, `fcp-server`, li traduce in controlli che ALSA mostra. Senza di lui il mixer dell'interfaccia non si può configurare.
 
@@ -110,6 +126,10 @@ In più `irqaffinity` manda le interruzioni delle periferiche su altri processor
 
 **Il cane da guardia e la protezione K-04.** Un thread su un processore del dominio `system`, a priorità più alta di tutti, guarda i thread live. Se uno non fa progressi per tre periodi lo considera bloccato: gli toglie la priorità, lo sposta via dal processore live e manda al suo posto un **thread di riserva** (_spare_), tenuto pronto da prima. I limiti: accorgersene entro 8,5 ms, liberare il processore entro 15 ms, riserva al lavoro entro 50 ms (ADR 0023). Se anche il cane da guardia si ferma, interviene systemd, che riavvia il motore.
 
+![Linea del tempo dal blocco di un thread all'intervento del cane da guardia, alla riserva e al grafo senza il nodo, con i limiti](img/k04.svg)
+
+**Figura 2.5.** La protezione K-04: che cosa succede, e entro quando, dopo che un thread smette di ritornare.
+
 **Il registro di ogni ciclo.** Ogni thread scrive per ogni ciclo una riga (quando doveva svegliarsi, quando si è svegliato, quanto ha calcolato, che cosa è successo) in un anello di memoria senza lucchetti; un thread non real-time li legge e ne fa le statistiche. È lo strumento con cui si giudica tutto il resto.
 
 **Il pezzo del suono (_patch_).** Gli strumenti di misura che lavorano sui blocchi della scheda accanto al grafo: il tono, il conteggio, le raffiche, l'ascolto. Sono descritti nel [capitolo 3](03-le-prove.md#gli-strumenti-di-misura-dentro-il-motore).
@@ -126,6 +146,21 @@ gain    piano  db=-6
 output  out5   channel=5
 connect in3 -> piano -> out5
 ```
+
+I tipi di nodo che esistono oggi, con ciò che costano sul 285K a 96 kHz, cioè per un quanto di 192 frame _(verificato, passi P1.7d e P1.7e)_:
+
+| Tipo | Parola nel file | Che cosa fa | Costo per quanto |
+| --- | --- | --- | --- |
+| Ingresso, uscita | `input`, `output` | Un canale della scheda, sul thread che la tiene | Non misurato a parte |
+| Guadagno | `gain` | Moltiplica per una costante | 0,06 µs |
+| Somma | `sum` | Somma i suoi ingressi | 0,08 µs con due ingressi, 0,17 con otto |
+| Bus | `bus` | Somma in doppia precisione, per molti ingressi | 0,12 µs con due ingressi, 0,27 con otto |
+| Ritardo | `delay` | Restituisce ciò che ha ricevuto tanti frame prima | 0,23 µs |
+| Sinusoide, impulso, rumore | `sine`, `impulse`, `noise` | Generatori di prova | 1,49, 0,13 e 0,36 µs |
+| Misuratore | `peak` | Ricorda il picco più alto che ha visto | 0,40 µs |
+| Carico | `load` | Filtri veri, in tre classi: è il «plugin» di riferimento | 2,0, 7,8 e 28,7 µs |
+| Attesa a vuoto | `spin` | Tiene occupato il processore per un tempo esatto: per le prove | Quello che dichiara |
+| Trappola | `trap` | Dopo un certo tempo non ritorna più: per provare la protezione | Come un guadagno, finché funziona |
 
 **Compilazione.** Fuori dal tempo reale, la descrizione viene controllata, messa in un ordine in cui ogni nodo viene dopo quelli da cui dipende, e ogni nodo viene **assegnato a un thread** per sempre. A ogni uscita di nodo viene dato un **buffer**.
 
@@ -145,6 +180,10 @@ connect in3 -> piano -> out5
 
 **Attesa attiva.** Quando un nodo ha bisogno di un ingresso che un altro thread non ha ancora scritto, il thread **non dorme**: gira a vuoto rileggendo un segno in memoria finché l'ingresso c'è, o finché il bilancio è finito. Dormire vorrebbe dire entrare nel kernel. Il prezzo è un processore tenuto sveglio (rischio K-23); misurate, le attese durano dal mezzo microsecondo ai pochi microsecondi.
 
+![Quattro corsie, una per thread, con i nodi del conteggio che passano da una all'altra](img/grafo-thread.svg)
+
+**Figura 2.6.** Un grafo su quattro thread: ogni nodo sta sul suo, e le frecce arancioni sono i passaggi in cui un thread aspetta l'altro.
+
 **Il segno.** Ogni nodo porta il numero dell'ultimo ciclo per cui è stato eseguito. Chi aspetta legge quel numero: uguale al ciclo corrente, l'ingresso è pronto; minore, non ancora; maggiore, chi aspetta è rimasto indietro e ciò che aspetta non arriverà.
 
 **Lucchetti solo tentati.** I buffer e lo stato dei nodi stanno dietro lucchetti che il motore **prova** a prendere e non aspetta mai. Per come è fatto il grafo nessuno li tiene quando un altro li chiede; se succede, chi chiede prosegue senza e l'evento è contato (`graph_refused`). Così il crate del grafo non ha una riga di codice `unsafe`.
@@ -152,6 +191,18 @@ connect in3 -> piano -> out5
 **Cella.** Ciò che un nodo è da un ciclo all'altro: la memoria dei filtri, la linea di ritardo, la fase di un oscillatore, il picco visto, il segno, i tempi misurati.
 
 **Scambio del grafo.** Sostituire il grafo mentre il ciclo gira. Il grafo nuovo si costruisce fuori dal tempo reale in un secondo posto; poi si nomina un ciclo, qualche periodo più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Un nodo con lo stesso nome, tipo e parametri **condivide la cella** con quello vecchio, e prosegue come se nulla fosse.
+
+![Quattro thread lungo otto cicli: tutti passano dal grafo vecchio al nuovo allo stesso ciclo](img/scambio.svg)
+
+**Figura 2.7.** Lo scambio: il grafo nuovo è offerto per un ciclo nominato qualche periodo più avanti, e da quel ciclo lo eseguono tutti.
+
+**Nodo abbandonato.** Un nodo in cui un thread è rimasto bloccato, dopo che il cane da guardia è intervenuto. Da quell'istante è **silenzio**: chi lo aspettava non lo aspetta più, e i buffer su cui stava lavorando non li chiede più nessuno, perché il thread bloccato li tiene e non c'è modo di toglierglieli. Poi il motore compila la descrizione **senza quel nodo** e la mette in uso con uno scambio: il nodo sparisce dal grafo (passo P1.7f).
+
+![Tre riquadri: il nodo bloccato con i suoi buffer, il nodo abbandonato con il silenzio accanto, il grafo senza il nodo](img/nodo-abbandonato.svg)
+
+**Figura 2.8.** Il nodo abbandonato in tre momenti. Ciò che il thread bloccato tiene non si può riprendere: si aggira.
+
+**Riferimento contato.** Il modo in cui un thread tiene il grafo del suo ciclo: prende un riferimento all'inizio e lo lascia alla fine, e il grafo vive finché qualcuno ne ha uno. Un thread bloccato non lascia mai il suo: il grafo che teneva resta in memoria per sempre, ma non impedisce a tutti gli altri di passare a uno nuovo.
 
 ## Il calcolo
 
@@ -166,6 +217,10 @@ connect in3 -> piano -> out5
 **Esecuzione fuori ordine.** Il processore esegue in anticipo le istruzioni che non dipendono da quelle in corso, dentro una finestra di qualche centinaio di operazioni. Due passate consecutive di un filtro su un blocco sono catene indipendenti, e il processore comincia la seconda prima che la prima sia finita: per questo il costo per frame di uno stadio è minore sui blocchi corti _(ipotesi coerente con le misure di P1.7d)_.
 
 **Stadio e ritocco.** Uno **stadio** del carico è una sezione su tutto il blocco: 1,845 ns per frame _(verificato)_. È troppo grosso per comporre 10 ns da solo, quindi il resto si copre con **ritocchi**, moltiplicazioni semplici da 0,2 ns per frame.
+
+![Un registro di otto numeri, una cascata di stadi e ritocchi, e le tre classi con i costi misurati](img/carico.svg)
+
+**Figura 2.9.** Il carico di riferimento: di che cosa è fatto e quanto costa.
 
 **Calibrazione.** Misurare sul 285K quanto costano la parte fissa, uno stadio e un ritocco, e da lì quanti stadi e ritocchi fanno ogni classe. Si fa con il motore stesso (`tools/graph-calibrate.sh`).
 

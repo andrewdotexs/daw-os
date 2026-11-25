@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 380" width="760" height="380" role="img" aria-label="Il nodo abbandonato: ciò che il thread bloccato si tiene" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Il nodo abbandonato: ciò che il thread bloccato si tiene</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#666666"/></marker></defs>
+<rect x="0.5" y="0.5" width="759" height="379" rx="8" fill="#ffffff" stroke="#d9d9d9"/>
+<text x="24" y="34" font-size="15" text-anchor="start" fill="#191919" font-weight="600">Il nodo abbandonato: ciò che il thread bloccato si tiene</text>
+<rect x="24" y="56" width="216" height="256" rx="6" fill="#ffffff" stroke="#d9d9d9" stroke-width="1"/>
+<text x="36" y="78" font-size="12.5" text-anchor="start" fill="#191919" font-weight="600">1. Il nodo non ritorna</text>
+<text x="36" y="94" font-size="10.5" text-anchor="start" fill="#666666">il thread tiene il suo stato e i suoi buffer</text>
+<rect x="36" y="112" width="82" height="32" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="77" y="131.85" font-size="11" text-anchor="middle" fill="#191919">sorgente</text>
+<rect x="36" y="168" width="82" height="28" rx="4" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
+<text x="77" y="185.85" font-size="11" text-anchor="middle" fill="#191919">buffer</text>
+<line x1="77" y1="146" x2="77" y2="166" stroke="#666666" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="36" y="226" width="82" height="34" rx="4" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
+<text x="77" y="239.7" font-size="11" text-anchor="middle" fill="#191919">bloccato</text>
+<text x="77" y="254" font-size="11" text-anchor="middle" fill="#191919">(thread 2)</text>
+<line x1="64" y1="198" x2="64" y2="224" stroke="#f47230" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="36" y="272" width="82" height="28" rx="4" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
+<text x="77" y="289.85" font-size="11" text-anchor="middle" fill="#191919">buffer</text>
+<line x1="77" y1="261" x2="77" y2="271" stroke="#f47230" stroke-width="1.8"/>
+<rect x="146" y="226" width="82" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="187" y="239.7" font-size="11" text-anchor="middle" fill="#191919">accanto</text>
+<text x="187" y="254" font-size="11" text-anchor="middle" fill="#191919">(thread 3)</text>
+<path d="M118,182 H187 V224" stroke="#666666" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="130" y="150" font-size="10.5" text-anchor="start" fill="#666666">trova occupato</text>
+<text x="130" y="163.65" font-size="10.5" text-anchor="start" fill="#666666">(graph_refused)</text>
+<rect x="272" y="56" width="216" height="256" rx="6" fill="#ffffff" stroke="#d9d9d9" stroke-width="1"/>
+<text x="284" y="78" font-size="12.5" text-anchor="start" fill="#191919" font-weight="600">2. Abbandonato</text>
+<text x="284" y="94" font-size="10.5" text-anchor="start" fill="#666666">silenzio per chi leggeva quei buffer</text>
+<rect x="284" y="112" width="82" height="32" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="325" y="131.85" font-size="11" text-anchor="middle" fill="#191919">sorgente</text>
+<rect x="284" y="168" width="82" height="28" rx="4" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
+<text x="325" y="185.85" font-size="11" text-anchor="middle" fill="#191919">buffer</text>
+<line x1="325" y1="146" x2="325" y2="166" stroke="#666666" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="284" y="226" width="82" height="34" rx="4" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
+<text x="325" y="239.7" font-size="11" text-anchor="middle" fill="#191919">bloccato</text>
+<text x="325" y="254" font-size="11" text-anchor="middle" fill="#191919">(thread 2)</text>
+<line x1="312" y1="198" x2="312" y2="224" stroke="#f47230" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="284" y="272" width="82" height="28" rx="4" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
+<text x="325" y="289.85" font-size="11" text-anchor="middle" fill="#191919">buffer</text>
+<line x1="325" y1="261" x2="325" y2="271" stroke="#f47230" stroke-width="1.8"/>
+<rect x="394" y="226" width="82" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="435" y="239.7" font-size="11" text-anchor="middle" fill="#191919">accanto</text>
+<text x="435" y="254" font-size="11" text-anchor="middle" fill="#191919">(thread 3)</text>
+<path d="M366,182 H435 V224" stroke="#666666" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="378" y="150" font-size="10.5" text-anchor="start" fill="#666666">sente silenzio</text>
+<rect x="520" y="56" width="216" height="256" rx="6" fill="#ffffff" stroke="#d9d9d9" stroke-width="1"/>
+<text x="532" y="78" font-size="12.5" text-anchor="start" fill="#191919" font-weight="600">3. Il grafo senza il nodo</text>
+<text x="532" y="94" font-size="10.5" text-anchor="start" fill="#666666">ciò che gli stava accanto ritorna</text>
+<rect x="532" y="112" width="82" height="32" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="573" y="131.85" font-size="11" text-anchor="middle" fill="#191919">sorgente</text>
+<rect x="532" y="168" width="82" height="28" rx="4" fill="#f4f4f4" stroke="#d9d9d9" stroke-width="1"/>
+<text x="573" y="185.85" font-size="11" text-anchor="middle" fill="#191919">buffer</text>
+<line x1="573" y1="146" x2="573" y2="166" stroke="#666666" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="532" y="226" width="82" height="34" rx="4" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="573" y="247" font-size="11" text-anchor="middle" fill="#666666">tolto</text>
+<rect x="642" y="226" width="82" height="34" rx="4" fill="#cce3fd" stroke="#257de0" stroke-width="1"/>
+<text x="683" y="239.7" font-size="11" text-anchor="middle" fill="#191919">accanto</text>
+<text x="683" y="254" font-size="11" text-anchor="middle" fill="#191919">(thread 3)</text>
+<path d="M614,182 H683 V224" stroke="#666666" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+<text x="626" y="150" font-size="10.5" text-anchor="start" fill="#666666">sente la sorgente</text>
+<rect x="24" y="328" width="14" height="14" rx="3" fill="#fde0d2" stroke="#f47230" stroke-width="1"/>
+<text x="46" y="340" font-size="11.5" text-anchor="start" fill="#666666">tenuto dal thread bloccato: in Rust sicuro non gli si può togliere</text>
+<text x="24" y="364" font-size="11.5" text-anchor="start" fill="#666666">Dal blocco al punto 2 passano 6–8,5 ms; dal punto 2 al punto 3 una decina di millisecondi (P1.7f, da misurare).</text>
+</svg>

@@ -1,0 +1,56 @@
+# A node that goes wrong, and a graph that goes on without it (step
+# P1.7f). For four live threads.
+#
+# With "--count 5:6" the engine plays the count on output 5 of the card;
+# inside the interface it comes back on input 5 (the file
+# MODEL.test-loop.conf). The graph hands it to thread 1 and back to the
+# thread of the card, which plays it on output 6: it comes back on input
+# 6, where the engine checks it sample for sample. Nothing on this way
+# has to do with thread 2.
+
+input   in5    channel=5
+gain    hop    db=0  thread=1
+output  out6   channel=6
+connect in5 -> hop -> out6
+
+# On thread 2, a node that copies the tone of input 3 for twelve seconds
+# and then never returns, holding what it was working on, with a meter
+# after it. The watchdog takes the CPU from the thread, gives the node
+# up and sends a spare thread in (ADR 0023); the engine then puts a
+# graph without the node in use. The count must not lose a sample in all
+# of this.
+
+input   in3    channel=3
+trap    bad    after=12  thread=2
+peak    after  thread=2
+connect in3 -> bad -> after
+
+# Beside it, on thread 3, a node that reads the same input: silence
+# while the stuck thread holds that buffer, the tone again with the new
+# graph.
+
+gain    beside db=0  thread=3
+peak    tone   thread=3
+connect in3 -> beside -> tone
+
+# Work on every thread meanwhile, each thread by itself: a thread that
+# waits for another is cut by its budget while that one is stuck, and
+# here only what goes wrong is to go wrong. A node that keeps its CPU
+# busy lasts the same on any machine, a virtual one too.
+
+noise   n0     seed=1     thread=0
+spin    busy0  ns=1000    thread=0
+peak    level0 thread=0
+connect n0 -> busy0 -> level0
+noise   n1     seed=2     thread=1
+spin    busy1  ns=1000    thread=1
+peak    level1 thread=1
+connect n1 -> busy1 -> level1
+noise   n2     seed=3     thread=2
+spin    busy2  ns=1000    thread=2
+peak    level2 thread=2
+connect n2 -> busy2 -> level2
+noise   n3     seed=4     thread=3
+spin    busy3  ns=1000    thread=3
+peak    level3 thread=3
+connect n3 -> busy3 -> level3

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" width="760" height="340" role="img" aria-label="Lo stesso grafo su uno, due, tre e quattro thread: previsto e misurato" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title>Lo stesso grafo su uno, due, tre e quattro thread: previsto e misurato</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#666666"/></marker></defs>
+<rect x="0.5" y="0.5" width="759" height="339" rx="8" fill="#ffffff" stroke="#d9d9d9"/>
+<text x="24" y="34" font-size="15" text-anchor="start" fill="#191919" font-weight="600">Lo stesso grafo su 1–4 thread: previsto dal compilatore e misurato</text>
+<text x="24" y="54" font-size="11.5" text-anchor="start" fill="#666666">tracks.graph a 96 kHz, durata del ciclo in microsecondi; il periodo è di 2000 µs (P1.7e)</text>
+<line x1="90" y1="262" x2="700" y2="262" stroke="#d9d9d9" stroke-width="1"/>
+<text x="82" y="266" font-size="11" text-anchor="end" fill="#666666">0</text>
+<line x1="90" y1="202.667" x2="700" y2="202.667" stroke="#d9d9d9" stroke-width="1"/>
+<text x="82" y="206.667" font-size="11" text-anchor="end" fill="#666666">100</text>
+<line x1="90" y1="143.333" x2="700" y2="143.333" stroke="#d9d9d9" stroke-width="1"/>
+<text x="82" y="147.333" font-size="11" text-anchor="end" fill="#666666">200</text>
+<line x1="90" y1="84" x2="700" y2="84" stroke="#d9d9d9" stroke-width="1"/>
+<text x="82" y="88" font-size="11" text-anchor="end" fill="#666666">300</text>
+<path d="M144,262 v-166.287 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v166.287 z" fill="#257de0"/>
+<path d="M172,262 v-168.067 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v168.067 z" fill="#f47230"/>
+<text x="156" y="85.7133" font-size="10.5" text-anchor="middle" fill="#666666">287,00</text>
+<text x="184" y="71.9333" font-size="10.5" text-anchor="middle" fill="#666666">290,00</text>
+<text x="170" y="280" font-size="12" text-anchor="middle" fill="#191919">1 thread</text>
+<text x="170" y="296" font-size="11" text-anchor="middle" fill="#666666">accelerazione 1,00</text>
+<path d="M294,262 v-81.707 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v81.707 z" fill="#257de0"/>
+<path d="M322,262 v-83.6591 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v83.6591 z" fill="#f47230"/>
+<text x="306" y="170.293" font-size="10.5" text-anchor="middle" fill="#666666">144,45</text>
+<text x="334" y="156.341" font-size="10.5" text-anchor="middle" fill="#666666">147,74</text>
+<text x="320" y="280" font-size="12" text-anchor="middle" fill="#191919">2 thread</text>
+<text x="320" y="296" font-size="11" text-anchor="middle" fill="#666666">accelerazione 1,96</text>
+<path d="M444,262 v-54.7875 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v54.7875 z" fill="#257de0"/>
+<path d="M472,262 v-57.4456 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v57.4456 z" fill="#f47230"/>
+<text x="456" y="197.213" font-size="10.5" text-anchor="middle" fill="#666666">99,08</text>
+<text x="484" y="182.554" font-size="10.5" text-anchor="middle" fill="#666666">103,56</text>
+<text x="470" y="280" font-size="12" text-anchor="middle" fill="#191919">3 thread</text>
+<text x="470" y="296" font-size="11" text-anchor="middle" fill="#666666">accelerazione 2,80</text>
+<path d="M594,262 v-40.9747 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v40.9747 z" fill="#257de0"/>
+<path d="M622,262 v-43.8286 a4,4 0 0 1 4,-4 h16 a4,4 0 0 1 4,4 v43.8286 z" fill="#f47230"/>
+<text x="606" y="211.025" font-size="10.5" text-anchor="middle" fill="#666666">75,80</text>
+<text x="634" y="196.171" font-size="10.5" text-anchor="middle" fill="#666666">80,61</text>
+<text x="620" y="280" font-size="12" text-anchor="middle" fill="#191919">4 thread</text>
+<text x="620" y="296" font-size="11" text-anchor="middle" fill="#666666">accelerazione 3,60</text>
+<rect x="90" y="316" width="14" height="10" rx="3" fill="#257de0"/>
+<text x="110" y="325" font-size="11.5" text-anchor="start" fill="#191919">previsto dal compilatore</text>
+<rect x="290" y="316" width="14" height="10" rx="3" fill="#f47230"/>
+<text x="310" y="325" font-size="11.5" text-anchor="start" fill="#191919">misurato: +1,0 % su un thread, +6,3 % su quattro</text>
+</svg>

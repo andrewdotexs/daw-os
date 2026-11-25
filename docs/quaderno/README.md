@@ -17,6 +17,22 @@ Non sostituisce le guide dei passi (`docs/fasi/`), che dicono che cosa fare e ch
 
 L'ordine consigliato è questo: il quadro, poi i concetti, poi la storia. Il capitolo sulle prove e il glossario si consultano.
 
+## Figure e PDF
+
+Le figure stanno in `img/`, in formato SVG, e sono disegnate da uno script, `tools/quaderno-figures.py`, a partire dai numeri scritti nello script stesso: quando un passo cambia un numero, si cambia lì e si ridisegna.
+
+```bash
+tools/quaderno-figures.py
+```
+
+Il quaderno c'è anche in PDF, in `pdf/`: un file per capitolo e `quaderno-dawos.pdf` con tutto. Si rigenerano con:
+
+```bash
+tools/quaderno-pdf.sh
+```
+
+Lo script usa `pandoc` e un Chromium; i PDF nel repository sono quelli dell'ultimo aggiornamento del quaderno.
+
 ## Le convenzioni
 
 - **Un numero è sempre detto con la sua provenienza**: _(verificato)_ se è stato misurato o letto, _(stima)_ se è un conto fatto prima della misura, _(ipotesi)_ se è una spiegazione che i numeri non contraddicono ma non dimostrano.
@@ -34,4 +50,4 @@ Il quaderno si aggiorna **alla chiusura di ogni passo**, insieme alla guida del 
 
 Un passo senza errori e senza concetti nuovi ha comunque la sua voce nel capitolo 4.
 
-**Aggiornato a**: passo P1.7e, prima misura fatta e seconda in corso (25 novembre 2026); P1.7d è l'ultimo passo chiuso.
+**Aggiornato a**: passo P1.7e superato (25 novembre 2026); P1.7f consegnato, da misurare.
