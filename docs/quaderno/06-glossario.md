@@ -89,6 +89,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Routing** | Quale segnale va dove, dentro l'interfaccia | Cap. 2, La scheda audio |
 | **Scambio** (_swap_) | Sostituire il grafo mentre il ciclo gira | Cap. 2, Il grafo |
 | **SCHED_FIFO** | La classe di schedulazione real-time: gira chi ha la priorità più alta, finché non cede | Cap. 2, Il tempo reale |
+| **Scrittura corta** (_short write_) | Un periodo di uscita che la scheda non prende per intero perché il suo buffer è pieno: ciò che non entra non viene suonato | Cap. 3, Le righe della scheda |
 | **Secure Boot** | Il firmware avvia solo file firmati | Cap. 2, La piattaforma |
 | **Segmento** | Una catena di nodi che va per intero su un thread | Cap. 2, Il grafo |
 | **Segno** (_stamp_) | Il numero dell'ultimo ciclo per cui un nodo è stato eseguito: lo legge chi lo aspetta | Cap. 2, Il grafo |
@@ -161,3 +162,4 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **A-69** | La latenza più lunga sulla quarta generazione | Aperto, P1.8 |
 | **A-70** | Una volta, in macchina virtuale, i thread non sono partiti in tempo | Aperto: causa ignota |
 | **A-71** | Lo stadio costa il 14 % più che in C, e dipende dalla lunghezza del blocco | Aperto |
+| **A-72** | Una scrittura corta all'avvio dei flussi, tre volte in un giorno | Aperto: il motore ora annota quando capita |

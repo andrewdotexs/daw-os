@@ -82,6 +82,11 @@ pub struct CardOutcome {
     pub reopen_attempts: u64,
     pub paused_restarts: u64,
     pub short_writes: u64,
+    /// Those of the short writes that fell in the warm-up.
+    pub early_short_writes: u64,
+    /// The first short write: seconds from the start of the run, periods
+    /// served since the streams were last started, frames the card took.
+    pub first_short: Option<(f64, u64, u64)>,
     pub bad_stamps: u64,
     /// The other live threads: cycles taken after a tick of the card,
     /// those of them with periods gone by, wake-ups with no cycle, and
@@ -892,6 +897,14 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             reopen_attempts: count(&stats.reopen_attempts),
             paused_restarts: count(&stats.paused_restarts),
             short_writes: count(&stats.short_writes),
+            early_short_writes: count(&stats.early_short_writes),
+            first_short: (count(&stats.first_short_ns) != 0).then(|| {
+                (
+                    count(&stats.first_short_ns) as f64 / 1e9,
+                    count(&stats.first_short_period),
+                    count(&stats.first_short_frames),
+                )
+            }),
             bad_stamps: count(&stats.bad_stamps),
             follower_cycles: count(&stats.follower_cycles),
             follower_behind: count(&stats.follower_behind),
@@ -1427,16 +1440,26 @@ fn audio_verdict(outcome: &Outcome) -> Verdict {
             // The xruns of the warm-up are those of an interface that is
             // settling: reported, not judged.
             let judged = card.xruns - card.early_xruns.min(card.xruns);
-            if judged == 0 && card.stalls == 0 && card.lost == 0 && card.short_writes == 0 {
-                good.push(if card.early_xruns == 0 {
+            // So are the periods of output the card did not take whole
+            // while its streams were starting (A-72).
+            let short = card.short_writes - card.early_short_writes.min(card.short_writes);
+            if judged == 0 && card.stalls == 0 && card.lost == 0 && short == 0 {
+                let mut words = if card.early_xruns == 0 {
                     "no xrun".to_string()
                 } else {
                     format!("no xrun after the warm-up ({} in it)", card.early_xruns)
-                });
+                };
+                if card.early_short_writes > 0 {
+                    words.push_str(&format!(
+                        "; {} short writes in the warm-up",
+                        card.early_short_writes
+                    ));
+                }
+                good.push(words);
             } else {
                 bad.push(format!(
-                    "{judged} xruns after the warm-up, {} waits without a period, card lost {} times, {} short writes",
-                    card.stalls, card.lost, card.short_writes
+                    "{judged} xruns after the warm-up, {} waits without a period, card lost {} times, {short} short writes after the warm-up",
+                    card.stalls, card.lost
                 ));
             }
         }
@@ -2067,7 +2090,16 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
             view.playback_delay
         );
     }
-    println!("card_short_writes: {}", card.short_writes);
+    match card.first_short {
+        Some((second, period, frames)) => println!(
+            "card_short_writes: {} ({} of them in the warm-up); the first at {second:.3} s, at period {period} since the streams were started: the card took {frames} frames of {}",
+            card.short_writes, card.early_short_writes, card.info.period
+        ),
+        None => println!(
+            "card_short_writes: {} ({} of them in the warm-up)",
+            card.short_writes, card.early_short_writes
+        ),
+    }
     println!("card_stamps_not_believed: {}", card.bad_stamps);
     println!(
         "card_followers: {} cycles after a tick of the card, {} of them with periods gone by, {} wake-ups with no cycle; timers of the card opened {}, refused {}",

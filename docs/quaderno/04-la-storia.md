@@ -268,11 +268,21 @@ Lungo la strada: l'immagine compilava il motore con un livello di ottimizzazione
 
 ### P1.7e: un grafo al posto di un altro
 
-_25 novembre: consegnato, in misura sul 285K._ Lo scambio del grafo mentre il ciclo gira. Due «posti» per un grafo; quello nuovo si costruisce nel posto libero, fuori dal tempo reale; si nomina un ciclo tre periodi più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Decisioni dell'utente: lo stato passa **per nome del nodo**, e lo scambio per ora lo chiede **la riga di comando**, per le prove.
+_25 novembre, 285K: prima misura fatta, seconda in corso._ Lo scambio del grafo mentre il ciclo gira. Due «posti» per un grafo; quello nuovo si costruisce nel posto libero, fuori dal tempo reale; si nomina un ciclo tre periodi più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Decisioni dell'utente: lo stato passa **per nome del nodo**, e lo scambio per ora lo chiede **la riga di comando**, per le prove.
 
 La prova è il caso `swap`: il conteggio attraverso due grafi che si scambiano ogni secondo, con una linea di ritardo che deve conservare il suo contenuto da un grafo all'altro. Se uno scambio perde o inventa anche un solo campione, il conteggio lo dice.
 
-Che cosa ci si aspetta _(stima, scritta prima della misura)_: giro di 1012 campioni (i 916 di `relay` più i 96 della linea di ritardo), nessuno slittamento, nessun campione fuori posto, circa 179 scambi in tre minuti. L'esito va scritto qui quando arriva.
+| Che cosa | Misurato | Atteso, scritto prima |
+| --- | --- | --- |
+| Scambi in tre minuti | 179 | Circa 180 |
+| Giro del conteggio | 1012 campioni | 1012: i 916 di `relay` più i 96 della linea di ritardo |
+| Campioni al loro posto | 8 642 668, **nessuno fuori posto** | Nessuno fuori posto |
+| Costruire un grafo nuovo | 20 µs in media | 100–200 µs |
+| Dall'offerta a tutti i thread sul grafo nuovo | 5,4 ms | Circa 6 ms |
+
+Lo scambio fa ciò che deve. Ma la prova audio ha dato **dieci casi su undici**: in un caso che non c'entra con il grafo la scheda ha rifiutato una volta un periodo in uscita, una **scrittura corta**. Cercando nei file della giornata ne sono saltate fuori altre due, in righe che la prova non giudicava e che nessuno aveva guardato. Tutte e tre sembrano cadere all'avvio dei flussi _(ipotesi)_: è il punto aperto A-72.
+
+Decisioni dell'utente: le scritture corte del riscaldamento si contano a parte, come gli xrun; il motore annota quando capita la prima; la prova audio si rifà, e il passo si chiude con quella.
 
 ### Che cosa viene dopo
 

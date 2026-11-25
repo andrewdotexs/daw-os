@@ -34,4 +34,4 @@ Il quaderno si aggiorna **alla chiusura di ogni passo**, insieme alla guida del 
 
 Un passo senza errori e senza concetti nuovi ha comunque la sua voce nel capitolo 4.
 
-**Aggiornato a**: passo P1.7e consegnato e in misura sul 285K (25 novembre 2026); P1.7d è l'ultimo passo chiuso.
+**Aggiornato a**: passo P1.7e, prima misura fatta e seconda in corso (25 novembre 2026); P1.7d è l'ultimo passo chiuso.

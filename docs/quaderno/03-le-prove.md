@@ -225,6 +225,7 @@ Un giro sano sul 285K ha `missed`, `incomplete` e `overruns` a zero, e ritardi d
 | `card_xruns` | Xrun, e quanti nel riscaldamento |
 | `card_recoveries` | Ripartenze dopo un xrun, e la più lunga |
 | `card_lost` | Volte in cui la scheda è sparita (scollegata), e se è tornata |
+| `card_short_writes` | **Scritture corte**: periodi di uscita che la scheda non ha preso per intero perché il suo buffer era pieno. Quante, quante nel riscaldamento, e della prima: a quanti secondi dall'inizio, a quale periodo dall'avvio dei flussi, quanti frame sono entrati. I frame non entrati non vengono suonati |
 | `card_followers` | Per i thread che seguono la scheda: cicli presi dopo un segnale della scheda, quanti con periodi saltati, quanti risvegli a vuoto |
 | `count_on_input_N` | Il giro del conteggio in campioni e in millisecondi |
 | `count_slips_on_input_N` | Slittamenti del conteggio |
@@ -292,7 +293,7 @@ Alla fine il motore si giudica da solo, con righe `nome: PASS (…)` o `FAIL (�
 | Verdetto | Che cosa giudica |
 | --- | --- |
 | `k04` | Con un guasto voluto: il cane da guardia se n'è accorto, ha liberato il processore e messo al lavoro la riserva entro i limiti |
-| `audio` | La scheda ha fatto ciò che era chiesto: nessun xrun dopo il riscaldamento, il tono dove deve essere, il conteggio trovato, nessuno slittamento sopra il limite |
+| `audio` | La scheda ha fatto ciò che era chiesto: nessun xrun e nessuna scrittura corta dopo il riscaldamento, il tono dove deve essere, il conteggio trovato, nessuno slittamento sopra il limite |
 | `compute` | Nessuna chiamata di sistema nella fase di calcolo |
 | `graph` | Ogni ciclo ha calcolato tutto il grafo; nessun lucchetto rifiutato; gli scambi sono andati a buon fine |
 

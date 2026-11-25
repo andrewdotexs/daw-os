@@ -33,6 +33,8 @@ Ciò che era stato scritto come attesa, e ciò che è stato misurato sul 285K.
 | P1.7d | Il costo per frame è lo stesso a tutte le frequenze, entro decimi di nanosecondo | Da −9 % a +6 %: 1,66 ns a 96 frame, 1,95 a 384 | Con blocchi corti il processore sovrappone passate consecutive _(ipotesi)_ |
 | P1.7d | Un guadagno costa 0,3 ns per frame, una sinusoide 4, un misuratore 0,5 | 0,06, 7,7 e 1,9 | Stime a occhio, fatte quando i nodi non calcolavano ancora |
 | P1.7d | A vuoto, con il motore compilato a ottimizzazione 3, il ciclo costa uguale «o poco meno» | Poco di più: 3,27, 4,89 e 6,09 µs contro 3,17, 4,43 e 5,89 | Insieme all'ottimizzazione sono arrivati i controlli di overflow, che costano qualcosa _(ipotesi)_ |
+| P1.7e | Leggere, compilare e costruire un grafo di 17 nodi costa 100–200 µs | 20 µs in media, 55 al massimo | Ancora una stima ricavata dall'ambiente di sviluppo |
+| P1.7e | Con i costi misurati scritti nei sorgenti, il ciclo vero sta entro il 3 % del programma del compilatore | +1,0 % su un thread, +6,3 % su quattro | I costi sono misurati su un thread solo: un bus che legge dodici ingressi scritti da altri thread costa 1,72 µs e non 0,50 |
 
 **Che cosa dice questa tabella.** Le stime sbagliano in tutte e due le direzioni, e non di poco: un fattore due o tre è normale, un fattore dieci capita. Sbagliano di più dove non c'era un dato vicino (i costi dei nodi «a occhio») e di meno dove si partiva da una misura (i tempi del grafo in P1.7a, giusti alla cifra). Nessuna di queste stime è stata usata per decidere: per questo sbagliarle è costato poco.
 
@@ -66,6 +68,8 @@ Qui non c'era una previsione ma un difetto da spiegare. In quasi tutti i casi la
 
 **I thread del motore che non partono in tempo (A-70, P1.7d).** Una volta, nella macchina virtuale dell'utente. Non si è ripetuto e la causa non si conosce. Non è stato chiuso come «un caso»: è un punto aperto, con ciò che si è visto e che cosa guardare se ricapita.
 
+**La scrittura corta (A-72, P1.7e).** Una volta, in un caso della prova audio, la scheda non prende un periodo di uscita. Primo pensiero: è dell'immagine nuova, o del modo in cui il motore è compilato da P1.7d. Caduto cercando nei file: lo stesso evento c'era in un giro del mattino, con l'immagine e la compilazione di prima. Ciò che resta è un'ipotesi con due indizi (succede al primo periodo dopo l'avvio dei flussi) e uno strumento nuovo per verificarla. La causa non si conosce.
+
 ## Errori degli strumenti e del metodo
 
 Lo strumento che misura è codice anche lui, e sbaglia.
@@ -88,6 +92,7 @@ Lo strumento che misura è codice anche lui, e sbaglia.
 | P1.7c | Una prova chiedeva «al più un ciclo tagliato su dieci» e falliva sotto carico | Riscritta per giudicare la logica e non i tempi: lo stesso errore, di nuovo |
 | P1.7c | Il registro di un giro fallito in macchina virtuale perso lanciando la prova successiva | La prova stampa i dettagli di ogni caso sulla console |
 | P1.7d | Nella macchina virtuale emulata i carichi vettoriali sono centinaia di volte più lenti, e il cane da guardia li prende per thread bloccati | I grafi di prova dello scambio non usano carichi veri |
+| P1.7e | Due scritture corte passate inosservate, al mattino e al pomeriggio: erano in righe `settle`, che la prova audio non giudica e di cui non mostrava quel conto | Ogni riga della prova mostra le scritture corte, quando ce ne sono |
 
 **Che cosa dice questa tabella.** Due errori sono tornati più volte: le prove che dipendono dai tempi della macchina che le esegue, e l'uscita di una prova fallita non conservata. Il primo ha ora una regola (nelle prove automatiche si giudica la logica; i tempi si giudicano solo sul 285K), il secondo un rimedio (i dettagli sulla console).
 
@@ -148,3 +153,4 @@ Ciò che hanno in comune: sono conti fatti su **meccanismi nostri**, di cui si c
 8. **Ciò che fa riscrivere al kernel il proprio codice si fa prima che l'audio parta.**
 9. **Prima di una prova sulla scheda si guarda dov'è il cavo.**
 10. **Il firmware si legge dalla macchina, non dalla memoria.**
+11. **Ciò che una prova non giudica lo deve almeno mostrare.** Un conto che nessuna riga stampa è un conto che nessuno guarda.

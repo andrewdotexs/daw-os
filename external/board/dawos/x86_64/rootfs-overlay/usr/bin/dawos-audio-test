@@ -119,6 +119,16 @@ field() {
 	sed -n "s/^$2: //p" "$1" | head -n 1
 }
 
+# The periods of output the card did not take whole in the run of file
+# $1, when there were any: how many, and when the first.
+short_writes() {
+	short=$(field "$1" card_short_writes)
+	case "${short}" in
+	"" | "0" | "0 "*) ;;
+	*) printf '; short writes %s' "${short}" ;;
+	esac
+}
+
 # Column $2 of the row of the first live thread in the thread table.
 thread_column() {
 	awk -v column="$2" '
@@ -216,6 +226,7 @@ run_case() {
 			"$(heard "${dir}/${name}.txt" 3)" "$(heard "${dir}/${name}.txt" 5)"
 		printf '; slips %s and %s' "$(field "${dir}/${name}.txt" slips_on_input_3)" \
 			"$(field "${dir}/${name}.txt" slips_on_input_5)"
+		short_writes "${dir}/${name}.txt"
 		# With more live threads than one: how far apart they woke, and
 		# how often one of those that follow the card woke for nothing.
 		spread=$(awk '$1 == "first" && $2 == "awake" { print $10 " and " $11 }' "${dir}/${name}.txt")
@@ -252,9 +263,10 @@ settle() {
 		inside && $1 !~ /^[0-9]+$/ { inside = 0 }
 		inside { last = $1; if ($5 < 0.99) bad = $1 }
 		END { if (last == "") print "never"; else if (bad == last) print "never"; else print bad + 1 }' "${dir}/settle-${settles}-$1.txt")
-	printf '%-18s %-5s xruns %s, restarts after a pause %s; the tone is clean from second %s\n' \
+	printf '%-18s %-5s xruns %s, restarts after a pause %s; the tone is clean from second %s%s\n' \
 		"settle-$1" "-" "$(field "${dir}/settle-${settles}-$1.txt" card_xruns)" \
-		"$(field "${dir}/settle-${settles}-$1.txt" card_restarts_after_a_pause | sed 's/ .*//')" "${clean}" |
+		"$(field "${dir}/settle-${settles}-$1.txt" card_restarts_after_a_pause | sed 's/ .*//')" "${clean}" \
+		"$(short_writes "${dir}/settle-${settles}-$1.txt")" |
 		tee -a "${dir}/summary.txt"
 }
 
