@@ -50,7 +50,7 @@ $(awk '
 	/^slot +kind/ || /^the graph in the cycles/ { print "  " $0; inside = 1; next }
 	inside && NF == 0 { inside = 0 }
 	inside { print "  " $0; next }
-	/^(live_threads|scheduling|denormals|card_xruns|card_recoveries|card_lost|card_short_writes|card_followers|count_[a-z_0-9]*|graph_refused|graph_change[a-z_]*|graph_peak [a-z0-9_.]*|k04|audio|compute|graph):/ { print "  " $0 }
+	/^(live_threads|scheduling|denormals|card_xruns|card_recoveries|card_lost|card_short_writes|card_followers|count_[a-z_0-9]*|graph_refused|graph_change[a-z_]*|graph_node_given_up|graph_peak [a-z0-9_.]*|k04|audio|compute|graph):/ { print "  " $0 }
 	/^slot [0-9]+ cycle / { print "  " $0 }' "${file}")"
 	done
 fi

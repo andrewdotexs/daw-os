@@ -123,9 +123,22 @@ pub fn watchdog_loop(watch: &Watch<'_>) {
             }
             let demoted = clock::now();
 
+            let mut name = None;
             // 2. The node it was in is given up; the slot changes hands.
+            // With a graph the node is one of the graph of that cycle:
+            // what waited for it goes on with silence from now, and the
+            // thread that keeps the time of the run sees it and puts a
+            // graph without it in use (step 4).
             if let Some(node) = node {
-                shared.plan.nodes(index)[node].abandon();
+                match shared.graphs.as_ref() {
+                    Some(graphs) => {
+                        if let Some(graph) = graphs.of_cycle(cycle) {
+                            graph.abandon(node);
+                            name = Some(graph.name_of(node).to_string());
+                        }
+                    }
+                    None => shared.plan.nodes(index)[node].abandon(),
+                }
             }
             let generation = slot.retire_holder();
 
@@ -146,8 +159,7 @@ pub fn watchdog_loop(watch: &Watch<'_>) {
                 spare.gate.open();
             }
 
-            // 5. Tell. (Step 4, a graph without the node, comes with the
-            // graph in step P1.7: until then the node is skipped.)
+            // 5. Tell.
             if let Some(event) = watch.events.get(next_event) {
                 next_event += 1;
                 event.slot.store(index, Ordering::Release);
@@ -165,7 +177,11 @@ pub fn watchdog_loop(watch: &Watch<'_>) {
             }
             eprintln!(
                 "dawos-engine: watchdog: thread {tid} on live slot {index} stuck in cycle {cycle} ({}): moved off its CPU{}",
-                node.map_or_else(|| "outside any node".to_string(), |node| format!("node {node}")),
+                match (&name, node) {
+                    (Some(name), _) => format!("node '{name}' of the graph, given up"),
+                    (None, Some(node)) => format!("node {node}"),
+                    (None, None) => "outside any node".to_string(),
+                },
                 if sent > 0 { ", spare thread sent in" } else { ", no spare thread left" },
             );
         }

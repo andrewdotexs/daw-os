@@ -110,6 +110,7 @@ Lo strumento che misura è codice anche lui, e sbaglia.
 | P1.4, P1.12b | **Il cavo nell'ingresso sbagliato**, due volte: prove a zero casi su cinque e zero su otto | La prova dovrebbe dire da sé dove arriva il tono: non ancora fatto |
 | P1.6e | La campagna di carico fermata a mano per errore durante le due ore | Ciò che doveva verificare è stato verificato in altro modo |
 | P1.12a | Un controllo dell'interfaccia contiene cifre del numero di serie, ed era finito in un commit | Storia del ramo riscritta; filtro in `check-private.sh` |
+| P1.1, visto in P1.7f | Il progetto prometteva che ciò che dipende da un nodo abbandonato «riceve silenzio con una dissolvenza» | Non si può: quando il cane da guardia interviene il nodo manca già da tre periodi. La frase è stata tolta, e detto perché |
 | P1.7b | La regola del bilancio decisa insieme era incompleta: in sovraccarico il ritardo sarebbe cresciuto a ogni ciclo | Trovato scrivendo la prova, prima della consegna: aggiunto un terzo limite |
 | P1.7d | L'immagine compilava il motore con un livello di ottimizzazione e dei controlli diversi da quelli dichiarati nei sorgenti | Deciso con l'utente: vale ciò che è scritto nei sorgenti |
 | P1.7e | Un difetto nella funzione che libera il grafo vecchio: dopo un tentativo fallito non ci avrebbe più riprovato | Trovato rileggendo il codice, prima della consegna |

@@ -286,11 +286,20 @@ Decisioni dell'utente: le scritture corte del riscaldamento si contano a parte, 
 
 La seconda misura: undici casi su undici, lo scambio identico alla prima (1012 campioni, 8 642 764 al loro posto, nessuno fuori posto). E una scrittura corta, in un altro caso, questa volta con lo strumento acceso: **al periodo 1 dopo l'avvio dei flussi, a un millisecondo dall'inizio, zero frame presi su 96**. È ciò che l'ipotesi diceva. In tutta la giornata, quattro su 52 avvii a 48 kHz. Il perché è del passo sul driver.
 
+### P1.7f: il nodo che non ritorna
+
+_25 novembre: consegnato, da misurare sul 285K._ La protezione K-04 incontra il grafo. Un nodo che smette di ritornare viene **abbandonato** dal cane da guardia: silenzio da subito per chi lo aspettava. Poi il motore toglie il nodo dalla descrizione, ricompila e scambia: il nodo sparisce.
+
+Il problema vero del passo è ciò che il thread bloccato **si tiene**: lo stato del nodo, i buffer su cui lavorava, e il grafo intero. Nessuno dei tre gli si può togliere. Le risposte: il nodo non lo chiede più nessuno; i buffer diventano silenzio per chi li legge; e il grafo si tiene con un riferimento contato, così il thread bloccato si porta via il suo senza fermare gli scambi degli altri.
+
+La prova è un nodo fatto apposta, la **trappola** (`trap`), che dopo dodici secondi non ritorna più. Sta su un thread; il conteggio passa da altri due. Ciò che ci si aspetta _(stima, scritta prima della misura)_: blocco visto in 6–8,5 ms, grafo senza il nodo in uso 16–25 ms dopo il blocco (limite 500), **e nessun campione del conteggio perso**.
+
+Scrivendo il passo è caduta una frase del progetto di P1.1: la «dissolvenza» verso il silenzio. Non si può sfumare un suono che manca già da tre periodi.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.7f | Il nodo abbandonato dalla protezione K-04 diventa silenzio e poi sparisce dal grafo |
 | P1.7g | L'accettazione del grafo (criterio 7) |
 | P1.8 | Il driver della scheda: la latenza sulla quarta generazione (A-69), lo scatto del periodo (A-68) |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49) |

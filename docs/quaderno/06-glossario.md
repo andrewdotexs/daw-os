@@ -66,6 +66,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Mediana** | Il valore sotto cui sta metà delle misure | Cap. 3, Il registro dei cicli |
 | **Microframe** | L'unità di tempo del bus USB veloce: 125 µs | Cap. 2, La scheda audio |
 | **Nodo** | Un elemento del grafo: ingresso, uscita, guadagno, somma, bus, ritardo, generatore, misuratore, carico | Cap. 2, Il grafo |
+| **Nodo abbandonato** | Un nodo in cui un thread si è bloccato: silenzio da subito, poi tolto dal grafo | Cap. 2, Il grafo |
 | **Passa-tutto** (_all-pass_) | Un filtro che cambia la fase e non il livello | Cap. 2, Il calcolo |
 | **Patch** | Il «pezzo del suono»: gli strumenti di misura che lavorano sui blocchi della scheda | Cap. 2, Il motore |
 | **Percentile** | «Il 99,9-esimo percentile è X»: 999 misure su mille stanno sotto X | Cap. 3 |
@@ -82,6 +83,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Recupero** | Far ripartire i flussi della scheda dopo un xrun | Cap. 2, L'audio come numeri |
 | **Registro dei cicli** | Una riga per ogni ciclo di ogni thread, da cui si ricavano tutte le statistiche | Cap. 2, Il motore |
 | **Retroazione implicita** | L'uscita della scheda regolata sul ritmo dell'ingresso | Cap. 2, La scheda audio |
+| **Riferimento contato** (`Arc`) | Un oggetto che vive finché qualcuno lo tiene: così un thread tiene il grafo del suo ciclo | Cap. 2, Il grafo |
 | **Riscaldamento** (_warm-up_) | I primi secondi di un giro, contati a parte e non giudicati | Cap. 2, La scheda audio |
 | **Riserva** (_spare_) | Il thread tenuto pronto per prendere il posto di uno bloccato | Cap. 2, Il motore |
 | **Ritardo di risveglio** | Il tempo tra quando un thread doveva ripartire e quando è ripartito | Cap. 2, Il tempo reale |
@@ -104,6 +106,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Tick** | L'interruzione periodica del timer del kernel; sui processori live è fermata | Cap. 2, Il tempo reale |
 | **Tono** | Una sinusoide di prova con un numero intero di cicli nel quanto | Cap. 3, strumenti nel motore |
 | **Traccia** (_trace_) | La registrazione che il kernel fa dei propri eventi, quando gli si chiede | Cap. 3, Il registro dei cicli |
+| **Trappola** (`trap`) | Un nodo di prova che dopo un certo tempo non ritorna più, tenendo ciò su cui lavorava | Cap. 3, La prova audio |
 | **UKI** | Kernel e riga di comando in un solo file firmato | Cap. 2, La piattaforma |
 | **`unsafe`** | Codice Rust che il compilatore non può verificare: ammesso in un solo modulo | Cap. 2, Il calcolo |
 | **URB** | Il pacchetto di lavoro del driver USB: per l'ingresso audio, un millisecondo | Cap. 2, La scheda audio |

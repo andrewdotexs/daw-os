@@ -17,6 +17,19 @@ pub fn load(
     format: Format,
     load_costs_ps: Option<[u32; 3]>,
 ) -> Result<Compiled, String> {
+    load_without(file, threads, format, load_costs_ps, &[])
+}
+
+/// As [`load`], leaving out the nodes named in `without` and what was
+/// connected to them: the graph that goes on when the watchdog has
+/// given nodes up (step P1.7f).
+pub fn load_without(
+    file: &str,
+    threads: usize,
+    format: Format,
+    load_costs_ps: Option<[u32; 3]>,
+    without: &[String],
+) -> Result<Compiled, String> {
     let text = std::fs::read_to_string(file).map_err(|error| format!("{file}: {error}"))?;
     let mut costs = Costs::default();
     if let Some([frame, stage, trim]) = load_costs_ps {
@@ -31,6 +44,11 @@ pub fn load(
         costs,
     };
     let description = parse(&text).map_err(|error| format!("{file}: {error}"))?;
+    let description = if without.is_empty() {
+        description
+    } else {
+        description.without(without)
+    };
     compile(&description, &settings).map_err(|error| format!("{file}: {error}"))
 }
 

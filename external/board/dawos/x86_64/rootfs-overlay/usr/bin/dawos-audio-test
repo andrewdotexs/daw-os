@@ -147,6 +147,9 @@ heard() {
 		inside && $1 == input { printf "input %s tone %s to %s dB share %s", $1, $6, $7, $8 }' "$1"
 }
 
+# The node of trap.graph that goes wrong.
+TRAP_NODE=bad
+
 # What the engine does with the sound in a case: the tone on output 3,
 # input 3 copied to output 5, both inputs measured. A case with a graph
 # sets its own before run_case, which puts this back.
@@ -197,6 +200,18 @@ run_case() {
 		case "${graph}" in
 		PASS*) ;;
 		*) result=FAIL ;;
+		esac
+		# A graph with a node that goes wrong (step P1.7f): the watchdog
+		# must have found the thread in that node and given it up.
+		# Whether a graph without it came into use in time is in the
+		# verdict "k04", which counts on the card: on the software card
+		# of a virtual machine the watchdog may have spent its spare
+		# threads on threads that were only slow, and with no thread on
+		# a slot no change of graph gets through.
+		case "${name}" in
+		trap*)
+			grep -q "^graph_node_given_up: ${TRAP_NODE};" "${dir}/${name}.txt" || result=FAIL
+			;;
 		esac
 		;;
 	esac
@@ -386,6 +401,10 @@ if [ "${mode}" = loopback ]; then
 	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
 	run_case swap --seconds "${seconds}" --allow-xruns --threads 4 --graph "${GRAPHS}/swap-a.graph" \
 		--swap-graph "${GRAPHS}/swap-b.graph" --swap-every 1
+	# A node of the graph that never returns after twelve seconds (step
+	# P1.7f): given up by the watchdog, and left out of the graph.
+	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
+	run_case trap --seconds 24 --allow-xruns --threads 4 --graph "${GRAPHS}/trap.graph"
 	if [ "${loaded}" = yes ]; then
 		modprobe -r snd-aloop 2> /dev/null || true
 	fi
@@ -454,6 +473,12 @@ else
 			run_case "stuck-follower-${first}" --rate "${first}" --seconds 12 --require-rt --kernel-probe \
 				--load 20 --fault stuck-node --fault-thread 1 --fault-after 4
 		fi
+		# A node of the graph that never returns, on a thread the count
+		# does not go through (step P1.7f): given up, left out of the
+		# graph, and not a sample of the count lost.
+		sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
+		run_case "trap-${first}" --rate "${first}" --warm-up 8 --seconds 38 --require-rt --kernel-probe \
+			--threads 4 --graph "${GRAPHS}/trap.graph"
 	fi
 
 	if [ -r "${CARDS_DIR}/${model}.conf" ]; then

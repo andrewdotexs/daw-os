@@ -45,6 +45,9 @@ const START_DELAY_MS: u64 = 300;
 /// the thread never left.
 const CORE_FREE_LIMIT_MS: f64 = 15.0;
 const SPARE_LIMIT_MS: f64 = 50.0;
+/// From the moment a thread is stuck in a node of the graph to every
+/// thread running a graph without the node (ADR 0023).
+const WITHOUT_NODE_LIMIT_MS: f64 = 500.0;
 
 /// Limit for the kernel probe during a fault: the live CPU is free
 /// within 15 ms, and the kernel's work then needs the wait of one cycle.
@@ -184,6 +187,14 @@ pub struct GraphOutcome {
     pub critical_measured_ns: f64,
     /// The changes of graph, when the run had them.
     pub swaps: Option<SwapOutcome>,
+    /// The nodes of the graph that are made to go wrong (kind `trap`),
+    /// by name.
+    pub traps: Vec<String>,
+    /// The nodes the watchdog gave up, by name, each with the
+    /// milliseconds from the moment its thread was stuck to every
+    /// thread running a graph without it; `None`: no such graph came
+    /// into use.
+    pub given_up: Vec<(String, Option<f64>)>,
 }
 
 /// The changes of graph of a run (step P1.7e).
@@ -245,6 +256,8 @@ pub struct EventView {
     pub cycle: u64,
     pub node: Option<usize>,
     pub tid: i32,
+    /// When the compute phase the thread never left began.
+    pub since_ns: u64,
     pub detected_ms: f64,
     pub core_free_ms: f64,
     pub spare_ms: Option<f64>,
@@ -825,20 +838,26 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
     let mut last_heartbeat = 0;
     // The changes of graph, when the run has them: made from here,
     // between two looks at the clock.
-    let mut swapper = match (&options.graph, &options.swap_graph, &compiled) {
-        (Some(first), Some(second), Some(compiled)) => Some(Swapper::new(
-            [first.clone(), second.clone()],
+    let mut swapper = match (&options.graph, &compiled) {
+        (Some(first), Some(compiled)) => Some(Swapper::new(
+            std::iter::once(first)
+                .chain(options.swap_graph.as_ref())
+                .cloned()
+                .collect(),
             compiled.clone(),
             threads,
             format,
             options.load_costs_ps,
-            options.swap_every_s,
+            options.swap_graph.as_ref().map(|_| options.swap_every_s),
             start_ns,
         )),
         _ => None,
     };
+    // With a graph, a look every few periods: a node the watchdog gave
+    // up is to be out of the graph soon.
+    let look_every = Duration::from_millis(if swapper.is_some() { 10 } else { 100 });
     while clock::now() < end_ns {
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(look_every);
         let now = heartbeat.load(Ordering::Acquire);
         if now != last_heartbeat {
             last_heartbeat = now;
@@ -936,7 +955,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         }
     });
 
-    let events = events
+    let events: Vec<EventView> = events
         .iter()
         .filter(|event| event.happened.load(Ordering::Acquire) == 1)
         .map(|event| {
@@ -949,6 +968,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             };
             EventView {
                 slot,
+                since_ns: since,
                 cycle: event.cycle.load(Ordering::Acquire),
                 node: match event.node.load(Ordering::Acquire) {
                     0 => None,
@@ -968,8 +988,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             .as_ref()
             .zip(shared.graphs.as_ref())
             .and_then(|(first, switch)| {
-                let guard = switch.in_use()?;
-                let graph = guard.as_ref()?;
+                let graph = switch.in_use()?;
                 // The graph in use at the end, as it was compiled.
                 let compiled = swapper.as_ref().map_or(first, |swapper| &swapper.compiled);
                 let total_refused =
@@ -1030,15 +1049,46 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                         .map(TimedNode::mean_ns)
                         .sum(),
                     timed,
-                    swaps: swapper.as_ref().map(|swapper| SwapOutcome {
-                        file: options.swap_graph.clone().unwrap_or_default(),
-                        every_s: options.swap_every_s,
-                        done: swapper.done,
-                        stalled: swapper.stalled.clone(),
-                        prepare: swapper.prepare.clone(),
-                        passing: swapper.passing.clone(),
-                        kept: swapper.kept,
-                    }),
+                    traps: first
+                        .nodes
+                        .iter()
+                        .filter(|node| matches!(node.kind, Kind::Trap { .. }))
+                        .map(|node| node.name.clone())
+                        .collect(),
+                    given_up: swapper
+                        .iter()
+                        .flat_map(|swapper| &swapper.without)
+                        .map(|name| {
+                            // The thread stuck last before the graph
+                            // without the node came into use: the one that
+                            // was in it.
+                            let after = swapper
+                                .iter()
+                                .flat_map(|swapper| &swapper.removed)
+                                .find(|(removed, _)| removed == name)
+                                .and_then(|&(_, at)| {
+                                    events
+                                        .iter()
+                                        .filter(|event| event.since_ns <= at)
+                                        .map(|event| at - event.since_ns)
+                                        .min()
+                                })
+                                .map(|ns| ns as f64 / 1e6);
+                            (name.clone(), after)
+                        })
+                        .collect(),
+                    swaps: swapper
+                        .as_ref()
+                        .filter(|_| options.swap_graph.is_some())
+                        .map(|swapper| SwapOutcome {
+                            file: options.swap_graph.clone().unwrap_or_default(),
+                            every_s: options.swap_every_s,
+                            done: swapper.done,
+                            stalled: swapper.stalled.clone(),
+                            prepare: swapper.prepare.clone(),
+                            passing: swapper.passing.clone(),
+                            kept: swapper.kept,
+                        }),
                 })
             });
     Ok(Outcome {
@@ -1287,6 +1337,29 @@ fn graph_verdict(outcome: &Outcome) -> Verdict {
     }
     let missing = sum(|report| report.graph_missing);
     let tolerant = outcome.options.allow_xruns || outcome.options.fault != Fault::None;
+    // A node given up was held by its thread until the watchdog
+    // noticed: what the others found taken in that time is told, not
+    // judged. A node given up that is still in the graph is a failure
+    // where the time is kept.
+    let gave_up = !graph.given_up.is_empty();
+    for (name, after) in &graph.given_up {
+        match after {
+            Some(ms) => what.push_str(&format!(
+                "; node '{name}' given up, the graph without it in use {ms:.2} ms after"
+            )),
+            None => what.push_str(&format!(
+                "; node '{name}' given up, and no graph without it came into use"
+            )),
+        }
+    }
+    if !tolerant
+        && graph
+            .given_up
+            .iter()
+            .any(|(_, after)| after.is_none_or(|ms| ms > WITHOUT_NODE_LIMIT_MS))
+    {
+        return Verdict::Fail(what);
+    }
     if let Some(swaps) = &graph.swaps {
         what.push_str(&format!(
             "; {} changes of graph, the last keeping {} nodes of {}",
@@ -1312,7 +1385,7 @@ fn graph_verdict(outcome: &Outcome) -> Verdict {
     if missing > 0 {
         return Verdict::Fail(format!("{what}; {missing} cycles found no graph"));
     }
-    if !tolerant && (cut > 0 || silent > 0 || graph.refused > 0) {
+    if !tolerant && (cut > 0 || silent > 0 || (graph.refused > 0 && !gave_up)) {
         return Verdict::Fail(what);
     }
     Verdict::Pass(what)
@@ -1323,7 +1396,13 @@ fn verdict(outcome: &Outcome) -> Verdict {
     // Three periods stuck, one of grain of the watchdog, half a
     // millisecond of slack: 8.5 ms with periods of 2 ms.
     let detect_limit_ms = (STUCK_PERIODS + 1) as f64 * period_ms + 0.5;
-    match outcome.options.fault {
+    // A node of the graph made to go wrong is a stuck node.
+    let traps = outcome.graph.as_ref().map_or(&[][..], |graph| &graph.traps);
+    let fault = match outcome.options.fault {
+        Fault::None if !traps.is_empty() => Fault::StuckNode,
+        other => other,
+    };
+    match fault {
         // The faults of the card are judged with the sound.
         // The system call made on purpose has a verdict of its own.
         Fault::None | Fault::CardXrun | Fault::CardLost | Fault::Syscall => Verdict::NotAsked,
@@ -1341,7 +1420,7 @@ fn verdict(outcome: &Outcome) -> Verdict {
             let Some(event) = outcome.events.first() else {
                 return Verdict::Fail("the watchdog did not notice the stuck thread".to_string());
             };
-            let limits = format!(
+            let mut limits = format!(
                 "limits: noticed within {detect_limit_ms:.1} ms, live CPU free within {CORE_FREE_LIMIT_MS:.0} ms, spare thread at work within {SPARE_LIMIT_MS:.0} ms{}",
                 if outcome.kernel_probe.is_some() {
                     format!(", kernel work on every CPU within {KERNEL_WORK_LIMIT_MS:.0} ms")
@@ -1349,6 +1428,23 @@ fn verdict(outcome: &Outcome) -> Verdict {
                     String::new()
                 }
             );
+            // With a node of the graph made to go wrong: that node
+            // given up, and a graph without it in use in time.
+            let mut graph_good = true;
+            if let Some(graph) = outcome
+                .graph
+                .as_ref()
+                .filter(|graph| !graph.traps.is_empty())
+            {
+                limits.push_str(&format!(
+                    ", a graph without the node in use within {WITHOUT_NODE_LIMIT_MS:.0} ms"
+                ));
+                graph_good = graph.traps.iter().all(|trap| {
+                    graph.given_up.iter().any(|(name, after)| {
+                        name == trap && after.is_some_and(|ms| ms <= WITHOUT_NODE_LIMIT_MS)
+                    })
+                });
+            }
             let spare_after = outcome
                 .reports
                 .iter()
@@ -1359,6 +1455,7 @@ fn verdict(outcome: &Outcome) -> Verdict {
                 .as_ref()
                 .is_none_or(|probe| probe.readable && probe.max_ms <= KERNEL_WORK_LIMIT_MS);
             let good = kernel_good
+                && graph_good
                 && event.detected_ms <= detect_limit_ms
                 && event.core_free_ms <= CORE_FREE_LIMIT_MS
                 && event.spare_ms.is_some_and(|ms| ms <= SPARE_LIMIT_MS)
@@ -1881,6 +1978,16 @@ fn print_graph(graph: &GraphOutcome, outcome: &Outcome) {
         };
         println!("graph_changes_seen: {}", changes.join(", "));
     }
+    for (name, after) in &graph.given_up {
+        match after {
+            Some(ms) => println!(
+                "graph_node_given_up: {name}; a graph without it run by every thread {ms:.2} ms after its thread was stuck (limit {WITHOUT_NODE_LIMIT_MS:.0} ms)"
+            ),
+            None => println!(
+                "graph_node_given_up: {name}; no graph without it came into use"
+            ),
+        }
+    }
 
     // Kind by kind, in the order of the graph: what the compiler
     // expected of a node and what the nodes took.
@@ -2288,6 +2395,59 @@ mod tests {
         fn drop(&mut self) {
             let _ = std::fs::remove_file(&self.0);
         }
+    }
+
+    /// A node of the graph stops returning. The watchdog gives it up,
+    /// a spare thread takes the slot, and a graph without the node
+    /// comes into use; what did not depend on it never notices.
+    #[test]
+    fn a_node_of_the_graph_that_goes_wrong_is_given_up_and_left_out() {
+        let _alone = alone();
+        let file = GraphFile::new(
+            "trap",
+            "impulse click every=1 db=-20 thread=0\npeak heard thread=0\n\
+             connect click -> heard\n\
+             sine tone thread=0\ntrap bad after=1 thread=1\npeak after thread=1\n\
+             connect tone -> bad -> after\n\
+             gain beside thread=0\npeak near thread=0\nconnect tone -> beside -> near\n",
+        );
+        let options = RunOptions {
+            seconds: 3,
+            ..file.options(2)
+        };
+        let outcome = execute(&options).expect("the run did not start");
+        let graph = outcome.graph.as_ref().expect("a graph");
+        assert_eq!(graph.traps, ["bad".to_string()]);
+
+        // One event, on the thread of the trap, in a node.
+        assert_eq!(outcome.events.len(), 1);
+        let event = &outcome.events[0];
+        assert_eq!(event.slot, 1);
+        assert!(event.node.is_some());
+        assert_eq!(outcome.never_returned, vec![1]);
+
+        // The node is given up, and the graph in use at the end is one
+        // without it: six nodes of seven.
+        assert_eq!(graph.given_up.len(), 1, "{:?}", graph.given_up);
+        assert_eq!(graph.given_up[0].0, "bad");
+        assert!(graph.given_up[0].1.is_some(), "no graph without the node");
+        assert_eq!(graph.nodes, 6);
+
+        // A spare thread runs what is left of that thread.
+        assert!(outcome
+            .reports
+            .iter()
+            .any(|report| report.slot == 1 && report.spare && report.graph_nodes > 0));
+        // The other thread ran its nodes all along, and found a graph
+        // in every cycle.
+        let other = outcome
+            .reports
+            .iter()
+            .find(|report| report.slot == 0)
+            .expect("slot 0");
+        assert!(other.cycles > 2 * CYCLES_A_SECOND);
+        assert_eq!(other.graph_missing, 0);
+        assert!((peak_db(&outcome, "heard") + 20.0).abs() < 0.01);
     }
 
     fn peak_db(outcome: &Outcome, name: &str) -> f64 {

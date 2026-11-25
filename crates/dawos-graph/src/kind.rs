@@ -79,6 +79,13 @@ pub enum Kind {
         /// Nanoseconds per frame it lasts.
         ns_per_frame: u32,
     },
+    /// A node that goes wrong, for the tests of the protection (ADR
+    /// 0023): it copies its input to its output for so many seconds,
+    /// then it never returns, holding what it was working on.
+    Trap {
+        /// Seconds of the run before it stops returning.
+        after_s: u32,
+    },
     /// The filtering of a load with its size said outright, for the
     /// calibration: so many stages and so many trims (see
     /// `dawos_rt::dsp`).
@@ -121,13 +128,14 @@ impl Kind {
             Self::Load { .. } => "load",
             Self::Cascade { .. } => "cascade",
             Self::Spin { .. } => "spin",
+            Self::Trap { .. } => "trap",
         }
     }
 
     /// The words of every kind.
-    pub const WORDS: [&'static str; 13] = [
+    pub const WORDS: [&'static str; 14] = [
         "input", "output", "gain", "sum", "bus", "delay", "sine", "impulse", "noise", "peak",
-        "load", "cascade", "spin",
+        "load", "cascade", "spin", "trap",
     ];
 
     /// How many inputs it has.
@@ -141,7 +149,8 @@ impl Kind {
             | Self::Gain { .. }
             | Self::Delay { .. }
             | Self::Peak
-            | Self::Spin { .. } => Inputs::Fixed(1),
+            | Self::Spin { .. }
+            | Self::Trap { .. } => Inputs::Fixed(1),
             Self::Sum | Self::Bus => Inputs::Any,
             Self::Load { .. } | Self::Cascade { .. } => Inputs::Fixed(2),
         }
@@ -258,6 +267,11 @@ impl Kind {
                 ns_per_frame: given
                     .whole("ns", 1, 1_000_000)?
                     .ok_or_else(|| Error::new(line, "a spin needs ns=N, nanoseconds per frame"))?,
+            },
+            "trap" => Self::Trap {
+                after_s: given.whole("after", 0, 86_400)?.ok_or_else(|| {
+                    Error::new(line, "a trap needs after=N, seconds before it goes wrong")
+                })?,
             },
             "cascade" => Self::Cascade {
                 stages: given.whole("stages", 0, 100_000)?.unwrap_or(0),
@@ -481,6 +495,8 @@ impl Costs {
             }
             Kind::Cascade { stages, trims } => self.cascade_ns(*stages, *trims),
             Kind::Spin { ns_per_frame } => f64::from(*ns_per_frame),
+            // A copy, while it works.
+            Kind::Trap { .. } => self.gain_ns,
         };
         // A load costs what it declares, all of it: what every node
         // costs is inside its cost per frame, as the calibration
@@ -509,7 +525,7 @@ mod tests {
 
     #[test]
     fn every_kind_is_read_from_its_word() {
-        let cases: [(&str, &[(&str, &str)]); 13] = [
+        let cases: [(&str, &[(&str, &str)]); 14] = [
             ("input", &[("channel", "3")]),
             ("output", &[("channel", "5")]),
             ("gain", &[("db", "-6")]),
@@ -523,6 +539,7 @@ mod tests {
             ("load", &[("class", "medium")]),
             ("cascade", &[("stages", "64")]),
             ("spin", &[("ns", "100")]),
+            ("trap", &[("after", "5")]),
         ];
         for (word, parameters) in cases {
             let kind = Kind::from_words(word, parameters, 1).unwrap();

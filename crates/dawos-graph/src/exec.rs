@@ -106,6 +106,10 @@ enum State {
     Spin {
         ns: u64,
     },
+    /// Cycles left before it stops returning.
+    Trap {
+        left: u64,
+    },
 }
 
 /// A node as it is run: where it sits in this graph, and its cell.
@@ -186,6 +190,10 @@ pub struct Running {
     inputs: Vec<usize>,
     outputs: Vec<usize>,
     buffers: Vec<RwLock<Vec<f32>>>,
+    /// The buffers a node given up was working on: the thread stuck in
+    /// it holds them for good. They read as silence, and what is
+    /// written to them is dropped, without asking.
+    lost: Vec<AtomicBool>,
     /// A quantum of silence, for an input nothing is connected to.
     silence: Vec<f32>,
     /// What the graph was compiled for: a graph that takes its place
@@ -263,6 +271,9 @@ fn fresh(kind: &Kind, compiled: &Compiled) -> State {
         },
         Kind::Spin { ns_per_frame } => State::Spin {
             ns: u64::from(ns_per_frame) * u64::from(compiled.frames),
+        },
+        Kind::Trap { after_s } => State::Trap {
+            left: u64::from(after_s) * u64::from(compiled.rate) / u64::from(compiled.frames.max(1)),
         },
     }
 }
@@ -346,6 +357,9 @@ impl Running {
             outputs: of_kind(|kind| matches!(kind, Kind::Output { .. })),
             buffers: (0..compiled.buffers)
                 .map(|_| RwLock::new(vec![0.0; frames]))
+                .collect(),
+            lost: (0..compiled.buffers)
+                .map(|_| AtomicBool::new(false))
                 .collect(),
             silence: vec![0.0; frames],
             rate: compiled.rate,
@@ -431,9 +445,39 @@ impl Running {
     }
 
     /// Give node `node` up: nobody runs it again, and what waits for it
-    /// goes on with silence.
+    /// goes on with silence. The thread stuck in it holds the buffers
+    /// it reads and writes, and nobody can take them from it: from now
+    /// on they are silence for every node that reads them, until a
+    /// graph without the node is in use (step P1.7f). By the watchdog:
+    /// a few stores, no lock.
     pub fn abandon(&self, node: usize) {
-        self.nodes[node].abandoned.store(true, Ordering::Release);
+        let live = &self.nodes[node];
+        for &buffer in live.inputs.iter().flatten().chain(&live.outputs) {
+            self.lost[buffer].store(true, Ordering::Release);
+        }
+        live.abandoned.store(true, Ordering::Release);
+    }
+
+    /// The name of node `node` in the description.
+    #[must_use]
+    pub fn name_of(&self, node: usize) -> &str {
+        &self.nodes[node].name
+    }
+
+    /// The names of the nodes given up. Not for a live thread: it
+    /// allocates.
+    #[must_use]
+    pub fn given_up(&self) -> Vec<String> {
+        self.nodes
+            .iter()
+            .filter(|node| node.abandoned.load(Ordering::Acquire))
+            .map(|node| node.name.clone())
+            .collect()
+    }
+
+    #[inline]
+    fn is_lost(&self, buffer: usize) -> bool {
+        self.lost[buffer].load(Ordering::Relaxed)
     }
 
     /// Whether everything node `node` waits for was run for cycle
@@ -473,7 +517,11 @@ impl Running {
     /// Run `work` on the buffer of output `port` of `node`.
     #[inline]
     fn write(&self, node: &Live, port: usize, work: impl FnOnce(&mut [f32])) {
-        match self.buffers[node.outputs[port]].try_write() {
+        let buffer = node.outputs[port];
+        if self.is_lost(buffer) {
+            return;
+        }
+        match self.buffers[buffer].try_write() {
             Ok(mut buffer) => work(&mut buffer),
             Err(_) => self.refuse(),
         }
@@ -487,6 +535,9 @@ impl Running {
         let Some(buffer) = node.inputs.get(port).copied().flatten() else {
             return false;
         };
+        if self.is_lost(buffer) {
+            return false;
+        }
         match self.buffers[buffer].try_read() {
             Ok(buffer) => {
                 work(&buffer);
@@ -504,6 +555,9 @@ impl Running {
     #[inline]
     fn input(&self, node: &Live, port: usize) -> Option<RwLockReadGuard<'_, Vec<f32>>> {
         let buffer = node.inputs.get(port).copied().flatten()?;
+        if self.is_lost(buffer) {
+            return None;
+        }
         match self.buffers[buffer].try_read() {
             Ok(buffer) => Some(buffer),
             Err(_) => {
@@ -673,14 +727,18 @@ impl Running {
                 let right = self.input(node, 1);
                 let left = left.as_deref().map_or(&self.silence[..], Vec::as_slice);
                 let right = right.as_deref().map_or(&self.silence[..], Vec::as_slice);
-                match (
-                    self.buffers[node.outputs[0]].try_write(),
-                    self.buffers[node.outputs[1]].try_write(),
-                ) {
-                    (Ok(mut out_left), Ok(mut out_right)) => {
-                        cascade.run(left, right, &mut out_left, &mut out_right, work);
+                if self.is_lost(node.outputs[0]) || self.is_lost(node.outputs[1]) {
+                    // Nowhere to put it.
+                } else {
+                    match (
+                        self.buffers[node.outputs[0]].try_write(),
+                        self.buffers[node.outputs[1]].try_write(),
+                    ) {
+                        (Ok(mut out_left), Ok(mut out_right)) => {
+                            cascade.run(left, right, &mut out_left, &mut out_right, work);
+                        }
+                        _ => self.refuse(),
                     }
-                    _ => self.refuse(),
                 }
             }
             State::Spin { ns } => {
@@ -689,6 +747,21 @@ impl Running {
                 while clock::now() < end {
                     std::hint::spin_loop();
                 }
+            }
+            State::Trap { left } => {
+                if *left == 0 {
+                    // Gone wrong, as a node stuck in its work is: its
+                    // state, its output and its input held, and no
+                    // return. Only the watchdog ends this for the rest
+                    // of the engine.
+                    let _output = self.buffers[node.outputs[0]].try_write();
+                    let _input = self.input(node, 0);
+                    loop {
+                        std::hint::spin_loop();
+                    }
+                }
+                *left -= 1;
+                self.each(node, |sample| sample);
             }
         }
         drop(state);
@@ -922,6 +995,103 @@ mod tests {
         assert_eq!(graph.deliver(1, &mut output, 1), 1);
         assert!(output.iter().all(|sample| *sample == 5));
         assert_eq!(graph.late_outputs(), 1);
+    }
+
+    /// A thread stuck in a node holds the state of the node and the
+    /// buffers it was reading and writing, for good. Once the node is
+    /// given up nobody asks for them again: what read them hears
+    /// silence, and a graph without the node gives the rest back.
+    #[test]
+    fn a_node_given_up_leaves_silence_where_it_was_working() {
+        let text = "sine tone cycles=3 db=-6\n\
+                    trap bad after=1000\n\
+                    gain beside\n\
+                    output one channel=1\n\
+                    output two channel=2\n\
+                    connect tone -> bad -> one\n\
+                    connect tone -> beside -> two\n";
+        let settings = Settings {
+            threads: 1,
+            rate: 48_000,
+            frames: FRAMES,
+            costs: Costs::default(),
+        };
+        let description = parse(text).unwrap();
+        let compiled = compile(&description, &settings).unwrap();
+        let graph = Running::new(&compiled);
+        let place = |name: &str| {
+            graph
+                .nodes
+                .iter()
+                .position(|node| node.name == name)
+                .unwrap()
+        };
+        let (tone, bad) = (place("tone"), place("bad"));
+        let frames = FRAMES as usize;
+        let mut output = vec![0_i32; frames * 2];
+        let heard = |output: &[i32], channel: usize| {
+            (0..frames).any(|frame| output[frame * 2 + channel] != 0)
+        };
+
+        // Healthy: the tone on both outputs.
+        graph.run_all(0, &[], &mut output, (0, 2));
+        assert!(heard(&output, 0) && heard(&output, 1));
+        assert_eq!(graph.refused(), 0);
+
+        // The thread stuck in the trap, as far as the others can tell.
+        let _state = graph.nodes[bad].state.try_lock().unwrap();
+        let _input = graph.buffers[graph.nodes[tone].outputs[0]]
+            .try_read()
+            .unwrap();
+        let _output = graph.buffers[graph.nodes[bad].outputs[0]]
+            .try_write()
+            .unwrap();
+        // Before the watchdog notices, the others find things taken.
+        graph.run(tone, 1);
+        assert!(graph.refused() > 0);
+
+        graph.abandon(bad);
+        assert_eq!(graph.given_up(), ["bad".to_string()]);
+        let refused = graph.refused();
+        for cycle in 2..6 {
+            output.fill(1);
+            graph.run_all(cycle, &[], &mut output, (0, 2));
+            assert!(!heard(&output, 0), "after the node: silence");
+            assert!(
+                !heard(&output, 1),
+                "beside it, on the buffer it held: silence"
+            );
+        }
+        assert_eq!(graph.refused(), refused, "nobody asked for what is lost");
+
+        // A graph without the node: what was beside it is back, what
+        // was after it stays silent.
+        let without = compile(&description.without(&graph.given_up()), &settings).unwrap();
+        let next = Running::after(&without, &graph);
+        assert_eq!((next.kept(), next.len()), (4, 4));
+        assert!(next.given_up().is_empty());
+        output.fill(1);
+        next.run_all(6, &[], &mut output, (0, 2));
+        assert!(!heard(&output, 0));
+        assert!(heard(&output, 1));
+        assert_eq!(next.refused(), 0);
+    }
+
+    /// A trap is a copy until its time comes.
+    #[test]
+    fn a_trap_works_until_its_time() {
+        let graph = running(
+            "impulse click every=96 db=0\ntrap bad after=1\npeak p\nconnect click -> bad -> p\n",
+            1,
+        );
+        let mut output = [0_i32; 0];
+        // One second is 500 cycles of 96 frames: none of these is the
+        // last.
+        for cycle in 0..499 {
+            graph.run_all(cycle, &[], &mut output, (0, 0));
+        }
+        assert!(peak_db(&graph, "p").abs() < 0.01);
+        assert_eq!(graph.refused(), 0);
     }
 
     #[test]

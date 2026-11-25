@@ -291,12 +291,12 @@ fn cycles(
         // comes between two cycles, for every thread at the same one.
         let held = graphs.map(|switch| switch.for_cycle(wake.index));
         let graph = match &held {
-            Some(Some((place, guard))) => {
+            Some(Some((place, graph))) => {
                 if last_place.is_some_and(|last| last != *place) {
                     report.graph_changes += 1;
                 }
                 last_place = Some(*place);
-                guard.as_ref()
+                Some(&**graph)
             }
             Some(None) => {
                 report.graph_missing += 1;
@@ -439,8 +439,8 @@ fn cycles(
         dispatch::in_node(None);
 
         // The nodes of the graph this thread was given, in their order.
-        // The watchdog does not know them one by one yet (step P1.7e):
-        // a thread stuck in one is a thread stuck outside any node.
+        // The slot says which one the thread is in: a thread stuck in a
+        // node has that node given up by the watchdog (step P1.7f).
         if let Some(graph) = graph.filter(|_| !incomplete) {
             // One reading of the clock per node: the end of a node is
             // the beginning of the next.
@@ -481,7 +481,9 @@ fn cycles(
                     break;
                 }
                 let began = now;
+                slot.enter_node(node);
                 graph.run(node, wake.index);
+                slot.leave_node();
                 now = clock::now();
                 graph.record(node, now - began);
                 report.graph_nodes += 1;

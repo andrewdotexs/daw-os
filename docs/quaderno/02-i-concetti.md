@@ -153,6 +153,10 @@ connect in3 -> piano -> out5
 
 **Scambio del grafo.** Sostituire il grafo mentre il ciclo gira. Il grafo nuovo si costruisce fuori dal tempo reale in un secondo posto; poi si nomina un ciclo, qualche periodo più avanti, e da quel ciclo tutti i thread eseguono il nuovo. Un nodo con lo stesso nome, tipo e parametri **condivide la cella** con quello vecchio, e prosegue come se nulla fosse.
 
+**Nodo abbandonato.** Un nodo in cui un thread è rimasto bloccato, dopo che il cane da guardia è intervenuto. Da quell'istante è **silenzio**: chi lo aspettava non lo aspetta più, e i buffer su cui stava lavorando non li chiede più nessuno, perché il thread bloccato li tiene e non c'è modo di toglierglieli. Poi il motore compila la descrizione **senza quel nodo** e la mette in uso con uno scambio: il nodo sparisce dal grafo (passo P1.7f).
+
+**Riferimento contato.** Il modo in cui un thread tiene il grafo del suo ciclo: prende un riferimento all'inizio e lo lascia alla fine, e il grafo vive finché qualcuno ne ha uno. Un thread bloccato non lascia mai il suo: il grafo che teneva resta in memoria per sempre, ma non impedisce a tutti gli altri di passare a uno nuovo.
+
 ## Il calcolo
 
 **Il carico di riferimento.** Il requisito R-04 parla di una sessione con centinaia di plugin; ma quanto costa «un plugin»? L'ADR 0011 lo definisce: un **carico sintetico** in tre classi, 10, 40 e 150 nanosecondi per frame, nella proporzione 60, 30 e 10 %. È calcolo vero, non un'attesa: filtri.

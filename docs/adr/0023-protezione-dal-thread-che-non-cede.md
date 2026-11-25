@@ -52,7 +52,7 @@ systemd sorveglia il motore: il thread delle statistiche segnala di essere vivo 
 | Il sorvegliante rileva il blocco | Entro 11 ms | 8,00 ms |
 | Il core live torna ai thread del kernel | Entro 15 ms | 8,03 ms |
 | Il thread di riserva è al lavoro | Entro 50 ms | 10,67 ms |
-| Il grafo senza il nodo è in uso | Entro 500 ms | Da fare in P1.7 |
+| Il grafo senza il nodo è in uso | Entro 500 ms | Fatto in P1.7f; da misurare |
 | Riavvio della macchina | Mai | Nessuno |
 
 Durante il blocco un lavoro chiesto al kernel su ogni core è rimasto in coda al più 6,68 ms.
@@ -89,3 +89,13 @@ Durante il blocco un lavoro chiesto al kernel su ogni core è rimasto in coda al
 - Se il margine del bilancio misurato risulta così grande da togliere capacità utile ai core live.
 - Se compaiono falsi allarmi con la soglia di tre quanti.
 - All'apertura della Fase 4, per i processi host e i thread dei plugin.
+
+## Nota del 25 novembre 2026: il nodo abbandonato di un grafo (P1.7f)
+
+Con il grafo vero ([P1.7f](../fasi/fase-1/P1.7-il-grafo.md#p17f-che-cosa-si-fa)) i punti 2 e 4 dell'elenco valgono per i nodi del grafo:
+
+- il thread scrive nel suo slot il nodo in cui si trova; il sorvegliante abbandona quello, e i buffer che il nodo leggeva e scriveva diventano silenzio per chi li legge, perché il thread bloccato li tiene e in Rust sicuro non gli si possono togliere;
+- il grafo senza il nodo si compila dalla descrizione, togliendo il nodo e i suoi collegamenti, e si mette in uso con lo scambio di P1.7e;
+- il grafo che il thread bloccato teneva non viene liberato: resta suo fino al riavvio del motore, come il thread.
+
+**Che cosa non vale più di ciò che P1.1 diceva**: la dissolvenza. Quando il sorvegliante interviene il nodo manca già da tre periodi; il silenzio è arrivato di colpo al primo. Sfumare richiederebbe un ritardo fisso sull'uscita, che questa fase non ha.
