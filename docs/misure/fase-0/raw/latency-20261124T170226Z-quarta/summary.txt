@@ -1,0 +1,55 @@
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer) --
+  inside, at the end of each run: 100 runs, 400 to 456 samples (9.070 to 10.340 ms); runs with slips: 0
+    lengths (times): 400 (1) 449 (3) 450 (55) 451 (28) 452 (2) 455 (2) 456 (9)
+  cable: 100 runs, 425.85 to 481.85 samples (9.656 to 10.926 ms); from start to start it moves by 56.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 425.85 (1) 474.85 (3) 475.85 (55) 476.85 (28) 477.85 (2) 480.85 (2) 481.85 (9)
+  converters and cable alone: 25.85 samples (0.586 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: NO (10.926 ms at the most)
+  calibrations: FAIL (100 of 100 measured; NOT all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.83 samples more than inside (peak 0.0894 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 451 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 100 runs, 416 to 465 samples (8.667 to 9.688 ms); runs with slips: 0
+    lengths (times): 416 (1) 458 (25) 459 (8) 464 (55) 465 (11)
+  cable: 100 runs, 441.85 to 490.85 samples (9.205 to 10.226 ms); from start to start it moves by 49.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 441.85 (1) 483.85 (25) 484.85 (8) 489.85 (55) 490.85 (11)
+  converters and cable alone: 25.85 samples (0.539 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: NO (10.226 ms at the most)
+  calibrations: FAIL (100 of 100 measured; NOT all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.84 samples more than inside (peak 0.0895 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 464 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 100 runs, 812 to 909 samples (8.458 to 9.469 ms); runs with slips: 0
+    lengths (times): 812 (1) 813 (1) 908 (58) 909 (40)
+  cable: 100 runs, 836.14 to 933.14 samples (8.710 to 9.720 ms); from start to start it moves by 97.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 836.14 (1) 837.14 (1) 932.14 (58) 933.14 (40)
+  converters and cable alone: 24.14 samples (0.251 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: yes (9.720 ms at the most)
+  calibrations: PASS (100 of 100 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.15 samples more than inside (peak 0.0894 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 908 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 100 runs, 1617 to 1833 samples (8.422 to 9.547 ms); runs with slips: 0
+    lengths (times): 1617 (1) 1808 (18) 1809 (60) 1832 (6) 1833 (15)
+  cable: 100 runs, 1641.12 to 1857.12 samples (8.547 to 9.672 ms); from start to start it moves by 216.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 1641.12 (1) 1832.12 (18) 1833.12 (60) 1856.12 (6) 1857.12 (15)
+  converters and cable alone: 24.12 samples (0.126 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: yes (9.672 ms at the most)
+  calibrations: PASS (100 of 100 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.09 samples more than inside (peak 0.0919 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 1809 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+finished_utc: 2026-11-24T17:59:22Z
+verdict: FAIL (2 of 4 shapes and rates)
