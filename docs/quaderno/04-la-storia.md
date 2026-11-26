@@ -427,6 +427,14 @@ Quei tre millisecondi sono due cose. Una è la durata del trasferimento, un mill
 
 La conseguenza più importante non è un numero. Da mesi il progetto si porta dietro una domanda: scrivere un driver audio nostro? Sulla latenza, la risposta è arrivata da dove non la cercavamo: quei millisecondi stanno **sotto** il driver audio, e uno nostro li troverebbe identici.
 
+### P1.8c: la prima patch al kernel
+
+_26 novembre: consegnato, in attesa della misura._ Sapere dove stanno i tre millisecondi non li toglie. Ma rileggendo il driver del controller è saltata fuori una cosa: la regola del «numero di frame», quella che costa i due millisecondi di anticipo, vale solo per i trasferimenti che non portano un certo segno, «appena possibile». Chi lo porta viene fatto partire dal controller al primo momento utile. Il driver audio di Linux quel segno non lo mette.
+
+L'utente ha scelto di provare: una riga nel driver audio, dietro un interruttore spento di fabbrica, che si accende e si spegne senza riavviare. È la prima volta che il progetto tocca il sorgente del kernel; finora lo aveva solo configurato.
+
+Il rischio è scritto prima della misura, come le previsioni. I due millisecondi di anticipo erano anche un cuscino: se il kernel serviva l'USB con un millisecondo di ritardo, non succedeva nulla. Senza, ogni ritardo oltre un decimo di millisecondo è un pacchetto che manca. Per questo la prova si fa due volte: a macchina ferma, per sapere quanto rende; sotto carico, per sapere se si può usare.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |

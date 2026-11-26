@@ -48,6 +48,12 @@
 # it with one live thread: when a shape has slices, every shape of the
 # same launch is measured with one thread, so that they compare.
 #
+# --asap 0 or 1 turns off or on, for the whole launch, the switch that
+# the kernel of step P1.8c gives the USB driver (iso_asap): the output
+# transfers handed to the controller as "as soon as possible" instead
+# of with the number of their frame, which costs 2 ms and more of way
+# round (step P1.8b). The switch is put back at the end.
+#
 # For every shape, besides the way round: how many interrupts a second
 # the USB controllers raised in the long run, and, where the kernel
 # lets the bus be read (usbmon), how many packets the driver put in a
@@ -72,7 +78,7 @@ usage() {
 	cat << USAGE
 Usage:
   ${PROG} [--card N] [--rates "HZ ..."] [--shapes "FRAMES:PERIODS[:SLICES] ..."]
-          [--runs N] [--long SECONDS] [LABEL]
+          [--runs N] [--long SECONDS] [--asap 0|1] [LABEL]
 
   --rates LIST    sample rates (default "44100 48000 96000 192000")
   --shapes LIST   shapes of the buffers (default "96:3", the engine's own);
@@ -82,6 +88,8 @@ Usage:
   --long SECONDS  length of the long run per shape; 0: none; from 120 up
                   it is judged, after a minute of warm-up (default 60)
   --card N        the sound card (default: the first USB one)
+  --asap 0|1      turn the switch iso_asap of the USB driver off or on
+                  for this launch (default: leave it as it is)
 USAGE
 }
 
@@ -109,6 +117,8 @@ runs=10
 long=60
 card=
 label=
+asap=
+SWITCH=/sys/module/snd_usb_audio/parameters/iso_asap
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--rates)
@@ -131,6 +141,10 @@ while [ $# -gt 0 ]; do
 		card=${2:-}
 		shift 2
 		;;
+	--asap)
+		asap=${2:-}
+		shift 2
+		;;
 	-h | --help)
 		usage
 		exit 0
@@ -146,6 +160,17 @@ case "${runs}${long}" in
 '' | *[!0-9]*) die "--runs and --long take a number" ;;
 esac
 [ "$(id -u)" = 0 ] || die "must run as root"
+case "${asap}" in
+'') ;;
+0 | 1)
+	[ -w "${SWITCH}" ] || die "this kernel has no switch iso_asap (${SWITCH}): it comes with step P1.8c"
+	switch_before=$(cat "${SWITCH}")
+	# Whatever happens, the switch goes back to where it was.
+	trap 'echo "${switch_before}" > "${SWITCH}"' EXIT
+	echo "${asap}" > "${SWITCH}" || die "cannot write ${asap} to ${SWITCH}"
+	;;
+*) die "--asap takes 0 or 1" ;;
+esac
 # One live thread for every shape, when one of them has slices.
 threads_option=
 for shape in ${shapes}; do
@@ -185,6 +210,7 @@ mkdir -p "${dir}" || die "cannot create ${dir}"
 	echo "card: ${identifier} (${model:-not a USB card})"
 	echo "lowlatency: $(cat /sys/module/snd_usb_audio/parameters/lowlatency 2> /dev/null)"
 	echo "implicit_fb: $(cat /sys/module/snd_usb_audio/parameters/implicit_fb 2> /dev/null)"
+	echo "iso_asap: $(cat "${SWITCH}" 2> /dev/null || echo "this kernel has no such switch")"
 	echo "rates: ${rates}"
 	echo "shapes: ${shapes}"
 	echo "live_threads: ${threads_option:-as many as the live CPUs}"
