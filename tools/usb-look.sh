@@ -40,6 +40,12 @@
 # Also read once: what the controller says it can do (its capability
 # registers), and what the kernel logged meanwhile.
 #
+# With the kernel of step P1.8c the driver has a switch, iso_asap: the
+# output transfers are handed over as "as soon as possible" instead of
+# with the number of their frame. ASAP lists the values to try, as in
+# ASAP="0 1": every case is read with each. Without it the switch is
+# left as it is.
+#
 # To try the script where there is no interface the engine can open (a
 # virtual machine with an emulated USB card), TRY_COMMAND replaces the
 # engine with the command it holds, run once for each case.
@@ -55,6 +61,8 @@ CARDS_DIR=${DAWOS_CARDS_DIR:-/usr/share/dawos/cards}
 BASE=/var/lib/dawos/measure
 RATES=${RATES:-48000}
 SLICES=${SLICES:-1 2 4 8}
+ASAP=${ASAP:-}
+SWITCH=/sys/module/snd_usb_audio/parameters/iso_asap
 TRY_COMMAND=${TRY_COMMAND:-}
 # Seconds the bus is read for, from just before the engine is started.
 READ_SECONDS=3
@@ -69,6 +77,13 @@ field() {
 }
 
 [ "$(id -u)" = 0 ] || die "must run as root"
+switch_before=
+if [ -n "${ASAP}" ]; then
+	[ -w "${SWITCH}" ] || die "this kernel has no switch iso_asap (${SWITCH}): it comes with step P1.8c"
+	switch_before=$(cat "${SWITCH}")
+	# Whatever happens, the switch goes back to where it was.
+	trap 'echo "${switch_before}" > "${SWITCH}"' EXIT
+fi
 
 card=
 for directory in /proc/asound/card[0-9]*; do
@@ -102,6 +117,7 @@ mkdir -p "${dir}" || die "cannot create ${dir}"
 	echo "bus: ${bus}, device ${device}"
 	echo "rates: ${RATES}"
 	echo "slices: ${SLICES}"
+	echo "iso_asap: ${ASAP:-left as it is: $(cat "${SWITCH}" 2> /dev/null || echo "this kernel has no such switch")}"
 	echo "command: ${TRY_COMMAND:-the engine}"
 } > "${dir}/meta.txt"
 echo "directory: ${dir}"
@@ -319,6 +335,69 @@ read_bus() {
 		}' "$1"
 }
 
+# ---- One case: the bus read while the engine starts and runs. Uses
+# rate, frames, slices and asap.
+look() {
+	name="${rate}-s${slices}"
+	how=
+	if [ "${asap}" != as-it-is ]; then
+		echo "${asap}" > "${SWITCH}" || die "cannot write ${asap} to ${SWITCH}"
+		name="${name}-asap${asap}"
+		case "$(cat "${SWITCH}")" in
+		Y) how=", output handed over as soon as possible (iso_asap on)" ;;
+		*) how=", output handed over with its frame (iso_asap off)" ;;
+		esac
+	fi
+	say ""
+	say "-- ${rate} Hz, a quantum of ${frames} frames, ${slices} periods of the driver in it${how} --"
+	if [ -z "${TRY_COMMAND}" ] && [ "${rate}" != "${current_rate}" ]; then
+		# The interface needs some seconds after a change of rate.
+		"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --threads 1 --allow-xruns \
+			--rate "${rate}" --seconds 8 --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
+		current_rate=${rate}
+	fi
+	# The reader goes ahead of ordinary work: the kernel keeps few
+	# lines for it, and those it does not take in time are lost (twelve
+	# of 48 000 in the first measure, step P1.8b).
+	chrt -f 10 cat "${monitor}" > "${dir}/bus.raw" 2> /dev/null &
+	reader=$!
+	# The reader is there before the first transfer.
+	sleep 1
+	if [ -n "${TRY_COMMAND}" ]; then
+		${TRY_COMMAND} > "${dir}/engine-${name}.txt" 2>&1 &
+	else
+		"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --threads 1 --require-rt --allow-xruns \
+			--rate "${rate}" --quantum "${frames}" --periods 3 --slices "${slices}" \
+			--seconds $((READ_SECONDS + 3)) --count 5:5 > "${dir}/engine-${name}.txt" 2>&1 &
+	fi
+	runner=$!
+	sleep "${READ_SECONDS}"
+	# The streams as the driver sees them, while they run.
+	cat "/proc/asound/card${card}/stream0" > "${dir}/stream-${name}.txt" 2> /dev/null
+	kill "${reader}" 2> /dev/null
+	wait "${reader}" 2> /dev/null
+	if [ -n "${TRY_COMMAND}" ]; then
+		kill "${runner}" 2> /dev/null
+	fi
+	wait "${runner}" 2> /dev/null
+
+	read_bus "${dir}/bus.raw" ":${device}:" | tee -a "${dir}/summary.txt"
+	# The lines themselves, cut short: how the streams start, and a
+	# stretch of the steady part.
+	awk -v device=":${device}:" '$4 ~ /^Z[io]:/ && index($4, device) { print substr($0, 1, 200) }' \
+		"${dir}/bus.raw" > "${dir}/bus.card"
+	sed -n '1,150p' "${dir}/bus.card" > "${dir}/bus-start-${name}.txt"
+	tail -n 120 "${dir}/bus.card" > "${dir}/bus-steady-${name}.txt"
+	rm -f "${dir}/bus.raw" "${dir}/bus.card"
+
+	if [ -z "${TRY_COMMAND}" ]; then
+		report="${dir}/engine-${name}.txt"
+		say "  the engine, in the same run: way round $(field "${report}" count_on_input_5 | sed -n 's/^way round \([0-9]* samples ([0-9.]* ms)\).*/\1/p' | grep . || echo "not found"); xruns $(field "${report}" card_xruns | sed 's/ .*//'); $(sed -n 's/^  card_frames_at_the_wake_up: /frames at a wake-up: /p' "${report}" | head -n 1)"
+		say "  $(sed -n 's/^  period_us: /length of a cycle, us: /p' "${report}" | head -n 1 | grep . || echo "length of a cycle: as asked")"
+		grep -E '^(card_short_writes|card_driver_period_frames|count_slips_on_input_5|count_samples_on_input_5): ' "${report}" | sed 's/^/  /' | tee -a "${dir}/summary.txt"
+	fi
+}
+
 # ---- The cases.
 current_rate=
 for rate in ${RATES}; do
@@ -330,52 +409,9 @@ for rate in ${RATES}; do
 	esac
 	frames=$((96 * factor))
 	for slices in ${SLICES}; do
-		name="${rate}-s${slices}"
-		say ""
-		say "-- ${rate} Hz, a quantum of ${frames} frames, ${slices} periods of the driver in it --"
-		if [ -z "${TRY_COMMAND}" ] && [ "${rate}" != "${current_rate}" ]; then
-			# The interface needs some seconds after a change of rate.
-			"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --threads 1 --allow-xruns \
-				--rate "${rate}" --seconds 8 --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
-			current_rate=${rate}
-		fi
-		cat "${monitor}" > "${dir}/bus.raw" 2> /dev/null &
-		reader=$!
-		# The reader is there before the first transfer.
-		sleep 1
-		if [ -n "${TRY_COMMAND}" ]; then
-			${TRY_COMMAND} > "${dir}/engine-${name}.txt" 2>&1 &
-		else
-			"${ENGINE}" run --backend alsa --device "hw:${identifier},0" --threads 1 --require-rt --allow-xruns \
-				--rate "${rate}" --quantum "${frames}" --periods 3 --slices "${slices}" \
-				--seconds $((READ_SECONDS + 3)) --count 5:5 > "${dir}/engine-${name}.txt" 2>&1 &
-		fi
-		runner=$!
-		sleep "${READ_SECONDS}"
-		# The streams as the driver sees them, while they run.
-		cat "/proc/asound/card${card}/stream0" > "${dir}/stream-${name}.txt" 2> /dev/null
-		kill "${reader}" 2> /dev/null
-		wait "${reader}" 2> /dev/null
-		if [ -n "${TRY_COMMAND}" ]; then
-			kill "${runner}" 2> /dev/null
-		fi
-		wait "${runner}" 2> /dev/null
-
-		read_bus "${dir}/bus.raw" ":${device}:" | tee -a "${dir}/summary.txt"
-		# The lines themselves, cut short: how the streams start, and a
-		# stretch of the steady part.
-		awk -v device=":${device}:" '$4 ~ /^Z[io]:/ && index($4, device) { print substr($0, 1, 200) }' \
-			"${dir}/bus.raw" > "${dir}/bus.card"
-		sed -n '1,150p' "${dir}/bus.card" > "${dir}/bus-start-${name}.txt"
-		tail -n 120 "${dir}/bus.card" > "${dir}/bus-steady-${name}.txt"
-		rm -f "${dir}/bus.raw" "${dir}/bus.card"
-
-		if [ -z "${TRY_COMMAND}" ]; then
-			report="${dir}/engine-${name}.txt"
-			say "  the engine, in the same run: way round $(field "${report}" count_on_input_5 | sed -n 's/^way round \([0-9]* samples ([0-9.]* ms)\).*/\1/p' | grep . || echo "not found"); xruns $(field "${report}" card_xruns | sed 's/ .*//'); $(sed -n 's/^  card_frames_at_the_wake_up: /frames at a wake-up: /p' "${report}" | head -n 1)"
-			say "  $(sed -n 's/^  period_us: /length of a cycle, us: /p' "${report}" | head -n 1 | grep . || echo "length of a cycle: as asked")"
-			grep -E '^(card_short_writes|card_driver_period_frames): ' "${report}" | sed 's/^/  /' | tee -a "${dir}/summary.txt"
-		fi
+		for asap in ${ASAP:-as-it-is}; do
+			look
+		done
 	done
 done
 

@@ -1,0 +1,74 @@
+From: dawOS <noreply@dawos.invalid>
+Subject: [PATCH] ALSA: usb-audio: a parameter to hand playback URBs over "as
+ soon as possible"
+
+On an xHCI host that keeps frame IDs contiguous (CFC), an isochronous
+URB without URB_ISO_ASAP is given the number of the frame it starts in.
+xhci_get_isoc_frame_id() wants that frame past "now + IST + 1
+microframe" rounded up to a frame, and moves it one frame further when
+it is the first one allowed. The samples of a playback URB are copied
+when it is prepared, so they wait for the wire all that time: 2.0 to
+2.5 ms on the Core Ultra 9 285K (IST: 4 microframes), measured with
+usbmon on a Scarlett 18i20 4th gen (dawOS, step P1.8b).
+
+With URB_ISO_ASAP xhci-hcd sets the SIA bit instead, and the controller
+starts the URB as soon as it can.
+
+iso_asap (default: off, nothing changes) sets the flag on the playback
+data URBs. It is read when a stream is set up, so it can be written
+between two runs:
+
+  echo 1 > /sys/module/snd_usb_audio/parameters/iso_asap
+
+This is an experiment of dawOS (step P1.8c), not a change proposed
+upstream.
+---
+--- a/sound/usb/card.c
++++ b/sound/usb/card.c
+@@ -77,6 +77,7 @@
+ 
+ bool snd_usb_use_vmalloc = true;
+ bool snd_usb_skip_validation;
++bool snd_usb_iso_asap;
+ 
+ module_param_array(index, int, NULL, 0444);
+ MODULE_PARM_DESC(index, "Index value for the USB audio adapter.");
+@@ -107,6 +108,8 @@
+ MODULE_PARM_DESC(use_vmalloc, "Use vmalloc for PCM intermediate buffers (default: yes).");
+ module_param_named(skip_validation, snd_usb_skip_validation, bool, 0444);
+ MODULE_PARM_DESC(skip_validation, "Skip unit descriptor validation (default: no).");
++module_param_named(iso_asap, snd_usb_iso_asap, bool, 0644);
++MODULE_PARM_DESC(iso_asap, "Hand playback data URBs to the host controller as \"as soon as possible\" (default: no).");
+ 
+ /* protects quirk_flags */
+ static DEFINE_MUTEX(quirk_flags_mutex);
+--- a/sound/usb/endpoint.c
++++ b/sound/usb/endpoint.c
+@@ -1258,6 +1258,17 @@
+ 			goto out_of_memory;
+ 		u->urb->pipe = ep->pipe;
+ 		u->urb->transfer_flags = URB_NO_TRANSFER_DMA_MAP;
++		/*
++		 * dawOS: without URB_ISO_ASAP an xHCI host with contiguous
++		 * frame IDs gives every URB the number of the frame it starts
++		 * in, which must be a whole frame past "now + IST": the
++		 * samples, already copied, wait 2 ms and more for the wire.
++		 * With the flag the controller starts the URB as soon as it
++		 * can. Read when the stream is set up: the parameter can be
++		 * changed between two runs.
++		 */
++		if (snd_usb_iso_asap && usb_pipeout(ep->pipe))
++			u->urb->transfer_flags |= URB_ISO_ASAP;
+ 		u->urb->interval = 1 << ep->datainterval;
+ 		u->urb->context = u;
+ 		u->urb->complete = snd_complete_urb;
+--- a/sound/usb/usbaudio.h
++++ b/sound/usb/usbaudio.h
+@@ -164,6 +164,7 @@
+ 
+ extern bool snd_usb_use_vmalloc;
+ extern bool snd_usb_skip_validation;
++extern bool snd_usb_iso_asap;
+ 
+ /*
+  * Driver behavior quirk flags, stored in chip->quirk_flags

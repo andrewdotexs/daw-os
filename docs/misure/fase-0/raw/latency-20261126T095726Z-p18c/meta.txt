@@ -1,0 +1,14 @@
+started_utc: 2026-11-26T09:57:26Z
+label: p18c
+kernel: Linux 6.18.64-dawos #1 SMP PREEMPT_RT Thu Nov 26 10:39:52 CET 2026 x86_64 GNU/Linux
+image: 0.0.1.20261126094028
+engine: dawos-engine 0.1.0
+card: Gen (1235-821d)
+lowlatency: Y
+implicit_fb: N,N,N,N,N,N,N,N
+iso_asap: Y
+rates: 44100 48000 96000 192000
+shapes: 96:3 96:3:4
+live_threads: --threads 1
+runs: 10
+long_s: 120

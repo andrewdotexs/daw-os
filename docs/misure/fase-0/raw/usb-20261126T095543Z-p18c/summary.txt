@@ -1,0 +1,230 @@
+-- the controller of bus 3: 0000:80:14.0 --
+  HCSPARAMS2 0x14200054, HCCPARAMS1 0x20007fc1
+  the controller wants a transfer 4 microframes (of 125 us) before its turn
+  it keeps the frame numbers of a stream contiguous (CFC): yes
+
+-- 48000 Hz, a quantum of 96 frames, 1 periods of the driver in it, output handed over with its frame (iso_asap off) --
+  read: 11993 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 1000 transfers came back in the last second read; in all 3008 handed over, 2996 back
+    packets in a transfer (times): 8 (1000)
+    bytes in a transfer, in its first five packets at the most (times): 3120 (1000)
+    microseconds with the controller, from handed over to back: least 11975, half 11975, most 11975
+    microframes from a transfer to the next (times): 8 (1000)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 1000 transfers came back in the last second read; in all 2996 handed over, 2993 back
+    packets in a transfer (times): 8 (1000)
+    bytes in a transfer (times): 4992 (1000)
+    microseconds with the controller, from handed over to back: least 2975, half 2975, most 2975
+    microframes from a transfer to the next (times): 8 (1000)
+    output transfers with the controller when one more is handed over (times): 3 (1000)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 2.865
+    Zo:3:004:1: first handed over at 2.866, first back at 5.877
+    first input transfer that carried something: at 2.865, after 0 empty ones
+    first output transfer handed over: at 2.866, after 1 input transfers had come back
+    first output transfer that was not silence: at 307.934, after 305 of silence
+  the engine, in the same run: way round 459 samples (9.562 ms); xruns 0; frames at a wake-up: ready 96 to 97, to play 191 to 192
+  length of a cycle, us: least 1965.49, most 2034.61 (nominal 2000.00)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 287765 in place, 0 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 1 periods of the driver in it, output handed over as soon as possible (iso_asap on) --
+  read: 11995 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 1000 transfers came back in the last second read; in all 3008 handed over, 2996 back
+    packets in a transfer (times): 8 (1000)
+    bytes in a transfer, in its first five packets at the most (times): 3120 (1000)
+    microseconds with the controller, from handed over to back: least 11975, half 11975, most 11975
+    microframes from a transfer to the next (times): 8 (1000)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 1000 transfers came back in the last second read; in all 2996 handed over, 2995 back
+    packets in a transfer (times): 8 (1000)
+    bytes in a transfer (times): 4992 (1000)
+    microseconds with the controller, from handed over to back: least 1100, half 1100, most 1100
+    microframes from a transfer to the next (times): 8 (1000)
+    output transfers with the controller when one more is handed over (times): 2 (1000)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 2.894
+    Zo:3:004:1: first handed over at 2.895, first back at 4.030
+    first input transfer that carried something: at 2.894, after 0 empty ones
+    first output transfer handed over: at 2.895, after 1 input transfers had come back
+    first output transfer that was not silence: at 307.952, after 305 of silence
+  the engine, in the same run: way round 374 samples (7.792 ms); xruns 0; frames at a wake-up: ready 96 to 97, to play 191 to 192
+  length of a cycle, us: least 1989.18, most 2011.07 (nominal 2000.00)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 287850 in place, 0 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 2 periods of the driver in it, output handed over with its frame (iso_asap off) --
+  read: 23982 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 2000 transfers came back in the last second read; in all 6006 handed over, 5994 back
+    packets in a transfer (times): 4 (2000)
+    bytes in a transfer, in its first five packets at the most (times): 2496 (2000)
+    microseconds with the controller, from handed over to back: least 5950, half 5975, most 6000
+    microframes from a transfer to the next (times): 4 (2000)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 2000 transfers came back in the last second read; in all 5994 handed over, 5988 back
+    packets in a transfer (times): 4 (2000)
+    bytes in a transfer (times): 2496 (2000)
+    microseconds with the controller, from handed over to back: least 2950, half 2975, most 3000
+    microframes from a transfer to the next (times): 4 (2000)
+    output transfers with the controller when one more is handed over (times): 6 (2000)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 2.751
+    Zo:3:004:1: first handed over at 2.752, first back at 5.764
+    first input transfer that carried something: at 2.751, after 0 empty ones
+    first output transfer handed over: at 2.752, after 1 input transfers had come back
+    first output transfer that was not silence: at 306.804, after 608 of silence
+  the engine, in the same run: way round 458 samples (9.542 ms); xruns 0; frames at a wake-up: ready 96 to 97, to play 191 to 192
+  length of a cycle, us: least 1973.34, most 2027.22 (nominal 2000.00)
+  card_driver_period_frames: 48 (2 of them in a quantum: the engine wakes once a quantum)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 287766 in place, 0 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 2 periods of the driver in it, output handed over as soon as possible (iso_asap on) --
+  read: 23983 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 2000 transfers came back in the last second read; in all 6005 handed over, 5993 back
+    packets in a transfer (times): 4 (2000)
+    bytes in a transfer, in its first five packets at the most (times): 2496 (2000)
+    microseconds with the controller, from handed over to back: least 5975, half 5975, most 6000
+    microframes from a transfer to the next (times): 4 (2000)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 2000 transfers came back in the last second read; in all 5993 handed over, 5992 back
+    packets in a transfer (times): 4 (2000)
+    bytes in a transfer (times): 2496 (2000)
+    microseconds with the controller, from handed over to back: least 600, half 600, most 600
+    microframes from a transfer to the next (times): 4 (2000)
+    output transfers with the controller when one more is handed over (times): 2 (2000)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 2.229
+    Zo:3:004:1: first handed over at 2.231, first back at 2.865
+    first input transfer that carried something: at 2.229, after 0 empty ones
+    first output transfer handed over: at 2.231, after 1 input transfers had come back
+    first output transfer that was not silence: at 306.770, after 609 of silence
+  the engine, in the same run: way round 350 samples (7.292 ms); xruns 0; frames at a wake-up: ready 96 to 97, to play 191 to 192
+  length of a cycle, us: least 1989.08, most 2006.10 (nominal 2000.00)
+  card_driver_period_frames: 48 (2 of them in a quantum: the engine wakes once a quantum)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 287874 in place, 0 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 4 periods of the driver in it, output handed over with its frame (iso_asap off) --
+  read: 47926 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 4000 transfers came back in the last second read; in all 11993 handed over, 11981 back
+    packets in a transfer (times): 2 (4000)
+    bytes in a transfer, in its first five packets at the most (times): 1248 (4000)
+    microseconds with the controller, from handed over to back: least 2975, half 2975, most 2975
+    microframes from a transfer to the next (times): 2 (4000)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 4000 transfers came back in the last second read; in all 11981 handed over, 11971 back
+    packets in a transfer (times): 2 (4000)
+    bytes in a transfer (times): 1248 (4000)
+    microseconds with the controller, from handed over to back: least 2475, half 2475, most 2500
+    microframes from a transfer to the next (times): 2 (4000)
+    output transfers with the controller when one more is handed over (times): 10 (4000)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 2.764
+    Zo:3:004:1: first handed over at 2.765, first back at 4.768
+    first input transfer that carried something: at 2.764, after 0 empty ones
+    first output transfer handed over: at 2.765, after 1 input transfers had come back
+    first output transfer that was not silence: at 306.577, after 1215 of silence
+  the engine, in the same run: way round 434 samples (9.042 ms); xruns 0; frames at a wake-up: ready 96 to 97, to play 191 to 192
+  length of a cycle, us: least 1969.66, most 2032.33 (nominal 2000.00)
+  card_driver_period_frames: 24 (4 of them in a quantum: the engine wakes once a quantum)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 287790 in place, 0 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 4 periods of the driver in it, output handed over as soon as possible (iso_asap on) --
+  read: 47939 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 4000 transfers came back in the last second read; in all 11994 handed over, 11982 back
+    packets in a transfer (times): 2 (4000)
+    bytes in a transfer, in its first five packets at the most (times): 1248 (3999), 1352 (1)
+    microseconds with the controller, from handed over to back: least 2975, half 2975, most 2975
+    microframes from a transfer to the next (times): 2 (4000)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 4000 transfers came back in the last second read; in all 11982 handed over, 11981 back
+    packets in a transfer (times): 2 (4000)
+    bytes in a transfer (times): 1248 (3999), 1352 (1)
+    microseconds with the controller, from handed over to back: least 350, half 350, most 350
+    microframes from a transfer to the next (times): 2 (4000)
+    output transfers with the controller when one more is handed over (times): 2 (4000)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 2.420
+    Zo:3:004:1: first handed over at 2.422, first back at 2.806
+    first input transfer that carried something: at 2.420, after 0 empty ones
+    first output transfer handed over: at 2.422, after 1 input transfers had come back
+    first output transfer that was not silence: at 306.701, after 1217 of silence
+  the engine, in the same run: way round 338 samples (7.042 ms); xruns 0; frames at a wake-up: ready 96 to 97, to play 191 to 192
+  length of a cycle, us: least 1993.98, most 2002.37 (nominal 2000.00)
+  card_driver_period_frames: 24 (4 of them in a quantum: the engine wakes once a quantum)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 287886 in place, 0 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 8 periods of the driver in it, output handed over with its frame (iso_asap off) --
+  read: 63822 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 5336 transfers came back in the last second read; in all 15967 handed over, 15956 back
+    packets in a transfer (times): 1 (5336)
+    bytes in a transfer, in its first five packets at the most (times): 624 (5336)
+    microseconds with the controller, from handed over to back: least 1975, half 1975, most 2475
+    microframes from a transfer to the next (times): 1 (4670), 5 (666)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 5336 transfers came back in the last second read; in all 15955 handed over, 15944 back
+    packets in a transfer (times): 1 (5336)
+    bytes in a transfer (times): 624 (5336)
+    microseconds with the controller, from handed over to back: least 1975, half 1975, most 2500
+    microframes from a transfer to the next (times): 1 (4670), 5 (666)
+    output transfers with the controller when one more is handed over (times): 11 (5336)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 1.668
+    Zo:3:004:1: first handed over at 1.669, first back at 3.680
+    first input transfer that carried something: at 1.668, after 0 empty ones
+    first output transfer handed over: at 1.669, after 1 input transfers had come back
+    first output transfer that was not silence: at 309.824, after 1645 of silence
+  the engine, in the same run: way round 386 samples (8.042 ms); xruns 0; frames at a wake-up: ready 96 to 96, to play 192 to 192
+  length of a cycle, us: least 2993.40, most 3006.04 (nominal 2000.00)
+  card_driver_period_frames: 12 (8 of them in a quantum: the engine wakes once a quantum)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 1339 (largest 7 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 91765 in place, 99925 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 8 periods of the driver in it, output handed over as soon as possible (iso_asap on) --
+  read: 63932 lines of the card in 3.00 s
+  Zi:3:004:1 (input): 5334 transfers came back in the last second read; in all 15992 handed over, 15980 back
+    packets in a transfer (times): 1 (5334)
+    bytes in a transfer, in its first five packets at the most (times): 624 (5334)
+    microseconds with the controller, from handed over to back: least 1975, half 2000, most 2500
+    microframes from a transfer to the next (times): 1 (4668), 5 (666)
+    transfers that came back with an error: 0
+  Zo:3:004:1 (output): 5336 transfers came back in the last second read; in all 15980 handed over, 15980 back
+    packets in a transfer (times): 1 (5336)
+    bytes in a transfer (times): 624 (5336)
+    microseconds with the controller, from handed over to back: least 225, half 225, most 250
+    microframes from a transfer to the next (times): 1 (4670), 5 (666)
+    output transfers with the controller when one more is handed over (times): 2 (4668), 1 (666)
+    transfers that came back with an error: 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 1.941
+    Zo:3:004:1: first handed over at 1.943, first back at 2.202
+    first input transfer that carried something: at 1.941, after 0 empty ones
+    first output transfer handed over: at 1.943, after 1 input transfers had come back
+    first output transfer that was not silence: at 309.952, after 1644 of silence
+  the engine, in the same run: way round 326 samples (6.792 ms); xruns 0; frames at a wake-up: ready 96 to 97, to play 191 to 192
+  length of a cycle, us: least 2992.93, most 3007.12 (nominal 2000.00)
+  card_driver_period_frames: 12 (8 of them in a quantum: the engine wakes once a quantum)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 12 (largest 1 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 106967 in place, 84805 out of place
+
+kernel log, lines about USB and sound written meanwhile: 0
+
+finished_utc: 2026-11-26T09:56:54Z
