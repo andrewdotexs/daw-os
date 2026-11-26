@@ -15,13 +15,17 @@
 #
 #   passthrough  SECONDS (default 3600) after a minute of warm-up, the
 #                threads with nothing to do but pass the sound;
-#   loaded       the same with every thread busy for 60 % of the period.
+#   loaded       the same with every thread busy for 60 % of the period;
+#   swap         two graphs that take each other's place every second
+#                (swap-a.graph and swap-b.graph, step P1.7e), the count
+#                going through both: the acceptance of step P1.7g.
 #
-# CASES chooses among them (default: both, in this order). In both a
-# tone goes out of output 3 and comes back on input 3 through the cable,
-# and a count goes out of output 5 and comes back on input 5 inside the
-# interface, through its router: a signal that slips is found to the
-# sample.
+# CASES chooses among them (default: the first two, in this order). In
+# all of them a tone goes out of output 3 and comes back on input 3
+# through the cable, and a count goes out of output 5 and comes back
+# inside the interface, through its router: on input 5 in the first
+# two, on input 6 through the graph in the third. A signal that slips
+# is found to the sample.
 #
 # The load of the rest of the machine is not started here: it is the one
 # of the campaign of step P0.7, started before this with
@@ -30,14 +34,18 @@
 #
 # and, from the development PC, "make campaign-net" for the network.
 # Whether the campaign was running is written at the start and at the
-# end of every case.
+# end of every case. With REQUIRE_CAMPAIGN=1 the hours do not start
+# unless the campaign is running: for an acceptance, where an hour
+# begun before the load is an hour to do again.
 #
 # A case passes when: the engine says "audio: PASS" and "compute: PASS";
 # no xrun; no slip of the count; no record of a cycle lost; no page of
 # the trace lost; no system call and no kernel entry in the compute
 # phase that is not accounted for (they are listed: the verdict asks for
 # no system call, and reports the entries); no wake-up of 50 us or more;
-# no interrupt of the firmware (SMI).
+# no interrupt of the firmware (SMI). The case "swap" also asks for
+# "graph: PASS", for a change of graph in every second, and for no
+# sample of the count out of place.
 #
 # To try the script itself where there is no interface (a virtual
 # machine), DEVICE_OPTIONS replaces the USB card with the options of the
@@ -56,11 +64,13 @@ RUN=/run/dawos-audio-hours
 ENGINE=${DAWOS_ENGINE:-dawos-engine}
 SETUP=${DAWOS_CARD_SETUP:-dawos-card-setup}
 CARDS_DIR=${DAWOS_CARDS_DIR:-/usr/share/dawos/cards}
+GRAPHS=${DAWOS_GRAPHS:-/usr/share/dawos/graphs}
 RATE=${RATE:-96000}
 SECONDS_JUDGED=${SECONDS_JUDGED:-3600}
 CASES=${CASES:-passthrough loaded}
 WARM_UP=${WARM_UP:-60}
 DEVICE_OPTIONS=${DEVICE_OPTIONS:-}
+REQUIRE_CAMPAIGN=${REQUIRE_CAMPAIGN:-}
 
 usage() {
 	cat << USAGE
@@ -70,7 +80,8 @@ Usage:
   ${PROG} --stop            stop the hours that are running
 
 In the environment of --start: RATE (default 96000), SECONDS_JUDGED
-(default 3600), CASES (default "passthrough loaded").
+(default 3600), CASES (default "passthrough loaded"; also "swap"),
+REQUIRE_CAMPAIGN (set: do not start unless the campaign is running).
 USAGE
 }
 
@@ -110,7 +121,7 @@ late_wake_ups() {
 
 # The verdict of one case, from the report of the engine: "PASS", or
 # "FAIL" and why. $1 the report, $2 and $3 the SMI count before and
-# after.
+# after, $4 the name of the case.
 judge() {
 	why=
 	case "$(field "$1" audio)" in
@@ -125,10 +136,34 @@ judge() {
 	"0 "*) ;;
 	*) why="${why}; xruns: $(field "$1" card_xruns)" ;;
 	esac
-	case "$(field "$1" count_slips_on_input_5)" in
+	slips=$(sed -n 's/^count_slips_on_input_[0-9]*: //p' "$1" | head -n 1)
+	case "${slips}" in
 	"0 "*) ;;
-	*) why="${why}; slips of the count: $(field "$1" count_slips_on_input_5)" ;;
+	*) why="${why}; slips of the count: ${slips}" ;;
 	esac
+	if [ "${4:-}" = swap ]; then
+		case "$(field "$1" graph)" in
+		PASS*) ;;
+		*) why="${why}; graph: $(field "$1" graph | cut -c1-160)" ;;
+		esac
+		samples=$(sed -n 's/^count_samples_on_input_[0-9]*: //p' "$1" | head -n 1)
+		case "${samples}" in
+		*" in place, 0 out of place"*) ;;
+		*) why="${why}; samples of the count: ${samples}" ;;
+		esac
+		# One change a second, for all the seconds that are judged.
+		changes=$(field "$1" graph_changes)
+		made=${changes%% *}
+		case "${made}" in
+		"" | *[!0-9]*) made=0 ;;
+		esac
+		if [ "${made}" -lt "$((SECONDS_JUDGED - 5))" ]; then
+			why="${why}; changes of graph: ${changes:-none}"
+		fi
+		case "${changes}" in
+		*"then they stopped"*) why="${why}; the changes stopped: ${changes}" ;;
+		esac
+	fi
 	case "$(field "$1" record_of_every_cycle)" in
 	*" 0 dropped"*) ;;
 	*) why="${why}; record: $(field "$1" record_of_every_cycle | cut -c1-60)" ;;
@@ -149,7 +184,7 @@ judge() {
 
 # What a case says, for the summary.
 lines_of() {
-	grep -E '^(syscall_dispatch|syscalls_stopped_in_compute|card_xruns|card_recoveries|card_followers|slips_on_input_3|count_on_input_5|count_slips_on_input_5|record_of_every_cycle|record, |  period, off|  wake-up +[0-9]|  input and patch|  nodes |  output |  compute, whole|  first awake|  wake_up_bands|  least_margin_us|  card_frames|  periods_gone_by|cycles_to_look_at|card_told_late_by_minute|audio: |compute: )' "$1"
+	grep -E '^(syscall_dispatch|syscalls_stopped_in_compute|card_xruns|card_recoveries|card_short_writes|card_followers|slips_on_input_3|count_on_input_[0-9]+|count_slips_on_input_[0-9]+|count_samples_on_input_[0-9]+|graph_file|graph_swap_file|graph_changes|graph_change_[a-z_]+|graph_changes_seen|graph_refused|graph_critical_path_measured_us|graph: |record_of_every_cycle|record, |  period, off|  wake-up +[0-9]|  input and patch|  nodes |  output |  compute, whole|  first awake|  wake_up_bands|  least_margin_us|  card_frames|  periods_gone_by|cycles_to_look_at|card_told_late_by_minute|audio: |compute: )' "$1"
 	grep -A 2 -E '^  slot [0-9]+.* cycle [0-9]+ at ' "$1" | head -n 36
 	awk '/^kernel_entries, wake-ups one by one/ { exit } /^kernel_entries/ { on = 1 } on' "$1"
 }
@@ -179,8 +214,18 @@ run_all() {
 	cases=0
 	for name in ${CASES}; do
 		case "${name}" in
-		passthrough) load=0 ;;
-		loaded) load=60 ;;
+		passthrough)
+			work="--load 0 --count 5:5"
+			what="four live threads, 0 % busy"
+			;;
+		loaded)
+			work="--load 60 --count 5:5"
+			what="four live threads, 60 % busy"
+			;;
+		swap)
+			work="--threads 4 --graph ${GRAPHS}/swap-a.graph --swap-graph ${GRAPHS}/swap-b.graph --swap-every 1 --count 5:6"
+			what="four live threads, two graphs taking each other's place every second"
+			;;
 		*)
 			echo "no case '${name}'" >> "${dir}/summary.txt"
 			continue
@@ -192,21 +237,21 @@ run_all() {
 		started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 		campaign_before=$(campaign_state)
 		echo "${name}: started ${started}, $((SECONDS_JUDGED + WARM_UP)) s; the campaign was ${campaign_before}" > "${dir}/now.txt"
-		# shellcheck disable=SC2086  # device is several words
-		"${ENGINE}" run --backend alsa ${device} --rate "${RATE}" --load "${load}" \
+		# shellcheck disable=SC2086  # device and work are several words
+		"${ENGINE}" run --backend alsa ${device} --rate "${RATE}" ${work} \
 			--seconds "$((SECONDS_JUDGED + WARM_UP))" --warm-up "${WARM_UP}" --require-rt \
-			--tone 3 --tone-cycles 3 --listen 3 --count 5:5 --kernel-entries \
+			--tone 3 --tone-cycles 3 --listen 3 --kernel-entries \
 			> "${dir}/${name}.txt" 2> "${dir}/${name}.err" &
 		echo $! > "${RUN}/engine.pid"
 		wait $!
 		after=$(smi_count)
-		verdict=$(judge "${dir}/${name}.txt" "${before}" "${after}")
+		verdict=$(judge "${dir}/${name}.txt" "${before}" "${after}" "${name}")
 		case "${verdict}" in
 		PASS) passed=$((passed + 1)) ;;
 		esac
 		{
 			echo
-			echo "== ${name}: ${RATE} Hz, four live threads, ${load} % busy, ${SECONDS_JUDGED} s after ${WARM_UP} s of warm-up =="
+			echo "== ${name}: ${RATE} Hz, ${what}, ${SECONDS_JUDGED} s after ${WARM_UP} s of warm-up =="
 			echo "from ${started} to $(date -u +%Y-%m-%dT%H:%M:%SZ); uptime_s at the end: $(cut -d. -f1 /proc/uptime)"
 			echo "campaign: ${campaign_before} at the start, $(campaign_state) at the end"
 			echo "smi_count: ${before} before, ${after} after"
@@ -294,6 +339,9 @@ if [ -z "${SELF}" ] || [ ! -r "${SELF}" ]; then
 	die "run it from a file: make audio-hours copies it to the machine"
 fi
 systemctl is-active --quiet "${UNIT}" && die "the hours are already running"
+if [ -n "${REQUIRE_CAMPAIGN}" ] && ! systemctl is-active --quiet dawos-campaign; then
+	die "the campaign is not running, and REQUIRE_CAMPAIGN asks for it: start it with 'make campaign' first"
+fi
 command -v "${ENGINE}" > /dev/null || die "${ENGINE} is not in this image"
 card=
 identifier=none

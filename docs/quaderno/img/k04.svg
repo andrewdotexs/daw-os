@@ -30,18 +30,18 @@
 <line x1="60" y1="98" x2="60" y2="142" stroke="#f47230" stroke-width="1.5"/>
 <circle cx="60" cy="146" r="4" fill="#f47230" stroke="#ffffff" stroke-width="2"/>
 <text x="66" y="92" font-size="11.5" text-anchor="start" fill="#191919">il blocco</text>
-<line x1="298" y1="82" x2="298" y2="190" stroke="#257de0" stroke-width="1.5"/>
-<circle cx="298" cy="190" r="4" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
-<text x="304" y="76" font-size="11.5" text-anchor="start" fill="#191919">il cane da guardia se ne accorge</text>
-<line x1="308.2" y1="110" x2="308.2" y2="190" stroke="#257de0" stroke-width="1.5"/>
-<circle cx="308.2" cy="190" r="4" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
-<text x="314.2" y="104" font-size="11.5" text-anchor="start" fill="#191919">processore libero, nodo abbandonato: silenzio</text>
-<line x1="383" y1="138" x2="383" y2="190" stroke="#257de0" stroke-width="1.5"/>
-<circle cx="383" cy="190" r="4" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
-<text x="389" y="132" font-size="11.5" text-anchor="start" fill="#191919">la riserva è al lavoro</text>
-<line x1="501.277" y1="166" x2="501.277" y2="190" stroke="#00b894" stroke-width="1.5"/>
-<circle cx="501.277" cy="190" r="4" fill="#00b894" stroke="#ffffff" stroke-width="2"/>
-<text x="507.277" y="160" font-size="11.5" text-anchor="start" fill="#191919">il grafo senza il nodo è in uso</text>
+<line x1="296.98" y1="82" x2="296.98" y2="190" stroke="#257de0" stroke-width="1.5"/>
+<circle cx="296.98" cy="190" r="4" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
+<text x="302.98" y="76" font-size="11.5" text-anchor="start" fill="#191919">il cane da guardia se ne accorge</text>
+<line x1="297.66" y1="110" x2="297.66" y2="190" stroke="#257de0" stroke-width="1.5"/>
+<circle cx="297.66" cy="190" r="4" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
+<text x="303.66" y="104" font-size="11.5" text-anchor="start" fill="#191919">processore libero, nodo abbandonato: silenzio</text>
+<line x1="332" y1="138" x2="332" y2="190" stroke="#257de0" stroke-width="1.5"/>
+<circle cx="332" cy="190" r="4" fill="#257de0" stroke="#ffffff" stroke-width="2"/>
+<text x="338" y="132" font-size="11.5" text-anchor="start" fill="#191919">la riserva è al lavoro</text>
+<line x1="487.308" y1="166" x2="487.308" y2="190" stroke="#00b894" stroke-width="1.5"/>
+<circle cx="487.308" cy="190" r="4" fill="#00b894" stroke="#ffffff" stroke-width="2"/>
+<text x="493.308" y="160" font-size="11.5" text-anchor="start" fill="#191919">il grafo senza il nodo è in uso</text>
 <text x="24" y="242" font-size="11.5" text-anchor="start" fill="#666666">limiti</text>
 <line x1="349" y1="216" x2="349" y2="238" stroke="#dc3c3d" stroke-width="1" stroke-dasharray="3 3"/>
 <text x="343" y="242" font-size="11.5" text-anchor="end" fill="#191919">accorgersene: entro 8,5 ms</text>
@@ -51,6 +51,6 @@
 <text x="554.968" y="282" font-size="11.5" text-anchor="end" fill="#191919">riserva al lavoro: entro 50 ms</text>
 <line x1="710.968" y1="216" x2="710.968" y2="298" stroke="#dc3c3d" stroke-width="1" stroke-dasharray="3 3"/>
 <text x="704.968" y="302" font-size="11.5" text-anchor="end" fill="#191919">grafo senza il nodo: entro 500 ms</text>
-<text x="24" y="322" font-size="11.5" text-anchor="start" fill="#666666">Misurato sul 285K: visto dopo 6,0–8,0 ms, riserva al lavoro dopo 8–11 ms (P1.3, P1.5).</text>
-<text x="24" y="336.95" font-size="11.5" text-anchor="start" fill="#666666">Il grafo senza il nodo: 16–27 ms attesi, da misurare (P1.7f).</text>
+<text x="24" y="322" font-size="11.5" text-anchor="start" fill="#666666">Misurato sul 285K con un nodo del grafo che non ritorna (P1.7f): visto dopo 6,97 ms, riserva al lavoro</text>
+<text x="24" y="336.95" font-size="11.5" text-anchor="start" fill="#666666">dopo 8,00 ms, grafo senza il nodo in uso dopo 16,14 ms. Nessun campione perso sugli altri thread.</text>
 </svg>

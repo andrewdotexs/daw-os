@@ -34,7 +34,7 @@ Le sigle dei passi: `P0.n` è la Fase 0, `P1.n` la Fase 1; una lettera in fondo 
 | P1.7c | 25 novembre | 285K | Il grafo nel ciclo: entro mezzo microsecondo dal previsto |
 | P1.7d | 25 novembre | 285K | Il carico vero, calibrato |
 | P1.7e | 25 novembre | 285K | Lo scambio del grafo: 179 scambi, nessun campione perso |
-| P1.7f | 25 novembre | consegnato | Il nodo che non ritorna |
+| P1.7f | 25 novembre | 285K | Il nodo che non ritorna: fuori dal grafo in 16 ms, nessun campione perso altrove |
 
 ## La Fase 0: la piattaforma
 
@@ -332,21 +332,39 @@ La seconda misura: undici casi su undici, lo scambio identico alla prima (1012 c
 
 ### P1.7f: il nodo che non ritorna
 
-_25 novembre: consegnato, da misurare sul 285K._ La protezione K-04 incontra il grafo. Un nodo che smette di ritornare viene **abbandonato** dal cane da guardia: silenzio da subito per chi lo aspettava. Poi il motore toglie il nodo dalla descrizione, ricompila e scambia: il nodo sparisce.
+_25 novembre, 285K._ La protezione K-04 incontra il grafo. Un nodo che smette di ritornare viene **abbandonato** dal cane da guardia: silenzio da subito per chi lo aspettava. Poi il motore toglie il nodo dalla descrizione, ricompila e scambia: il nodo sparisce.
 
 Il problema vero del passo è ciò che il thread bloccato **si tiene**: lo stato del nodo, i buffer su cui lavorava, e il grafo intero. Nessuno dei tre gli si può togliere. Le risposte: il nodo non lo chiede più nessuno; i buffer diventano silenzio per chi li legge; e il grafo si tiene con un riferimento contato, così il thread bloccato si porta via il suo senza fermare gli scambi degli altri.
 
-La prova è un nodo fatto apposta, la **trappola** (`trap`), che dopo dodici secondi non ritorna più. Sta su un thread; il conteggio passa da altri due. Ciò che ci si aspetta _(stima, scritta prima della misura)_: blocco visto in 6–8,5 ms, grafo senza il nodo in uso 16–25 ms dopo il blocco (limite 500), **e nessun campione del conteggio perso**.
+La prova è un nodo fatto apposta, la **trappola** (`trap`), che dopo dodici secondi non ritorna più. Sta su un thread; il conteggio passa da altri due. | Che cosa | Misurato | Atteso, scritto prima | Limite |
+| --- | --- | --- | --- |
+| Il cane da guardia se ne accorge | 6,97 ms | 6,0–8,5 ms | 8,5 ms |
+| La riserva è al lavoro | 8,00 ms | Entro 12 ms | 50 ms |
+| Il grafo senza il nodo è in uso | **16,14 ms** | 16–27 ms | 500 ms |
+| Campioni del conteggio | 1 823 402 al loro posto, **nessuno fuori posto** | Nessuno fuori posto | — |
+
+Un nodo che muore su un thread non è costato un campione a ciò che girava sugli altri, e non c'è stato un xrun.
 
 Il primo giro si è fermato alla macchina virtuale dell'utente, quella sera molto più lenta del solito: la trappola, che contava i cicli e non il tempo, non è mai scattata (corretto), e un thread del motore non è partito in tempo, per la seconda volta in un giorno (A-70: ora, dove il tempo non è tenuto, ha tre secondi in più e il rapporto dice di quanto ha tardato).
 
 Scrivendo il passo è caduta una frase del progetto di P1.1: la «dissolvenza» verso il silenzio. Non si può sfumare un suono che manca già da tre periodi.
 
+### P1.7g: l'accettazione del grafo
+
+_25 novembre: prima misura fatta; l'ora di scambio si rifà._ Il criterio 7 chiede tre cose: lo stesso grafo su 1–4 processori con accelerazione e percorso critico misurati, lo scambio senza discontinuità, il carico calibrato. Sono già state misurate tutte, ma ognuna in un passo e con un'immagine diversa. Qui si rifanno sulla stessa immagine, senza toccare il motore, e uno script ne ricava un verdetto.
+
+Decisioni dell'utente: solo l'accettazione, senza codice nuovo; e lo scambio per **un'ora**, sotto il carico della campagna, come le altre accettazioni. Le soglie sono scritte prima della misura.
+
+Ciò che non si sapeva prevedere, ed era scritto: quante volte, in un'ora di scambi, liberare la memoria di un grafo vecchio manda un'interruzione ai processori live. La traccia del kernel non aveva mai guardato uno scambio.
+
+La prima misura: tutte le soglie rispettate. Le tre classi entro lo 0,5 %; il grafo a 96 kHz su quattro thread al 7,2 % dal previsto, accelerazione 3,56; nell'ora 3659 scambi e **351 361 864 campioni al loro posto, nessuno fuori posto**. E la risposta alla domanda aperta: dodici ingressi nel kernel durante il calcolo, tutti per svuotare la TLB, in due soli istanti, subito dopo uno scambio. Non migliaia; ma nemmeno zero, ed è il punto aperto A-75.
+
+L'ora però è cominciata due minuti prima del carico della campagna, che era già finita ed è stata rilanciata. L'utente ha deciso di rifarla. Lo strumento stampava «la campagna non girava all'inizio» senza giudicarlo: ora lo giudica, e può rifiutarsi di partire.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.7g | L'accettazione del grafo (criterio 7) |
 | P1.8 | Il driver della scheda: la latenza sulla quarta generazione (A-69), lo scatto del periodo (A-68) |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49) |
 | P1.10 | La campagna della Fase 1 |

@@ -384,10 +384,10 @@ def k04():
     # Events above the axis.
     events = [
         (0, 92, "il blocco", ORANGE),
-        (7, 76, "il cane da guardia se ne accorge", BLUE),
-        (7.3, 104, "processore libero, nodo abbandonato: silenzio", BLUE),
-        (9.5, 132, "la riserva è al lavoro", BLUE),
-        (20, 160, "il grafo senza il nodo è in uso", AQUA),
+        (6.97, 76, "il cane da guardia se ne accorge", BLUE),
+        (6.99, 104, "processore libero, nodo abbandonato: silenzio", BLUE),
+        (8.0, 132, "la riserva è al lavoro", BLUE),
+        (16.14, 160, "il grafo senza il nodo è in uso", AQUA),
     ]
     for ms, top, name, colour in events:
         f.line(at(ms), top + 6, at(ms), y - (48 if ms < 6 else 0), colour, 1.5)
@@ -404,8 +404,8 @@ def k04():
         24,
         322,
         [
-            "Misurato sul 285K: visto dopo 6,0–8,0 ms, riserva al lavoro dopo 8–11 ms (P1.3, P1.5).",
-            "Il grafo senza il nodo: 16–27 ms attesi, da misurare (P1.7f).",
+            "Misurato sul 285K con un nodo del grafo che non ritorna (P1.7f): visto dopo 6,97 ms, riserva al lavoro",
+            "dopo 8,00 ms, grafo senza il nodo in uso dopo 16,14 ms. Nessun campione perso sugli altri thread.",
         ],
         11.5,
         fill=INK2,
@@ -627,7 +627,7 @@ def nodo_abbandonato():
         f.lines(x + 106, 150, label, 10.5, fill=INK2)
     f.rect(24, 328, 14, 14, ORANGE_TINT, ORANGE, 3)
     f.text(46, 340, "tenuto dal thread bloccato: in Rust sicuro non gli si può togliere", 11.5, fill=INK2)
-    f.text(24, 364, "Dal blocco al punto 2 passano 6–8,5 ms; dal punto 2 al punto 3 una decina di millisecondi (P1.7f, da misurare).", 11.5, fill=INK2)
+    f.text(24, 364, "Misurato (P1.7f): dal blocco al punto 2 passano 6,97 ms; il punto 3 arriva 16,14 ms dopo il blocco.", 11.5, fill=INK2)
     f.save("nodo-abbandonato")
 
 

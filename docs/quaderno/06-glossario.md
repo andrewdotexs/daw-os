@@ -140,7 +140,7 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **R-04** | La sessione di riferimento (256 tracce, otto plugin in media, 96 kHz) deve stare entro il 60 % del dominio live e il 75 % dell'anticipativo | Il carico è definito e calibrato (P1.7d); la sessione è della Fase 2 |
 | **K-01** | Il firmware ruba tempo ai processori (SMI) | Misurato: zero |
 | **K-03** | R-01 ha poco margine | Vero sulla quarta generazione |
-| **K-04** | Un thread real-time che non cede affama il kernel sul suo processore | Protezione fatta e provata (P1.3) |
+| **K-04** | Un thread real-time che non cede affama il kernel sul suo processore | Protezione fatta e provata (P1.3), anche per i nodi del grafo (P1.7f) |
 | **K-07** | L'interruzione USB condivisa con altri dispositivi | Aperto: la Scarlett condivide il controller (A-53) |
 | **K-08** | Difetti audio che ALSA non segnala come xrun | Visti: gli slittamenti. Per questo esiste il conteggio |
 | **K-17** | Il risveglio del motore attraversa due processori | Misurato in P1.4 e P1.6 |
@@ -166,3 +166,6 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **A-70** | Una volta, in macchina virtuale, i thread non sono partiti in tempo | Aperto: causa ignota |
 | **A-71** | Lo stadio costa il 14 % più che in C, e dipende dalla lunghezza del blocco | Aperto |
 | **A-72** | Una scrittura corta all'avvio dei flussi, circa un avvio su tredici a 48 kHz | Aperto: si sa quando (il primo periodo), non perché. P1.8 |
+| **A-73** | Il compilatore del grafo sottostima il ciclo su più thread, del 6–7 % su quattro | Aperto, Fase 2 |
+| **A-74** | Chi aspetta un nodo di un thread bloccato taglia i suoi cicli per intero | Aperto, Fase 2 |
+| **A-75** | Il processo fa svuotare la TLB sui propri processori live quando restituisce memoria: 12 volte in un'ora di scambi | Aperto, P1.9 |

@@ -50,4 +50,4 @@ Il quaderno si aggiorna **alla chiusura di ogni passo**, insieme alla guida del 
 
 Un passo senza errori e senza concetti nuovi ha comunque la sua voce nel capitolo 4.
 
-**Aggiornato a**: passo P1.7e superato (25 novembre 2026); P1.7f consegnato, da misurare.
+**Aggiornato a**: passo P1.7f chiuso; P1.7g alla prima misura, con l'ora di scambio da rifare (26 novembre 2026).

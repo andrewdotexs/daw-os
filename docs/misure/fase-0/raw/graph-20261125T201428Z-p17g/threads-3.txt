@@ -1,0 +1,184 @@
+dawos-engine 0.1.0
+backend: null
+rate_hz: 192000
+quantum_frames: 384
+period_us: 2000.000
+live_threads: 3
+live_cpus: 4,5,6
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 30
+load_percent: 0
+vector_unit: AVX2 and FMA
+denormals: taken for zero on the live threads (FTZ and DAZ)
+margin_us: 150
+fault: none
+watchdog_rounds: 15003
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin  behind
+0      first  stopped     15003       0          0        0      1.62      2.27      211.27      240.11      1759.89       0
+1      first  stopped     15003       0          0        0      1.66      2.26      192.58      220.76      1779.24       0
+2      first  stopped     15003       0          0        0      1.67      2.38      202.92      236.21      1763.79       0
+
+graph_file: /usr/share/dawos/graphs/tracks.graph
+graph_rate_hz: 192000
+graph_quantum_frames: 384 (a period of 2000.00 us)
+graph_nodes: 66 (16 noise, 48 load, 1 bus, 1 peak)
+graph_buffers: 113 of 384 frames
+graph_threads: 3, 3 of them with nodes
+graph_costs: expected; a load is made of 2.3 ns per frame, 1.845 for every stage and 0.207 for every trim
+graph_load_of_10_ns: 4 stages and 2 trims, expected 10.09 ns per frame
+graph_load_of_40_ns: 20 stages and 4 trims, expected 40.03 ns per frame
+graph_load_of_150_ns: 80 stages and 0 trims, expected 149.90 ns per frame
+graph_work_us: 573.31 (every node, one after the other)
+graph_critical_path_us: 90.65 (t10 -> t10.1 -> t10.2 -> t10.3 -> mix -> meter)
+graph_makespan_us: 197.85 on 3 threads (speed-up 2.89; the critical path allows 6.32 at the most)
+graph_budget_us: 1850.00 (a period less 150 of margin): the graph fits
+
+threads (expected work in a cycle):
+thread   nodes    work_us  percent_of_period
+0           26     197.85                9.8
+1           20     183.87                9.1
+2           20     191.58                9.5
+
+thread 0, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.61  t10                  noise    -
+     0.61     15.37  t10.1                load     t10
+    15.98     15.37  t10.2                load     t10.1
+    31.35     57.56  t10.3                load     t10.2
+    88.92      0.61  t13                  noise    -
+    89.53     15.37  t13.1                load     t13
+   104.90     15.37  t13.2                load     t13.1
+   120.27     15.37  t13.3                load     t13.2
+   135.64      0.61  t9                   noise    -
+   136.26      3.87  t9.1                 load     t9
+   140.14      3.87  t9.2                 load     t9.1
+   144.01     15.37  t9.3                 load     t9.2
+   159.38      0.61  t1                   noise    -
+   160.00      3.87  t1.1                 load     t1
+   163.88      3.87  t1.2                 load     t1.1
+   167.75      3.87  t1.3                 load     t1.2
+   171.63      0.61  t8                   noise    -
+   172.24      3.87  t8.1                 load     t8
+   176.12      3.87  t8.2                 load     t8.1
+   180.00      3.87  t8.3                 load     t8.2
+   183.87      0.61  t15                  noise    -
+   184.49      3.87  t15.1                load     t15
+   188.36      3.87  t15.2                load     t15.1
+   192.24      3.87  t15.3                load     t15.2
+   196.12      0.96  mix                  bus      t10.3, t7.3 (thread 1), t4.3 (thread 2), t14.3 (thread 2), t3.3 (thread 1), t13.3, t6.3 (thread 1), t16.3 (thread 2), t9.3, t1.3, t2.3 (thread 1), t5.3 (thread 2), t8.3, t11.3 (thread 1), t12.3 (thread 2), t15.3
+   197.08      0.77  meter                peak     mix
+
+thread 1, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.61  t7                   noise    -
+     0.61     15.37  t7.1                 load     t7
+    15.98     57.56  t7.2                 load     t7.1
+    73.54      3.87  t7.3                 load     t7.2
+    77.42      0.61  t3                   noise    -
+    78.04     15.37  t3.1                 load     t3
+    93.41     15.37  t3.2                 load     t3.1
+   108.78     15.37  t3.3                 load     t3.2
+   124.15      0.61  t6                   noise    -
+   124.77      3.87  t6.1                 load     t6
+   128.64     15.37  t6.2                 load     t6.1
+   144.01     15.37  t6.3                 load     t6.2
+   159.38      0.61  t2                   noise    -
+   160.00      3.87  t2.1                 load     t2
+   163.88      3.87  t2.2                 load     t2.1
+   167.75      3.87  t2.3                 load     t2.2
+   171.63      0.61  t11                  noise    -
+   172.24      3.87  t11.1                load     t11
+   176.12      3.87  t11.2                load     t11.1
+   180.00      3.87  t11.3                load     t11.2
+
+thread 2, in the order it runs them (expected microseconds from the start of the cycle):
+ start_us   cost_us  node                 kind     waits for
+     0.00      0.61  t4                   noise    -
+     0.61     57.56  t4.1                 load     t4
+    58.17      3.87  t4.2                 load     t4.1
+    62.05      3.87  t4.3                 load     t4.2
+    65.93      0.61  t14                  noise    -
+    66.54     57.56  t14.1                load     t14
+   124.10      3.87  t14.2                load     t14.1
+   127.98      3.87  t14.3                load     t14.2
+   131.86      0.61  t16                  noise    -
+   132.47      3.87  t16.1                load     t16
+   136.35     15.37  t16.2                load     t16.1
+   151.72     15.37  t16.3                load     t16.2
+   167.09      0.61  t5                   noise    -
+   167.71      3.87  t5.1                 load     t5
+   171.58      3.87  t5.2                 load     t5.1
+   175.46      3.87  t5.3                 load     t5.2
+   179.33      0.61  t12                  noise    -
+   179.95      3.87  t12.1                load     t12
+   183.83      3.87  t12.2                load     t12.1
+   187.70      3.87  t12.3                load     t12.2
+
+the graph in the cycles (times in microseconds; cut, starved and silent after the warm-up):
+slot   kind    nodes_run    waits  wait_avg  wait_max    cut  starved  silent  cut_early  silent_early
+0      first      390078     3092      8.77     33.14      0        0       0          0             0
+1      first      300060        0         -         -      0        0       0          0             0
+2      first      300060        0         -         -      0        0       0          0             0
+graph_refused: 0 after the warm-up, 0 in it (a buffer or a node in use by another thread when one asked for it)
+
+the nodes of the graph by kind (microseconds for a quantum; ns_per_frame from the average):
+kind                  nodes   expected        avg lowest_avg        max  ns_per_frame
+noise                    16      0.616      0.678      0.619      1.010         1.767
+load_40ns                14     15.371     16.173     15.964     19.217        42.118
+load_150ns                4     57.562     61.000     60.547     71.965       158.853
+load_10ns                30      3.876      3.980      3.789      5.131        10.364
+bus                       1      0.962      2.646      2.646      3.252         6.892
+peak                      1      0.770      0.783      0.783      0.951         2.039
+graph_critical_path_measured_us: 97.751 (the nodes of the chain, each on average; the compiler expected 90.652)
+graph_peak meter: 5.7 dBFS
+
+record_of_every_cycle: 45009 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 15003 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.34      1.62      1.75      2.00      2.25      2.25      2.27
+  input and patch               0.03      0.23      0.25      0.50      0.58      0.58      0.58
+  nodes                       205.69    211.03    210.00    239.79    239.79    239.79    239.79
+  output                        0.01      0.01      0.06      0.06      0.06      0.06      0.06
+  compute, whole              205.88    211.27    210.00    240.00    240.00    240.00    240.11
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 15003, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1759.89
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 1: 15003 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.44      1.66      1.75      2.00      2.25      2.25      2.26
+  input and patch               0.06      0.27      0.25      0.61      0.61      0.61      0.61
+  nodes                       191.15    192.30    200.00    200.00    220.00    220.00    220.52
+  output                        0.01      0.01      0.04      0.04      0.04      0.04      0.04
+  compute, whole              191.23    192.58    200.00    200.00    220.00    220.00    220.76
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 15003, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1779.24
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 0.00 us
+record, slot 2: 15003 cycles after the warm-up, 0 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.00      0.00      0.00      0.00      0.00      0.00
+  wake-up                       1.48      1.67      1.75      2.00      2.25      2.38      2.38
+  input and patch               0.06      0.22      0.25      0.59      0.59      0.59      0.59
+  nodes                       199.01    202.69    210.00    230.00    235.85    235.85    235.85
+  output                        0.01      0.01      0.08      0.08      0.08      0.08      0.08
+  compute, whole              199.18    202.92    210.00    230.00    236.21    236.21    236.21
+  period_us: least 2000.00, most 2000.00 (nominal 2000.00)
+  wake_up_bands: under 5 us 15003, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1763.79
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 0.00 us
+record, the 3 threads together: 15003 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.03      0.11      0.25      0.50      0.50      0.61      0.61
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+compute: PASS (no system call in the compute phase)
+graph: PASS (990198 nodes run in 15003 cycles of 66 nodes; 0 cycles cut, 0 of them waiting for another thread; 0 outputs left silent for a cycle; 0 times a buffer or a node was in use by another thread)
