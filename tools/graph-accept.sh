@@ -28,7 +28,8 @@
 #      from "make audio-hours" with CASES=swap, the verdict of the
 #      case, which asks for a change every second, no sample of the
 #      count out of place, no xrun, no slip, no system call in the
-#      compute phase and no wake-up of 50 us or more.
+#      compute phase and no wake-up of 50 us or more; and the load of
+#      the campaign running when the hour starts and when it ends.
 #
 # The thresholds are those written in the guide of the step before the
 # measures were made.
@@ -164,6 +165,11 @@ else
 	PASS) ;;
 	"") fail "the case swap has no verdict" ;;
 	*) fail "the case swap did not pass" ;;
+	esac
+	# The hour is one under the load of the campaign, all of it.
+	case "$(sed -n '/^== swap: /,$p' "${hours}/summary.txt" | sed -n 's/^campaign: //p' | head -n 1)" in
+	"running at the start, running at the end") ;;
+	*) fail "the campaign was not running for the whole hour: start it first, and look at 'make campaign' before starting the hour" ;;
 	esac
 fi
 

@@ -35,6 +35,8 @@ Ciò che era stato scritto come attesa, e ciò che è stato misurato sul 285K.
 | P1.7d | A vuoto, con il motore compilato a ottimizzazione 3, il ciclo costa uguale «o poco meno» | Poco di più: 3,27, 4,89 e 6,09 µs contro 3,17, 4,43 e 5,89 | Insieme all'ottimizzazione sono arrivati i controlli di overflow, che costano qualcosa _(ipotesi)_ |
 | P1.7e | Leggere, compilare e costruire un grafo di 17 nodi costa 100–200 µs | 20 µs in media e 55 al massimo nella prima misura, 68 e 299 nella seconda | La stima veniva dall'ambiente di sviluppo. La seconda misura dice anche che una misura sola non bastava per chiamarla sbagliata: c'è di mezzo la lettura di un file |
 | P1.7e | Con i costi misurati scritti nei sorgenti, il ciclo vero sta entro il 3 % del programma del compilatore | +1,0 % su un thread, +6,3 % su quattro | I costi sono misurati su un thread solo: un bus che legge dodici ingressi scritti da altri thread costa 1,72 µs e non 0,50 |
+| P1.7g | A 192 kHz il grafo su quattro thread dura tra l'8 e il 14 % più del previsto | +6,5 % | Avevo sommato due scarti come se fossero indipendenti: con blocchi lunghi ciò che non scala con i frame (attese, passaggi tra thread) pesa meno |
+| P1.7g | «Non so»: liberare un grafo a ogni scambio può svuotare la TLB sui processori live, forse migliaia di volte in un'ora | 12 volte, in due soli scambi su 3659 | Non è lo scambio: è la libreria C quando restituisce memoria al sistema _(ipotesi)_. Dire «non so» prima della misura è servito: la riga da guardare era già scritta |
 
 ![Per sedici stime, il rapporto tra misurato e previsto su una scala logaritmica da un decimo a dieci](img/stime.svg)
 
@@ -98,6 +100,7 @@ Lo strumento che misura è codice anche lui, e sbaglia.
 | P1.7d | Nella macchina virtuale emulata i carichi vettoriali sono centinaia di volte più lenti, e il cane da guardia li prende per thread bloccati | I grafi di prova dello scambio non usano carichi veri |
 | P1.7e | Due scritture corte passate inosservate, al mattino e al pomeriggio: erano in righe `settle`, che la prova audio non giudica e di cui non mostrava quel conto | Ogni riga della prova mostra le scritture corte, quando ce ne sono |
 | P1.7f | La trappola di prova contava i cicli eseguiti, non il tempo: in una macchina virtuale lenta «dodici secondi» non sono mai arrivati, e il caso è fallito | Va con l'orologio. Nella mia macchina virtuale era scattata tre secondi in ritardo, e non ci avevo dato peso: un numero strano che non fa fallire nulla va guardato lo stesso |
+| P1.7g | L'ora di accettazione è partita prima del carico; lo strumento lo stampava («NOT running at the start») senza farne un difetto, e lo script del giudizio ha detto PASS | Lo script giudica quella riga; lo strumento, se glielo si chiede, non parte senza la campagna |
 
 **Che cosa dice questa tabella.** Due errori sono tornati più volte: le prove che dipendono dai tempi della macchina che le esegue, e l'uscita di una prova fallita non conservata. Il primo ha ora una regola (nelle prove automatiche si giudica la logica; i tempi si giudicano solo sul 285K), il secondo un rimedio (i dettagli sulla console).
 

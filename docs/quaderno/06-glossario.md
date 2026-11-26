@@ -168,3 +168,4 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **A-72** | Una scrittura corta all'avvio dei flussi, circa un avvio su tredici a 48 kHz | Aperto: si sa quando (il primo periodo), non perché. P1.8 |
 | **A-73** | Il compilatore del grafo sottostima il ciclo su più thread, del 6–7 % su quattro | Aperto, Fase 2 |
 | **A-74** | Chi aspetta un nodo di un thread bloccato taglia i suoi cicli per intero | Aperto, Fase 2 |
+| **A-75** | Il processo fa svuotare la TLB sui propri processori live quando restituisce memoria: 12 volte in un'ora di scambi | Aperto, P1.9 |

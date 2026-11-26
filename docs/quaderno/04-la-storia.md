@@ -351,11 +351,15 @@ Scrivendo il passo è caduta una frase del progetto di P1.1: la «dissolvenza» 
 
 ### P1.7g: l'accettazione del grafo
 
-_25 novembre: consegnato, da misurare._ Il criterio 7 chiede tre cose: lo stesso grafo su 1–4 processori con accelerazione e percorso critico misurati, lo scambio senza discontinuità, il carico calibrato. Sono già state misurate tutte, ma ognuna in un passo e con un'immagine diversa. Qui si rifanno sulla stessa immagine, senza toccare il motore, e uno script ne ricava un verdetto.
+_25 novembre: prima misura fatta; l'ora di scambio si rifà._ Il criterio 7 chiede tre cose: lo stesso grafo su 1–4 processori con accelerazione e percorso critico misurati, lo scambio senza discontinuità, il carico calibrato. Sono già state misurate tutte, ma ognuna in un passo e con un'immagine diversa. Qui si rifanno sulla stessa immagine, senza toccare il motore, e uno script ne ricava un verdetto.
 
 Decisioni dell'utente: solo l'accettazione, senza codice nuovo; e lo scambio per **un'ora**, sotto il carico della campagna, come le altre accettazioni. Le soglie sono scritte prima della misura.
 
-Ciò che non si sa prevedere, ed è scritto: quante volte, in un'ora di scambi, liberare la memoria di un grafo vecchio manda un'interruzione ai processori live. La traccia del kernel non ha mai guardato uno scambio.
+Ciò che non si sapeva prevedere, ed era scritto: quante volte, in un'ora di scambi, liberare la memoria di un grafo vecchio manda un'interruzione ai processori live. La traccia del kernel non aveva mai guardato uno scambio.
+
+La prima misura: tutte le soglie rispettate. Le tre classi entro lo 0,5 %; il grafo a 96 kHz su quattro thread al 7,2 % dal previsto, accelerazione 3,56; nell'ora 3659 scambi e **351 361 864 campioni al loro posto, nessuno fuori posto**. E la risposta alla domanda aperta: dodici ingressi nel kernel durante il calcolo, tutti per svuotare la TLB, in due soli istanti, subito dopo uno scambio. Non migliaia; ma nemmeno zero, ed è il punto aperto A-75.
+
+L'ora però è cominciata due minuti prima del carico della campagna, che era già finita ed è stata rilanciata. L'utente ha deciso di rifarla. Lo strumento stampava «la campagna non girava all'inizio» senza giudicarlo: ora lo giudica, e può rifiutarsi di partire.
 
 ### Che cosa viene dopo
 

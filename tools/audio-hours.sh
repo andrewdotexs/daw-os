@@ -34,7 +34,9 @@
 #
 # and, from the development PC, "make campaign-net" for the network.
 # Whether the campaign was running is written at the start and at the
-# end of every case.
+# end of every case. With REQUIRE_CAMPAIGN=1 the hours do not start
+# unless the campaign is running: for an acceptance, where an hour
+# begun before the load is an hour to do again.
 #
 # A case passes when: the engine says "audio: PASS" and "compute: PASS";
 # no xrun; no slip of the count; no record of a cycle lost; no page of
@@ -68,6 +70,7 @@ SECONDS_JUDGED=${SECONDS_JUDGED:-3600}
 CASES=${CASES:-passthrough loaded}
 WARM_UP=${WARM_UP:-60}
 DEVICE_OPTIONS=${DEVICE_OPTIONS:-}
+REQUIRE_CAMPAIGN=${REQUIRE_CAMPAIGN:-}
 
 usage() {
 	cat << USAGE
@@ -77,7 +80,8 @@ Usage:
   ${PROG} --stop            stop the hours that are running
 
 In the environment of --start: RATE (default 96000), SECONDS_JUDGED
-(default 3600), CASES (default "passthrough loaded"; also "swap").
+(default 3600), CASES (default "passthrough loaded"; also "swap"),
+REQUIRE_CAMPAIGN (set: do not start unless the campaign is running).
 USAGE
 }
 
@@ -335,6 +339,9 @@ if [ -z "${SELF}" ] || [ ! -r "${SELF}" ]; then
 	die "run it from a file: make audio-hours copies it to the machine"
 fi
 systemctl is-active --quiet "${UNIT}" && die "the hours are already running"
+if [ -n "${REQUIRE_CAMPAIGN}" ] && ! systemctl is-active --quiet dawos-campaign; then
+	die "the campaign is not running, and REQUIRE_CAMPAIGN asks for it: start it with 'make campaign' first"
+fi
 command -v "${ENGINE}" > /dev/null || die "${ENGINE} is not in this image"
 card=
 identifier=none
