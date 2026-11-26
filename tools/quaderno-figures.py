@@ -675,6 +675,43 @@ def latenza():
     f.save("latenza")
 
 
+def latenza_patch():
+    """The round trip by the cable on the fourth generation, stock and patched."""
+    f = Figure(760, 330, "La latenza del giro per il cavo sulla quarta generazione, con il kernel di serie e con la patch")
+    f.text(24, 34, "Quarta generazione, forma 96:3: prima e dopo la patch", 15, weight=600)
+    f.text(24, 54, "Dal minimo al massimo su cento avvii per frequenza, in millisecondi (P1.12c e P1.8d)", 11.5, fill=INK2)
+    data = [
+        ("44,1 kHz", (9.66, 10.93), (8.91, 9.09)),
+        ("48 kHz", (9.21, 10.23), (8.21, 8.35)),
+        ("96 kHz", (8.71, 9.72), (7.84, 7.85)),
+        ("192 kHz", (8.55, 9.67), (7.67, 7.80)),
+    ]
+    x0, x1 = 110, 700
+
+    def at(ms):
+        return x0 + (ms - 4) / (12 - 4) * (x1 - x0)
+
+    top, row = 96, 44
+    for tick in range(4, 13, 2):
+        f.line(at(tick), top - 10, at(tick), top + 4 * row - 6, GRID)
+        f.text(at(tick), top + 4 * row + 10, f"{tick} ms", 11, "middle", INK2)
+    f.line(at(10), top - 22, at(10), top + 4 * row - 6, CRITICAL, 1.5)
+    f.text(at(10) + 6, top - 14, "limite di R-01: 10 ms", 11.5)
+    for index, (rate, stock, patched) in enumerate(data):
+        y = top + index * row
+        f.text(x0 - 12, y + 18, rate, 12, "end")
+        for offset, (low, high), colour in ((0, stock, ORANGE), (16, patched, BLUE)):
+            f.rect(at(low), y + offset, max(at(high) - at(low), 4), 12, colour, rx=2)
+            f.text(at(high) + 8, y + offset + 10, f"{comma(low)}–{comma(high)}", 10.5, fill=INK2)
+    # The legend.
+    y = top + 4 * row + 34
+    f.rect(x0, y, 14, 10, ORANGE, rx=3)
+    f.text(x0 + 20, y + 9, "kernel di serie", 11.5)
+    f.rect(x0 + 150, y, 14, 10, BLUE, rx=3)
+    f.text(x0 + 170, y + 9, "con iso_asap acceso: sotto il limite a tutte le frequenze", 11.5)
+    f.save("latenza-patch")
+
+
 def giro_dove():
     """Where the round trip inside the interface is spent (steps P1.8b and P1.8c)."""
     f = Figure(760, 400, "Dove passa il tempo del giro dentro l'interfaccia a 48 kHz, con il kernel di serie e con la patch")
@@ -847,6 +884,7 @@ FIGURES = {
     "dove-gira": dove_gira,
     "nodo-abbandonato": nodo_abbandonato,
     "latenza": latenza,
+    "latenza-patch": latenza_patch,
     "giro-dove": giro_dove,
     "thread-1-4": thread_1_4,
     "stime": stime,

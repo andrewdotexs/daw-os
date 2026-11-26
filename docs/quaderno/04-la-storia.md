@@ -452,17 +452,45 @@ Otto fette restano rotte: la patch tocca solo l'uscita, e l'ingresso ha ancora l
 
 ### P1.8d: la patch sotto carico
 
-_26 novembre: consegnato, in attesa della misura._ L'utente ha scelto la prova più diretta: la forma di oggi, quattro thread, un'ora sotto il carico della campagna con l'interruttore acceso. Se passa, i cento avvii dell'accettazione.
+_26 novembre: misurato._ L'utente ha scelto la prova più diretta: la forma di oggi, quattro thread, un'ora sotto il carico della campagna con l'interruttore acceso. Se passa, i cento avvii dell'accettazione.
 
 Lo strumento delle ore ha due giudizi in più, nati dal rischio scritto prima: nessun campione del conteggio fuori posto, e il giro alla fine uguale a quello dell'inizio. Un trasferimento consegnato tardi lascia un buco sul bus, e da lì l'uscita resta indietro per sempre: non è un xrun, ALSA non lo vede, ma il conteggio sì.
 
-La previsione, questa volta, è un fallimento: da uno a cinque slittamenti nei primi minuti, e un giro finale più lungo di qualche microframe. Tre milioni e mezzo di consegne con un decimo di millisecondo di tempo ciascuna, sugli stessi processori che servono disco e rete. Se va così il rimedio ha già una forma: dare al flusso, all'avvio, l'anticipo che altrimenti si prenderebbe a forza di buchi.
+La previsione, questa volta, era un fallimento: da uno a cinque slittamenti nei primi minuti, e un giro finale più lungo di qualche microframe. Tre milioni e seicentomila consegne con un decimo di millisecondo di tempo ciascuna, sugli stessi processori che servono disco e rete.
+
+**Non è andata così.** L'ora è passata senza un difetto.
+
+| Un'ora a 96 kHz, quattro thread al 60 %, sotto la campagna | Kernel di serie (P1.12c) | Con l'interruttore acceso |
+| --- | --- | --- |
+| Giro del conteggio all'inizio | 908 campioni (9,46 ms) | 729 campioni (7,59 ms) |
+| Giro alla fine | 908 | 729 |
+| Slittamenti, campioni fuori posto, xrun | 0, 0, 0 | 0, 0, 0 |
+| Chiamate di sistema nel calcolo | 0 | 0 |
+
+Poi i cento avvii per frequenza, a macchina ferma: tutti misurati, tutti sotto il limite.
+
+| Frequenza | Giro per il cavo, kernel di serie | Con l'interruttore acceso | R-01 (sotto 10 ms) |
+| --- | --- | --- | --- |
+| 44,1 kHz | 9,66–10,93 ms | 8,91–9,09 ms | **sì** (era no) |
+| 48 kHz | 9,21–10,23 ms | 8,21–8,35 ms | **sì** (era no) |
+| 96 kHz | 8,71–9,72 ms | 7,84–7,85 ms | sì |
+| 192 kHz | 8,55–9,67 ms | 7,67–7,80 ms | sì |
+
+![Intervalli di latenza per frequenza sulla quarta generazione, con il kernel di serie e con la patch, e il limite di 10 millisecondi](img/latenza-patch.svg)
+
+**Figura 4.5.** La quarta generazione prima e dopo la patch. Le barre blu sono anche più corte: da un avvio all'altro il giro cambia meno.
+
+La figura mostra una cosa che non cercavamo. Con il kernel di serie il giro cambiava da un avvio all'altro anche di un millisecondo, perché l'anticipo scelto dal controller alla partenza non era sempre lo stesso; una volta su cento cadeva un millisecondo sotto. Con l'interruttore acceso restano due gruppi a un microframe di distanza (un ottavo di millisecondo), e a 96 kHz uno solo. Per chi registra sopra una base è una buona notizia quanto il numero assoluto: una latenza che non cambia si compensa una volta sola.
+
+Che cosa avevo sbagliato. Avevo trattato il decimo di millisecondo come tutto il tempo disponibile, e avevo dato per certo che sotto carico il kernel ogni tanto tardasse di più. Non avevo misurato né l'una né l'altra cosa, e l'avevo scritto; ma avevo scritto anche `FAIL`. Perché abbia retto non lo so ancora dire con un numero: o il thread che serve l'interrupt dell'USB non tarda mai tanto (ha priorità in tempo reale, e i suoi processori non sono mai pieni), o un ritardo di un microframe viene assorbito dalla memoria dell'interfaccia senza lasciare traccia. Sono due ipotesi. Per distinguerle basta leggere il bus mentre la macchina lavora, come in P1.8b.
+
+Che cosa resta. Un'ora non sono le 24 della campagna, che sarà la conferma. La patch non è ancora adottata: l'interruttore nasce spento, e chi lo accende è una decisione da scrivere. E la domanda sul driver nostro ora ha i numeri per essere chiusa: per stare sotto i 10 ms non serve.
 
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: che cosa fare dell'anticipo del controller USB (una modifica piccola al suo driver, le quattro fette, o tutte e due); poi la consegna senza chiamata di sistema, l'avvio (A-72), la decisione su un driver nostro |
+| P1.8 | Il driver della scheda: adottare la patch (chi accende l'interruttore), la decisione su un driver nostro, l'avvio dei flussi (A-72), la consegna senza chiamata di sistema |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |
