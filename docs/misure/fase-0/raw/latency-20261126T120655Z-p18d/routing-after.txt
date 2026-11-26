@@ -1,0 +1,6 @@
+set: PCM 5 Capture Enum: 'PCM 5' -> 'Analogue 5'
+set: PCM 6 Capture Enum: 'PCM 6' -> 'Analogue 6'
+set: Analogue 5 Playback Enum: 'Off' -> 'PCM 5'
+set: Analogue 6 Playback Enum: 'Off' -> 'PCM 6'
+controls changed: 4
+card 0: as /usr/share/dawos/cards/1235-821d.conf says
