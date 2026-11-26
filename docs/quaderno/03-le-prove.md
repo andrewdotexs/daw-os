@@ -374,6 +374,8 @@ Nella macchina virtuale, prima della riga del risultato, ci sono righe `DAWOS-AU
 
 **`dawos-latency-test`**: misura la latenza del giro completo con ogni forma del buffer e ogni frequenza. Una forma è `FRAME:PERIODI`, come `96:3`; dal passo P1.8a anche `FRAME:PERIODI:FETTE`, come `96:3:8`, che chiede al driver un periodo otto volte più corto del ciclo. Per ogni forma dice anche quante interruzioni al secondo hanno fatto i controller USB e, leggendo il bus con `usbmon` in un giro a parte, quanti pacchetti il driver mette in un trasferimento.
 
+**`tools/usb-look.sh`** (dal passo P1.8b): legge il bus USB mentre il motore gira, con `usbmon`. Per l'ingresso e l'uscita della scheda dice quanti trasferimenti al secondo, di quanti pacchetti, quanto restano presso il controller (per l'uscita: con che anticipo sul cavo il driver li consegna), quanti sono in coda, e come avviene l'avvio. Si lancia via ssh, senza immagine nuova.
+
 **`tools/audio-hours.sh`** (`make audio-hours`): giri lunghi, di un'ora, mentre il resto della macchina lavora con il carico della campagna. Tre casi: `passthrough` (i thread non fanno che passare il suono), `loaded` (ogni thread occupato per il 60 % del periodo) e `swap` (due grafi che si scambiano ogni secondo). Ogni caso ha la sua riga `case_verdict`.
 
 ## Gli strumenti del grafo

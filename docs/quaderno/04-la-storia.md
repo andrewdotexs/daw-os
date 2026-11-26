@@ -405,6 +405,16 @@ Il modello era sbagliato: avevo ragionato come se un campione aspettasse «un tr
 
 E lo strumento ha mancato il dato che chiamavo «il più sicuro», i pacchetti per trasferimento letti sul bus: usava un comando, `timeout`, che nell'immagine non c'è.
 
+### P1.8b: leggere il bus
+
+_26 novembre: consegnato, in attesa della misura._ Tre millisecondi restano senza padrone, e stanno in un posto dove il motore non guarda: il bus. L'utente ha scelto di guardarci prima di investire nelle quattro fette.
+
+Il kernel mostra ogni trasferimento USB due volte, quando il driver lo consegna al controller e quando torna, con l'istante di ognuna. Dalla differenza si ricava con che anticipo sul cavo l'uscita viene consegnata: il numero che il sorgente del controller fa sospettare grande.
+
+La domanda conta per un'altra decisione: se quel tempo sta nel driver del controller USB, un driver audio nostro non lo toccherebbe.
+
+Questa volta lo strumento è stato provato prima di consegnarlo, su un bus vero: una scheda audio USB emulata nella macchina virtuale.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |

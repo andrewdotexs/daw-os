@@ -50,4 +50,4 @@ Il quaderno si aggiorna **alla chiusura di ogni passo**, insieme alla guida del 
 
 Un passo senza errori e senza concetti nuovi ha comunque la sua voce nel capitolo 4.
 
-**Aggiornato a**: passo P1.7g chiuso, e con lui tutto P1.7 (criterio 7 raggiunto); P1.8a misurato (26 novembre 2026).
+**Aggiornato a**: passo P1.7g chiuso, e con lui tutto P1.7 (criterio 7 raggiunto); P1.8a misurato; P1.8b consegnato, in attesa della misura (26 novembre 2026).
