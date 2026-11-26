@@ -38,8 +38,17 @@
 # unless the campaign is running: for an acceptance, where an hour
 # begun before the load is an hour to do again.
 #
+# With ASAP=1 (or 0) the hours turn on (or off) the switch that the
+# kernel of step P1.8c gives the USB driver, iso_asap: the output
+# transfers handed to the controller as "as soon as possible". It is
+# put back when the hours end. A transfer handed over late then leaves
+# a hole on the bus, and the output is that much later for good: so in
+# every case the way round of the count must be the same at the end as
+# at the start, and no sample of it out of place (step P1.8d).
+#
 # A case passes when: the engine says "audio: PASS" and "compute: PASS";
-# no xrun; no slip of the count; no record of a cycle lost; no page of
+# no xrun; no slip of the count; no sample of it out of place; the same
+# way round at the end as at the start; no record of a cycle lost; no page of
 # the trace lost; no system call and no kernel entry in the compute
 # phase that is not accounted for (they are listed: the verdict asks for
 # no system call, and reports the entries); no wake-up of 50 us or more;
@@ -71,6 +80,8 @@ CASES=${CASES:-passthrough loaded}
 WARM_UP=${WARM_UP:-60}
 DEVICE_OPTIONS=${DEVICE_OPTIONS:-}
 REQUIRE_CAMPAIGN=${REQUIRE_CAMPAIGN:-}
+ASAP=${ASAP:-}
+SWITCH=/sys/module/snd_usb_audio/parameters/iso_asap
 
 usage() {
 	cat << USAGE
@@ -81,7 +92,8 @@ Usage:
 
 In the environment of --start: RATE (default 96000), SECONDS_JUDGED
 (default 3600), CASES (default "passthrough loaded"; also "swap"),
-REQUIRE_CAMPAIGN (set: do not start unless the campaign is running).
+REQUIRE_CAMPAIGN (set: do not start unless the campaign is running),
+ASAP (0 or 1: the switch iso_asap of the USB driver, for these hours).
 USAGE
 }
 
@@ -141,15 +153,21 @@ judge() {
 	"0 "*) ;;
 	*) why="${why}; slips of the count: ${slips}" ;;
 	esac
+	samples=$(sed -n 's/^count_samples_on_input_[0-9]*: //p' "$1" | head -n 1)
+	case "${samples}" in
+	*" in place, 0 out of place"*) ;;
+	*) why="${why}; samples of the count: ${samples:-not counted}" ;;
+	esac
+	# The way round, as found at the start and as it is at the end.
+	round=$(sed -n 's/^count_on_input_[0-9]*: way round \([0-9]*\) samples.*at the end \([0-9]*\) samples.*/\1 \2/p' "$1" | head -n 1)
+	case "${round}" in
+	"") why="${why}; the way round of the count was not found" ;;
+	*) [ "${round% *}" = "${round#* }" ] || why="${why}; the way round went from ${round% *} to ${round#* } samples" ;;
+	esac
 	if [ "${4:-}" = swap ]; then
 		case "$(field "$1" graph)" in
 		PASS*) ;;
 		*) why="${why}; graph: $(field "$1" graph | cut -c1-160)" ;;
-		esac
-		samples=$(sed -n 's/^count_samples_on_input_[0-9]*: //p' "$1" | head -n 1)
-		case "${samples}" in
-		*" in place, 0 out of place"*) ;;
-		*) why="${why}; samples of the count: ${samples}" ;;
 		esac
 		# One change a second, for all the seconds that are judged.
 		changes=$(field "$1" graph_changes)
@@ -185,6 +203,9 @@ judge() {
 # What a case says, for the summary.
 lines_of() {
 	grep -E '^(syscall_dispatch|syscalls_stopped_in_compute|card_xruns|card_recoveries|card_short_writes|card_followers|slips_on_input_3|count_on_input_[0-9]+|count_slips_on_input_[0-9]+|count_samples_on_input_[0-9]+|graph_file|graph_swap_file|graph_changes|graph_change_[a-z_]+|graph_changes_seen|graph_refused|graph_critical_path_measured_us|graph: |record_of_every_cycle|record, |  period, off|  wake-up +[0-9]|  input and patch|  nodes |  output |  compute, whole|  first awake|  wake_up_bands|  least_margin_us|  card_frames|  periods_gone_by|cycles_to_look_at|card_told_late_by_minute|audio: |compute: )' "$1"
+	# Every slip of the count with its instant, the first twenty: with
+	# the switch iso_asap on they tell when the output fell behind.
+	grep -E '^ *count slip on input ' "$1" | head -n 20
 	grep -A 2 -E '^  slot [0-9]+.* cycle [0-9]+ at ' "$1" | head -n 36
 	awk '/^kernel_entries, wake-ups one by one/ { exit } /^kernel_entries/ { on = 1 } on' "$1"
 }
@@ -203,6 +224,14 @@ run_all() {
 			"${SETUP}" apply --card "${card}"
 			"${SETUP}" apply --card "${card}" "${loop}"
 		} > "${dir}/routing-before.txt" 2>&1
+	fi
+
+	# The switch of the USB driver, for all the cases; put back at the
+	# end, whatever was asked.
+	switch_before=
+	if [ -n "${ASAP}" ]; then
+		switch_before=$(cat "${SWITCH}")
+		echo "${ASAP}" > "${SWITCH}"
 	fi
 
 	echo "settling the interface at ${RATE} Hz" > "${dir}/now.txt"
@@ -254,6 +283,7 @@ run_all() {
 			echo "== ${name}: ${RATE} Hz, ${what}, ${SECONDS_JUDGED} s after ${WARM_UP} s of warm-up =="
 			echo "from ${started} to $(date -u +%Y-%m-%dT%H:%M:%SZ); uptime_s at the end: $(cut -d. -f1 /proc/uptime)"
 			echo "campaign: ${campaign_before} at the start, $(campaign_state) at the end"
+			echo "iso_asap: $(cat "${SWITCH}" 2> /dev/null || echo "this kernel has no such switch")"
 			echo "smi_count: ${before} before, ${after} after"
 			echo "case_verdict: ${verdict}"
 			lines_of "${dir}/${name}.txt"
@@ -261,6 +291,7 @@ run_all() {
 		} >> "${dir}/summary.txt"
 	done
 
+	[ -z "${switch_before}" ] || echo "${switch_before}" > "${SWITCH}"
 	[ -n "${DEVICE_OPTIONS}" ] || "${SETUP}" apply --card "${card}" > "${dir}/routing-after.txt" 2>&1
 	# A run that was killed leaves its trace on: take it away.
 	[ -d /sys/kernel/tracing/instances/dawos-engine ] &&
@@ -343,6 +374,11 @@ if [ -n "${REQUIRE_CAMPAIGN}" ] && ! systemctl is-active --quiet dawos-campaign;
 	die "the campaign is not running, and REQUIRE_CAMPAIGN asks for it: start it with 'make campaign' first"
 fi
 command -v "${ENGINE}" > /dev/null || die "${ENGINE} is not in this image"
+case "${ASAP}" in
+'') ;;
+0 | 1) [ -w "${SWITCH}" ] || die "this kernel has no switch iso_asap (${SWITCH}): it comes with step P1.8c" ;;
+*) die "ASAP is 0 or 1" ;;
+esac
 card=
 identifier=none
 model=none
@@ -376,6 +412,7 @@ rm -f "${RUN}/stop"
 	echo "rate: ${RATE}"
 	echo "seconds: ${SECONDS_JUDGED} after ${WARM_UP} of warm-up"
 	echo "cases: ${CASES}"
+	echo "iso_asap: ${ASAP:-left as it is: $(cat "${SWITCH}" 2> /dev/null || echo "this kernel has no such switch")}"
 	[ -n "${DEVICE_OPTIONS}" ] && echo "device_options: ${DEVICE_OPTIONS}"
 	echo "timer_migration: $(cat /proc/sys/kernel/timer_migration 2> /dev/null)"
 	echo "uptime_s: $(cut -d. -f1 /proc/uptime)"
@@ -390,7 +427,7 @@ cp "${SELF}" "${copy}" || die "could not copy ${SELF} to ${RUN}"
 systemd-run --quiet --unit="${UNIT}" --collect \
 	--description="dawOS engine, acceptance hours (P1.6e)" \
 	--setenv=RATE="${RATE}" --setenv=SECONDS_JUDGED="${SECONDS_JUDGED}" --setenv=CASES="${CASES}" \
-	--setenv=WARM_UP="${WARM_UP}" --setenv=DEVICE_OPTIONS="${DEVICE_OPTIONS}" \
+	--setenv=WARM_UP="${WARM_UP}" --setenv=DEVICE_OPTIONS="${DEVICE_OPTIONS}" --setenv=ASAP="${ASAP}" \
 	/bin/sh "${copy}" --run "${dir}" ||
 	die "could not start the hours"
 

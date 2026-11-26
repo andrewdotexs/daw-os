@@ -450,6 +450,14 @@ Avevo previsto meno: tra 1,5 e 1,8 ms presso il controller, contando come antici
 
 Otto fette restano rotte: la patch tocca solo l'uscita, e l'ingresso ha ancora la sua regola. Non importa più.
 
+### P1.8d: la patch sotto carico
+
+_26 novembre: consegnato, in attesa della misura._ L'utente ha scelto la prova più diretta: la forma di oggi, quattro thread, un'ora sotto il carico della campagna con l'interruttore acceso. Se passa, i cento avvii dell'accettazione.
+
+Lo strumento delle ore ha due giudizi in più, nati dal rischio scritto prima: nessun campione del conteggio fuori posto, e il giro alla fine uguale a quello dell'inizio. Un trasferimento consegnato tardi lascia un buco sul bus, e da lì l'uscita resta indietro per sempre: non è un xrun, ALSA non lo vede, ma il conteggio sì.
+
+La previsione, questa volta, è un fallimento: da uno a cinque slittamenti nei primi minuti, e un giro finale più lungo di qualche microframe. Tre milioni e mezzo di consegne con un decimo di millisecondo di tempo ciascuna, sugli stessi processori che servono disco e rete. Se va così il rimedio ha già una forma: dare al flusso, all'avvio, l'anticipo che altrimenti si prenderebbe a forza di buchi.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |

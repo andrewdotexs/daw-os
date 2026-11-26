@@ -50,4 +50,4 @@ Il quaderno si aggiorna **alla chiusura di ogni passo**, insieme alla guida del 
 
 Un passo senza errori e senza concetti nuovi ha comunque la sua voce nel capitolo 4.
 
-**Aggiornato a**: passo P1.7g chiuso, e con lui tutto P1.7 (criterio 7 raggiunto); P1.8a, P1.8b e P1.8c misurati: i tre millisecondi sono del controller USB, e una patch di una riga ne toglie due a macchina ferma; resta la prova sotto carico (26 novembre 2026).
+**Aggiornato a**: passo P1.7g chiuso, e con lui tutto P1.7 (criterio 7 raggiunto); P1.8a, P1.8b e P1.8c misurati: i tre millisecondi sono del controller USB, e una patch di una riga ne toglie due a macchina ferma; P1.8d, la prova sotto carico, consegnato (26 novembre 2026).
