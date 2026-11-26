@@ -380,7 +380,7 @@ Tre cose che il confronto ha insegnato.
 
 ### P1.8a: dove stanno i tre millisecondi
 
-_26 novembre: consegnato, in attesa della misura._ Sulla Scarlett di quarta generazione il giro per il cavo è 10,2 ms a 48 kHz, due decimi sopra il limite, e sotto il buffer ci sono 3,5 ms che nessuna forma provata ha toccato. Il passo P1.8 è quello del driver, e l'utente ha scelto di cominciare da qui: capire dove stanno.
+_26 novembre: misurato._ Sulla Scarlett di quarta generazione il giro per il cavo è 10,2 ms a 48 kHz, due decimi sopra il limite, e sotto il buffer ci sono 3,5 ms che nessuna forma provata ha toccato. Il passo P1.8 è quello del driver, e l'utente ha scelto di cominciare da qui: capire dove stanno.
 
 Il sorgente del driver dice due cose. La prima era nota: con un'interfaccia a retroazione implicita la modalità a bassa latenza è esclusa, e i campioni vengono copiati in un blocco USB quando il blocco si prepara, non quando parte. La seconda no: **la lunghezza dei blocchi dipende dal periodo che il motore chiede**. Con il periodo di 2 ms usato finora sono blocchi da un millisecondo, in entrata e in uscita; con un periodo di un quarto di millisecondo sono un pacchetto solo, 125 µs.
 
@@ -391,6 +391,29 @@ Nel motore è entrata un'opzione sola, `--slices`: il driver riceve un periodo p
 Il primo giro si è fermato, ancora una volta, alla macchina virtuale dell'utente; ma non per il codice nuovo. È fallito il caso più vecchio di tutti: il thread che tiene la scheda stava recuperando un xrun quando il giro è finito, e il motore lo ha preso per bloccato. Una corsa che c'era dal passo P1.4 e che serve una macchina molto lenta per vedere.
 
 La previsione, scritta prima: con otto fette il giro si accorcia tra 0,9 e 1,75 ms, e a 48 kHz scende sotto i 10 ms; a 44,1 è al limite. Se non si accorcia, i tre millisecondi sono dell'interfaccia e questa strada è chiusa.
+
+La misura ha dato una terza risposta, che non avevo messo in conto.
+
+| Fette | Giro per il cavo a 48 kHz, al massimo | Che cosa succede |
+| --- | --- | --- |
+| 1 (com'era) | 10,23 ms | — |
+| 2 | 10,21 | Quasi nulla; ogni tanto un avvio mezzo millisecondo più corto |
+| 4 | **9,73** | Mezzo millisecondo in meno a tutte le frequenze, pulito in due minuti |
+| 8 | — | Il bus porta due pacchetti su tre: il ciclo dura 3 ms invece di 2, metà dei campioni fuori posto, e ALSA non conta un xrun |
+
+Il modello era sbagliato: avevo ragionato come se un campione aspettasse «un trasferimento» in entrata e uno in uscita. Ma l'uscita insegue l'ingresso trasferimento per trasferimento, e la distanza tra i due flussi sul cavo si decide **all'avvio**: la lunghezza del trasferimento conta solo per come l'avvio va. Nel sorgente del controller USB c'è un candidato per una parte dei tre millisecondi: un flusso che parte a coda vuota è messo in programma da 1,25 a 2,25 ms più avanti.
+
+E lo strumento ha mancato il dato che chiamavo «il più sicuro», i pacchetti per trasferimento letti sul bus: usava un comando, `timeout`, che nell'immagine non c'è.
+
+### P1.8b: leggere il bus
+
+_26 novembre: consegnato, in attesa della misura._ Tre millisecondi restano senza padrone, e stanno in un posto dove il motore non guarda: il bus. L'utente ha scelto di guardarci prima di investire nelle quattro fette.
+
+Il kernel mostra ogni trasferimento USB due volte, quando il driver lo consegna al controller e quando torna, con l'istante di ognuna. Dalla differenza si ricava con che anticipo sul cavo l'uscita viene consegnata: il numero che il sorgente del controller fa sospettare grande.
+
+La domanda conta per un'altra decisione: se quel tempo sta nel driver del controller USB, un driver audio nostro non lo toccherebbe.
+
+Questa volta lo strumento è stato provato prima di consegnarlo, su un bus vero: una scheda audio USB emulata nella macchina virtuale.
 
 ### Che cosa viene dopo
 
