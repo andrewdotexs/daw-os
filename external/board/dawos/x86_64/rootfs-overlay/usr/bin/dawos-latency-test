@@ -241,14 +241,23 @@ transfers() {
 		return 0
 	fi
 	engine --allow-xruns "$@" --seconds 5 --count 5:5 > /dev/null 2>&1 &
+	engine_pid=$!
 	sleep 3
+	# One second of the bus, read by a cat that is then stopped: the
+	# image has no "timeout" command (the first version used it, and
+	# read nothing: step P1.8a).
+	cat "${monitor}" > "${dir}/usbmon.raw" 2> /dev/null &
+	reader_pid=$!
+	sleep 1
+	kill "${reader_pid}" 2> /dev/null
+	wait "${reader_pid}" 2> /dev/null
+	wait "${engine_pid}" 2> /dev/null
 	# Isochronous transfers of the card only, as they are handed to the
 	# controller: "S", then "Zi" or "Zo" with bus, device and endpoint,
 	# then the number of packets.
-	timeout 1 cat "${monitor}" 2> /dev/null |
-		awk -v device=":${device}:" '$3 == "S" && $4 ~ /^Z[io]:/ && index($4, device)' \
-			> "${dir}/usbmon-${transfers_name}.txt"
-	wait
+	awk -v device=":${device}:" '$3 == "S" && $4 ~ /^Z[io]:/ && index($4, device)' \
+		"${dir}/usbmon.raw" > "${dir}/usbmon-${transfers_name}.txt"
+	rm -f "${dir}/usbmon.raw"
 	if [ -s "${dir}/usbmon-${transfers_name}.txt" ]; then
 		awk '{ seen[$4 " " $6]++ }
 			END { for (key in seen) { split(key, part, " "); printf "    %s: %d transfers in a second, of %s packets\n", part[1], seen[key], part[2] } }' \
