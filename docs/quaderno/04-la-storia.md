@@ -378,11 +378,23 @@ Tre cose che il confronto ha insegnato.
 - **Le pulizie della TLB sono tre per processore in tutte e due le ore**, con un carico intorno venti volte diverso sulla rete. Non è il caso: è qualcosa che il processo fa a un punto fisso della sua corsa. Quando, nella seconda ora, non si sa: il rapporto elenca solo le prime dodici righe, ed erano di un altro tipo (A-75).
 - **Uno degli ingressi nel kernel ha finalmente una causa.** `__bpf_arch_ibpb` è la pulizia del predittore dei salti che il kernel fa su tutti i processori quando carica un programma BPF classico; e a caricarli, qui, è con ogni probabilità il server SSH a ogni connessione. Le connessioni le fanno i nostri strumenti di misura: più traffico di rete, più pulizie (A-76).
 
+### P1.8a: dove stanno i tre millisecondi
+
+_26 novembre: consegnato, in attesa della misura._ Sulla Scarlett di quarta generazione il giro per il cavo è 10,2 ms a 48 kHz, due decimi sopra il limite, e sotto il buffer ci sono 3,5 ms che nessuna forma provata ha toccato. Il passo P1.8 è quello del driver, e l'utente ha scelto di cominciare da qui: capire dove stanno.
+
+Il sorgente del driver dice due cose. La prima era nota: con un'interfaccia a retroazione implicita la modalità a bassa latenza è esclusa, e i campioni vengono copiati in un blocco USB quando il blocco si prepara, non quando parte. La seconda no: **la lunghezza dei blocchi dipende dal periodo che il motore chiede**. Con il periodo di 2 ms usato finora sono blocchi da un millisecondo, in entrata e in uscita; con un periodo di un quarto di millisecondo sono un pacchetto solo, 125 µs.
+
+Tutte le forme provate fin qui avevano periodi di un millisecondo o più: per questo la «costante» sembrava non dipendere dalla forma.
+
+Nel motore è entrata un'opzione sola, `--slices`: il driver riceve un periodo più corto, il motore si sveglia una volta per ciclo come prima. Per ora con un thread, perché gli altri si sveglierebbero a ogni periodo del driver.
+
+La previsione, scritta prima: con otto fette il giro si accorcia tra 0,9 e 1,75 ms, e a 48 kHz scende sotto i 10 ms; a 44,1 è al limite. Se non si accorcia, i tre millisecondi sono dell'interfaccia e questa strada è chiusa.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: la latenza sulla quarta generazione (A-69), lo scatto del periodo (A-68), la scrittura corta all'avvio (A-72) |
+| P1.8 | Il driver della scheda: dopo la misura di P1.8a, i thread con il periodo corto e la prova sotto carico, la consegna senza chiamata di sistema, la seconda generazione, l'avvio (A-72), la decisione su un driver nostro |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |

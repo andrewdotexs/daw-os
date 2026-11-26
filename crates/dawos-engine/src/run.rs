@@ -508,12 +508,22 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             playback: device.clone(),
             format,
             periods: options.periods,
+            slices: options.slices,
         })?),
         _ => None,
     };
     // With more live threads than one, the others wake on the timer of
     // the input stream: better to know now that it is there.
     if let Some(card) = &card {
+        // The timer of the stream ticks at every period of the driver:
+        // with several of them in a quantum the other threads would
+        // wake that many times a cycle (step P1.8a measures with one).
+        if threads > 1 && options.slices > 1 {
+            return Err(format!(
+                "--slices {}: with one live thread for now (--threads 1): the others wake at every period of the driver",
+                options.slices
+            ));
+        }
         if threads > 1 {
             card.followers_can_wake().map_err(|error| {
                 format!("the other live threads cannot wake with the card ({error}): --threads 1 runs without them")
@@ -2185,6 +2195,13 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         "card_period_frames: {} (buffer: capture {}, playback {})",
         info.period, info.capture_buffer, info.playback_buffer
     );
+    if info.card_period != info.period {
+        println!(
+            "card_driver_period_frames: {} ({} of them in a quantum: the engine wakes once a quantum)",
+            info.card_period,
+            info.period / info.card_period.max(1)
+        );
+    }
     println!("card_linked: {}", if info.linked { "yes" } else { "no" });
     println!(
         "card_period_stamps: {}",

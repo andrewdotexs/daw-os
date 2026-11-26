@@ -232,6 +232,18 @@ run_case() {
 		fi
 		;;
 	esac
+	# A case with a period of the driver shorter than the quantum (step
+	# P1.8a): the report must say what the driver was asked for.
+	driver_period=
+	case " $* " in
+	*" --slices "*)
+		driver_period=$(field "${dir}/${name}.txt" card_driver_period_frames)
+		if [ -z "${driver_period}" ]; then
+			result=FAIL
+			driver_period="not said"
+		fi
+		;;
+	esac
 	[ "${result}" = PASS ] && passed=$((passed + 1))
 	{
 		printf '%-18s %-5s' "${name}" "${result}"
@@ -257,6 +269,7 @@ run_case() {
 		[ -n "${counted}" ] && printf '; %s, slips %s, out of place %s' "${counted}" \
 			"$(sed -n 's/^count_slips_on_input_[0-9]*: \([0-9]*\) .*/\1/p' "${dir}/${name}.txt")" \
 			"$(sed -n 's/^count_samples_on_input_[0-9]*: .* in place, \([0-9]*\) out of place.*/\1/p' "${dir}/${name}.txt")"
+		[ -n "${driver_period}" ] && printf '; period of the driver: %s' "${driver_period}"
 		[ -n "${graph}" ] && printf '; graph %s' "${graph}"
 		[ -z "${graph}" ] && case " $* " in *" --graph "*) printf '; graph: no verdict' ;; esac
 		# Why, in the engine's own words.
@@ -413,6 +426,11 @@ if [ "${mode}" = loopback ]; then
 	sed 's/after=12/after=3/' "${GRAPHS}/trap.graph" > "${dir}/trap.graph"
 	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:6"
 	run_case trap --seconds 12 --allow-xruns --threads 4 --graph "${dir}/trap.graph"
+	# A period of the driver four times shorter than the quantum (step
+	# P1.8a): the engine wakes once a quantum, and the count comes back
+	# all the same. One live thread: see the option --slices.
+	sound="--tone 3 --tone-cycles 3 --listen 3 --count 5:5"
+	run_case slices --seconds "${seconds}" --allow-xruns --threads 1 --slices 4
 	if [ "${loaded}" = yes ]; then
 		modprobe -r snd-aloop 2> /dev/null || true
 	fi

@@ -100,6 +100,8 @@ Altri due casi, visti in P1.7g. Quando un processo restituisce o sposta memoria,
 
 **Figura 2.3.** Perché il periodo arriva «a scatti»: il driver vede l'audio a blocchi di un millisecondo.
 
+**Periodo del driver e ciclo del motore.** Non devono per forza coincidere. Il driver USB dimensiona i suoi blocchi sul periodo che gli si chiede: al più un millisecondo, e comunque più corti di un periodo. Chiedendogli un periodo più corto del ciclo del motore (una **fetta**: metà, un quarto, un ottavo) i blocchi si accorciano fino a un pacchetto solo, e i campioni aspettano meno in entrata e in uscita; il motore continua a svegliarsi una volta per ciclo. Il prezzo: più interruzioni USB, e meno scorta nel driver se il sistema si ferma un momento. È ciò che misura il passo P1.8a.
+
 **Retroazione implicita.** Il modo in cui la Scarlett tiene in passo uscita e ingresso: il computer manda in uscita tanti campioni quanti ne ha appena ricevuti in ingresso. Funziona, ma il driver di Linux in questa modalità rinuncia a un'ottimizzazione di latenza: sulla quarta generazione il giro dentro il computer è 3,5 ms più lungo che sulla seconda (punto aperto A-69).
 
 **Routing e loopback.** La Scarlett ha un mixer interno che decide quale segnale va dove. Per le prove serve che un'uscita torni su un ingresso: **con un cavo** (uscita 3 → ingresso 3, attraverso i convertitori) o **dentro l'interfaccia**, senza convertitori, bit per bit (canali 5 e 6). I file `*.test-loop.conf` mettono l'interfaccia in questo stato e la prova lo ripristina alla fine.

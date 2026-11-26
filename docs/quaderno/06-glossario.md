@@ -47,6 +47,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Fair server** | La riserva di tempo del kernel per i processi normali; spenta sui processori live | Cap. 2, Il tempo reale |
 | **Fase di attesa, fase di calcolo** | Le due metà del ciclo: una chiamata bloccante, poi nessun ingresso nel kernel | Cap. 2, Il tempo reale |
 | **fcp-server** | Il programma che traduce i comandi della Scarlett di quarta generazione | Cap. 2, La scheda audio |
+| **Fetta** (_slice_) | Un periodo del driver più corto del ciclo del motore: due, quattro o otto in un ciclo (opzione `--slices`) | Cap. 2, La scheda audio |
 | **Follower** | Un thread live che non tiene la scheda e la segue attraverso un timer | Cap. 2, Il motore |
 | **Forma del buffer** | Frame per periodo e periodi nel buffer, come `96:3` | Cap. 2, L'audio come numeri |
 | **Frame** | I campioni di tutti i canali nello stesso istante | Cap. 2, L'audio come numeri |
@@ -112,7 +113,8 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Trappola** (`trap`) | Un nodo di prova che dopo un certo tempo non ritorna più, tenendo ciò su cui lavorava | Cap. 3, La prova audio |
 | **UKI** | Kernel e riga di comando in un solo file firmato | Cap. 2, La piattaforma |
 | **`unsafe`** | Codice Rust che il compilatore non può verificare: ammesso in un solo modulo | Cap. 2, Il calcolo |
-| **URB** | Il pacchetto di lavoro del driver USB: per l'ingresso audio, un millisecondo | Cap. 2, La scheda audio |
+| **URB** | Il blocco di lavoro del driver USB (un trasferimento): per l'audio, da uno a otto pacchetti, cioè da 125 µs a un millisecondo secondo il periodo chiesto | Cap. 2, La scheda audio |
+| **usbmon** | Lo strumento del kernel che mostra ogni trasferimento che passa su un bus USB | Cap. 3 |
 | **Verdetto** | La riga `PASS` o `FAIL` con cui uno strumento giudica sé stesso | Cap. 3, I verdetti |
 | **Xrun** | La scheda rimasta senza campioni da suonare, o senza posto per quelli registrati | Cap. 2, L'audio come numeri |
 

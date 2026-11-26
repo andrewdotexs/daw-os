@@ -40,6 +40,19 @@
 # and 192 kHz, so that a period lasts the same. The default is the shape
 # of the engine, 96:3 (decision D-14).
 #
+# "FRAMES:PERIODS:SLICES" asks the driver for a period SLICES times
+# shorter than the quantum of the engine (step P1.8a): the engine wakes
+# once a quantum all the same, but the USB driver sizes its transfers on
+# the period it is asked for, 1 ms each with a period of 2 ms, down to
+# one packet (125 us) with a period of 250 us. For now the engine does
+# it with one live thread: when a shape has slices, every shape of the
+# same launch is measured with one thread, so that they compare.
+#
+# For every shape, besides the way round: how many interrupts a second
+# the USB controllers raised in the long run, and, where the kernel
+# lets the bus be read (usbmon), how many packets the driver put in a
+# transfer, read in a short run of its own.
+#
 #   dawos-latency-test                          a quick look, 6 minutes
 #   dawos-latency-test --runs 100 --long 600    the acceptance, an hour
 #
@@ -58,11 +71,13 @@ LIMIT_MS=10
 usage() {
 	cat << USAGE
 Usage:
-  ${PROG} [--card N] [--rates "HZ ..."] [--shapes "FRAMES:PERIODS ..."]
+  ${PROG} [--card N] [--rates "HZ ..."] [--shapes "FRAMES:PERIODS[:SLICES] ..."]
           [--runs N] [--long SECONDS] [LABEL]
 
   --rates LIST    sample rates (default "44100 48000 96000 192000")
-  --shapes LIST   shapes of the buffers (default "96:3", the engine's own)
+  --shapes LIST   shapes of the buffers (default "96:3", the engine's own);
+                  FRAMES:PERIODS:SLICES asks the driver for a period
+                  SLICES times shorter than the quantum
   --runs N        short runs per shape, each a fresh start (default 10)
   --long SECONDS  length of the long run per shape; 0: none; from 120 up
                   it is judged, after a minute of warm-up (default 60)
@@ -131,6 +146,16 @@ case "${runs}${long}" in
 '' | *[!0-9]*) die "--runs and --long take a number" ;;
 esac
 [ "$(id -u)" = 0 ] || die "must run as root"
+# One live thread for every shape, when one of them has slices.
+threads_option=
+for shape in ${shapes}; do
+	case "${shape}" in
+	*:*:1) ;;
+	*:*:*) threads_option="--threads 1" ;;
+	*:*) ;;
+	*) die "shape '${shape}': not FRAMES:PERIODS or FRAMES:PERIODS:SLICES" ;;
+	esac
+done
 if [ -z "${card}" ]; then
 	card=$(first_usb_card) || die "no USB sound card: is the interface connected?"
 fi
@@ -162,6 +187,7 @@ mkdir -p "${dir}" || die "cannot create ${dir}"
 	echo "implicit_fb: $(cat /sys/module/snd_usb_audio/parameters/implicit_fb 2> /dev/null)"
 	echo "rates: ${rates}"
 	echo "shapes: ${shapes}"
+	echo "live_threads: ${threads_option:-as many as the live CPUs}"
 	echo "runs: ${runs}"
 	echo "long_s: ${long}"
 } > "${dir}/meta.txt"
@@ -178,7 +204,7 @@ if [ -r "${CARDS_DIR}/${model}.conf" ]; then
 fi
 
 # One line per short run: what a later look needs.
-echo "rate frames periods run xruns inside_first inside_last inside_slips cable_least cable_median cable_most cable_match" > "${dir}/runs.txt"
+echo "rate frames periods run xruns inside_first inside_last inside_slips cable_least cable_median cable_most cable_match slices" > "${dir}/runs.txt"
 : > "${dir}/summary.txt"
 
 say() {
@@ -188,8 +214,56 @@ say() {
 # The engine. The short runs are never judged by its own verdict (they
 # are given --allow-xruns): their figures are.
 engine() {
-	# shellcheck disable=SC2086  # device_options is several words
-	"${ENGINE}" run --backend alsa ${device_options} --require-rt "$@"
+	# shellcheck disable=SC2086  # device_options and threads_option are several words
+	"${ENGINE}" run --backend alsa ${device_options} ${threads_option} --require-rt "$@"
+}
+
+# Interrupts raised so far by the USB controllers, all CPUs together.
+usb_interrupts() {
+	awk '/xhci[-_]hcd/ { for (field = 2; field <= NF && $field ~ /^[0-9]+$/; field++) total += $field }
+		END { print total + 0 }' /proc/interrupts
+}
+
+# What the driver puts in a transfer, read on the bus itself for one
+# second of a short run of its own: reading the bus takes time from the
+# driver, and that is not for a run that is measured. $1: the name of
+# the shape; the rest: the options of the engine.
+transfers() {
+	transfers_name=$1
+	shift
+	where=$(cat "/proc/asound/card${card}/usbbus" 2> /dev/null)
+	bus=$(echo "${where%%/*}" | sed 's/^0*//')
+	device=${where##*/}
+	[ -d /sys/kernel/debug/usb ] || mount -t debugfs debugfs /sys/kernel/debug 2> /dev/null
+	monitor="/sys/kernel/debug/usb/usbmon/${bus:-none}u"
+	if [ -z "${bus}" ] || [ ! -r "${monitor}" ]; then
+		say "  transfers on the bus: not read (this kernel does not show the bus of the card)"
+		return 0
+	fi
+	engine --allow-xruns "$@" --seconds 5 --count 5:5 > /dev/null 2>&1 &
+	sleep 3
+	# Isochronous transfers of the card only, as they are handed to the
+	# controller: "S", then "Zi" or "Zo" with bus, device and endpoint,
+	# then the number of packets.
+	timeout 1 cat "${monitor}" 2> /dev/null |
+		awk -v device=":${device}:" '$3 == "S" && $4 ~ /^Z[io]:/ && index($4, device)' \
+			> "${dir}/usbmon-${transfers_name}.txt"
+	wait
+	if [ -s "${dir}/usbmon-${transfers_name}.txt" ]; then
+		awk '{ seen[$4 " " $6]++ }
+			END { for (key in seen) { split(key, part, " "); printf "    %s: %d transfers in a second, of %s packets\n", part[1], seen[key], part[2] } }' \
+			"${dir}/usbmon-${transfers_name}.txt" | sort > "${dir}/transfers.tmp"
+		say "  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):"
+		tee -a "${dir}/summary.txt" < "${dir}/transfers.tmp"
+		rm -f "${dir}/transfers.tmp"
+		# The lines themselves: the first forty are enough to check the
+		# reading above.
+		sed -n '1,40p' "${dir}/usbmon-${transfers_name}.txt" > "${dir}/usbmon.tmp"
+		mv "${dir}/usbmon.tmp" "${dir}/usbmon-${transfers_name}.txt"
+	else
+		rm -f "${dir}/usbmon-${transfers_name}.txt"
+		say "  transfers on the bus: none read in a second"
+	fi
 }
 
 failures=0
@@ -205,18 +279,30 @@ for rate in ${rates}; do
 	for shape in ${shapes}; do
 		frames=$((${shape%%:*} * factor))
 		periods=${shape#*:}
+		slices=1
+		case "${periods}" in
+		*:*)
+			slices=${periods#*:}
+			periods=${periods%%:*}
+			;;
+		esac
+		case "${slices}" in
+		'' | *[!0-9]* | 0) die "shape '${shape}': the slices are a number from 1 up" ;;
+		esac
+		[ $((frames % slices)) -eq 0 ] || die "shape '${shape}': ${frames} frames are not ${slices} periods of whole frames"
 		if [ "${rate}" != "${current_rate}" ]; then
 			# The interface needs some seconds after a change of rate.
 			engine --allow-xruns --rate "${rate}" --seconds 8 --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
 			current_rate=${rate}
 		fi
 		name="${rate}-${frames}x${periods}"
+		[ "${slices}" -gt 1 ] && name="${name}s${slices}"
 		say ""
-		say "-- ${rate} Hz, ${frames} frames x ${periods} periods ($(awk -v f="${frames}" -v p="${periods}" -v r="${rate}" 'BEGIN { printf "%.2f", f * p * 1000 / r }') ms of buffer) --"
+		say "-- ${rate} Hz, ${frames} frames x ${periods} periods ($(awk -v f="${frames}" -v p="${periods}" -v r="${rate}" 'BEGIN { printf "%.2f", f * p * 1000 / r }') ms of buffer)$([ "${slices}" -gt 1 ] && echo ", the driver asked for periods of $((frames / slices)) frames (${slices} in a quantum)") --"
 
 		run=1
 		while [ "${run}" -le "${runs}" ]; do
-			engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
+			engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --slices "${slices}" --seconds 2 \
 				--count 5:5 --burst 3:3 > "${dir}/run.txt" 2> "${dir}/run.err"
 			inside=$(field "${dir}/run.txt" count_on_input_5)
 			cable=$(field "${dir}/run.txt" bursts_3_to_3)
@@ -225,6 +311,7 @@ for rate in ${rates}; do
 				"$(echo "${inside}" | sed -n 's/^way round \([0-9]*\) samples.*at the end \([0-9]*\) samples.*/\1 \2/p' | grep . || echo "- -")" \
 				"$(field "${dir}/run.txt" count_slips_on_input_5 | sed 's/ .*//' | grep . || echo -)" \
 				"$(echo "${cable}" | sed -n 's/.*way round \([0-9.]*\) to \([0-9.]*\) samples, median \([0-9.]*\) .* at least \([0-9.]*\)$/\1 \3 \2 \4/p' | grep . || echo "- - - -")" \
+				"${slices}" \
 				>> "${dir}/runs.txt"
 			# The first run of a shape is kept whole, as an example.
 			[ "${run}" = 1 ] && cp "${dir}/run.txt" "${dir}/first-${name}.txt"
@@ -235,7 +322,7 @@ for rate in ${rates}; do
 		# What the short runs of this shape say, together. The length
 		# inside is the one at the end of each run: the first one found
 		# comes before the slips of the start.
-		verdict=$(awk -v rate="${rate}" -v frames="${frames}" -v periods="${periods}" -v limit="${LIMIT_MS}" '
+		verdict=$(awk -v rate="${rate}" -v frames="${frames}" -v periods="${periods}" -v slices="${slices}" -v limit="${LIMIT_MS}" '
 			function ms(samples) { return samples * 1000 / rate }
 			# The keys of a table as numbers in order, in list[1..n].
 			function in_order(table, list,    key, n, i, j, held) {
@@ -254,7 +341,7 @@ for rate in ${rates}; do
 				for (i = 1; i <= n; i++) text = text " " list[i] " (" table[list[i]] ")"
 				return text
 			}
-			$1 == rate && $2 == frames && $3 == periods {
+			$1 == rate && $2 == frames && $3 == periods && $NF == slices {
 				runs++
 				xruns += $5
 				if ($7 != "-") {
@@ -307,7 +394,7 @@ for rate in ${rates}; do
 
 		# The same way round with impulses instead of noise: the two
 		# must agree, once the length inside is taken away from each.
-		engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds 2 \
+		engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --slices "${slices}" --seconds 2 \
 			--count 5:5 --impulse 3:3 > "${dir}/impulse-${name}.txt" 2>&1
 		inside=$(field "${dir}/impulse-${name}.txt" count_on_input_5 | sed -n 's/.*at the end \([0-9]*\) samples.*/\1/p')
 		cable=$(field "${dir}/impulse-${name}.txt" bursts_3_to_3)
@@ -324,9 +411,10 @@ for rate in ${rates}; do
 		*) shape_failed=1 ;;
 		esac
 
+		interrupts_before=$(usb_interrupts)
 		if [ "${long}" -ge 120 ]; then
 			# Judged by the engine itself, as in dawos-audio-test.
-			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds "${long}" --warm-up 60 \
+			engine --rate "${rate}" --quantum "${frames}" --periods "${periods}" --slices "${slices}" --seconds "${long}" --warm-up 60 \
 				--tone 3 --tone-cycles 3 --listen 3 --count 5:5 > "${dir}/long-${name}.txt" 2>&1
 			audio=$(field "${dir}/long-${name}.txt" audio)
 			say "  long run, ${long} s, the first 60 not judged: ${audio:-no verdict}"
@@ -335,13 +423,15 @@ for rate in ${rates}; do
 			*) shape_failed=1 ;;
 			esac
 		elif [ "${long}" -gt 0 ]; then
-			engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --seconds "${long}" \
+			engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --slices "${slices}" --seconds "${long}" \
 				--tone 3 --tone-cycles 3 --listen 3 --count 5:5 > "${dir}/long-${name}.txt" 2>&1
 		fi
 		if [ "${long}" -gt 0 ]; then
 			say "  long run, ${long} s: xruns $(field "${dir}/long-${name}.txt" card_xruns); count slips $(field "${dir}/long-${name}.txt" count_slips_on_input_5); slips of the tone $(field "${dir}/long-${name}.txt" slips_on_input_3)"
 			grep 'count slip on input' "${dir}/long-${name}.txt" | sed 's/^ */    /' | tee -a "${dir}/summary.txt"
+			say "  long run: $((($(usb_interrupts) - interrupts_before) / long)) interrupts of the USB controllers a second; worst wake-up $(sed -n 's/^  wake-up  *.* \([0-9.]*\)$/\1/p' "${dir}/long-${name}.txt" | head -n 1) us"
 		fi
+		transfers "${name}" --rate "${rate}" --quantum "${frames}" --periods "${periods}" --slices "${slices}"
 		shapes_done=$((shapes_done + 1))
 		failures=$((failures + shape_failed))
 	done
