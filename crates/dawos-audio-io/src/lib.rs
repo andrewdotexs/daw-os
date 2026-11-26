@@ -25,7 +25,7 @@ mod alsa_card;
 mod alsa_follower;
 mod null;
 
-pub use alsa_backend::{keeper_loop, AlsaBackend, AlsaShared, CardStats};
+pub use alsa_backend::{keeper_loop, AlsaBackend, AlsaShared, CardStats, PAUSE_BEFORE_RESTART_NS};
 pub use alsa_card::{CardConfig, CardInfo, XrunView};
 pub use alsa_follower::AlsaFollower;
 pub use null::NullBackend;

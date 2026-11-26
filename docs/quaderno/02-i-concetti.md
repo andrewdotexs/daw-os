@@ -58,6 +58,8 @@ In più `irqaffinity` manda le interruzioni delle periferiche su altri processor
 
 **Chiamate tra processori (IPI).** Un processore può interromperne un altro per chiedergli di fare qualcosa: rifare la schedulazione, svuotare una cache, eseguire una funzione. Arrivano anche sui processori isolati. Il caso che resta sul 285K: quando il kernel **riscrive il proprio codice** (carica un modulo, accende una traccia) chiede a tutti i processori di sincronizzarsi, con la funzione `do_sync_core`. Sono 72 ingressi all'ora per processore live, meno di 2 µs l'uno _(verificato in P1.6e)_. Regola che ne viene: ciò che fa riscrivere il codice al kernel si fa **prima** che l'audio parta.
 
+Altri due casi, visti in P1.7g. Quando un processo restituisce o sposta memoria, il kernel fa **svuotare la TLB** (la cache delle traduzioni degli indirizzi) a tutti i processori su cui quel processo ha thread, con `flush_tlb_func`: il motore lo provoca a sé stesso tre volte all'ora per processore live (A-75). E quando il kernel carica un **programma BPF classico** (un filtro delle chiamate di sistema, come quello che il server SSH installa a ogni connessione) fa ripulire il **predittore dei salti** a tutti i processori, con `__bpf_arch_ibpb`: è una difesa contro gli attacchi di tipo Spectre, e arriva anche ai live (A-76).
+
 **Migrazione dei timer.** Il kernel può spostare la gestione di un timer su un altro processore per lasciar dormire quello che lo ha armato. Per un thread live vuol dire essere svegliato «attraverso» due processori, con qualche microsecondo in più e ogni tanto molti di più. Nel profilo è spenta (`kernel.timer_migration=0`, dal passo P1.6c).
 
 **Fase di attesa e fase di calcolo.** La regola su cui si regge il motore (ADR 0021): un thread live fa **una sola chiamata bloccante per ciclo**, quella con cui aspetta il periodo. Da lì alla fine del calcolo non entra più nel kernel: niente chiamate di sistema, niente allocazioni di memoria, niente attese su lucchetti. Ogni ingresso nel kernel è un punto in cui il thread può essere trattenuto per un tempo che non controlla.
@@ -97,6 +99,8 @@ In più `irqaffinity` manda le interruzioni delle periferiche su altri processor
 ![Pacchetti USB raggruppati in blocchi da un millisecondo, e i periodi annunciati dai blocchi](img/usb-blocchi.svg)
 
 **Figura 2.3.** Perché il periodo arriva «a scatti»: il driver vede l'audio a blocchi di un millisecondo.
+
+**Periodo del driver e ciclo del motore.** Non devono per forza coincidere. Il driver USB dimensiona i suoi blocchi sul periodo che gli si chiede: al più un millisecondo, e comunque più corti di un periodo. Chiedendogli un periodo più corto del ciclo del motore (una **fetta**: metà, un quarto, un ottavo) i blocchi si accorciano fino a un pacchetto solo, e i campioni aspettano meno in entrata e in uscita; il motore continua a svegliarsi una volta per ciclo. Il prezzo: più interruzioni USB, e meno scorta nel driver se il sistema si ferma un momento. È ciò che misura il passo P1.8a.
 
 **Retroazione implicita.** Il modo in cui la Scarlett tiene in passo uscita e ingresso: il computer manda in uscita tanti campioni quanti ne ha appena ricevuti in ingresso. Funziona, ma il driver di Linux in questa modalità rinuncia a un'ottimizzazione di latenza: sulla quarta generazione il giro dentro il computer è 3,5 ms più lungo che sulla seconda (punto aperto A-69).
 

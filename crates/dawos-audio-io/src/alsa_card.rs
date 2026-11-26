@@ -3,6 +3,11 @@
 //! together, a buffer of a few periods of one quantum each (three,
 //! unless something else is asked: step P1.5).
 //!
+//! The period the driver is asked for may be a slice of the quantum
+//! (step P1.8a): the engine still wakes once a quantum, but a USB
+//! driver sizes its transfers on the period it is asked for, and with a
+//! shorter one the samples wait less on their way in and out.
+//!
 //! Nothing here knows about threads. Every function may enter the
 //! kernel: the live thread calls them in the wait phase of its cycle, or
 //! where the comment says that the call stays in user space.
@@ -26,6 +31,10 @@ pub struct CardConfig {
     /// ([`Format::DEFAULT_PERIODS`]); with two the signal slips on a USB
     /// interface, and with more the way round only gets longer.
     pub periods: u32,
+    /// Periods of the driver in a quantum: 1, the period is the quantum;
+    /// more, the driver is asked for a period that many times shorter
+    /// (the frames of the quantum must be a multiple of it).
+    pub slices: u32,
 }
 
 /// What the driver accepted.
@@ -41,8 +50,12 @@ pub struct CardInfo {
     pub inputs: usize,
     /// Channels of the playback stream.
     pub outputs: usize,
-    /// Frames per period, the same in both directions.
+    /// Frames per period, the same in both directions: the quantum of
+    /// the engine.
     pub period: usize,
+    /// Frames of the period the driver was asked for: the quantum, or a
+    /// slice of it.
+    pub card_period: usize,
     /// Frames of the capture buffer.
     pub capture_buffer: usize,
     /// Frames of the playback buffer.
@@ -162,10 +175,18 @@ fn open_stream(
     direction: Direction,
     format: Format,
     periods: u32,
+    slices: u32,
 ) -> Result<(PCM, usize, usize, bool), String> {
+    if slices == 0 || format.frames % slices != 0 {
+        return Err(format!(
+            "{device}: a quantum of {} frames is not {slices} periods of whole frames",
+            format.frames
+        ));
+    }
     let pcm = PCM::new(device, direction, false)
         .map_err(|error| describe("cannot open the device", device, error))?;
     let frames = i64::from(format.frames);
+    let slice = i64::from(format.frames / slices);
     let whole = i64::from(periods) * frames;
     let channels;
     {
@@ -195,8 +216,8 @@ fn open_stream(
             .set_channels(most)
             .map_err(|error| refuse(&format!("no {most} channels"), error))?;
         hardware
-            .set_period_size(frames, ValueOr::Nearest)
-            .map_err(|error| refuse(&format!("no period of {frames} frames"), error))?;
+            .set_period_size(slice, ValueOr::Nearest)
+            .map_err(|error| refuse(&format!("no period of {slice} frames"), error))?;
         hardware
             .set_buffer_size(whole)
             .map_err(|error| refuse(&format!("no buffer of {whole} frames"), error))?;
@@ -221,9 +242,9 @@ fn open_stream(
                 .map_err(|error| describe("cannot read the rate back", device, error))?,
         )
     };
-    if period != frames || buffer != whole || rate != format.rate {
+    if period != slice || buffer != whole || rate != format.rate {
         return Err(format!(
-            "{device}: asked for {} Hz, a period of {frames} frames and a buffer of {}; the driver set {rate} Hz, {period} and {buffer}",
+            "{device}: asked for {} Hz, a period of {slice} frames and a buffer of {}; the driver set {rate} Hz, {period} and {buffer}",
             format.rate, whole
         ));
     }
@@ -234,6 +255,8 @@ fn open_stream(
             .sw_params_current()
             .map_err(|error| describe("no software parameters", device, error))?;
         let refuse = |what: &str, error| describe(what, device, error);
+        // The engine wakes for a whole quantum, whatever the period of
+        // the driver is.
         software
             .set_avail_min(frames)
             .map_err(|error| refuse("cannot set the wake-up threshold", error))?;
@@ -267,12 +290,14 @@ impl Card {
             Direction::Playback,
             config.format,
             config.periods,
+            config.slices,
         )?;
         let (capture, inputs, capture_buffer, timestamps) = open_stream(
             &config.capture,
             Direction::Capture,
             config.format,
             config.periods,
+            config.slices,
         )?;
         // One trigger for both: they start on the same frame, and an
         // xrun of one stops the other.
@@ -298,6 +323,7 @@ impl Card {
                 inputs,
                 outputs,
                 period: config.format.frames as usize,
+                card_period: (config.format.frames / config.slices) as usize,
                 capture_buffer,
                 playback_buffer,
                 linked,

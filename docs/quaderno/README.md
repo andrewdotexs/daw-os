@@ -25,13 +25,13 @@ Le figure stanno in `img/`, in formato SVG, e sono disegnate da uno script, `too
 tools/quaderno-figures.py
 ```
 
-Il quaderno c'è anche in PDF, in `pdf/`: un file per capitolo e `quaderno-dawos.pdf` con tutto. Si rigenerano con:
+Il quaderno c'è anche in PDF: `pdf/quaderno-dawos.pdf`, con tutti i capitoli, rigenerato a ogni aggiornamento del quaderno. Si rifà con:
 
 ```bash
 tools/quaderno-pdf.sh
 ```
 
-Lo script usa `pandoc` e un Chromium; i PDF nel repository sono quelli dell'ultimo aggiornamento del quaderno.
+Un PDF per ogni capitolo si ottiene con `tools/quaderno-pdf.sh --chapters`, in `pdf/capitoli/`: quelli non stanno nel repository (decisione del 26 novembre 2026: facevano crescere la storia di git di circa 4 MB a ogni passo). Lo script usa `pandoc` e un Chromium.
 
 ## Le convenzioni
 
@@ -50,4 +50,4 @@ Il quaderno si aggiorna **alla chiusura di ogni passo**, insieme alla guida del 
 
 Un passo senza errori e senza concetti nuovi ha comunque la sua voce nel capitolo 4.
 
-**Aggiornato a**: passo P1.7f chiuso; P1.7g alla prima misura, con l'ora di scambio da rifare (26 novembre 2026).
+**Aggiornato a**: passo P1.7g chiuso, e con lui tutto P1.7 (criterio 7 raggiunto); P1.8a consegnato, in attesa della misura (26 novembre 2026).

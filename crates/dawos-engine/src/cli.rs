@@ -62,6 +62,8 @@ pub struct RunOptions {
     pub listen: Vec<usize>,
     /// Periods in the buffers of the card.
     pub periods: u32,
+    /// Periods of the driver in a quantum (1: the period is the quantum).
+    pub slices: u32,
     /// Seconds at the beginning of the run that are not judged.
     pub warm_up_s: u64,
     /// Print what was heard second by second, not only summed up.
@@ -205,6 +207,12 @@ Options of run:
   --periods N        with alsa: periods in the buffers of the card, 2 to 8
                      (default 3: the output plays three quanta after
                      the input; with 2 the signal slips on USB)
+  --slices N         with alsa: ask the driver for a period N times
+                     shorter than the quantum, 1 to 32 (default 1). The
+                     engine still wakes once a quantum; a USB driver
+                     makes its transfers shorter, and the way round
+                     with them. One live thread for now: the others
+                     wake at every period of the driver
   --warm-up N        with alsa: do not judge the first N seconds of the
                      run (an interface settles for some seconds after
                      its streams start); what happens there is counted
@@ -322,6 +330,7 @@ impl Default for RunOptions {
             routes: Vec::new(),
             listen: Vec::new(),
             periods: Format::DEFAULT_PERIODS,
+            slices: 1,
             warm_up_s: 0,
             each_second: false,
             allow_xruns: false,
@@ -441,6 +450,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
                 }
             }
             "--periods" => options.periods = number(value("--periods")?, "--periods", 2, 8)?,
+            "--slices" => options.slices = number(value("--slices")?, "--slices", 1, 32)?,
             "--warm-up" => options.warm_up_s = number(value("--warm-up")?, "--warm-up", 0, 3600)?,
             "--each-second" => options.each_second = true,
             "--allow-xruns" => options.allow_xruns = true,
@@ -546,6 +556,7 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             || options.bursts.is_some()
             || options.each_second
             || options.periods != Format::DEFAULT_PERIODS
+            || options.slices != 1
             || options.warm_up_s != 0
             || options.allow_xruns
             || matches!(options.fault, Fault::CardXrun | Fault::CardLost);
@@ -667,7 +678,7 @@ mod tests {
     fn run_takes_the_options_about_sound() {
         let text = "run --backend alsa --device hw:USB,0 --capture-device hw:Loopback,1 --tone 3 \
                     --tone-hz 440 --tone-level 20 --route 3:5,4:6 --listen 3,5 --each-second --allow-xruns --tone-cycles 3 --count 5:5 --impulse 3:4 \
-                    --fault card-xrun";
+                    --periods 4 --slices 8 --fault card-xrun";
         let Ok(Command::Run(options)) = parse(&arguments(text)) else {
             panic!("run was not understood");
         };
@@ -685,6 +696,8 @@ mod tests {
         assert_eq!(options.bursts, Some((2, 3)));
         assert!(options.impulses);
         assert!(options.allow_xruns);
+        assert_eq!(options.periods, 4);
+        assert_eq!(options.slices, 8);
         assert_eq!(options.fault, Fault::CardXrun);
     }
 
@@ -726,6 +739,12 @@ mod tests {
             ("run --backend alsa", "needs --device"),
             ("run --tone 3", "need --backend alsa"),
             ("run --fault card-lost", "need --backend alsa"),
+            ("run --slices 2", "need --backend alsa"),
+            ("run --backend alsa --device hw:0 --slices 0", "not between"),
+            (
+                "run --backend alsa --device hw:0 --slices 33",
+                "not between",
+            ),
             ("run --backend alsa --device hw:0 --tone 0", "not between"),
             ("run --backend alsa --device hw:0 --route 3", "not IN:OUT"),
             (

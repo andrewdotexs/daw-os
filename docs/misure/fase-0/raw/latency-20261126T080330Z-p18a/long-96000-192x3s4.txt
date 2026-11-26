@@ -1,0 +1,71 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 96000
+quantum_frames: 192
+period_us: 2000.000
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 120
+load_percent: 0
+vector_unit: AVX2 and FMA
+denormals: taken for zero on the live threads (FTZ and DAZ)
+margin_us: 150
+fault: none
+watchdog_rounds: 60041
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin  behind
+0      first  stopped     60041       0          0        0      3.23      9.03        3.86        5.66      1994.34       0
+
+card_capture: hw:Gen,0
+card_playback: hw:Gen,0
+card_format: S32_LE, 96000 Hz, 18 inputs, 18 outputs
+card_period_frames: 192 (buffer: capture 576, playback 576)
+card_driver_period_frames: 48 (4 of them in a quantum: the engine wakes once a quantum)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 60042 with the card, 0 without
+warm_up_seconds: 60
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0 (0 of them in the warm-up)
+card_stamps_not_believed: 0
+card_followers: 0 cycles after a tick of the card, 0 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 0, refused 0
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+count_on_input_5: way round 861 samples (8.969 ms), found at 0.010 s; at the end 861 samples (8.969 ms)
+count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 11526947 in place, 0 out of place
+routes: none
+
+inputs listened to (dB relative to full scale; the first 60 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            60    -17.9      -20.9      -20.9     -17.9     -17.9     1.0000
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+record_of_every_cycle: 60041 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 30042 cycles after the warm-up, 29999 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      0.19      0.25      0.75      6.25      8.25    250.28
+  wake-up                       1.81      3.23      3.25      3.75      3.75      3.75      3.81
+  input and patch               1.68      2.60      2.75      3.00      3.00      3.00      3.06
+  nodes                         0.01      0.01      0.25      0.25      0.25      0.25      0.26
+  output                        0.70      1.26      1.25      1.75      1.75      1.97      1.97
+  compute, whole                2.40      3.87      4.00      4.50      4.70      4.70      4.70
+  period_us: least 1749.72, most 2009.58 (nominal 2000.00)
+  wake_up_bands: under 5 us 30042, 5 to 10 0, 10 to 20 0, 20 to 50 0, 50 and over 0
+  least_margin_us: 1995.30
+  card_frames_at_the_wake_up: ready 192 to 215, to play 361 to 384
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 9.03 us
+cycles_to_look_at: 0 after the warm-up (none); 0 in it (none)
+card_told_late_by_minute: 0 0 0 (from the first period, the warm-up too)
+audio: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 861 samples)
+compute: PASS (no system call in the compute phase)

@@ -728,7 +728,7 @@ for expected in "${expectations[@]}"; do
 done
 if ((failed)); then
 	if [[ -n ${audio_test} ]]; then
-		tr -d '\r' < "${log}" | grep -a -E '^(plain|card-xrun|card-lost|stuck-node|kernel-entries|syscall|graph|relay|swap|trap) +(PASS|FAIL)' >&2 || true
+		tr -d '\r' < "${log}" | grep -a -E '^(plain|card-xrun|card-lost|stuck-node|kernel-entries|syscall|graph|relay|swap|trap|slices) +(PASS|FAIL)' >&2 || true
 	fi
 	echo "(console log: ${log})" >&2
 	exit 1
@@ -768,7 +768,7 @@ if [[ ${update_test} == good ]]; then
 fi
 
 if [[ -n ${audio_test} ]]; then
-	tr -d '\r' < "${log}" | grep -a -E '^(plain|card-xrun|card-lost|stuck-node|kernel-entries|syscall|graph|relay|swap|trap) +(PASS|FAIL)' || true
+	tr -d '\r' < "${log}" | grep -a -E '^(plain|card-xrun|card-lost|stuck-node|kernel-entries|syscall|graph|relay|swap|trap|slices) +(PASS|FAIL)' || true
 	echo "PASS: the engine played a tone on the software sound card, heard it back, and recovered from every fault"
 	exit 0
 fi

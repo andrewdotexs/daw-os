@@ -45,7 +45,10 @@ const STALLS_BEFORE_GONE: u32 = 3;
 /// changing its clock stops sending for a second or so: starting it
 /// again at once, to see it stop two periods later, is a storm of xruns
 /// (ninety in 0.8 s on the Scarlett 18i20 at 192 kHz, step P1.4).
-const PAUSE_BEFORE_RESTART_NS: u64 = 50_000_000;
+///
+/// Public for whoever waits for the thread of the card to end: it may
+/// be asleep here, and it is not stuck.
+pub const PAUSE_BEFORE_RESTART_NS: u64 = 50_000_000;
 
 /// How many xruns are kept one by one, from the first.
 const XRUNS_KEPT: usize = 12;

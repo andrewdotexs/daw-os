@@ -1,0 +1,210 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 48000
+quantum_frames: 96
+period_us: 2000.000
+live_threads: 1
+live_cpus: 4
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 120
+load_percent: 0
+vector_unit: AVX2 and FMA
+denormals: taken for zero on the live threads (FTZ and DAZ)
+margin_us: 150
+fault: none
+watchdog_rounds: 60040
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin  behind
+0      first  stopped     40027   19652          0        0      3.33     10.09        2.85        4.23      1995.77       0
+
+card_capture: hw:Gen,0
+card_playback: hw:Gen,0
+card_format: S32_LE, 48000 Hz, 26 inputs, 26 outputs
+card_period_frames: 96 (buffer: capture 288, playback 288)
+card_driver_period_frames: 12 (8 of them in a quantum: the engine wakes once a quantum)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 40028 with the card, 0 without
+warm_up_seconds: 60
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0 (0 of them in the warm-up)
+card_stamps_not_believed: 0
+card_followers: 0 cycles after a tick of the card, 0 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 0, refused 0
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+count_on_input_5: way round 386 samples (8.042 ms), found at 0.011 s; at the end 385 samples (8.021 ms)
+count_slips_on_input_5: 6714 (largest 7 samples); in the warm-up 20098 (largest 7)
+count_samples_on_input_5: 1838713 in place, 2003353 out of place
+  count slip on input 5 at 0.015 s: +6 samples
+  count slip on input 5 at 0.017 s: -6 samples
+  count slip on input 5 at 0.021 s: +6 samples
+  count slip on input 5 at 0.023 s: -6 samples
+  count slip on input 5 at 0.027 s: +6 samples
+  count slip on input 5 at 0.029 s: -6 samples
+  count slip on input 5 at 0.033 s: +6 samples
+  count slip on input 5 at 0.035 s: -6 samples
+  count slip on input 5 at 0.039 s: +6 samples
+  count slip on input 5 at 0.041 s: -6 samples
+  count slip on input 5 at 0.045 s: +6 samples
+  count slip on input 5 at 0.047 s: -6 samples
+  count slip on input 5 at 0.051 s: +6 samples
+  count slip on input 5 at 0.053 s: -6 samples
+  count slip on input 5 at 0.057 s: +6 samples
+  count slip on input 5 at 0.059 s: -6 samples
+  count slip on input 5 at 0.063 s: +6 samples
+  count slip on input 5 at 0.065 s: -6 samples
+  count slip on input 5 at 0.069 s: +6 samples
+  count slip on input 5 at 0.071 s: -6 samples
+  count slip on input 5 at 0.075 s: +6 samples
+  count slip on input 5 at 0.077 s: -6 samples
+  count slip on input 5 at 0.081 s: +6 samples
+  count slip on input 5 at 0.083 s: -6 samples
+  count slip on input 5 at 0.087 s: +6 samples
+  count slip on input 5 at 0.089 s: -6 samples
+  count slip on input 5 at 0.093 s: +6 samples
+  count slip on input 5 at 0.095 s: -6 samples
+  count slip on input 5 at 0.099 s: +6 samples
+  count slip on input 5 at 0.101 s: -6 samples
+  count slip on input 5 at 0.105 s: +6 samples
+  count slip on input 5 at 0.107 s: -6 samples
+  count slip on input 5 at 0.111 s: +6 samples
+  count slip on input 5 at 0.113 s: -6 samples
+  count slip on input 5 at 0.117 s: +6 samples
+  count slip on input 5 at 0.119 s: -6 samples
+  count slip on input 5 at 0.123 s: +6 samples
+  count slip on input 5 at 0.125 s: -6 samples
+  count slip on input 5 at 0.129 s: +6 samples
+  count slip on input 5 at 0.131 s: -6 samples
+  count slip on input 5 at 0.135 s: +6 samples
+  count slip on input 5 at 0.137 s: -6 samples
+  count slip on input 5 at 0.141 s: +6 samples
+  count slip on input 5 at 0.143 s: -6 samples
+  count slip on input 5 at 0.147 s: +6 samples
+  count slip on input 5 at 0.149 s: -6 samples
+  count slip on input 5 at 0.153 s: +6 samples
+  count slip on input 5 at 0.155 s: -6 samples
+  count slip on input 5 at 0.159 s: +6 samples
+  count slip on input 5 at 0.161 s: -6 samples
+  count slip on input 5 at 0.165 s: +6 samples
+  count slip on input 5 at 0.167 s: -6 samples
+  count slip on input 5 at 0.171 s: +6 samples
+  count slip on input 5 at 0.173 s: -6 samples
+  count slip on input 5 at 0.177 s: +6 samples
+  count slip on input 5 at 0.179 s: -6 samples
+  count slip on input 5 at 0.183 s: +6 samples
+  count slip on input 5 at 0.185 s: -6 samples
+  count slip on input 5 at 0.189 s: +6 samples
+  count slip on input 5 at 0.191 s: -6 samples
+  count slip on input 5 at 0.195 s: +6 samples
+  count slip on input 5 at 0.197 s: -6 samples
+  count slip on input 5 at 0.201 s: +6 samples
+  count slip on input 5 at 0.203 s: -6 samples
+routes: none
+
+inputs listened to (dB relative to full scale; the first 60 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3            20    -16.6      -23.6      -23.4     -25.4     -24.9     0.3251
+slips_on_input_3: 4 (largest 1.06 samples); in the warm-up 44 (largest 1.19)
+  slip on input 3 at 0.014 s: -0.76 samples
+  slip on input 3 at 0.376 s: +0.98 samples
+  slip on input 3 at 0.400 s: -0.98 samples
+  slip on input 3 at 9.406 s: +0.96 samples
+  slip on input 3 at 9.412 s: -0.95 samples
+  slip on input 3 at 13.024 s: +0.90 samples
+  slip on input 3 at 14.758 s: -1.13 samples
+  slip on input 3 at 14.788 s: +0.79 samples
+  slip on input 3 at 14.794 s: -0.94 samples
+  slip on input 3 at 16.600 s: +0.96 samples
+  slip on input 3 at 18.346 s: -0.98 samples
+  slip on input 3 at 18.358 s: +0.96 samples
+  slip on input 3 at 18.370 s: -1.11 samples
+  slip on input 3 at 20.170 s: +0.90 samples
+  slip on input 3 at 21.946 s: -1.08 samples
+  slip on input 3 at 23.758 s: +0.97 samples
+  slip on input 3 at 25.528 s: -1.19 samples
+  slip on input 3 at 27.340 s: +1.05 samples
+  slip on input 3 at 29.098 s: -1.09 samples
+  slip on input 3 at 30.928 s: +0.98 samples
+  slip on input 3 at 32.668 s: -1.01 samples
+  slip on input 3 at 34.486 s: +1.05 samples
+  slip on input 3 at 34.492 s: -0.99 samples
+  slip on input 3 at 34.498 s: +1.00 samples
+  slip on input 3 at 36.250 s: -0.91 samples
+  slip on input 3 at 38.086 s: +0.99 samples
+  slip on input 3 at 39.820 s: -1.08 samples
+  slip on input 3 at 39.832 s: +1.08 samples
+  slip on input 3 at 39.838 s: -0.99 samples
+  slip on input 3 at 41.656 s: +1.08 samples
+  slip on input 3 at 43.426 s: -0.99 samples
+  slip on input 3 at 43.444 s: +1.00 samples
+  slip on input 3 at 43.450 s: -1.00 samples
+  slip on input 3 at 45.232 s: +1.02 samples
+  slip on input 3 at 46.984 s: -0.95 samples
+  slip on input 3 at 46.996 s: +1.03 samples
+  slip on input 3 at 47.002 s: -1.06 samples
+  slip on input 3 at 48.826 s: +1.00 samples
+  slip on input 3 at 50.578 s: -0.99 samples
+  slip on input 3 at 52.432 s: +1.04 samples
+  slip on input 3 at 54.214 s: -1.02 samples
+  slip on input 3 at 56.044 s: +1.04 samples
+  slip on input 3 at 57.814 s: -1.04 samples
+  slip on input 3 at 59.662 s: +1.04 samples
+  slip on input 3 at 61.396 s: -1.04 samples
+  slip on input 3 at 63.226 s: +1.02 samples
+  slip on input 3 at 64.972 s: -1.02 samples
+  slip on input 3 at 66.490 s: +1.06 samples
+
+record_of_every_cycle: 40027 cycles read, 0 dropped (rings of 4096 records, the fullest held 7)
+record, slot 0: 20027 cycles after the warm-up, 20000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal     878.61    999.98   1000.00   1010.00   1020.00   1035.88   1035.88
+  wake-up                       1.92      3.34      3.50      3.75      8.25      8.75     10.09
+  input and patch               1.07      1.72      1.75      2.00      2.00      2.23      2.23
+  nodes                         0.01      0.01      0.09      0.09      0.09      0.09      0.09
+  output                        0.63      1.11      1.25      1.50      1.64      1.64      1.64
+  compute, whole                1.71      2.84      3.00      3.25      3.47      3.47      3.47
+  period_us: least 2878.61, most 3035.88 (nominal 2000.00)
+  wake_up_bands: under 5 us 19884, 5 to 10 142, 10 to 20 1, 20 to 50 0, 50 and over 0
+  least_margin_us: 1996.53
+  card_frames_at_the_wake_up: ready 96 to 101, to play 187 to 192
+  periods_gone_by: 9919; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 3.85 us
+cycles_to_look_at: 9919 after the warm-up (9919 the card told of the period late); 9733 in it (9733 the card told of the period late)
+card_told_late_by_minute: 9733 9906 13 (from the first period, the warm-up too)
+  slot 0 cycle 29734 at 60.002 s: the card told of the period late, 3000.01 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.31 us after the period was due; input 1.60, nodes 0.01 (0 of them), output 1.03 us; ended 1997.35 us before the instant it had to end by; card: 98 frames ready, 190 to play
+      the one before: woke 3.06 us after the period was due; input 1.64, nodes 0.01 (0 of them), output 1.06 us; ended 1997.29 us before the instant it had to end by; card: 98 frames ready, 190 to play
+  slot 0 cycle 29739 at 60.014 s: the card told of the period late, 3002.02 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.39 us after the period was due; input 1.80, nodes 0.01 (0 of them), output 1.41 us; ended 1996.78 us before the instant it had to end by; card: 98 frames ready, 190 to play
+      the one before: woke 3.26 us after the period was due; input 1.75, nodes 0.01 (0 of them), output 1.04 us; ended 1997.20 us before the instant it had to end by; card: 98 frames ready, 190 to play
+  slot 0 cycle 29742 at 60.020 s: the card told of the period late, 3002.20 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.54 us after the period was due; input 1.59, nodes 0.01 (0 of them), output 1.11 us; ended 1997.29 us before the instant it had to end by; card: 98 frames ready, 190 to play
+      the one before: woke 3.27 us after the period was due; input 1.67, nodes 0.01 (0 of them), output 1.07 us; ended 1997.25 us before the instant it had to end by; card: 98 frames ready, 190 to play
+  slot 0 cycle 29746 at 60.029 s: the card told of the period late, 3003.71 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.24 us after the period was due; input 1.73, nodes 0.01 (0 of them), output 1.10 us; ended 1997.15 us before the instant it had to end by; card: 98 frames ready, 190 to play
+      the one before: woke 3.20 us after the period was due; input 1.88, nodes 0.01 (0 of them), output 1.06 us; ended 1997.04 us before the instant it had to end by; card: 98 frames ready, 190 to play
+  slot 0 cycle 29749 at 60.035 s: the card told of the period late, 3000.17 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.43 us after the period was due; input 1.60, nodes 0.01 (0 of them), output 1.15 us; ended 1997.23 us before the instant it had to end by; card: 98 frames ready, 190 to play
+      the one before: woke 3.22 us after the period was due; input 1.60, nodes 0.01 (0 of them), output 1.12 us; ended 1997.27 us before the instant it had to end by; card: 98 frames ready, 190 to play
+  slot 0 cycle 29751 at 60.038 s: the card told of the period late, 3000.60 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.35 us after the period was due; input 1.83, nodes 0.01 (0 of them), output 1.10 us; ended 1997.05 us before the instant it had to end by; card: 98 frames ready, 190 to play
+      the one before: woke 3.43 us after the period was due; input 1.60, nodes 0.01 (0 of them), output 1.15 us; ended 1997.23 us before the instant it had to end by; card: 98 frames ready, 190 to play
+  ... and 9913 more, not shown (of each kind the first 6; of the late wake-ups the worst 6)
+in the warm-up, 2 of them:
+  slot 0 cycle 3 at 0.009 s: the card told of the period late, 3000.35 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.47 us after the period was due; input 1.75, nodes 0.02 (0 of them), output 1.42 us; ended 1996.82 us before the instant it had to end by; card: 96 frames ready, 192 to play
+      the one before: woke 3.37 us after the period was due; input 1.89, nodes 0.01 (0 of them), output 1.42 us; ended 1996.68 us before the instant it had to end by; card: 96 frames ready, 192 to play
+  slot 0 cycle 6 at 0.015 s: the card told of the period late, 3001.75 us after the period before (1.50 periods); periods gone by 1
+      it: woke 3.36 us after the period was due; input 2.20, nodes 0.01 (0 of them), output 1.07 us; ended 1996.72 us before the instant it had to end by; card: 96 frames ready, 192 to play
+      the one before: woke 3.22 us after the period was due; input 1.64, nodes 0.01 (0 of them), output 1.07 us; ended 1997.28 us before the instant it had to end by; card: 96 frames ready, 192 to play
+audio: FAIL (the tone is not on input 3; a slip of 7 samples in the count on input 5)
+compute: PASS (no system call in the compute phase)
+dawos-engine: the sound card did not do what was asked

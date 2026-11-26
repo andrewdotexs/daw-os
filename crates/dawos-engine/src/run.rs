@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use dawos_audio_io::{
     keeper_loop, AlsaBackend, AlsaFollower, AlsaShared, Backend, CardConfig, CardInfo, Format,
-    NullBackend, XrunView,
+    NullBackend, XrunView, PAUSE_BEFORE_RESTART_NS,
 };
 use dawos_rt::cpu::{self, Policy};
 use dawos_rt::dispatch;
@@ -46,6 +46,16 @@ const START_DELAY_MS: u64 = 300;
 /// place. The periods start without it, and it joins the cycle in
 /// progress when it comes (open point A-70).
 const LATE_START_GRACE_MS: u64 = 3000;
+
+/// With a sound card: how much longer the end of a run waits for a live
+/// thread that has not ended, past the few periods every thread is
+/// given. The thread that holds the card may be starting the streams
+/// again after an xrun: it sleeps on purpose before the restart, then
+/// asks the driver, and it is not stuck. Taken for stuck, its xrun was
+/// counted and its recovery was not, and the run failed for that
+/// (step P1.8a, on a virtual machine). A thread that is stuck costs the
+/// run this much more at its end, once.
+const END_GRACE_NS: u64 = PAUSE_BEFORE_RESTART_NS + 100_000_000;
 
 /// Limits of ADR 0023, counted from the beginning of the compute phase
 /// the thread never left.
@@ -508,12 +518,22 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             playback: device.clone(),
             format,
             periods: options.periods,
+            slices: options.slices,
         })?),
         _ => None,
     };
     // With more live threads than one, the others wake on the timer of
     // the input stream: better to know now that it is there.
     if let Some(card) = &card {
+        // The timer of the stream ticks at every period of the driver:
+        // with several of them in a quantum the other threads would
+        // wake that many times a cycle (step P1.8a measures with one).
+        if threads > 1 && options.slices > 1 {
+            return Err(format!(
+                "--slices {}: with one live thread for now (--threads 1): the others wake at every period of the driver",
+                options.slices
+            ));
+        }
         if threads > 1 {
             card.followers_can_wake().map_err(|error| {
                 format!("the other live threads cannot wake with the card ({error}): --threads 1 runs without them")
@@ -895,6 +915,16 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
         spare.gate.open();
     }
     thread::sleep(Duration::from_nanos(4 * period_ns + 20_000_000));
+    if card.is_some() {
+        let until = clock::now() + END_GRACE_NS;
+        while clock::now() < until
+            && handles
+                .iter()
+                .any(|(_, spare, handle)| !spare && !handle.is_finished())
+        {
+            thread::sleep(Duration::from_millis(1));
+        }
+    }
     let mut reports = Vec::new();
     let mut never_returned = Vec::new();
     for (index, spare, handle) in handles {
@@ -2185,6 +2215,13 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         "card_period_frames: {} (buffer: capture {}, playback {})",
         info.period, info.capture_buffer, info.playback_buffer
     );
+    if info.card_period != info.period {
+        println!(
+            "card_driver_period_frames: {} ({} of them in a quantum: the engine wakes once a quantum)",
+            info.card_period,
+            info.period / info.card_period.max(1)
+        );
+    }
     println!("card_linked: {}", if info.linked { "yes" } else { "no" });
     println!(
         "card_period_stamps: {}",

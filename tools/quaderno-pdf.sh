@@ -1,13 +1,18 @@
 #!/bin/sh
 # quaderno-pdf.sh — the quaderno (docs/quaderno) as PDF files.
 #
-# One PDF for every chapter, and one with all of them, in
-# docs/quaderno/pdf. Every chapter goes from Markdown to HTML with
-# pandoc, and from HTML to PDF with a Chromium run without a window.
-# The links between chapters become links between the PDF files, or,
-# in the file with all the chapters, links inside it.
+# One PDF with all the chapters, docs/quaderno/pdf/quaderno-dawos.pdf:
+# the one kept in the repository (decision of 26 November 2026: a PDF
+# for every chapter too made the history of the repository grow by
+# four megabytes a step). With --chapters, also one PDF for every
+# chapter, in docs/quaderno/pdf/capitoli, which git ignores.
 #
-# Usage: tools/quaderno-pdf.sh
+# Every chapter goes from Markdown to HTML with pandoc, and from HTML
+# to PDF with a Chromium run without a window. The links between
+# chapters become links inside the file with all the chapters, or, in
+# the files of the chapters, links between them.
+#
+# Usage: tools/quaderno-pdf.sh [--chapters]
 #
 # Needs pandoc and a Chromium or a Chrome. CHROMIUM names the program
 # when it is not one of those looked for below.
@@ -15,6 +20,16 @@
 # The figures are not drawn here: tools/quaderno-figures.py does that.
 
 set -eu
+
+each=no
+case "${1:-}" in
+--chapters) each=yes ;;
+'') ;;
+*)
+	echo "usage: tools/quaderno-pdf.sh [--chapters]" >&2
+	exit 1
+	;;
+esac
 
 here=$(cd "$(dirname "$0")/.." && pwd)
 quaderno="${here}/docs/quaderno"
@@ -85,14 +100,17 @@ to_html() {
 
 mkdir -p "${out}"
 
-# ---- One file for every chapter: a link to another chapter is a link
-# to its file.
-for chapter in ${chapters}; do
-	sed -E 's/\]\(([0-9A-Za-z-]+)\.md(#[^)]*)?\)/](\1.pdf)/g' "${quaderno}/${chapter}.md" |
-		to_html "${work}/${chapter}.html" "Il quaderno di dawOS"
-	to_pdf "${work}/${chapter}.html" "${out}/${chapter}.pdf"
-	echo "docs/quaderno/pdf/${chapter}.pdf"
-done
+# ---- If asked, one file for every chapter: a link to another chapter
+# is a link to its file.
+if [ "${each}" = yes ]; then
+	mkdir -p "${out}/capitoli"
+	for chapter in ${chapters}; do
+		sed -E 's/\]\(([0-9A-Za-z-]+)\.md(#[^)]*)?\)/](\1.pdf)/g' "${quaderno}/${chapter}.md" |
+			to_html "${work}/${chapter}.html" "Il quaderno di dawOS"
+		to_pdf "${work}/${chapter}.html" "${out}/capitoli/${chapter}.pdf"
+		echo "docs/quaderno/pdf/capitoli/${chapter}.pdf"
+	done
+fi
 
 # ---- All the chapters in one file: a link to another chapter is a
 # link to its heading, or to the heading it names.

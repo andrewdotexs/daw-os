@@ -18,6 +18,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **AVX2, FMA** | Istruzioni che lavorano su otto numeri alla volta, e che moltiplicano e sommano in un'operazione | Cap. 2, Il calcolo |
 | **Bilancio di calcolo** (_budget_) | L'istante oltre il quale un thread non comincia un altro nodo: la scadenza del ciclo meno il margine | Cap. 2, Il motore |
 | **Biquad** | Sezione del secondo ordine: il mattone dei filtri digitali | Cap. 2, Il calcolo |
+| **BPF classico** | Piccoli programmi che il kernel esegue per filtrare chiamate di sistema o pacchetti. Caricarne uno fa ripulire il predittore dei salti su tutti i processori (A-76) | Cap. 2, Il tempo reale |
 | **Buffer** | La coda di campioni tra programma e scheda; nel grafo, il blocco di campioni all'uscita di un nodo | Cap. 2 |
 | **Buildroot** | Lo strumento che costruisce l'immagine dai sorgenti | Cap. 2, La piattaforma |
 | **Campagna** | Ore di misura sotto un carico che cambia a fasi | Cap. 3, La campagna |
@@ -46,6 +47,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Fair server** | La riserva di tempo del kernel per i processi normali; spenta sui processori live | Cap. 2, Il tempo reale |
 | **Fase di attesa, fase di calcolo** | Le due metà del ciclo: una chiamata bloccante, poi nessun ingresso nel kernel | Cap. 2, Il tempo reale |
 | **fcp-server** | Il programma che traduce i comandi della Scarlett di quarta generazione | Cap. 2, La scheda audio |
+| **Fetta** (_slice_) | Un periodo del driver più corto del ciclo del motore: due, quattro o otto in un ciclo (opzione `--slices`) | Cap. 2, La scheda audio |
 | **Follower** | Un thread live che non tiene la scheda e la segue attraverso un timer | Cap. 2, Il motore |
 | **Forma del buffer** | Frame per periodo e periodi nel buffer, come `96:3` | Cap. 2, L'audio come numeri |
 | **Frame** | I campioni di tutti i canali nello stesso istante | Cap. 2, L'audio come numeri |
@@ -73,6 +75,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Percorso critico** | La catena più lunga di nodi che si aspettano: il ciclo non può durare meno | Cap. 2, Il grafo |
 | **Periodo** | Il blocco di campioni che la scheda scambia in un colpo, e il tempo che dura: 2 ms | Cap. 2, L'audio come numeri |
 | **ppm** | Parti per milione: l'unità in cui si dice di quanto due orologi differiscono | Cap. 4, P1.6a |
+| **Predittore dei salti** | La parte del processore che indovina dove andrà un salto prima di saperlo. Il kernel lo fa ripulire (IBPB) per difesa dagli attacchi di tipo Spectre | Cap. 2, Il tempo reale |
 | **PREEMPT_RT** | La variante real-time del kernel Linux | Cap. 2, Il tempo reale |
 | **Profilo di avvio** | Le opzioni del kernel che dipendono dalla macchina: `285k`, `generic` | Cap. 2, La piattaforma |
 | **Quanto** | La lunghezza di un periodo in frame: 96, 192 o 384 secondo la frequenza | Cap. 2, L'audio come numeri |
@@ -104,12 +107,14 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Thread** | Un filo di esecuzione di un programma. I thread live sono quelli del ciclo audio | Cap. 2, Il motore |
 | **Throttling** | Il processore che rallenta da solo perché è troppo caldo | Cap. 2, Il tempo reale |
 | **Tick** | L'interruzione periodica del timer del kernel; sui processori live è fermata | Cap. 2, Il tempo reale |
+| **TLB** | La cache in cui il processore tiene le traduzioni degli indirizzi di memoria. Quando un processo restituisce o sposta memoria, il kernel la fa svuotare ai processori su cui gira (A-75) | Cap. 2, Il tempo reale |
 | **Tono** | Una sinusoide di prova con un numero intero di cicli nel quanto | Cap. 3, strumenti nel motore |
 | **Traccia** (_trace_) | La registrazione che il kernel fa dei propri eventi, quando gli si chiede | Cap. 3, Il registro dei cicli |
 | **Trappola** (`trap`) | Un nodo di prova che dopo un certo tempo non ritorna più, tenendo ciò su cui lavorava | Cap. 3, La prova audio |
 | **UKI** | Kernel e riga di comando in un solo file firmato | Cap. 2, La piattaforma |
 | **`unsafe`** | Codice Rust che il compilatore non può verificare: ammesso in un solo modulo | Cap. 2, Il calcolo |
-| **URB** | Il pacchetto di lavoro del driver USB: per l'ingresso audio, un millisecondo | Cap. 2, La scheda audio |
+| **URB** | Il blocco di lavoro del driver USB (un trasferimento): per l'audio, da uno a otto pacchetti, cioè da 125 µs a un millisecondo secondo il periodo chiesto | Cap. 2, La scheda audio |
+| **usbmon** | Lo strumento del kernel che mostra ogni trasferimento che passa su un bus USB | Cap. 3 |
 | **Verdetto** | La riga `PASS` o `FAIL` con cui uno strumento giudica sé stesso | Cap. 3, I verdetti |
 | **Xrun** | La scheda rimasta senza campioni da suonare, o senza posto per quelli registrati | Cap. 2, L'audio come numeri |
 
@@ -168,4 +173,5 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **A-72** | Una scrittura corta all'avvio dei flussi, circa un avvio su tredici a 48 kHz | Aperto: si sa quando (il primo periodo), non perché. P1.8 |
 | **A-73** | Il compilatore del grafo sottostima il ciclo su più thread, del 6–7 % su quattro | Aperto, Fase 2 |
 | **A-74** | Chi aspetta un nodo di un thread bloccato taglia i suoi cicli per intero | Aperto, Fase 2 |
-| **A-75** | Il processo fa svuotare la TLB sui propri processori live quando restituisce memoria: 12 volte in un'ora di scambi | Aperto, P1.9 |
+| **A-75** | Il processo fa svuotare la TLB sui propri processori live: 12 volte in un'ora di scambi, lo stesso numero in due ore | Aperto, P1.9 |
+| **A-76** | Ogni programma BPF classico caricato (una connessione SSH, per esempio) fa ripulire il predittore dei salti su tutti i processori, live compresi | Aperto, P1.9 |
