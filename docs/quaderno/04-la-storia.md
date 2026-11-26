@@ -417,9 +417,9 @@ Questa volta lo strumento è stato provato prima di consegnarlo, su un bus vero:
 
 In due minuti di misura i tre millisecondi hanno trovato il padrone.
 
-![Il giro dentro l'interfaccia a 48 kHz diviso in buffer, uscita presso il controller USB e resto, con una e con quattro fette](img/giro-dove.svg)
+![Il giro dentro l'interfaccia a 48 kHz diviso in buffer, uscita presso il controller USB e resto, con il kernel di serie e con la patch](img/giro-dove.svg)
 
-**Figura 4.4.** Il giro è una somma di tre pezzi. Il primo lo sceglie il motore; il terzo è dell'interfaccia; il secondo, tre millisecondi, è del controller USB.
+**Figura 4.4.** Il giro è una somma di tre pezzi. Il primo lo sceglie il motore; il terzo è dell'interfaccia; il secondo, tre millisecondi con il kernel di serie, è del controller USB. Le due righe in basso sono del passo dopo, P1.8c.
 
 Un trasferimento d'uscita resta presso il controller 2,98 ms. Sommato al buffer, quello che avanza per arrivare al giro misurato dal motore è mezzo millisecondo: la stessa costante della Scarlett di seconda generazione. **La quarta non è più lenta: è servita in un altro modo.**
 
@@ -429,11 +429,26 @@ La conseguenza più importante non è un numero. Da mesi il progetto si porta di
 
 ### P1.8c: la prima patch al kernel
 
-_26 novembre: consegnato, in attesa della misura._ Sapere dove stanno i tre millisecondi non li toglie. Ma rileggendo il driver del controller è saltata fuori una cosa: la regola del «numero di frame», quella che costa i due millisecondi di anticipo, vale solo per i trasferimenti che non portano un certo segno, «appena possibile». Chi lo porta viene fatto partire dal controller al primo momento utile. Il driver audio di Linux quel segno non lo mette.
+_26 novembre: misurato a macchina ferma._ Sapere dove stanno i tre millisecondi non li toglie. Ma rileggendo il driver del controller è saltata fuori una cosa: la regola del «numero di frame», quella che costa i due millisecondi di anticipo, vale solo per i trasferimenti che non portano un certo segno, «appena possibile». Chi lo porta viene fatto partire dal controller al primo momento utile. Il driver audio di Linux quel segno non lo mette.
 
 L'utente ha scelto di provare: una riga nel driver audio, dietro un interruttore spento di fabbrica, che si accende e si spegne senza riavviare. È la prima volta che il progetto tocca il sorgente del kernel; finora lo aveva solo configurato.
 
 Il rischio è scritto prima della misura, come le previsioni. I due millisecondi di anticipo erano anche un cuscino: se il kernel serviva l'USB con un millisecondo di ritardo, non succedeva nulla. Senza, ogni ritardo oltre un decimo di millisecondo è un pacchetto che manca. Per questo la prova si fa due volte: a macchina ferma, per sapere quanto rende; sotto carico, per sapere se si può usare.
+
+La prima metà è fatta, e ha reso più del previsto.
+
+| A 48 kHz, una fetta | Kernel di serie | Con l'interruttore acceso |
+| --- | --- | --- |
+| Uscita presso il controller | 2,98 ms | 1,10 ms |
+| Giro dentro l'interfaccia | 9,56 ms | 7,79 ms |
+| Giro per il cavo, al massimo | 10,23 ms | **8,35 ms** |
+| Lo stesso a 44,1 kHz | 10,93 ms | **8,95 ms** |
+
+Per la prima volta la Scarlett di quarta generazione sta sotto i 10 ms a tutte le frequenze, e senza le fette. In ottanta avvii e sedici minuti di suono, nemmeno un campione fuori posto.
+
+Avevo previsto meno: tra 1,5 e 1,8 ms presso il controller, contando come anticipo il mezzo millisecondo che il controller dichiara di volere. Servito «appena possibile», il trasferimento parte nel microframe dopo: l'anticipo è un decimo di millisecondo. La stessa cosa che fa rendere di più la patch fa stringere il rischio: quel decimo è tutto il tempo che il kernel ha per rispondere. A macchina ferma basta sempre. Sotto carico è la prossima misura.
+
+Otto fette restano rotte: la patch tocca solo l'uscita, e l'ingresso ha ancora la sua regola. Non importa più.
 
 ### Che cosa viene dopo
 
