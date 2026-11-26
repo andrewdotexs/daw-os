@@ -388,6 +388,8 @@ Tutte le forme provate fin qui avevano periodi di un millisecondo o più: per qu
 
 Nel motore è entrata un'opzione sola, `--slices`: il driver riceve un periodo più corto, il motore si sveglia una volta per ciclo come prima. Per ora con un thread, perché gli altri si sveglierebbero a ogni periodo del driver.
 
+Il primo giro si è fermato, ancora una volta, alla macchina virtuale dell'utente; ma non per il codice nuovo. È fallito il caso più vecchio di tutti: il thread che tiene la scheda stava recuperando un xrun quando il giro è finito, e il motore lo ha preso per bloccato. Una corsa che c'era dal passo P1.4 e che serve una macchina molto lenta per vedere.
+
 La previsione, scritta prima: con otto fette il giro si accorcia tra 0,9 e 1,75 ms, e a 48 kHz scende sotto i 10 ms; a 44,1 è al limite. Se non si accorcia, i tre millisecondi sono dell'interfaccia e questa strada è chiusa.
 
 ### Che cosa viene dopo
