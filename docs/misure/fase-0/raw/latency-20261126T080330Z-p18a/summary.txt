@@ -1,0 +1,491 @@
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer) --
+  inside, at the end of each run: 10 runs, 450 to 456 samples (10.204 to 10.340 ms); runs with slips: 0
+    lengths (times): 450 (8) 451 (1) 456 (1)
+  cable: 10 runs, 475.85 to 481.85 samples (10.790 to 10.926 ms); from start to start it moves by 6.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 475.85 (8) 476.85 (1) 481.85 (1)
+  converters and cable alone: 25.85 samples (0.586 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: NO (10.926 ms at the most)
+  calibrations: FAIL (10 of 10 measured; NOT all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.83 samples more than inside (peak 0.0894 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 450 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 1022 interrupts of the USB controllers a second; worst wake-up 9.25 us
+  transfers on the bus: none read in a second
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer), the driver asked for periods of 48 frames (2 in a quantum) --
+  inside, at the end of each run: 10 runs, 450 to 457 samples (10.204 to 10.363 ms); runs with slips: 0
+    lengths (times): 450 (4) 451 (3) 455 (1) 456 (1) 457 (1)
+  cable: 10 runs, 475.85 to 482.85 samples (10.790 to 10.949 ms); from start to start it moves by 7.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 475.85 (4) 476.85 (3) 480.85 (1) 481.85 (1) 482.85 (1)
+  converters and cable alone: 25.85 samples (0.586 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: NO (10.949 ms at the most)
+  calibrations: FAIL (10 of 10 measured; NOT all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.83 samples more than inside (peak 0.0894 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 450 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 2056 interrupts of the USB controllers a second; worst wake-up 8.50 us
+  transfers on the bus: none read in a second
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer), the driver asked for periods of 24 frames (4 in a quantum) --
+  inside, at the end of each run: 10 runs, 428 to 434 samples (9.705 to 9.841 ms); runs with slips: 0
+    lengths (times): 428 (5) 429 (2) 433 (1) 434 (2)
+  cable: 10 runs, 453.85 to 459.85 samples (10.291 to 10.427 ms); from start to start it moves by 6.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 453.85 (5) 454.85 (2) 458.85 (1) 459.85 (2)
+  converters and cable alone: 25.85 samples (0.586 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: NO (10.427 ms at the most)
+  calibrations: FAIL (10 of 10 measured; NOT all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.83 samples more than inside (peak 0.0894 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 428 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 4125 interrupts of the USB controllers a second; worst wake-up 9.26 us
+  transfers on the bus: none read in a second
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer), the driver asked for periods of 12 frames (8 in a quantum) --
+  inside, at the end of each run: 10 runs, 378 to 390 samples (8.571 to 8.844 ms); runs with slips: 10
+    lengths (times): 378 (1) 384 (2) 385 (3) 388 (1) 389 (2) 390 (1)
+  cable: the bursts never came back in 10 runs
+  xruns in the short runs: 0
+  with impulses, one run: 23.83 samples more than inside (peak 0.0069 of full scale)
+  long run, 120 s, the first 60 not judged: FAIL (a slip of 7 samples on input 3; a slip of 6 samples in the count on input 5)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 1265 (largest 6 samples); in the warm-up 3757 (largest 6); slips of the tone 781 (largest 7.00 samples); in the warm-up 2354 (largest 8.08)
+    count slip on input 5 at 0.013 s: +4 samples
+    count slip on input 5 at 0.015 s: +1 samples
+    count slip on input 5 at 0.025 s: -6 samples
+    count slip on input 5 at 0.041 s: +5 samples
+    count slip on input 5 at 0.051 s: -4 samples
+    count slip on input 5 at 0.069 s: +4 samples
+    count slip on input 5 at 0.097 s: -1 samples
+    count slip on input 5 at 0.105 s: -4 samples
+    count slip on input 5 at 0.109 s: +1 samples
+    count slip on input 5 at 0.111 s: +4 samples
+    count slip on input 5 at 0.151 s: -5 samples
+    count slip on input 5 at 0.163 s: +1 samples
+    count slip on input 5 at 0.167 s: +4 samples
+    count slip on input 5 at 0.179 s: -4 samples
+    count slip on input 5 at 0.181 s: +4 samples
+    count slip on input 5 at 0.195 s: -1 samples
+    count slip on input 5 at 0.209 s: +1 samples
+    count slip on input 5 at 0.210 s: -4 samples
+    count slip on input 5 at 0.248 s: -1 samples
+    count slip on input 5 at 0.264 s: +4 samples
+    count slip on input 5 at 0.276 s: -3 samples
+    count slip on input 5 at 0.278 s: +4 samples
+    count slip on input 5 at 0.290 s: -5 samples
+    count slip on input 5 at 0.306 s: +5 samples
+    count slip on input 5 at 0.308 s: -4 samples
+    count slip on input 5 at 0.334 s: +5 samples
+    count slip on input 5 at 0.354 s: -5 samples
+    count slip on input 5 at 0.362 s: +3 samples
+    count slip on input 5 at 0.370 s: -4 samples
+    count slip on input 5 at 0.374 s: +1 samples
+    count slip on input 5 at 0.376 s: +4 samples
+    count slip on input 5 at 0.378 s: +1 samples
+    count slip on input 5 at 0.388 s: -6 samples
+    count slip on input 5 at 0.432 s: +5 samples
+    count slip on input 5 at 0.444 s: -4 samples
+    count slip on input 5 at 0.460 s: +3 samples
+    count slip on input 5 at 0.474 s: +1 samples
+    count slip on input 5 at 0.508 s: -4 samples
+    count slip on input 5 at 0.514 s: -1 samples
+    count slip on input 5 at 0.530 s: +5 samples
+    count slip on input 5 at 0.542 s: -4 samples
+    count slip on input 5 at 0.556 s: -1 samples
+    count slip on input 5 at 0.572 s: +5 samples
+    count slip on input 5 at 0.587 s: -4 samples
+    count slip on input 5 at 0.627 s: +3 samples
+    count slip on input 5 at 0.635 s: -4 samples
+    count slip on input 5 at 0.641 s: +5 samples
+    count slip on input 5 at 0.653 s: -5 samples
+    count slip on input 5 at 0.669 s: +5 samples
+    count slip on input 5 at 0.709 s: -5 samples
+    count slip on input 5 at 0.715 s: +1 samples
+    count slip on input 5 at 0.725 s: +3 samples
+    count slip on input 5 at 0.733 s: -4 samples
+    count slip on input 5 at 0.739 s: +5 samples
+    count slip on input 5 at 0.779 s: -5 samples
+    count slip on input 5 at 0.795 s: +5 samples
+    count slip on input 5 at 0.807 s: -4 samples
+    count slip on input 5 at 0.837 s: +4 samples
+    count slip on input 5 at 0.893 s: -1 samples
+    count slip on input 5 at 0.901 s: -3 samples
+    count slip on input 5 at 0.907 s: +4 samples
+    count slip on input 5 at 0.962 s: +1 samples
+    count slip on input 5 at 0.974 s: -6 samples
+    count slip on input 5 at 0.990 s: +4 samples
+  long run: 5517 interrupts of the USB controllers a second; worst wake-up 9.05 us
+  transfers on the bus: none read in a second
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 10 runs, 458 to 465 samples (9.542 to 9.688 ms); runs with slips: 0
+    lengths (times): 458 (5) 459 (3) 464 (1) 465 (1)
+  cable: 10 runs, 483.85 to 490.85 samples (10.080 to 10.226 ms); from start to start it moves by 7.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 483.85 (5) 484.85 (3) 489.85 (1) 490.85 (1)
+  converters and cable alone: 25.85 samples (0.539 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: NO (10.226 ms at the most)
+  calibrations: FAIL (10 of 10 measured; NOT all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.84 samples more than inside (peak 0.0895 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 458 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 1011 interrupts of the USB controllers a second; worst wake-up 8.64 us
+  transfers on the bus: none read in a second
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 48 frames (2 in a quantum) --
+  inside, at the end of each run: 10 runs, 434 to 464 samples (9.042 to 9.667 ms); runs with slips: 0
+    lengths (times): 434 (2) 441 (1) 458 (3) 459 (2) 464 (2)
+  cable: 10 runs, 459.85 to 489.85 samples (9.580 to 10.205 ms); from start to start it moves by 30.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 459.85 (2) 466.85 (1) 483.85 (3) 484.85 (2) 489.85 (2)
+  converters and cable alone: 25.85 samples (0.539 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: NO (10.205 ms at the most)
+  calibrations: FAIL (10 of 10 measured; NOT all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.84 samples more than inside (peak 0.0895 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 458 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 2035 interrupts of the USB controllers a second; worst wake-up 8.16 us
+  transfers on the bus: none read in a second
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 24 frames (4 in a quantum) --
+  inside, at the end of each run: 10 runs, 434 to 441 samples (9.042 to 9.188 ms); runs with slips: 0
+    lengths (times): 434 (7) 440 (2) 441 (1)
+  cable: 10 runs, 459.85 to 466.85 samples (9.580 to 9.726 ms); from start to start it moves by 7.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 459.85 (7) 465.85 (2) 466.85 (1)
+  converters and cable alone: 25.85 samples (0.539 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (9.726 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.84 samples more than inside (peak 0.0895 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 434 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 4073 interrupts of the USB controllers a second; worst wake-up 8.03 us
+  transfers on the bus: none read in a second
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 12 frames (8 in a quantum) --
+  inside, at the end of each run: 10 runs, 385 to 392 samples (8.021 to 8.167 ms); runs with slips: 10
+    lengths (times): 385 (4) 386 (1) 391 (2) 392 (3)
+  cable: the bursts never came back in 10 runs
+  xruns in the short runs: 0
+  with impulses, one run: 25.83 samples more than inside (peak 0.0895 of full scale)
+  long run, 120 s, the first 60 not judged: FAIL (the tone is not on input 3; a slip of 7 samples in the count on input 5)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 6714 (largest 7 samples); in the warm-up 20098 (largest 7); slips of the tone 4 (largest 1.06 samples); in the warm-up 44 (largest 1.19)
+    count slip on input 5 at 0.015 s: +6 samples
+    count slip on input 5 at 0.017 s: -6 samples
+    count slip on input 5 at 0.021 s: +6 samples
+    count slip on input 5 at 0.023 s: -6 samples
+    count slip on input 5 at 0.027 s: +6 samples
+    count slip on input 5 at 0.029 s: -6 samples
+    count slip on input 5 at 0.033 s: +6 samples
+    count slip on input 5 at 0.035 s: -6 samples
+    count slip on input 5 at 0.039 s: +6 samples
+    count slip on input 5 at 0.041 s: -6 samples
+    count slip on input 5 at 0.045 s: +6 samples
+    count slip on input 5 at 0.047 s: -6 samples
+    count slip on input 5 at 0.051 s: +6 samples
+    count slip on input 5 at 0.053 s: -6 samples
+    count slip on input 5 at 0.057 s: +6 samples
+    count slip on input 5 at 0.059 s: -6 samples
+    count slip on input 5 at 0.063 s: +6 samples
+    count slip on input 5 at 0.065 s: -6 samples
+    count slip on input 5 at 0.069 s: +6 samples
+    count slip on input 5 at 0.071 s: -6 samples
+    count slip on input 5 at 0.075 s: +6 samples
+    count slip on input 5 at 0.077 s: -6 samples
+    count slip on input 5 at 0.081 s: +6 samples
+    count slip on input 5 at 0.083 s: -6 samples
+    count slip on input 5 at 0.087 s: +6 samples
+    count slip on input 5 at 0.089 s: -6 samples
+    count slip on input 5 at 0.093 s: +6 samples
+    count slip on input 5 at 0.095 s: -6 samples
+    count slip on input 5 at 0.099 s: +6 samples
+    count slip on input 5 at 0.101 s: -6 samples
+    count slip on input 5 at 0.105 s: +6 samples
+    count slip on input 5 at 0.107 s: -6 samples
+    count slip on input 5 at 0.111 s: +6 samples
+    count slip on input 5 at 0.113 s: -6 samples
+    count slip on input 5 at 0.117 s: +6 samples
+    count slip on input 5 at 0.119 s: -6 samples
+    count slip on input 5 at 0.123 s: +6 samples
+    count slip on input 5 at 0.125 s: -6 samples
+    count slip on input 5 at 0.129 s: +6 samples
+    count slip on input 5 at 0.131 s: -6 samples
+    count slip on input 5 at 0.135 s: +6 samples
+    count slip on input 5 at 0.137 s: -6 samples
+    count slip on input 5 at 0.141 s: +6 samples
+    count slip on input 5 at 0.143 s: -6 samples
+    count slip on input 5 at 0.147 s: +6 samples
+    count slip on input 5 at 0.149 s: -6 samples
+    count slip on input 5 at 0.153 s: +6 samples
+    count slip on input 5 at 0.155 s: -6 samples
+    count slip on input 5 at 0.159 s: +6 samples
+    count slip on input 5 at 0.161 s: -6 samples
+    count slip on input 5 at 0.165 s: +6 samples
+    count slip on input 5 at 0.167 s: -6 samples
+    count slip on input 5 at 0.171 s: +6 samples
+    count slip on input 5 at 0.173 s: -6 samples
+    count slip on input 5 at 0.177 s: +6 samples
+    count slip on input 5 at 0.179 s: -6 samples
+    count slip on input 5 at 0.183 s: +6 samples
+    count slip on input 5 at 0.185 s: -6 samples
+    count slip on input 5 at 0.189 s: +6 samples
+    count slip on input 5 at 0.191 s: -6 samples
+    count slip on input 5 at 0.195 s: +6 samples
+    count slip on input 5 at 0.197 s: -6 samples
+    count slip on input 5 at 0.201 s: +6 samples
+    count slip on input 5 at 0.203 s: -6 samples
+  long run: 5516 interrupts of the USB controllers a second; worst wake-up 10.09 us
+  transfers on the bus: none read in a second
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 10 runs, 908 to 909 samples (9.458 to 9.469 ms); runs with slips: 0
+    lengths (times): 908 (6) 909 (4)
+  cable: 10 runs, 932.14 to 933.14 samples (9.710 to 9.720 ms); from start to start it moves by 1.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 932.14 (6) 933.14 (4)
+  converters and cable alone: 24.14 samples (0.251 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (9.720 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.15 samples more than inside (peak 0.0894 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 908 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 1451 interrupts of the USB controllers a second; worst wake-up 3.81 us
+  transfers on the bus: none read in a second
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 96 frames (2 in a quantum) --
+  inside, at the end of each run: 10 runs, 908 to 909 samples (9.458 to 9.469 ms); runs with slips: 0
+    lengths (times): 908 (6) 909 (4)
+  cable: 10 runs, 932.14 to 933.14 samples (9.710 to 9.720 ms); from start to start it moves by 1.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 932.14 (6) 933.14 (4)
+  converters and cable alone: 24.14 samples (0.251 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (9.720 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.15 samples more than inside (peak 0.0894 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 908 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 3983 interrupts of the USB controllers a second; worst wake-up 7.57 us
+  transfers on the bus: none read in a second
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 48 frames (4 in a quantum) --
+  inside, at the end of each run: 10 runs, 860 to 861 samples (8.958 to 8.969 ms); runs with slips: 0
+    lengths (times): 860 (6) 861 (4)
+  cable: 10 runs, 884.14 to 885.15 samples (9.210 to 9.220 ms); from start to start it moves by 1.01 samples; inside a run the bursts differ by 0.01 at the most
+    lengths (times): 884.14 (2) 884.15 (4) 885.15 (4)
+  converters and cable alone: 24.15 samples (0.252 ms) more than inside, in 8 runs of 10
+  R-01, under 10 ms through the cable: yes (9.220 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.15 samples more than inside (peak 0.0894 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 861 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 8011 interrupts of the USB controllers a second; worst wake-up 3.81 us
+  transfers on the bus: none read in a second
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 24 frames (8 in a quantum) --
+  inside, at the end of each run: 10 runs, 751 to 763 samples (7.823 to 7.948 ms); runs with slips: 10
+    lengths (times): 751 (1) 762 (4) 763 (5)
+  cable: 10 runs, 775.15 to 787.16 samples (8.074 to 8.200 ms); from start to start it moves by 12.01 samples; inside a run the bursts differ by 1.01 at the most
+    lengths (times): 775.15 (1) 786.15 (3) 787.13 (2) 787.14 (1) 787.15 (2) 787.16 (1)
+  converters and cable alone: 24.15 samples (0.252 ms) more than inside, in 3 runs of 10
+  R-01, under 10 ms through the cable: yes (8.200 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.14 samples more than inside (peak 0.0894 of full scale)
+  long run, 120 s, the first 60 not judged: FAIL (the tone is not on input 3)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 181 (largest 1 samples); in the warm-up 556 (largest 1); slips of the tone 41 (largest 1.00 samples); in the warm-up 130 (largest 1.00)
+    count slip on input 5 at 0.574 s: +1 samples
+    count slip on input 5 at 0.576 s: -1 samples
+    count slip on input 5 at 0.892 s: -1 samples
+    count slip on input 5 at 0.896 s: +1 samples
+    count slip on input 5 at 0.898 s: -1 samples
+    count slip on input 5 at 0.902 s: +1 samples
+    count slip on input 5 at 0.904 s: -1 samples
+    count slip on input 5 at 0.908 s: +1 samples
+    count slip on input 5 at 0.910 s: -1 samples
+    count slip on input 5 at 0.922 s: +1 samples
+    count slip on input 5 at 0.928 s: -1 samples
+    count slip on input 5 at 1.632 s: +1 samples
+    count slip on input 5 at 1.634 s: -1 samples
+    count slip on input 5 at 1.640 s: +1 samples
+    count slip on input 5 at 1.656 s: -1 samples
+    count slip on input 5 at 1.658 s: +1 samples
+    count slip on input 5 at 2.676 s: -1 samples
+    count slip on input 5 at 2.680 s: +1 samples
+    count slip on input 5 at 2.688 s: -1 samples
+    count slip on input 5 at 2.696 s: +1 samples
+    count slip on input 5 at 2.698 s: -1 samples
+    count slip on input 5 at 2.708 s: +1 samples
+    count slip on input 5 at 2.712 s: -1 samples
+    count slip on input 5 at 2.716 s: +1 samples
+    count slip on input 5 at 2.720 s: -1 samples
+    count slip on input 5 at 2.726 s: +1 samples
+    count slip on input 5 at 2.730 s: -1 samples
+    count slip on input 5 at 2.978 s: +1 samples
+    count slip on input 5 at 2.980 s: -1 samples
+    count slip on input 5 at 3.422 s: +1 samples
+    count slip on input 5 at 3.424 s: -1 samples
+    count slip on input 5 at 3.428 s: +1 samples
+    count slip on input 5 at 3.430 s: -1 samples
+    count slip on input 5 at 3.434 s: +1 samples
+    count slip on input 5 at 3.436 s: -1 samples
+    count slip on input 5 at 3.442 s: +1 samples
+    count slip on input 5 at 3.448 s: -1 samples
+    count slip on input 5 at 3.450 s: +1 samples
+    count slip on input 5 at 4.472 s: -1 samples
+    count slip on input 5 at 4.474 s: +1 samples
+    count slip on input 5 at 4.480 s: -1 samples
+    count slip on input 5 at 4.482 s: +1 samples
+    count slip on input 5 at 4.484 s: -1 samples
+    count slip on input 5 at 4.490 s: +1 samples
+    count slip on input 5 at 4.494 s: -1 samples
+    count slip on input 5 at 4.496 s: +1 samples
+    count slip on input 5 at 4.498 s: -1 samples
+    count slip on input 5 at 4.500 s: +1 samples
+    count slip on input 5 at 4.504 s: -1 samples
+    count slip on input 5 at 4.508 s: +1 samples
+    count slip on input 5 at 4.510 s: -1 samples
+    count slip on input 5 at 4.512 s: +1 samples
+    count slip on input 5 at 4.514 s: -1 samples
+    count slip on input 5 at 4.516 s: +1 samples
+    count slip on input 5 at 4.518 s: -1 samples
+    count slip on input 5 at 5.224 s: +1 samples
+    count slip on input 5 at 5.228 s: -1 samples
+    count slip on input 5 at 5.230 s: +1 samples
+    count slip on input 5 at 5.232 s: -1 samples
+    count slip on input 5 at 5.234 s: +1 samples
+    count slip on input 5 at 5.238 s: -1 samples
+    count slip on input 5 at 5.240 s: +1 samples
+    count slip on input 5 at 5.250 s: -1 samples
+    count slip on input 5 at 5.252 s: +1 samples
+  long run: 10681 interrupts of the USB controllers a second; worst wake-up 9.96 us
+  transfers on the bus: none read in a second
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 10 runs, 1808 to 1833 samples (9.417 to 9.547 ms); runs with slips: 0
+    lengths (times): 1808 (1) 1809 (5) 1832 (1) 1833 (3)
+  cable: 10 runs, 1832.12 to 1857.12 samples (9.542 to 9.672 ms); from start to start it moves by 25.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 1832.12 (1) 1833.12 (5) 1856.12 (1) 1857.12 (3)
+  converters and cable alone: 24.12 samples (0.126 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (9.672 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.09 samples more than inside (peak 0.0919 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 1809 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 2006 interrupts of the USB controllers a second; worst wake-up 7.72 us
+  transfers on the bus: none read in a second
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 192 frames (2 in a quantum) --
+  inside, at the end of each run: 10 runs, 1713 to 1833 samples (8.922 to 9.547 ms); runs with slips: 1
+    lengths (times): 1713 (1) 1808 (1) 1809 (6) 1832 (1) 1833 (1)
+  cable: 10 runs, 1737.12 to 1857.12 samples (9.047 to 9.672 ms); from start to start it moves by 120.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 1737.12 (1) 1832.12 (1) 1833.12 (6) 1856.12 (1) 1857.12 (1)
+  converters and cable alone: 24.12 samples (0.126 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (9.672 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.09 samples more than inside (peak 0.0919 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 1808 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 4012 interrupts of the USB controllers a second; worst wake-up 8.27 us
+  transfers on the bus: none read in a second
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 96 frames (4 in a quantum) --
+  inside, at the end of each run: 10 runs, 1712 to 1737 samples (8.917 to 9.047 ms); runs with slips: 0
+    lengths (times): 1712 (2) 1713 (7) 1737 (1)
+  cable: 10 runs, 1736.12 to 1761.12 samples (9.042 to 9.172 ms); from start to start it moves by 25.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 1736.12 (2) 1737.12 (7) 1761.12 (1)
+  converters and cable alone: 24.12 samples (0.126 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (9.172 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.09 samples more than inside (peak 0.0919 of full scale)
+  long run, 120 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 1713 samples)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 8025 interrupts of the USB controllers a second; worst wake-up 8.98 us
+  transfers on the bus: none read in a second
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer), the driver asked for periods of 48 frames (8 in a quantum) --
+  inside, at the end of each run: 10 runs, 1517 to 1540 samples (7.901 to 8.021 ms); runs with slips: 10
+    lengths (times): 1517 (9) 1540 (1)
+  cable: 8 runs, 1541.08 to 1541.12 samples (8.026 to 8.027 ms); from start to start it moves by 0.04 samples; inside a run the bursts differ by 1.00 at the most
+    lengths (times): 1541.08 (1) 1541.10 (1) 1541.11 (1) 1541.12 (5)
+  converters and cable alone: 24.12 samples (0.126 ms) more than inside, in 4 runs of 8
+  R-01, under 10 ms through the cable: yes (8.027 ms at the most)
+  calibrations: FAIL (8 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 1093.80 samples more than inside (peak 0.0003 of full scale)
+  long run, 120 s, the first 60 not judged: FAIL (the tone is not on input 3; a slip of 25 samples in the count on input 5)
+  long run, 120 s: xruns 0 (0 of them in the warm-up); count slips 8437 (largest 25 samples); in the warm-up 25124 (largest 26); slips of the tone 71 (largest 1.00 samples); in the warm-up 923 (largest 5.19)
+    count slip on input 5 at 0.011 s: +24 samples
+    count slip on input 5 at 0.012 s: -24 samples
+    count slip on input 5 at 0.014 s: +24 samples
+    count slip on input 5 at 0.015 s: -24 samples
+    count slip on input 5 at 0.021 s: +24 samples
+    count slip on input 5 at 0.022 s: -24 samples
+    count slip on input 5 at 0.024 s: +24 samples
+    count slip on input 5 at 0.025 s: -24 samples
+    count slip on input 5 at 0.031 s: +24 samples
+    count slip on input 5 at 0.032 s: -24 samples
+    count slip on input 5 at 0.034 s: +24 samples
+    count slip on input 5 at 0.035 s: -24 samples
+    count slip on input 5 at 0.041 s: +24 samples
+    count slip on input 5 at 0.042 s: -24 samples
+    count slip on input 5 at 0.044 s: +24 samples
+    count slip on input 5 at 0.045 s: -24 samples
+    count slip on input 5 at 0.051 s: +24 samples
+    count slip on input 5 at 0.052 s: -24 samples
+    count slip on input 5 at 0.054 s: +24 samples
+    count slip on input 5 at 0.055 s: -24 samples
+    count slip on input 5 at 0.061 s: +24 samples
+    count slip on input 5 at 0.062 s: -24 samples
+    count slip on input 5 at 0.064 s: +24 samples
+    count slip on input 5 at 0.065 s: -25 samples
+    count slip on input 5 at 0.070 s: +1 samples
+    count slip on input 5 at 0.071 s: +24 samples
+    count slip on input 5 at 0.072 s: -25 samples
+    count slip on input 5 at 0.073 s: +1 samples
+    count slip on input 5 at 0.074 s: +24 samples
+    count slip on input 5 at 0.075 s: -25 samples
+    count slip on input 5 at 0.076 s: +1 samples
+    count slip on input 5 at 0.077 s: -1 samples
+    count slip on input 5 at 0.078 s: +1 samples
+    count slip on input 5 at 0.079 s: -1 samples
+    count slip on input 5 at 0.081 s: +24 samples
+    count slip on input 5 at 0.082 s: -24 samples
+    count slip on input 5 at 0.084 s: +25 samples
+    count slip on input 5 at 0.085 s: -25 samples
+    count slip on input 5 at 0.088 s: +1 samples
+    count slip on input 5 at 0.089 s: -1 samples
+    count slip on input 5 at 0.091 s: +24 samples
+    count slip on input 5 at 0.092 s: -24 samples
+    count slip on input 5 at 0.094 s: +24 samples
+    count slip on input 5 at 0.095 s: -24 samples
+    count slip on input 5 at 0.101 s: +24 samples
+    count slip on input 5 at 0.102 s: -24 samples
+    count slip on input 5 at 0.104 s: +24 samples
+    count slip on input 5 at 0.105 s: -24 samples
+    count slip on input 5 at 0.111 s: +24 samples
+    count slip on input 5 at 0.112 s: -24 samples
+    count slip on input 5 at 0.114 s: +24 samples
+    count slip on input 5 at 0.115 s: -24 samples
+    count slip on input 5 at 0.121 s: +24 samples
+    count slip on input 5 at 0.122 s: -24 samples
+    count slip on input 5 at 0.124 s: +24 samples
+    count slip on input 5 at 0.125 s: -24 samples
+    count slip on input 5 at 0.131 s: +24 samples
+    count slip on input 5 at 0.132 s: -24 samples
+    count slip on input 5 at 0.134 s: +24 samples
+    count slip on input 5 at 0.135 s: -24 samples
+    count slip on input 5 at 0.141 s: +24 samples
+    count slip on input 5 at 0.142 s: -24 samples
+    count slip on input 5 at 0.144 s: +24 samples
+    count slip on input 5 at 0.145 s: -24 samples
+  long run: 10701 interrupts of the USB controllers a second; worst wake-up 8.87 us
+  transfers on the bus: none read in a second
+
+finished_utc: 2026-11-26T08:44:45Z
+verdict: FAIL (7 of 16 shapes and rates)
