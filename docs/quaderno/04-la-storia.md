@@ -486,11 +486,29 @@ Che cosa avevo sbagliato. Avevo trattato il decimo di millisecondo come tutto il
 
 Che cosa resta. Un'ora non sono le 24 della campagna, che sarà la conferma. La patch non è ancora adottata: l'interruttore nasce spento, e chi lo accende è una decisione da scrivere. E la domanda sul driver nostro ora ha i numeri per essere chiusa: per stare sotto i 10 ms non serve.
 
+### P1.8e: adottare la patch, e guardare ciò che l'ora non vedeva
+
+_26 novembre: consegnato, in attesa della misura._ Con i numeri di P1.8d l'utente ha preso tre decisioni.
+
+1. **La patch si adotta**, accesa dalla riga di comando del kernel nel profilo della macchina. Nel driver l'interruttore resta spento di fabbrica: un kernel di dawOS a cui nessuno chiede nulla si comporta come quello di tutti.
+2. **Il driver audio nostro non si scrive**, almeno in questa fase. La domanda era aperta da prima della Fase 0, e si chiude con una riga di patch al posto di settimane di lavoro. La conferma sarà la campagna di 24 ore.
+3. Restano due cose: misurare il margine, e sistemare l'avvio dei flussi.
+
+Le prime due stanno in un registro delle decisioni (l'ADR 0026), con una parte che fino a oggi non era mai servita: le tre condizioni che il progetto si era dato per ogni patch al kernel. Arriva con la misura; si propone a chi mantiene il kernel, quando si può; qualcuno la riporta a ogni versione nuova.
+
+Poi, preparando la misura del margine, ho riletto il driver del controller e ho trovato **un limite della prova appena passata**. Se una consegna tarda più di un decimo di millisecondo, il trasferimento esce un microframe dopo, e da lì tutta l'uscita è 125 µs più tardi sul bus. Ma l'interfaccia ha una sua piccola memoria tra il bus e il convertitore: un campione che arriva un po' più tardi viene suonato nello stesso istante, purché arrivi prima del suo turno. Il giro non cambia, il conteggio non slitta. Cambia solo quando quella memoria si svuota.
+
+Quindi l'ora pulita di P1.8d non dice «nessuna consegna ha tardato». Dice «la memoria dell'interfaccia non si è mai svuotata». È una buona notizia lo stesso, ma è un'altra frase, e la differenza conta per le 24 ore: una riserva che si consuma un pezzo alla volta può durare un'ora e non un giorno.
+
+Sul bus la differenza si vede. Dopo un microframe saltato il tempo che un trasferimento passa presso il controller sale da 1,115 a 1,24 ms e ci resta: lo strumento lo chiama **salto**. La misura di P1.8e è questa: due minuti di bus per caso, sotto il carico della campagna, a contare i salti. E con l'interruttore spento lo stesso strumento dà, per la prima volta, il numero che mi è mancato in P1.8d: di quanto tarda il kernel a consegnare, quando la macchina lavora.
+
+La previsione questa volta è che salti non ce ne siano. La scrivo sapendo che l'ultima era sbagliata nel verso opposto.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: adottare la patch (chi accende l'interruttore), la decisione su un driver nostro, l'avvio dei flussi (A-72), la consegna senza chiamata di sistema |
+| P1.8 | Il driver della scheda: il margine della consegna letto sul bus sotto carico (P1.8e), poi l'avvio dei flussi (A-72, P1.8f) |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |

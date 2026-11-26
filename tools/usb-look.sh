@@ -46,6 +46,17 @@
 # ASAP="0 1": every case is read with each. Without it the switch is
 # left as it is.
 #
+# READ_SECONDS (3 by default, 300 at the most) is how long the bus is
+# read for in each case. Step P1.8e reads it for a minute or two while
+# the load of the campaign runs: with the switch on, an output transfer
+# is handed over a tenth of a millisecond before its turn, and how that
+# tenth holds when the machine works shows in the spread of the time a
+# transfer stays with the controller, in the transfers handed over with
+# no other before them, in those that do not follow the one before by
+# its own length, and in the stays that differ from the one before by
+# half a microframe or more. What is counted is counted from one second after
+# the first transfer of the card to the end of the reading.
+#
 # To try the script where there is no interface the engine can open (a
 # virtual machine with an emulated USB card), TRY_COMMAND replaces the
 # engine with the command it holds, run once for each case.
@@ -65,7 +76,7 @@ ASAP=${ASAP:-}
 SWITCH=/sys/module/snd_usb_audio/parameters/iso_asap
 TRY_COMMAND=${TRY_COMMAND:-}
 # Seconds the bus is read for, from just before the engine is started.
-READ_SECONDS=3
+READ_SECONDS=${READ_SECONDS:-3}
 
 die() {
 	echo "usb-look: $*" >&2
@@ -77,13 +88,21 @@ field() {
 }
 
 [ "$(id -u)" = 0 ] || die "must run as root"
+case "${READ_SECONDS}" in
+'' | *[!0-9]*) die "READ_SECONDS=${READ_SECONDS}: a number of seconds, from 3 to 300" ;;
+esac
+if [ "${READ_SECONDS}" -lt 3 ] || [ "${READ_SECONDS}" -gt 300 ]; then
+	die "READ_SECONDS=${READ_SECONDS}: from 3 to 300"
+fi
 switch_before=
 if [ -n "${ASAP}" ]; then
 	[ -w "${SWITCH}" ] || die "this kernel has no switch iso_asap (${SWITCH}): it comes with step P1.8c"
 	switch_before=$(cat "${SWITCH}")
-	# Whatever happens, the switch goes back to where it was.
-	trap 'echo "${switch_before}" > "${SWITCH}"' EXIT
 fi
+raw=
+# Whatever happens, the switch goes back to where it was, and the lines
+# of the bus kept in memory are let go.
+trap '[ -z "${switch_before}" ] || echo "${switch_before}" > "${SWITCH}"; [ -z "${raw}" ] || rm -f "${raw}"' EXIT
 
 card=
 for directory in /proc/asound/card[0-9]*; do
@@ -106,6 +125,20 @@ monitor="/sys/kernel/debug/usb/usbmon/${bus}u"
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 dir="${BASE}/usb-${stamp}${label:+-${label}}"
 mkdir -p "${dir}" || die "cannot create ${dir}"
+# Whether the load of the campaign is running, as its own script says.
+campaign="no script of the campaign on this machine"
+if [ -r /var/lib/dawos/campaign.sh ]; then
+	campaign=$(sh /var/lib/dawos/campaign.sh --status 2> /dev/null | head -n 1)
+	campaign=${campaign:-unknown}
+fi
+# The lines of the bus are kept in memory while they are read, when
+# there is room (about a megabyte a second): the disk is part of the
+# load, and a reader that waits for it loses lines.
+raw="${dir}/bus.raw"
+if [ "$(awk '$2 == "/run" { print $3 }' /proc/mounts | head -n 1)" = tmpfs ]; then
+	room=$(df -Pk /run 2> /dev/null | awk 'NR == 2 { print int($4 / 1024) }')
+	[ "${room:-0}" -ge $((READ_SECONDS * 2 + 16)) ] && raw="/run/dawos-usb-look.$$"
+fi
 {
 	echo "started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 	echo "label: ${label:-none}"
@@ -119,6 +152,8 @@ mkdir -p "${dir}" || die "cannot create ${dir}"
 	echo "slices: ${SLICES}"
 	echo "iso_asap: ${ASAP:-left as it is: $(cat "${SWITCH}" 2> /dev/null || echo "this kernel has no such switch")}"
 	echo "command: ${TRY_COMMAND:-the engine}"
+	echo "read_seconds: ${READ_SECONDS}"
+	echo "campaign: ${campaign}"
 } > "${dir}/meta.txt"
 echo "directory: ${dir}"
 : > "${dir}/summary.txt"
@@ -126,6 +161,10 @@ echo "directory: ${dir}"
 say() {
 	echo "$*" | tee -a "${dir}/summary.txt"
 }
+
+say "campaign: ${campaign}"
+say "the bus is read for ${READ_SECONDS} s in each case; its lines are kept in ${raw%/*} meanwhile"
+say ""
 
 # ---- The controller of the bus, and what it says it can do. The
 # registers are in debugfs, under the name of the controller on its own
@@ -185,7 +224,7 @@ kernel_lines_before=$(dmesg | wc -l)
 #   the whole, and "=" with the first 32 bytes
 # "start" is the microframe the controller gave the transfer.
 read_bus() {
-	awk -v device="$2" -v window=1000000 '
+	awk -v device="$2" -v skip=1000000 -v bin=5 '
 		# The keys of a table as numbers in order, in list[1..n].
 		function in_order(table, list,    key, n, i, j, held) {
 			n = 0
@@ -213,10 +252,13 @@ read_bus() {
 			}
 			return text == "" ? "none" : text
 		}
-		# Least, middle and most of the values counted in bins of 25 us
-		# under the prefix.
-		function spread(table, prefix,    key, own, list, n, i, total, seen, middle) {
+		# The values counted in bins under the prefix: the least, the
+		# one a thousandth of them stay under, the middle, the one a
+		# thousandth go over, the most. With every > 0, every value
+		# seen with its times as well, in every_one.
+		function spread(table, prefix, every,    key, own, list, n, i, total, seen, low, middle, high) {
 			total = 0
+			every_one = ""
 			for (key in table) {
 				if (index(key, prefix) != 1) continue
 				own[substr(key, length(prefix) + 1)] = table[key]
@@ -225,12 +267,18 @@ read_bus() {
 			if (total == 0) return "none"
 			n = in_order(own, list)
 			seen = 0
-			middle = list[1]
+			low = middle = high = ""
 			for (i = 1; i <= n; i++) {
 				seen += own[list[i]]
-				if (seen * 2 >= total) { middle = list[i]; break }
+				if (low == "" && seen * 1000 >= total) low = list[i]
+				if (middle == "" && seen * 2 >= total) middle = list[i]
+				if (high == "" && seen * 1000 >= total * 999) high = list[i]
+				if (every > 0) {
+					if (i <= every) every_one = every_one " " list[i] * bin " (" own[list[i]] ")"
+					else if (i == every + 1) every_one = every_one " and " n - every " values more"
+				}
 			}
-			return sprintf("least %d, half %d, most %d", list[1] * 25, middle * 25, list[n] * 25)
+			return sprintf("least %d, 0.1 %% %d, half %d, 99.9 %% %d, most %d", list[1] * bin, low * bin, middle * bin, high * bin, list[n] * bin)
 		}
 		($3 == "S" || $3 == "C") && $4 ~ /^Z[io]:/ && index($4, device) {
 			lines++
@@ -238,6 +286,10 @@ read_bus() {
 			if (!(point in known)) { known[point] = 1; order[++points] = point }
 			if (first_time == "") first_time = $2
 			last_time = $2
+			# What is counted: from a second after the first line of
+			# the card, when the streams have started.
+			steady = ($2 - first_time >= skip)
+			if (steady && steady_from == "") steady_from = $2
 			packets = $6 + 0
 			shown = packets > 5 ? 5 : packets
 			bytes = $(7 + shown) + 0
@@ -264,11 +316,16 @@ read_bus() {
 						first_sound = $2
 						outputs_before_sound = handed[point] - 1
 					}
-					waiting[point] = handed[point] - back[point]
-					kept_waiting[NR] = waiting[point]
-					kept_point[NR] = point
-					kept_time[NR] = $2
-					kept++
+					if (steady) {
+						waiting = handed[point] - back[point]
+						count["waiting " point " " waiting]++
+						# Handed over when the controller had no other:
+						# the one before had already come back.
+						if (waiting <= 1) {
+							alone[point]++
+							if (alone[point] <= 10) alone_at[point] = alone_at[point] sprintf(" %.3f", ($2 - first_time) / 1000000)
+						}
+					}
 				}
 			} else {
 				back[point]++
@@ -277,51 +334,77 @@ read_bus() {
 					inputs_back++
 					if (bytes > 0 && first_input_with_sound == "") { first_input_with_sound = $2; empty_inputs = inputs_back - 1 }
 				}
-				came[NR] = point
-				came_time[NR] = $2
-				came_packets[NR] = packets
-				came_bytes[NR] = bytes
-				came_stay[NR] = ($1 in sent_at) ? $2 - sent_at[$1] : -1
+				stay = ($1 in sent_at) ? $2 - sent_at[$1] : -1
+				delete sent_at[$1]
 				# The microframes from the transfer before, on the same
-				# endpoint: the lines come in the order of time.
-				came_step[NR] = -1
+				# endpoint: the lines come in the order of time. A
+				# transfer follows the one before by the length of
+				# that one: its packets, each as long as the interval.
+				step = -1
+				due = -1
+				gap = -1
 				if (point in start_before) {
-					came_step[NR] = state[3] - start_before[point]
-					if (came_step[NR] < 0) came_step[NR] += 16384
+					step = state[3] - start_before[point]
+					if (step < 0) step += 16384
+					due = packets_before[point] * state[2]
+					gap = $2 - back_before[point]
 				}
 				start_before[point] = state[3]
-				came_wrong[NR] = (state[1] != 0 || state[4] + 0 != 0)
-				delete sent_at[$1]
+				packets_before[point] = packets
+				back_before[point] = $2
+				if (steady) {
+					steady_back[point]++
+					count["packets " point " " packets]++
+					count["bytes " point " " bytes]++
+					if (stay >= 0) {
+						count["stay " point " " int(stay / bin)]++
+						# A stay that differs from the one before by
+						# half a microframe or more: a hand-over that
+						# came late, or a transfer that went later than
+						# its turn.
+						if (point in stay_before) {
+							change = stay - stay_before[point]
+							if (change >= 60 || change <= -60) {
+								jumps[point]++
+								if (jumps[point] <= 10) jump_at[point] = jump_at[point] sprintf("\n      at %.3f s: from %d to %d us", ($2 - first_time) / 1000000, stay_before[point], stay)
+							}
+						}
+						stay_before[point] = stay
+					} else unread[point]++
+					if (gap >= 0) count["gap " point " " int(gap / bin)]++
+					if (step >= 0) {
+						count["step " point " " step]++
+						if (step != due) {
+							odd[point]++
+							if (odd[point] <= 10) odd_at[point] = odd_at[point] sprintf("\n      at %.3f s: %d microframes after the one before instead of %d, back %d us after it", ($2 - first_time) / 1000000, step, due, gap)
+						}
+					}
+					if (state[1] != 0 || state[4] + 0 != 0) wrong[point]++
+				}
 			}
 		}
 		END {
 			if (lines == 0) { print "  nothing of the card was on the bus"; exit }
 			printf "  read: %d lines of the card in %.2f s\n", lines, (last_time - first_time) / 1000000
-			from = last_time - window
-			# The steady second: the last one read.
-			for (line in came) {
-				if (came_time[line] < from) continue
-				point = came[line]
-				steady[point]++
-				count["packets " point " " came_packets[line]]++
-				count["bytes " point " " came_bytes[line]]++
-				if (came_stay[line] >= 0) count["stay " point " " int(came_stay[line] / 25)]++
-				if (came_step[line] >= 0) count["step " point " " came_step[line]]++
-				if (came_wrong[line]) wrong[point]++
-			}
-			for (line in kept_waiting) {
-				if (kept_time[line] < from) continue
-				count["waiting " kept_point[line] " " kept_waiting[line]]++
-			}
+			if (steady_from == "") { print "  the card was on the bus for less than a second: nothing to count"; exit }
+			seconds = (last_time - steady_from) / 1000000
 			for (i = 1; i <= points; i++) {
 				point = order[i]
-				printf "  %s (%s): %d transfers came back in the last second read; in all %d handed over, %d back\n", point, (point ~ /^Zi/ ? "input" : "output"), steady[point], handed[point], back[point]
+				printf "  %s (%s): %d transfers came back in the %.2f s counted, %.0f a second; in all %d handed over, %d back\n", point, (point ~ /^Zi/ ? "input" : "output"), steady_back[point], seconds, (seconds > 0 ? steady_back[point] / seconds : 0), handed[point], back[point]
 				printf "    packets in a transfer (times): %s\n", most_seen(count, "packets " point " ")
 				printf "    bytes in a transfer%s (times): %s\n", (point ~ /^Zi/ ? ", in its first five packets at the most" : ""), most_seen(count, "bytes " point " ")
-				printf "    microseconds with the controller, from handed over to back: %s\n", spread(count, "stay " point " ")
+				printf "    microseconds with the controller, from handed over to back: %s\n", spread(count, "stay " point " ", (point ~ /^Zo/ ? 60 : 0))
+				if (point ~ /^Zo/ && every_one != "") printf "      every value seen (times):%s\n", every_one
+				if (point ~ /^Zo/) printf "    stays that differ from the one before by 60 us or more: %d%s\n", jumps[point], jump_at[point]
+				printf "    microseconds from a transfer back to the next back: %s\n", spread(count, "gap " point " ", 0)
 				printf "    microframes from a transfer to the next (times): %s\n", most_seen(count, "step " point " ")
-				if (point ~ /^Zo/) printf "    output transfers with the controller when one more is handed over (times): %s\n", most_seen(count, "waiting " point " ")
+				printf "    transfers that did not follow the one before by its length: %d%s\n", odd[point], odd_at[point]
+				if (point ~ /^Zo/) {
+					printf "    output transfers with the controller when one more is handed over (times): %s\n", most_seen(count, "waiting " point " ")
+					printf "    handed over when the controller had no other: %d%s\n", alone[point], (alone[point] > 0 ? "; the first at (s):" alone_at[point] : "")
+				}
 				printf "    transfers that came back with an error: %d\n", wrong[point]
+				printf "    transfers back whose hand-over was not read (lines the reader lost): %d\n", unread[point]
 			}
 			print "  the start, in milliseconds from the first line of the card:"
 			for (i = 1; i <= points; i++) {
@@ -359,7 +442,7 @@ look() {
 	# The reader goes ahead of ordinary work: the kernel keeps few
 	# lines for it, and those it does not take in time are lost (twelve
 	# of 48 000 in the first measure, step P1.8b).
-	chrt -f 10 cat "${monitor}" > "${dir}/bus.raw" 2> /dev/null &
+	chrt -f 10 cat "${monitor}" > "${raw}" 2> /dev/null &
 	reader=$!
 	# The reader is there before the first transfer.
 	sleep 1
@@ -381,14 +464,19 @@ look() {
 	fi
 	wait "${runner}" 2> /dev/null
 
-	read_bus "${dir}/bus.raw" ":${device}:" | tee -a "${dir}/summary.txt"
-	# The lines themselves, cut short: how the streams start, and a
-	# stretch of the steady part.
-	awk -v device=":${device}:" '$4 ~ /^Z[io]:/ && index($4, device) { print substr($0, 1, 200) }' \
-		"${dir}/bus.raw" > "${dir}/bus.card"
-	sed -n '1,150p' "${dir}/bus.card" > "${dir}/bus-start-${name}.txt"
-	tail -n 120 "${dir}/bus.card" > "${dir}/bus-steady-${name}.txt"
-	rm -f "${dir}/bus.raw" "${dir}/bus.card"
+	read_bus "${raw}" ":${device}:" | tee -a "${dir}/summary.txt"
+	# The lines themselves, cut short: how the streams start (the first
+	# 150 of the card), and a stretch of the steady part (the last 120).
+	awk -v device=":${device}:" -v start="${dir}/bus-start-${name}.txt" -v keep=120 '
+		$4 ~ /^Z[io]:/ && index($4, device) {
+			line = substr($0, 1, 200)
+			if (++seen <= 150) print line > start
+			last[seen % keep] = line
+		}
+		END {
+			for (i = (seen > keep ? seen - keep + 1 : 1); i <= seen; i++) print last[i % keep]
+		}' "${raw}" > "${dir}/bus-steady-${name}.txt"
+	rm -f "${raw}"
 
 	if [ -z "${TRY_COMMAND}" ]; then
 		report="${dir}/engine-${name}.txt"
