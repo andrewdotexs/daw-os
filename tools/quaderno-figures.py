@@ -675,6 +675,45 @@ def latenza():
     f.save("latenza")
 
 
+def giro_dove():
+    """Where the round trip inside the interface is spent (step P1.8b)."""
+    f = Figure(760, 300, "Dove passa il tempo del giro dentro l'interfaccia a 48 kHz, con una e con quattro fette")
+    f.text(24, 34, "Dove stanno i millisecondi del giro (48 kHz, forma 96:3)", 15, weight=600)
+    f.text(24, 54, "Giro dentro l'interfaccia, dal motore al motore; letto sul bus USB nel passo P1.8b", 11.5, fill=INK2)
+    rows = [
+        ("una fetta", 6.00, 2.98, 0.57, 9.54),
+        ("quattro fette", 6.00, 2.45, 0.59, 9.04),
+    ]
+    x0, x1 = 130, 580
+
+    def at(ms):
+        return x0 + ms / 10.0 * (x1 - x0)
+
+    top, row = 104, 62
+    for tick in range(0, 11, 2):
+        f.line(at(tick), top - 12, at(tick), top + 2 * row - 14, GRID)
+        f.text(at(tick), top + 2 * row + 2, f"{tick} ms", 11, "middle", INK2)
+    for index, (name, buffer, controller, rest, whole) in enumerate(rows):
+        y = top + index * row
+        f.text(x0 - 12, y + 19, name, 12, "end")
+        start = 0.0
+        for value, colour in ((buffer, BLUE), (controller, ORANGE), (rest, AQUA)):
+            f.rect(at(start) + 1, y, at(start + value) - at(start) - 2, 28, colour, rx=4)
+            start += value
+        f.text(at(buffer / 2), y + 19, comma(buffer), 12, "middle", fill="#ffffff", weight=600)
+        f.text(at(buffer + controller / 2), y + 19, comma(controller), 12, "middle", fill="#ffffff", weight=600)
+        f.text(at(start) + 8, y + 19, f"{comma(rest)}   in tutto {comma(whole)} ms", 11.5, fill=INK2)
+    # The parts, named once under the first row.
+    y = top + 2 * row + 30
+    f.rect(x0, y, 14, 10, BLUE, rx=3)
+    f.text(x0 + 20, y + 9, "il buffer: tre cicli del motore", 11.5)
+    f.rect(x0 + 200, y, 14, 10, ORANGE, rx=3)
+    f.text(x0 + 220, y + 9, "l'uscita presso il controller USB", 11.5)
+    f.rect(x0 + 420, y, 14, 10, AQUA, rx=3)
+    f.text(x0 + 440, y + 9, "interfaccia e avvio", 11.5)
+    f.save("giro-dove")
+
+
 def thread_1_4():
     """The same graph on one to four threads: expected and measured."""
     f = Figure(760, 340, "Lo stesso grafo su uno, due, tre e quattro thread: previsto e misurato")
@@ -802,6 +841,7 @@ FIGURES = {
     "dove-gira": dove_gira,
     "nodo-abbandonato": nodo_abbandonato,
     "latenza": latenza,
+    "giro-dove": giro_dove,
     "thread-1-4": thread_1_4,
     "stime": stime,
     "risveglio": risveglio,

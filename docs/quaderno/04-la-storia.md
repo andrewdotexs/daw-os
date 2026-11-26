@@ -407,7 +407,7 @@ E lo strumento ha mancato il dato che chiamavo «il più sicuro», i pacchetti p
 
 ### P1.8b: leggere il bus
 
-_26 novembre: consegnato, in attesa della misura._ Tre millisecondi restano senza padrone, e stanno in un posto dove il motore non guarda: il bus. L'utente ha scelto di guardarci prima di investire nelle quattro fette.
+_26 novembre: misurato._ Tre millisecondi restano senza padrone, e stanno in un posto dove il motore non guarda: il bus. L'utente ha scelto di guardarci prima di investire nelle quattro fette.
 
 Il kernel mostra ogni trasferimento USB due volte, quando il driver lo consegna al controller e quando torna, con l'istante di ognuna. Dalla differenza si ricava con che anticipo sul cavo l'uscita viene consegnata: il numero che il sorgente del controller fa sospettare grande.
 
@@ -415,11 +415,23 @@ La domanda conta per un'altra decisione: se quel tempo sta nel driver del contro
 
 Questa volta lo strumento è stato provato prima di consegnarlo, su un bus vero: una scheda audio USB emulata nella macchina virtuale.
 
+In due minuti di misura i tre millisecondi hanno trovato il padrone.
+
+![Il giro dentro l'interfaccia a 48 kHz diviso in buffer, uscita presso il controller USB e resto, con una e con quattro fette](img/giro-dove.svg)
+
+**Figura 4.4.** Il giro è una somma di tre pezzi. Il primo lo sceglie il motore; il terzo è dell'interfaccia; il secondo, tre millisecondi, è del controller USB.
+
+Un trasferimento d'uscita resta presso il controller 2,98 ms. Sommato al buffer, quello che avanza per arrivare al giro misurato dal motore è mezzo millisecondo: la stessa costante della Scarlett di seconda generazione. **La quarta non è più lenta: è servita in un altro modo.**
+
+Quei tre millisecondi sono due cose. Una è la durata del trasferimento, un millisecondo. L'altra è l'**anticipo**: il driver del controller vuole ricevere un trasferimento ben prima che parta. Il controller dichiara che gli basta mezzo millisecondo; il driver arrotonda al millisecondo successivo e ne aggiunge un altro per prudenza, e ne vengono due. Con trasferimenti più corti l'anticipo cresce, perché comanda il punto peggiore del millisecondo: ecco perché due fette non davano nulla, e quattro solo metà di ciò che toglievano. Con otto, i dodici trasferimenti del driver audio non bastano a coprire l'anticipo, e il flusso si buca a ogni millisecondo: il «due pacchetti su tre».
+
+La conseguenza più importante non è un numero. Da mesi il progetto si porta dietro una domanda: scrivere un driver audio nostro? Sulla latenza, la risposta è arrivata da dove non la cercavamo: quei millisecondi stanno **sotto** il driver audio, e uno nostro li troverebbe identici.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: dopo la misura di P1.8a, i thread con il periodo corto e la prova sotto carico, la consegna senza chiamata di sistema, la seconda generazione, l'avvio (A-72), la decisione su un driver nostro |
+| P1.8 | Il driver della scheda: che cosa fare dell'anticipo del controller USB (una modifica piccola al suo driver, le quattro fette, o tutte e due); poi la consegna senza chiamata di sistema, l'avvio (A-72), la decisione su un driver nostro |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |
