@@ -351,7 +351,7 @@ Scrivendo il passo è caduta una frase del progetto di P1.1: la «dissolvenza» 
 
 ### P1.7g: l'accettazione del grafo
 
-_25 novembre: prima misura fatta; l'ora di scambio si rifà._ Il criterio 7 chiede tre cose: lo stesso grafo su 1–4 processori con accelerazione e percorso critico misurati, lo scambio senza discontinuità, il carico calibrato. Sono già state misurate tutte, ma ognuna in un passo e con un'immagine diversa. Qui si rifanno sulla stessa immagine, senza toccare il motore, e uno script ne ricava un verdetto.
+_25 e 26 novembre: superato, con l'ora di scambio fatta due volte._ Il criterio 7 chiede tre cose: lo stesso grafo su 1–4 processori con accelerazione e percorso critico misurati, lo scambio senza discontinuità, il carico calibrato. Sono già state misurate tutte, ma ognuna in un passo e con un'immagine diversa. Qui si rifanno sulla stessa immagine, senza toccare il motore, e uno script ne ricava un verdetto.
 
 Decisioni dell'utente: solo l'accettazione, senza codice nuovo; e lo scambio per **un'ora**, sotto il carico della campagna, come le altre accettazioni. Le soglie sono scritte prima della misura.
 
@@ -361,11 +361,28 @@ La prima misura: tutte le soglie rispettate. Le tre classi entro lo 0,5 %; il gr
 
 L'ora però è cominciata due minuti prima del carico della campagna, che era già finita ed è stata rilanciata. L'utente ha deciso di rifarla. Lo strumento stampava «la campagna non girava all'inizio» senza giudicarlo: ora lo giudica, e può rifiutarsi di partire.
 
+La seconda ora, il 26 novembre, sotto il carico dall'inizio alla fine: 3659 scambi, **351 362 246 campioni al loro posto, nessuno fuori posto**, nessun xrun, risveglio peggiore 14,85 µs. **Il criterio 7 è raggiunto**, e con lui il passo P1.7 è chiuso.
+
+| | Prima ora | Seconda ora |
+| --- | --- | --- |
+| Campagna all'inizio | non girava | girava |
+| Traffico di rete, per senso | 4,5 GB | 95 GB |
+| Giro del conteggio | 1912 campioni | 1914 |
+| Campioni fuori posto | 0 | 0 |
+| Pulizie della TLB nel calcolo, per processore live | 3 | 3 |
+| Pulizie del predittore (`__bpf_arch_ibpb`), per processore live | 10 | 38 |
+
+Tre cose che il confronto ha insegnato.
+
+- **Il giro non è una costante.** 1912 in un'ora, 1914 nell'altra, fermo dall'inizio alla fine di ognuna: dipende da come partono i due flussi della scheda. Avevo scritto «previsione sbagliata» per due campioni che sono solo un altro avvio.
+- **Le pulizie della TLB sono tre per processore in tutte e due le ore**, con un carico intorno venti volte diverso sulla rete. Non è il caso: è qualcosa che il processo fa a un punto fisso della sua corsa. Quando, nella seconda ora, non si sa: il rapporto elenca solo le prime dodici righe, ed erano di un altro tipo (A-75).
+- **Uno degli ingressi nel kernel ha finalmente una causa.** `__bpf_arch_ibpb` è la pulizia del predittore dei salti che il kernel fa su tutti i processori quando carica un programma BPF classico; e a caricarli, qui, è con ogni probabilità il server SSH a ogni connessione. Le connessioni le fanno i nostri strumenti di misura: più traffico di rete, più pulizie (A-76).
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: la latenza sulla quarta generazione (A-69), lo scatto del periodo (A-68) |
-| P1.9 | Il kernel: le chiamate tra processori che restano (A-49) |
+| P1.8 | Il driver della scheda: la latenza sulla quarta generazione (A-69), lo scatto del periodo (A-68), la scrittura corta all'avvio (A-72) |
+| P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |
