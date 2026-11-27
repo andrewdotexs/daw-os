@@ -712,6 +712,50 @@ def latenza_patch():
     f.save("latenza-patch")
 
 
+def margine_consegna():
+    """How long an output transfer stays with the controller, idle and under load."""
+    import math
+    f = Figure(760, 360, "Quanto resta presso il controller un trasferimento d'uscita, a macchina ferma e sotto carico")
+    f.text(24, 34, "Il margine della consegna, a 48 kHz con iso_asap acceso", 15, weight=600)
+    f.text(24, 54, "Tempo di ogni trasferimento d'uscita presso il controller, a passi di 5 µs (P1.8e)", 11.5, fill=INK2)
+    idle = {1090: 1, 1095: 16, 1100: 300, 1105: 946, 1110: 11295, 1115: 46260, 1120: 180, 1125: 1}
+    load = {1075: 1, 1085: 51, 1090: 184, 1095: 774, 1100: 2389, 1105: 8926, 1110: 12114, 1115: 20400,
+            1120: 71658, 1125: 2050, 1130: 433, 1135: 7, 1140: 13}
+    x0, x1, base, top = 80, 720, 280, 92
+
+    def at(us):
+        return x0 + (us - 990) / (1150 - 990) * (x1 - x0)
+
+    def up(times):
+        return base - math.log10(times * 10) / 6 * (base - top)
+
+    for power, label in ((0, "1"), (1, "10"), (2, "100"), (3, "1000"), (4, "10 000"), (5, "100 000")):
+        y = up(10 ** power)
+        f.line(x0, y, x1, y, GRID)
+        f.text(x0 - 8, y + 4, label, 10.5, "end", INK2)
+    f.text(x0 - 8, top - 14, "volte", 10.5, "end", INK2)
+    for tick in range(1000, 1151, 25):
+        f.text(at(tick), base + 16, f"{tick}", 10.5, "middle", INK2)
+    f.text(x1, base + 32, "µs", 10.5, "end", INK2)
+    width = (x1 - x0) / 32 / 2 - 1
+    for series, colour, shift in ((idle, BLUE, -width - 0.5), (load, ORANGE, 0.5)):
+        for us, times in series.items():
+            f.rect(at(us + 2.5) + shift, up(times), width, base - up(times), colour, rx=1)
+    f.line(x0, base, x1, base, INK2)
+    # The edge: the length of the transfer itself.
+    f.line(at(1000), top - 6, at(1000), base, CRITICAL, 1.5)
+    f.text(at(1000) + 6, top + 4, "1000 µs: la durata", 11)
+    f.text(at(1000) + 6, top + 18, "del trasferimento", 11)
+    f.line(at(1002), base - 26, at(1073), base - 26, INK2, arrow=True)
+    f.text(at(1036), base - 32, "75 µs rimasti nel caso peggiore", 11, "middle")
+    y = base + 52
+    f.rect(x0, y, 14, 10, BLUE, rx=3)
+    f.text(x0 + 20, y + 9, "macchina ferma, 59 000 trasferimenti", 11.5)
+    f.rect(x0 + 300, y, 14, 10, ORANGE, rx=3)
+    f.text(x0 + 320, y + 9, "sotto il carico della campagna, 119 000", 11.5)
+    f.save("margine-consegna")
+
+
 def giro_dove():
     """Where the round trip inside the interface is spent (steps P1.8b and P1.8c)."""
     f = Figure(760, 400, "Dove passa il tempo del giro dentro l'interfaccia a 48 kHz, con il kernel di serie e con la patch")
@@ -885,6 +929,7 @@ FIGURES = {
     "nodo-abbandonato": nodo_abbandonato,
     "latenza": latenza,
     "latenza-patch": latenza_patch,
+    "margine-consegna": margine_consegna,
     "giro-dove": giro_dove,
     "thread-1-4": thread_1_4,
     "stime": stime,
