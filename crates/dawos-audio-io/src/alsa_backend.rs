@@ -57,6 +57,47 @@ const XRUNS_KEPT: usize = 12;
 /// provoke an xrun on purpose, on top of those the buffers hold.
 const PERIODS_TO_SKIP: u64 = 2;
 
+/// Periods after a start of the streams in which a period that does not
+/// fit in the output buffer is part of the start, and periods of the
+/// first start of a run that are kept one by one.
+///
+/// The output buffer is filled whole with silence before the streams
+/// start: that silence is the distance between what the engine writes
+/// and what the converters play. The interface announces its first
+/// period of input when it may not have played a period of that silence
+/// yet (with implicit feedback the output moves only after the input
+/// came back; open point A-72): the first period written then finds
+/// less room than it needs. From the second or third period the output
+/// is one period ahead, and stays so.
+pub const START_PERIODS: usize = 4;
+
+/// What to do with a period of `frames` frames when the output buffer
+/// has `room` frames of room, at a start of the streams: how many frames
+/// to let go at the head of the period. What is written is the tail, so
+/// that the period after follows it without a break; what was let go
+/// would have been played first, and at a start nobody has heard
+/// anything yet.
+#[must_use]
+pub const fn head_to_let_go(frames: usize, room: usize) -> usize {
+    frames.saturating_sub(room)
+}
+
+/// One of the first periods of the first start of a run.
+#[derive(Default)]
+pub struct StartPeriod {
+    /// Nanoseconds from the start of the run to the wake-up, at least 1
+    /// (0: the run did not get this far).
+    pub at_ns: AtomicU64,
+    /// Frames of input ready at the wake-up.
+    pub ready: AtomicU64,
+    /// Frames of output still to play at the wake-up.
+    pub to_play: AtomicU64,
+    /// Frames of the period the card took.
+    pub written: AtomicU64,
+    /// Frames let go at its head, because the buffer was still full.
+    pub let_go: AtomicU64,
+}
+
 /// What happened to the card during a run. Written by the live thread
 /// and by the keeper, read at the end.
 #[derive(Default)]
@@ -96,6 +137,13 @@ pub struct CardStats {
     pub first_short_period: AtomicU64,
     /// The first of them: frames the card took of the period.
     pub first_short_frames: AtomicU64,
+    /// Periods written in part at a start of the streams, their tail
+    /// only (see [`START_PERIODS`]): not short writes.
+    pub start_top_ups: AtomicU64,
+    /// Frames let go at the head of those periods.
+    pub start_frames_let_go: AtomicU64,
+    /// The first periods of the first start of the run.
+    pub first_start: [StartPeriod; START_PERIODS],
     /// Cycles with a period stamp that could not be believed.
     pub bad_stamps: AtomicU64,
     /// The error number that made the card be given up, the last time
@@ -172,6 +220,12 @@ struct Seat {
     stalls: u32,
     /// Periods of input since the card was last started.
     served: u64,
+    /// Starts of the streams that gave a period, in this run.
+    starts: u64,
+    /// Whether a period went to the card whole since it was last
+    /// started: until then, and for [`START_PERIODS`] periods at the
+    /// most, one that does not fit is the start, not a fault.
+    whole_since_start: bool,
     /// Until when to stay away from the card, to provoke an xrun (a
     /// test); 0: not asked.
     skip_until: Instant,
@@ -239,6 +293,8 @@ impl AlsaShared {
                 pending: None,
                 stalls: 0,
                 served: 0,
+                starts: 0,
+                whole_since_start: false,
                 skip_until: 0,
                 silent: true,
                 events: 0,
@@ -546,11 +602,23 @@ impl AlsaBackend {
                     .in_use
                     .store(in_use(which + 1, card.place()), Ordering::Release);
                 seat.card = Some(card);
+                // Streams that have not started yet.
+                seat.served = 0;
                 seat.events |= Wake::CARD_BACK;
                 self.shared.ready.store(false, Ordering::Release);
                 self.shared.stats.back.fetch_add(1, Ordering::AcqRel);
             }
         }
+    }
+
+    /// Where to note the period being served, if it is one of the first
+    /// of the first start of the run.
+    fn start_period(&self, seat: &Seat) -> Option<&StartPeriod> {
+        if seat.starts != 1 {
+            return None;
+        }
+        let index = usize::try_from(seat.served.checked_sub(1)?).ok()?;
+        self.shared.stats.first_start.get(index)
     }
 
     /// Start the streams again after an xrun.
@@ -661,8 +729,23 @@ impl Backend for AlsaBackend {
                 }) => {
                     let woke = clock::now();
                     seat.stalls = 0;
+                    if seat.served == 0 {
+                        // The first period of streams just started.
+                        seat.starts += 1;
+                        seat.whole_since_start = false;
+                    }
                     seat.served += 1;
                     seat.silent = false;
+                    if let Some(period) = self.start_period(seat) {
+                        let since = woke.saturating_sub(self.shared.start.load(Ordering::Acquire));
+                        period.at_ns.store(since.max(1), Ordering::Release);
+                        period
+                            .ready
+                            .store(u64::from(input_ready), Ordering::Release);
+                        period
+                            .to_play
+                            .store(u64::from(output_queued), Ordering::Release);
+                    }
                     // The stamp is believed when it is in the past and
                     // not older than the wait itself.
                     let due = match stamp {
@@ -743,9 +826,42 @@ impl Backend for AlsaBackend {
         if seat.silent || seat.pending.is_some() {
             return;
         }
-        let frames = output.len() / self.shared.info.outputs.max(1);
-        match seat.card.as_mut().map(|card| card.deliver_from(output)) {
-            Some(Ok(written)) if written < frames => {
+        let channels = self.shared.info.outputs.max(1);
+        let frames = output.len() / channels;
+        // ---- At a start of the streams the output buffer is still full
+        // of the first silence: a period that does not fit gives up its
+        // head, and the stream goes on whole from its tail.
+        let starting = !seat.whole_since_start && seat.served <= START_PERIODS as u64;
+        let mut let_go = 0;
+        if starting {
+            // A stream that cannot say how much room it has is one that
+            // stopped: the write below finds out, as at any other time.
+            if let Some(room) = seat.card.as_mut().and_then(Card::playback_room) {
+                let_go = head_to_let_go(frames, room);
+            }
+        }
+        let wanted = frames - let_go;
+        let result = seat
+            .card
+            .as_mut()
+            .map(|card| card.deliver_from(&output[let_go * channels..]));
+        if let Some(Ok(written)) = result {
+            let stats = &self.shared.stats;
+            if let_go > 0 && written == wanted {
+                stats.start_top_ups.fetch_add(1, Ordering::AcqRel);
+                stats
+                    .start_frames_let_go
+                    .fetch_add(let_go as u64, Ordering::AcqRel);
+            } else if written == frames {
+                seat.whole_since_start = true;
+            }
+            if let Some(period) = self.start_period(seat) {
+                period.written.store(written as u64, Ordering::Release);
+                period.let_go.store(let_go as u64, Ordering::Release);
+            }
+        }
+        match result {
+            Some(Ok(written)) if written < wanted => {
                 // The frames that did not fit are not played: said, and
                 // said when, because at the start of the streams it is
                 // the interface that is not taking samples yet.
@@ -794,6 +910,17 @@ impl Backend for AlsaBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_period_that_does_not_fit_at_a_start_keeps_its_tail() {
+        // Room for the whole period: nothing is let go.
+        assert_eq!(head_to_let_go(96, 96), 0);
+        assert_eq!(head_to_let_go(96, 288), 0);
+        // The interface played half a period of the first silence.
+        assert_eq!(head_to_let_go(96, 48), 48);
+        // It played nothing yet: the whole period is let go.
+        assert_eq!(head_to_let_go(96, 0), 96);
+    }
 
     #[test]
     fn nothing_is_published_before_the_first_cycle() {

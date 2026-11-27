@@ -78,7 +78,7 @@ usage() {
 	cat << USAGE
 Usage:
   ${PROG} [--card N] [--rates "HZ ..."] [--shapes "FRAMES:PERIODS[:SLICES] ..."]
-          [--runs N] [--long SECONDS] [--asap 0|1] [LABEL]
+          [--runs N] [--long SECONDS] [--settle SECONDS] [--asap 0|1] [LABEL]
 
   --rates LIST    sample rates (default "44100 48000 96000 192000")
   --shapes LIST   shapes of the buffers (default "96:3", the engine's own);
@@ -87,6 +87,9 @@ Usage:
   --runs N        short runs per shape, each a fresh start (default 10)
   --long SECONDS  length of the long run per shape; 0: none; from 120 up
                   it is judged, after a minute of warm-up (default 60)
+  --settle SECONDS  length of the first run at each rate, the one the
+                  interface changes rate in (default 8, the least); its
+                  way round at the start and at the end is in the summary
   --card N        the sound card (default: the first USB one)
   --asap 0|1      turn the switch iso_asap of the USB driver off or on
                   for this launch (default: leave it as it is)
@@ -115,6 +118,7 @@ rates="44100 48000 96000 192000"
 shapes="96:3"
 runs=10
 long=60
+settle=8
 card=
 label=
 asap=
@@ -137,6 +141,10 @@ while [ $# -gt 0 ]; do
 		long=${2:-}
 		shift 2
 		;;
+	--settle)
+		settle=${2:-}
+		shift 2
+		;;
 	--card)
 		card=${2:-}
 		shift 2
@@ -156,6 +164,10 @@ while [ $# -gt 0 ]; do
 		;;
 	esac
 done
+case "${settle}" in
+'' | *[!0-9]*) die "--settle takes a number of seconds" ;;
+esac
+[ "${settle}" -ge 8 ] || die "--settle ${settle}: the interface needs 8 seconds at the least"
 case "${runs}${long}" in
 '' | *[!0-9]*) die "--runs and --long take a number" ;;
 esac
@@ -230,7 +242,7 @@ if [ -r "${CARDS_DIR}/${model}.conf" ]; then
 fi
 
 # One line per short run: what a later look needs.
-echo "rate frames periods run xruns inside_first inside_last inside_slips cable_least cable_median cable_most cable_match slices" > "${dir}/runs.txt"
+echo "rate frames periods run xruns inside_first inside_last inside_slips cable_least cable_median cable_most cable_match to_play_first let_go short_writes slices" > "${dir}/runs.txt"
 : > "${dir}/summary.txt"
 
 say() {
@@ -325,15 +337,25 @@ for rate in ${rates}; do
 		'' | *[!0-9]* | 0) die "shape '${shape}': the slices are a number from 1 up" ;;
 		esac
 		[ $((frames % slices)) -eq 0 ] || die "shape '${shape}': ${frames} frames are not ${slices} periods of whole frames"
+		first_at_rate=no
 		if [ "${rate}" != "${current_rate}" ]; then
 			# The interface needs some seconds after a change of rate.
-			engine --allow-xruns --rate "${rate}" --seconds 8 --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
+			# This run is the first start at the rate: what its way
+			# round does is said below (open point A-62: on the
+			# second generation such a start came up short and grew
+			# in steps for minutes).
+			engine --allow-xruns --rate "${rate}" --seconds "${settle}" --count 5:5 > "${dir}/settle-${rate}.txt" 2>&1
 			current_rate=${rate}
+			first_at_rate=yes
 		fi
 		name="${rate}-${frames}x${periods}"
 		[ "${slices}" -gt 1 ] && name="${name}s${slices}"
 		say ""
 		say "-- ${rate} Hz, ${frames} frames x ${periods} periods ($(awk -v f="${frames}" -v p="${periods}" -v r="${rate}" 'BEGIN { printf "%.2f", f * p * 1000 / r }') ms of buffer)$([ "${slices}" -gt 1 ] && echo ", the driver asked for periods of $((frames / slices)) frames (${slices} in a quantum)") --"
+		if [ "${first_at_rate}" = yes ]; then
+			first="${dir}/settle-${rate}.txt"
+			say "  the first run at this rate, ${settle} s: $(field "${first}" count_on_input_5 | grep . || echo "the count did not come back"); count slips $(field "${first}" count_slips_on_input_5 | sed 's/;.*//' | grep . || echo unknown); xruns $(field "${first}" card_xruns | sed 's/ .*//'); short writes $(field "${first}" card_short_writes | sed 's/ .*//'); at the start $(field "${first}" card_start_top_ups | sed 's/ (\([0-9]*\) frames.*/ periods written in part, \1 frames let go/' | grep . || echo "nothing said")"
+		fi
 
 		run=1
 		while [ "${run}" -le "${runs}" ]; do
@@ -346,6 +368,9 @@ for rate in ${rates}; do
 				"$(echo "${inside}" | sed -n 's/^way round \([0-9]*\) samples.*at the end \([0-9]*\) samples.*/\1 \2/p' | grep . || echo "- -")" \
 				"$(field "${dir}/run.txt" count_slips_on_input_5 | sed 's/ .*//' | grep . || echo -)" \
 				"$(echo "${cable}" | sed -n 's/.*way round \([0-9.]*\) to \([0-9.]*\) samples, median \([0-9.]*\) .* at least \([0-9.]*\)$/\1 \3 \2 \4/p' | grep . || echo "- - - -")" \
+				"$(field "${dir}/run.txt" card_first_start_1 | sed -n 's/.* frames ready, \([0-9]*\) to play.*/\1/p' | grep . || echo -)" \
+				"$(field "${dir}/run.txt" card_start_top_ups | sed -n 's/^[0-9]* (\([0-9]*\) frames let go.*/\1/p' | grep . || echo -)" \
+				"$(field "${dir}/run.txt" card_short_writes | sed 's/ .*//' | grep . || echo -)" \
 				"${slices}" \
 				>> "${dir}/runs.txt"
 			# The first run of a shape is kept whole, as an example.
@@ -379,6 +404,12 @@ for rate in ${rates}; do
 			$1 == rate && $2 == frames && $3 == periods && $NF == slices {
 				runs++
 				xruns += $5
+				# The start of the streams (step P1.8f): how full the
+				# output was at the first wake-up, and what the first
+				# period gave up to fit.
+				if ($13 != "-") to_play[$13]++
+				if ($14 != "-") { let_go[$14]++; if ($14 > 0) topped++ }
+				if ($15 != "-") short += $15
 				if ($7 != "-") {
 					found++
 					inside[$7]++
@@ -424,6 +455,9 @@ for rate in ${rates}; do
 					print good ? "VERDICT yes" : "VERDICT no"
 				}
 				printf "  xruns in the short runs: %d\n", xruns
+				printf "  the start: frames of output to play at the first wake-up (times):%s\n", seen(to_play)
+				printf "  the start: runs whose first period did not fit whole: %d of %d; frames let go at its head (times):%s\n", topped, runs, seen(let_go)
+				printf "  short writes in the short runs: %d\n", short
 			}' "${dir}/runs.txt")
 		echo "${verdict}" | grep -v '^VERDICT' | tee -a "${dir}/summary.txt"
 

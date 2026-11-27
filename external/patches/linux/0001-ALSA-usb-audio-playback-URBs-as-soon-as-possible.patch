@@ -15,13 +15,17 @@ With URB_ISO_ASAP xhci-hcd sets the SIA bit instead, and the controller
 starts the URB as soon as it can.
 
 iso_asap (default: off, nothing changes) sets the flag on the playback
-data URBs. It is read when a stream is set up, so it can be written
-between two runs:
+data URBs of a stream paced by implicit feedback, where every playback
+URB is queued when a capture URB comes back: the only case it was
+measured in (step P1.8f; before, it was set on every playback URB). It
+is read when a stream is set up, so it can be written between two runs:
 
   echo 1 > /sys/module/snd_usb_audio/parameters/iso_asap
 
-This is an experiment of dawOS (step P1.8c), not a change proposed
-upstream.
+Measured in steps P1.8c to P1.8e of dawOS and adopted there (ADR 0026):
+on that machine the way round of the interface goes from 10.2 to 8.4 ms
+at 48 kHz, with no fault in an hour under load. Not proposed upstream
+yet.
 ---
 --- a/sound/usb/card.c
 +++ b/sound/usb/card.c
@@ -38,13 +42,13 @@ upstream.
  module_param_named(skip_validation, snd_usb_skip_validation, bool, 0444);
  MODULE_PARM_DESC(skip_validation, "Skip unit descriptor validation (default: no).");
 +module_param_named(iso_asap, snd_usb_iso_asap, bool, 0644);
-+MODULE_PARM_DESC(iso_asap, "Hand playback data URBs to the host controller as \"as soon as possible\" (default: no).");
++MODULE_PARM_DESC(iso_asap, "Hand the playback URBs of a stream with implicit feedback to the host controller as \"as soon as possible\" (default: no).");
  
  /* protects quirk_flags */
  static DEFINE_MUTEX(quirk_flags_mutex);
 --- a/sound/usb/endpoint.c
 +++ b/sound/usb/endpoint.c
-@@ -1258,6 +1258,17 @@
+@@ -1258,6 +1258,23 @@
  			goto out_of_memory;
  		u->urb->pipe = ep->pipe;
  		u->urb->transfer_flags = URB_NO_TRANSFER_DMA_MAP;
@@ -56,8 +60,14 @@ upstream.
 +		 * With the flag the controller starts the URB as soon as it
 +		 * can. Read when the stream is set up: the parameter can be
 +		 * changed between two runs.
++		 *
++		 * Only for a playback endpoint paced by implicit feedback:
++		 * there every URB is queued when a capture URB comes back,
++		 * one for one, and that is the only case this was measured
++		 * in. The other playback modes are left as they are.
 +		 */
-+		if (snd_usb_iso_asap && usb_pipeout(ep->pipe))
++		if (snd_usb_iso_asap &&
++		    snd_usb_endpoint_implicit_feedback_sink(ep))
 +			u->urb->transfer_flags |= URB_ISO_ASAP;
  		u->urb->interval = 1 << ep->datainterval;
  		u->urb->context = u;

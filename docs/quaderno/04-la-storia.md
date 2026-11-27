@@ -526,11 +526,29 @@ Due limiti, scritti nell'esito. Il traffico di rete è partito due minuti dopo l
 
 Da qui l'idea che chiude il sottopasso, e che è la più utile. Un salto lascia il segno: dopo, il tempo presso il controller è 125 µs più lungo, e resta così finché il flusso non riparte. Quindi non serve leggere il bus per 24 ore. Basta leggerlo due secondi all'inizio e due alla fine, e fare la differenza.
 
+### P1.8f: l'avvio, e una patch più stretta
+
+_27 novembre: consegnato, in attesa della misura._ Restava un difetto piccolo, visto due giorni prima: ogni tanto, al primo ciclo dopo l'avvio, la scheda non prendeva per intero il periodo che il motore le dava. Una «scrittura corta», una sola, e poi nulla per ore.
+
+Guardando com'è fatto l'avvio si capisce perché, e si capisce anche perché non fa danno. Prima di partire il motore riempie di silenzio tutto il buffer d'uscita: è la riserva che dà il tempo di calcolare. Poi i flussi partono, ma l'uscita di questa interfaccia si muove solo dopo che è tornato l'ingresso. Al primo risveglio del motore l'uscita ha consumato un periodo di quel silenzio, o mezzo, o niente: è una gara tra due lavori su due processori. Se non ha consumato abbastanza, il primo periodo non entra tutto.
+
+| Al primo risveglio l'uscita ha consumato | Posto nel buffer | Che cosa succedeva | Che cosa succede ora |
+| --- | --- | --- | --- |
+| Un periodo (96 frame) | 96 | Il periodo entra | Lo stesso |
+| Mezzo periodo (48) | 48 | Entra la prima metà, la seconda si perde: un buco di 1 ms subito dopo | Entra la **seconda** metà: ciò che segue è continuo |
+| Niente | 0 | Il periodo si perde | Lo stesso, e si chiama col suo nome |
+
+In tutti e tre i casi, dopo quella scrittura il buffer è pieno, e dal ciclo dopo tutto è uguale: **la latenza non dipende da chi vince la gara**. Per questo il rimedio non tocca la riserva di silenzio. Cambia solo quale pezzo del primo periodo si lascia andare: la testa, che sarebbe uscita per prima quando nessuno ha ancora sentito nulla, invece della coda. E smette di chiamarsi «scrittura corta», che da qui in poi vuol dire soltanto un difetto.
+
+Scrivendo la modifica ho fatto un errore, e l'ha trovato la prova nella macchina virtuale. Per sapere quanto posto c'è chiedo alla scheda; una scheda che si è appena fermata per un xrun non risponde, e io prendevo la non-risposta per «zero posto, buffer pieno»: il motore saltava la scrittura, e l'xrun veniva scoperto un ciclo più tardi. Nei dettagli della prova c'erano righe impossibili, «144 frame da suonare su 288, 0 scritti, 96 ceduti». Ora chi non risponde non è all'avvio: scrive come sempre, e l'errore esce subito.
+
+Le altre due cose del sottopasso vengono dalle decisioni dell'utente. **La patch al kernel si stringe**: vale solo per i flussi «a retroazione implicita», cioè per il modo in cui lavora la Scarlett di quarta generazione, l'unico in cui è stata misurata. L'altra interfaccia del progetto usa un altro modo, sta già sotto i 10 ms senza patch, e torna sul percorso di tutti. E **le ore di prova leggono il bus** per due secondi all'inizio e alla fine: è il contatore dei microframe saltati nato dall'esito di P1.8e.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: l'avvio dei flussi (A-72, P1.8f), e il bus letto all'inizio e alla fine di ogni ora di prova |
+| P1.8 | Il driver della scheda: la misura di P1.8f (cento avvii per frequenza), poi la chiusura del passo |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |
