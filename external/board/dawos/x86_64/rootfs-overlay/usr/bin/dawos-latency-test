@@ -78,7 +78,8 @@ usage() {
 	cat << USAGE
 Usage:
   ${PROG} [--card N] [--rates "HZ ..."] [--shapes "FRAMES:PERIODS[:SLICES] ..."]
-          [--runs N] [--long SECONDS] [--settle SECONDS] [--asap 0|1] [LABEL]
+          [--runs N] [--long SECONDS] [--settle SECONDS] [--asap 0|1]
+          [--start usual|full|full-no-silence] [LABEL]
 
   --rates LIST    sample rates (default "44100 48000 96000 192000")
   --shapes LIST   shapes of the buffers (default "96:3", the engine's own);
@@ -90,6 +91,13 @@ Usage:
   --settle SECONDS  length of the first run at each rate, the one the
                   interface changes rate in (default 8, the least); its
                   way round at the start and at the end is in the summary
+  --start HOW     a test of the start of the streams, for the short runs:
+                  "full": the engine acts as if the output buffer had
+                  no room at the first period, which happens by itself
+                  once in some hundreds of starts; the way round must
+                  be the usual one. "full-no-silence": the same without
+                  giving the silence back; the way round must be one
+                  period shorter (default "usual": nothing)
   --card N        the sound card (default: the first USB one)
   --asap 0|1      turn the switch iso_asap of the USB driver off or on
                   for this launch (default: leave it as it is)
@@ -119,6 +127,7 @@ shapes="96:3"
 runs=10
 long=60
 settle=8
+start=usual
 card=
 label=
 asap=
@@ -145,6 +154,10 @@ while [ $# -gt 0 ]; do
 		settle=${2:-}
 		shift 2
 		;;
+	--start)
+		start=${2:-}
+		shift 2
+		;;
 	--card)
 		card=${2:-}
 		shift 2
@@ -166,6 +179,12 @@ while [ $# -gt 0 ]; do
 done
 case "${settle}" in
 '' | *[!0-9]*) die "--settle takes a number of seconds" ;;
+esac
+case "${start}" in
+usual) start_options= ;;
+full) start_options="--start-as-if-full" ;;
+full-no-silence) start_options="--start-as-if-full --no-start-silence" ;;
+*) die "--start ${start}: usual, full or full-no-silence" ;;
 esac
 [ "${settle}" -ge 8 ] || die "--settle ${settle}: the interface needs 8 seconds at the least"
 case "${runs}${long}" in
@@ -227,6 +246,7 @@ mkdir -p "${dir}" || die "cannot create ${dir}"
 	echo "shapes: ${shapes}"
 	echo "live_threads: ${threads_option:-as many as the live CPUs}"
 	echo "runs: ${runs}"
+	echo "start_of_the_short_runs: ${start}"
 	echo "long_s: ${long}"
 } > "${dir}/meta.txt"
 echo "directory: ${dir}"
@@ -242,7 +262,7 @@ if [ -r "${CARDS_DIR}/${model}.conf" ]; then
 fi
 
 # One line per short run: what a later look needs.
-echo "rate frames periods run xruns inside_first inside_last inside_slips cable_least cable_median cable_most cable_match to_play_first let_go short_writes slices" > "${dir}/runs.txt"
+echo "rate frames periods run xruns inside_first inside_last inside_slips cable_least cable_median cable_most cable_match to_play_first let_go short_writes silence slices" > "${dir}/runs.txt"
 : > "${dir}/summary.txt"
 
 say() {
@@ -352,15 +372,17 @@ for rate in ${rates}; do
 		[ "${slices}" -gt 1 ] && name="${name}s${slices}"
 		say ""
 		say "-- ${rate} Hz, ${frames} frames x ${periods} periods ($(awk -v f="${frames}" -v p="${periods}" -v r="${rate}" 'BEGIN { printf "%.2f", f * p * 1000 / r }') ms of buffer)$([ "${slices}" -gt 1 ] && echo ", the driver asked for periods of $((frames / slices)) frames (${slices} in a quantum)") --"
+		[ "${start}" = usual ] || say "  a test of the start, in the short runs: ${start} (the engine acts as if the output had no room at the first period$([ "${start}" = full-no-silence ] && echo ", and does not give the silence back"))"
 		if [ "${first_at_rate}" = yes ]; then
 			first="${dir}/settle-${rate}.txt"
-			say "  the first run at this rate, ${settle} s: $(field "${first}" count_on_input_5 | grep . || echo "the count did not come back"); count slips $(field "${first}" count_slips_on_input_5 | sed 's/;.*//' | grep . || echo unknown); xruns $(field "${first}" card_xruns | sed 's/ .*//'); short writes $(field "${first}" card_short_writes | sed 's/ .*//'); at the start $(field "${first}" card_start_top_ups | sed 's/ (\([0-9]*\) frames.*/ periods written in part, \1 frames let go/' | grep . || echo "nothing said")"
+			say "  the first run at this rate, ${settle} s: $(field "${first}" count_on_input_5 | grep . || echo "the count did not come back"); count slips $(field "${first}" count_slips_on_input_5 | sed 's/;.*//' | grep . || echo unknown); xruns $(field "${first}" card_xruns | sed 's/ .*//'); short writes $(field "${first}" card_short_writes | sed 's/ .*//'); at the start $(field "${first}" card_start_top_ups | sed 's/ (\([0-9]*\) frames.*/ periods played as silence, \1 frames let go/' | grep . || echo "nothing said")"
 		fi
 
 		run=1
 		while [ "${run}" -le "${runs}" ]; do
+			# shellcheck disable=SC2086  # start_options is several words, or none
 			engine --allow-xruns --rate "${rate}" --quantum "${frames}" --periods "${periods}" --slices "${slices}" --seconds 2 \
-				--count 5:5 --burst 3:3 > "${dir}/run.txt" 2> "${dir}/run.err"
+				--count 5:5 --burst 3:3 ${start_options} > "${dir}/run.txt" 2> "${dir}/run.err"
 			inside=$(field "${dir}/run.txt" count_on_input_5)
 			cable=$(field "${dir}/run.txt" bursts_3_to_3)
 			echo "${rate} ${frames} ${periods} ${run}" \
@@ -371,6 +393,7 @@ for rate in ${rates}; do
 				"$(field "${dir}/run.txt" card_first_start_1 | sed -n 's/.* frames ready, \([0-9]*\) to play.*/\1/p' | grep . || echo -)" \
 				"$(field "${dir}/run.txt" card_start_top_ups | sed -n 's/^[0-9]* (\([0-9]*\) frames let go.*/\1/p' | grep . || echo -)" \
 				"$(field "${dir}/run.txt" card_short_writes | sed 's/ .*//' | grep . || echo -)" \
+				"$(field "${dir}/run.txt" card_start_top_ups | sed -n 's/.*played as silence, \([0-9]*\) frames of it written.*/\1/p' | grep . || echo -)" \
 				"${slices}" \
 				>> "${dir}/runs.txt"
 			# The first run of a shape is kept whole, as an example.
@@ -410,6 +433,7 @@ for rate in ${rates}; do
 				if ($13 != "-") to_play[$13]++
 				if ($14 != "-") { let_go[$14]++; if ($14 > 0) topped++ }
 				if ($15 != "-") short += $15
+				if ($16 != "-") silence[$16]++
 				if ($7 != "-") {
 					found++
 					inside[$7]++
@@ -456,7 +480,8 @@ for rate in ${rates}; do
 				}
 				printf "  xruns in the short runs: %d\n", xruns
 				printf "  the start: frames of output to play at the first wake-up (times):%s\n", seen(to_play)
-				printf "  the start: runs whose first period did not fit whole: %d of %d; frames let go at its head (times):%s\n", topped, runs, seen(let_go)
+				printf "  the start: runs whose first period did not fit whole: %d of %d; frames of it let go (times):%s\n", topped, runs, seen(let_go)
+				printf "  the start: frames of silence written in their place (times):%s\n", seen(silence)
 				printf "  short writes in the short runs: %d\n", short
 			}' "${dir}/runs.txt")
 		echo "${verdict}" | grep -v '^VERDICT' | tee -a "${dir}/summary.txt"

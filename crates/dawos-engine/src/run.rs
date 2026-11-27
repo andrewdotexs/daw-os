@@ -110,10 +110,14 @@ pub struct CardOutcome {
     /// the frames let go at their head.
     pub start_top_ups: u64,
     pub start_frames_let_go: u64,
+    /// Silence written in the place of those periods, and silence owed
+    /// that the buffer had no room for.
+    pub start_silence_written: u64,
+    pub start_silence_forgiven: u64,
     /// The first periods of the first start of the run: milliseconds
     /// from the start of the run, frames ready, frames to play, frames
-    /// written and frames let go.
-    pub first_start: Vec<(f64, u64, u64, u64, u64)>,
+    /// written, frames let go and frames of silence written.
+    pub first_start: Vec<(f64, u64, u64, u64, u64, u64)>,
     pub bad_stamps: u64,
     /// The other live threads: cycles taken after a tick of the card,
     /// those of them with periods gone by, wake-ups with no cycle, and
@@ -527,6 +531,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             format,
             periods: options.periods,
             slices: options.slices,
+            start_silence: !options.no_start_silence,
+            start_as_if_full: options.start_as_if_full,
         })?),
         _ => None,
     };
@@ -984,6 +990,8 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
             }),
             start_top_ups: count(&stats.start_top_ups),
             start_frames_let_go: count(&stats.start_frames_let_go),
+            start_silence_written: count(&stats.start_silence_written),
+            start_silence_forgiven: count(&stats.start_silence_forgiven),
             first_start: stats
                 .first_start
                 .iter()
@@ -995,6 +1003,7 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                         count(&period.to_play),
                         count(&period.written),
                         count(&period.let_go),
+                        count(&period.silence),
                     )
                 })
                 .collect(),
@@ -2302,12 +2311,17 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
         ),
     }
     println!(
-        "card_start_top_ups: {} ({} frames let go at the head of a period: the output was still full of the first silence)",
-        card.start_top_ups, card.start_frames_let_go
+        "card_start_top_ups: {} ({} frames let go at a start, where the output was still full of the first silence: played as silence, {} frames of it written, {} not given back)",
+        card.start_top_ups,
+        card.start_frames_let_go,
+        card.start_silence_written,
+        card.start_silence_forgiven
     );
-    for (index, (at, ready, to_play, written, let_go)) in card.first_start.iter().enumerate() {
+    for (index, (at, ready, to_play, written, let_go, silence)) in
+        card.first_start.iter().enumerate()
+    {
         println!(
-            "card_first_start_{}: at {at:.3} ms; {ready} frames ready, {to_play} to play; {written} of {} written, {let_go} let go",
+            "card_first_start_{}: at {at:.3} ms; {ready} frames ready, {to_play} to play; {written} of {} written, {let_go} let go, {silence} of silence before",
             index + 1,
             card.info.period
         );

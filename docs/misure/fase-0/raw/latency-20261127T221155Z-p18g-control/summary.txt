@@ -1,0 +1,83 @@
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer) --
+  a test of the start, in the short runs: full-no-silence (the engine acts as if the output had no room at the first period, and does not give the silence back)
+  the first run at this rate, 8 s: way round 374 samples (8.481 ms), found at 3.954 s; at the end 374 samples (8.481 ms); count slips 0 (largest 0 samples); xruns 0; short writes 0; at the start 0 periods played as silence, 0 frames let go
+  inside, at the end of each run: 10 runs, 271 to 279 samples (6.145 to 6.327 ms); runs with slips: 0
+    lengths (times): 271 (4) 272 (3) 273 (1) 277 (1) 279 (1)
+  cable: 10 runs, 296.85 to 304.85 samples (6.731 to 6.913 ms); from start to start it moves by 8.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 296.85 (4) 297.85 (3) 298.85 (1) 302.85 (1) 304.85 (1)
+  converters and cable alone: 25.85 samples (0.586 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (6.913 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  the start: frames of output to play at the first wake-up (times): 155 (3) 156 (7)
+  the start: runs whose first period did not fit whole: 10 of 10; frames of it let go (times): 96 (10)
+  the start: frames of silence written in their place (times): 0 (10)
+  short writes in the short runs: 0
+  with impulses, one run: 25.83 samples more than inside (peak 0.0894 of full scale)
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:004:1: 1000 transfers in a second, of 8 packets
+    Zo:3:004:1: 1000 transfers in a second, of 8 packets
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer) --
+  a test of the start, in the short runs: full-no-silence (the engine acts as if the output had no room at the first period, and does not give the silence back)
+  the first run at this rate, 8 s: way round 379 samples (7.896 ms), found at 3.961 s; at the end 379 samples (7.896 ms); count slips 0 (largest 0 samples); xruns 0; short writes 0; at the start 0 periods played as silence, 0 frames let go
+  inside, at the end of each run: 10 runs, 272 to 279 samples (5.667 to 5.812 ms); runs with slips: 0
+    lengths (times): 272 (6) 273 (1) 278 (2) 279 (1)
+  cable: 10 runs, 297.85 to 304.85 samples (6.205 to 6.351 ms); from start to start it moves by 7.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 297.85 (6) 298.85 (1) 303.85 (2) 304.85 (1)
+  converters and cable alone: 25.85 samples (0.539 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (6.351 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  the start: frames of output to play at the first wake-up (times): 192 (10)
+  the start: runs whose first period did not fit whole: 10 of 10; frames of it let go (times): 96 (10)
+  the start: frames of silence written in their place (times): 0 (10)
+  short writes in the short runs: 0
+  with impulses, one run: 25.84 samples more than inside (peak 0.0895 of full scale)
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:004:1: 1000 transfers in a second, of 8 packets
+    Zo:3:004:1: 1000 transfers in a second, of 8 packets
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer) --
+  a test of the start, in the short runs: full-no-silence (the engine acts as if the output had no room at the first period, and does not give the silence back)
+  the first run at this rate, 8 s: way round 739 samples (7.698 ms), found at 3.945 s; at the end 739 samples (7.698 ms); count slips 0 (largest 0 samples); xruns 0; short writes 0; at the start 0 periods played as silence, 0 frames let go
+  inside, at the end of each run: 10 runs, 536 to 537 samples (5.583 to 5.594 ms); runs with slips: 0
+    lengths (times): 536 (8) 537 (2)
+  cable: 10 runs, 560.14 to 561.14 samples (5.835 to 5.845 ms); from start to start it moves by 1.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 560.14 (8) 561.14 (2)
+  converters and cable alone: 24.14 samples (0.251 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (5.845 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  the start: frames of output to play at the first wake-up (times): 384 (10)
+  the start: runs whose first period did not fit whole: 10 of 10; frames of it let go (times): 192 (10)
+  the start: frames of silence written in their place (times): 0 (10)
+  short writes in the short runs: 0
+  with impulses, one run: 24.15 samples more than inside (peak 0.0894 of full scale)
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:004:1: 1000 transfers in a second, of 8 packets
+    Zo:3:004:1: 1000 transfers in a second, of 8 packets
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer) --
+  a test of the start, in the short runs: full-no-silence (the engine acts as if the output had no room at the first period, and does not give the silence back)
+  the first run at this rate, 8 s: way round 1503 samples (7.828 ms), found at 3.941 s; at the end 1503 samples (7.828 ms); count slips 0 (largest 0 samples); xruns 0; short writes 0; at the start 0 periods played as silence, 0 frames let go
+  inside, at the end of each run: 10 runs, 1065 to 1089 samples (5.547 to 5.672 ms); runs with slips: 0
+    lengths (times): 1065 (7) 1088 (1) 1089 (2)
+  cable: 10 runs, 1089.12 to 1113.12 samples (5.673 to 5.798 ms); from start to start it moves by 24.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 1089.12 (7) 1112.12 (1) 1113.12 (2)
+  converters and cable alone: 24.12 samples (0.126 ms) more than inside, in 10 runs of 10
+  R-01, under 10 ms through the cable: yes (5.798 ms at the most)
+  calibrations: PASS (10 of 10 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  the start: frames of output to play at the first wake-up (times): 768 (10)
+  the start: runs whose first period did not fit whole: 10 of 10; frames of it let go (times): 384 (10)
+  the start: frames of silence written in their place (times): 0 (10)
+  short writes in the short runs: 0
+  with impulses, one run: 24.09 samples more than inside (peak 0.0922 of full scale)
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:004:1: 1000 transfers in a second, of 8 packets
+    Zo:3:004:1: 1000 transfers in a second, of 8 packets
+
+finished_utc: 2026-11-27T22:14:38Z
+verdict: PASS (4 of 4 shapes and rates)

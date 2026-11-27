@@ -64,22 +64,68 @@ const PERIODS_TO_SKIP: u64 = 2;
 /// The output buffer is filled whole with silence before the streams
 /// start: that silence is the distance between what the engine writes
 /// and what the converters play. The interface announces its first
-/// period of input when it may not have played a period of that silence
-/// yet (with implicit feedback the output moves only after the input
-/// came back; open point A-72): the first period written then finds
-/// less room than it needs. From the second or third period the output
-/// is one period ahead, and stays so.
+/// period of input when, as far as the engine can see, it may not have
+/// played a period of that silence yet (open points A-72 and A-59): the
+/// first period written then finds less room than it needs.
+///
+/// Measured in step P1.8f on a Scarlett 18i20 4th gen: once in 400
+/// starts, and that start had a way round one millisecond shorter than
+/// the others, because the frames that did not fit were never played
+/// and the buffer held that much less for the whole run. So the period
+/// that does not fit is played as silence, and nothing is missing: see
+/// [`plan_at_a_start`].
 pub const START_PERIODS: usize = 4;
 
-/// What to do with a period of `frames` frames when the output buffer
-/// has `room` frames of room, at a start of the streams: how many frames
-/// to let go at the head of the period. What is written is the tail, so
-/// that the period after follows it without a break; what was let go
-/// would have been played first, and at a start nobody has heard
-/// anything yet.
+/// What to write at a start of the streams, in order: frames of silence,
+/// then whether the period itself; and the silence still owed after it.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct StartPlan {
+    /// Frames of silence to write first.
+    pub silence: usize,
+    /// Whether the period is written after them (whole: it fits).
+    pub period: bool,
+    /// Frames of silence owed after this write.
+    pub owed: usize,
+}
+
+/// The write of a period of `frames` frames at a start of the streams,
+/// when the output buffer has `room` frames of room, `owed` frames of
+/// silence are owed from the periods before, and the input still holds
+/// `waiting` frames beyond the period just read.
+///
+/// What a healthy start keeps is a sum: the frames the output holds
+/// after a write, plus those the input still holds, are a buffer of
+/// output, the first silence. The frames waiting in the input reach
+/// the output in the next cycles, faster than the interface plays: the
+/// room for them is left alone (at 44.1 kHz a period comes with 37
+/// frames more than it needs, and the first cycles run close together
+/// until they are used up).
+///
+/// - The period does not fit: it is played as silence. What fits of
+///   that silence goes now, the rest is owed. The engine's samples of
+///   that period are let go: at a start nobody has heard anything yet,
+///   and every sample after them plays at the instant it would have.
+/// - The period fits: before it goes as much of the owed silence as
+///   leaves room for it and for what waits in the input. What the
+///   buffer cannot hold is forgiven: the sum is then what a healthy
+///   start has.
 #[must_use]
-pub const fn head_to_let_go(frames: usize, room: usize) -> usize {
-    frames.saturating_sub(room)
+pub const fn plan_at_a_start(frames: usize, room: usize, owed: usize, waiting: usize) -> StartPlan {
+    let free = room.saturating_sub(waiting);
+    if room < frames {
+        StartPlan {
+            silence: free,
+            period: false,
+            owed: owed + frames - free,
+        }
+    } else {
+        let spare = free.saturating_sub(frames);
+        StartPlan {
+            silence: if owed < spare { owed } else { spare },
+            period: true,
+            owed: 0,
+        }
+    }
 }
 
 /// One of the first periods of the first start of a run.
@@ -94,8 +140,10 @@ pub struct StartPeriod {
     pub to_play: AtomicU64,
     /// Frames of the period the card took.
     pub written: AtomicU64,
-    /// Frames let go at its head, because the buffer was still full.
+    /// Frames of it let go, because the buffer was still full.
     pub let_go: AtomicU64,
+    /// Frames of silence written before it, or in its place.
+    pub silence: AtomicU64,
 }
 
 /// What happened to the card during a run. Written by the live thread
@@ -137,11 +185,16 @@ pub struct CardStats {
     pub first_short_period: AtomicU64,
     /// The first of them: frames the card took of the period.
     pub first_short_frames: AtomicU64,
-    /// Periods written in part at a start of the streams, their tail
-    /// only (see [`START_PERIODS`]): not short writes.
+    /// Periods that did not fit at a start of the streams and were
+    /// played as silence (see [`START_PERIODS`]): not short writes.
     pub start_top_ups: AtomicU64,
-    /// Frames let go at the head of those periods.
+    /// Frames of those periods: samples of the engine that were let go.
     pub start_frames_let_go: AtomicU64,
+    /// Frames of silence written in their place.
+    pub start_silence_written: AtomicU64,
+    /// Frames of silence owed and not written: the buffer was full
+    /// without them, or the start was over.
+    pub start_silence_forgiven: AtomicU64,
     /// The first periods of the first start of the run.
     pub first_start: [StartPeriod; START_PERIODS],
     /// Cycles with a period stamp that could not be believed.
@@ -226,6 +279,11 @@ struct Seat {
     /// started: until then, and for [`START_PERIODS`] periods at the
     /// most, one that does not fit is the start, not a fault.
     whole_since_start: bool,
+    /// Frames of silence owed to the output since the last start, for
+    /// the periods that did not fit.
+    owed: usize,
+    /// Frames of input still to read after the period of this cycle.
+    waiting: usize,
     /// Until when to stay away from the card, to provoke an xrun (a
     /// test); 0: not asked.
     skip_until: Instant,
@@ -295,6 +353,8 @@ impl AlsaShared {
                 served: 0,
                 starts: 0,
                 whole_since_start: false,
+                owed: 0,
+                waiting: 0,
                 skip_until: 0,
                 silent: true,
                 events: 0,
@@ -733,9 +793,11 @@ impl Backend for AlsaBackend {
                         // The first period of streams just started.
                         seat.starts += 1;
                         seat.whole_since_start = false;
+                        seat.owed = 0;
                     }
                     seat.served += 1;
                     seat.silent = false;
+                    seat.waiting = (input_ready as usize).saturating_sub(self.shared.info.period);
                     if let Some(period) = self.start_period(seat) {
                         let since = woke.saturating_sub(self.shared.start.load(Ordering::Acquire));
                         period.at_ns.store(since.max(1), Ordering::Release);
@@ -826,38 +888,82 @@ impl Backend for AlsaBackend {
         if seat.silent || seat.pending.is_some() {
             return;
         }
-        let channels = self.shared.info.outputs.max(1);
-        let frames = output.len() / channels;
-        // ---- At a start of the streams the output buffer is still full
-        // of the first silence: a period that does not fit gives up its
-        // head, and the stream goes on whole from its tail.
-        let starting = !seat.whole_since_start && seat.served <= START_PERIODS as u64;
-        let mut let_go = 0;
-        if starting {
+        let frames = output.len() / self.shared.info.outputs.max(1);
+        // ---- At a start of the streams a period that does not fit in
+        // the output buffer is played as silence, and the silence the
+        // buffer had no room for is given back before the next period.
+        if !seat.whole_since_start && seat.served <= START_PERIODS as u64 {
             // A stream that cannot say how much room it has is one that
             // stopped: the write below finds out, as at any other time.
-            if let Some(room) = seat.card.as_mut().and_then(Card::playback_room) {
-                let_go = head_to_let_go(frames, room);
-            }
-        }
-        let wanted = frames - let_go;
-        let result = seat
-            .card
-            .as_mut()
-            .map(|card| card.deliver_from(&output[let_go * channels..]));
-        if let Some(Ok(written)) = result {
-            let stats = &self.shared.stats;
-            if let_go > 0 && written == wanted {
-                stats.start_top_ups.fetch_add(1, Ordering::AcqRel);
+            if let Some(mut room) = seat.card.as_mut().and_then(Card::playback_room) {
+                if self.shared.config.start_as_if_full && seat.served == 1 {
+                    room = 0;
+                }
+                let due = seat.owed;
+                let owed = if self.shared.config.start_silence {
+                    due
+                } else {
+                    0
+                };
+                let plan = plan_at_a_start(frames, room, owed, seat.waiting);
+                let stats = &self.shared.stats;
+                let mut silence = 0;
+                if plan.silence > 0 {
+                    match seat
+                        .card
+                        .as_mut()
+                        .map(|card| card.deliver_silence(plan.silence))
+                    {
+                        Some(Ok(written)) => silence = written,
+                        Some(Err(error)) => {
+                            seat.pending = Some(error);
+                            return;
+                        }
+                        None => return,
+                    }
+                    stats
+                        .start_silence_written
+                        .fetch_add(silence as u64, Ordering::AcqRel);
+                }
+                if !plan.period {
+                    seat.owed = due - owed + plan.owed + (plan.silence - silence);
+                    stats.start_top_ups.fetch_add(1, Ordering::AcqRel);
+                    stats
+                        .start_frames_let_go
+                        .fetch_add(frames as u64, Ordering::AcqRel);
+                    if let Some(period) = self.start_period(seat) {
+                        period.written.store(0, Ordering::Release);
+                        period.let_go.store(frames as u64, Ordering::Release);
+                        period.silence.store(silence as u64, Ordering::Release);
+                    }
+                    return;
+                }
+                // The period follows; what was owed and did not go
+                // before it is not owed any more.
                 stats
-                    .start_frames_let_go
-                    .fetch_add(let_go as u64, Ordering::AcqRel);
-            } else if written == frames {
+                    .start_silence_forgiven
+                    .fetch_add((due - silence.min(due)) as u64, Ordering::AcqRel);
+                seat.owed = 0;
+                if let Some(period) = self.start_period(seat) {
+                    period.silence.store(silence as u64, Ordering::Release);
+                }
+            }
+        } else if seat.owed > 0 {
+            // The start is over with silence still owed.
+            self.shared
+                .stats
+                .start_silence_forgiven
+                .fetch_add(seat.owed as u64, Ordering::AcqRel);
+            seat.owed = 0;
+        }
+        let wanted = frames;
+        let result = seat.card.as_mut().map(|card| card.deliver_from(output));
+        if let Some(Ok(written)) = result {
+            if written == frames {
                 seat.whole_since_start = true;
             }
             if let Some(period) = self.start_period(seat) {
                 period.written.store(written as u64, Ordering::Release);
-                period.let_go.store(let_go as u64, Ordering::Release);
             }
         }
         match result {
@@ -912,14 +1018,120 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_period_that_does_not_fit_at_a_start_keeps_its_tail() {
-        // Room for the whole period: nothing is let go.
-        assert_eq!(head_to_let_go(96, 96), 0);
-        assert_eq!(head_to_let_go(96, 288), 0);
-        // The interface played half a period of the first silence.
-        assert_eq!(head_to_let_go(96, 48), 48);
-        // It played nothing yet: the whole period is let go.
-        assert_eq!(head_to_let_go(96, 0), 96);
+    fn a_period_that_fits_at_a_start_is_written_as_it_is() {
+        let plan = plan_at_a_start(96, 96, 0, 0);
+        assert_eq!(
+            plan,
+            StartPlan {
+                silence: 0,
+                period: true,
+                owed: 0
+            }
+        );
+        assert_eq!(plan_at_a_start(96, 288, 0, 0), plan);
+        // With frames waiting in the input too.
+        assert_eq!(plan_at_a_start(96, 133, 0, 37), plan);
+    }
+
+    #[test]
+    fn a_period_that_does_not_fit_at_a_start_is_played_as_silence() {
+        // The output looks full: nothing goes now, a period is owed.
+        assert_eq!(
+            plan_at_a_start(96, 0, 0, 0),
+            StartPlan {
+                silence: 0,
+                period: false,
+                owed: 96
+            }
+        );
+        // Room for half a period: half of the silence now, half owed.
+        assert_eq!(
+            plan_at_a_start(96, 48, 0, 0),
+            StartPlan {
+                silence: 48,
+                period: false,
+                owed: 48
+            }
+        );
+        // Two periods in a row do not fit: what is owed adds up.
+        assert_eq!(plan_at_a_start(96, 0, 96, 0).owed, 192);
+    }
+
+    #[test]
+    fn the_silence_owed_goes_before_the_next_period_up_to_what_the_buffer_holds() {
+        // Room for all of it: the silence owed, then the period.
+        assert_eq!(
+            plan_at_a_start(96, 192, 96, 0),
+            StartPlan {
+                silence: 96,
+                period: true,
+                owed: 0
+            }
+        );
+        // Room for the period and half of what is owed: the rest is
+        // forgiven, the buffer is full after the write.
+        assert_eq!(
+            plan_at_a_start(96, 144, 96, 0),
+            StartPlan {
+                silence: 48,
+                period: true,
+                owed: 0
+            }
+        );
+        // Room for the period alone.
+        assert_eq!(plan_at_a_start(96, 96, 48, 0).silence, 0);
+    }
+
+    #[test]
+    fn room_is_left_for_what_waits_in_the_input() {
+        // 44.1 kHz, the second period of a start that lost its first:
+        // 176 frames of room, 29 still in the input. A healthy start
+        // holds 259 frames after this write: 112 + 51 + 96.
+        assert_eq!(
+            plan_at_a_start(96, 176, 96, 29),
+            StartPlan {
+                silence: 51,
+                period: true,
+                owed: 0
+            }
+        );
+        // The same after a first period let go on purpose: 221 of room.
+        assert_eq!(plan_at_a_start(96, 221, 96, 29).silence, 96);
+        // A period that does not fit leaves that room alone too.
+        assert_eq!(
+            plan_at_a_start(96, 60, 0, 37),
+            StartPlan {
+                silence: 23,
+                period: false,
+                owed: 73
+            }
+        );
+    }
+
+    #[test]
+    fn a_start_that_lost_its_first_period_holds_what_a_healthy_one_holds() {
+        // The buffer of the engine: three periods of 96, full of the
+        // first silence; the interface plays 96 frames a period. `late`
+        // frames are what it had not played at the first wake-up, as
+        // far as the engine could see.
+        for late in [0_usize, 48, 96] {
+            let (frames, buffer) = (96_usize, 288_usize);
+            let mut held = buffer;
+            let mut owed = 0;
+            let mut played = 0;
+            for period in 1..=6 {
+                // What the interface played by this wake-up.
+                let by_now = (frames * period).saturating_sub(late);
+                held -= by_now - played;
+                played = by_now;
+                let plan = plan_at_a_start(frames, buffer - held, owed, 0);
+                held += plan.silence + if plan.period { frames } else { 0 };
+                owed = plan.owed;
+                assert!(held <= buffer);
+            }
+            assert_eq!(held, buffer, "late by {late}");
+            assert_eq!(owed, 0);
+        }
     }
 
     #[test]
