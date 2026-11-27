@@ -599,10 +599,22 @@ Il passo era partito il 26 novembre con una domanda, «perché questa interfacci
 
 Le previsioni sbagliate del passo sono state più di quelle giuste, e quasi tutte nello stesso verso: troppo prudenti sui tempi del kernel, troppo sicure su ciò che sembrava ovvio. Le tre che hanno fatto più strada sono nate da un errore: l'ora «pulita» che non poteva vedere ciò che cercava, la frase data per dimostrata, la regola corretta scrivendo una tabella.
 
+### P1.9a: chi chiama i core live
+
+_27 novembre: consegnato, in attesa della misura._ Il passo sul kernel aveva, dal progetto iniziale, una risposta pronta e pesante: portare nel nostro kernel una serie di patch che altri stanno ancora discutendo, per rinviare certe interruzioni dei core live. L'utente ha scelto di cominciare da un'altra parte: **sapere da dove vengono** quelle interruzioni.
+
+Il motore le vede arrivare, e da qualche passo le sa anche nominare. Sono di tre tipi: il kernel che ha riscritto un pezzo del proprio codice; un programma BPF «classico» caricato da qualcuno, per cui ogni processore deve dimenticare le sue previsioni dei salti; un processo che ha restituito memoria. Costano due microsecondi l'una. E a macchina ferma, senza nessuno collegato, **sono zero**.
+
+Quest'ultimo fatto è il più importante, perché dice che non vengono dal kernel in sé: qualcuno le provoca. Ma chi? Il motore sta sul core che riceve; chi manda sta su un altro core, in un altro programma. Il kernel però ha un evento anche per quel lato, e sa attaccarci la pila delle chiamate. Lo strumento nuovo lo accende per i soli core live e alla fine fa un elenco: questa funzione, tante volte, chiesta da questo programma, da questo punto del kernel.
+
+Le ipotesi, scritte prima: il BPF lo carica `sshd` a ogni connessione, e le connessioni le aprono i nostri strumenti di misura (è il «lo strumento fa parte del carico» della regola 12, in grande); la riscrittura del codice la provocano gli strumenti della campagna; la memoria la restituisce un thread del motore stesso. Se reggono tutte e tre, la serie di patch non ha nulla da fare, e una domanda aperta dalla prima pagina del progetto si chiude con un elenco di tre righe.
+
+Nella macchina virtuale lo strumento ha già detto una cosa vera che non cercavo: tra chi fa riscrivere il codice al kernel c'è anche `dawos-tune`, il nostro programma di regolazione, all'avvio. Lì va bene, è prima di tutto. Ma è esattamente il tipo di risposta che serve.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
+| P1.9 | Il kernel: la misura di P1.9a (chi chiama i core live), poi la stima sulla serie di patch, o la sua chiusura (A-49, A-75, A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |

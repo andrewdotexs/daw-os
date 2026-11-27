@@ -78,6 +78,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Periodo** | Il blocco di campioni che la scheda scambia in un colpo, e il tempo che dura: 2 ms | Cap. 2, L'audio come numeri |
 | **ppm** | Parti per milione: l'unità in cui si dice di quanto due orologi differiscono | Cap. 4, P1.6a |
 | **Predittore dei salti** | La parte del processore che indovina dove andrà un salto prima di saperlo. Il kernel lo fa ripulire (IBPB) per difesa dagli attacchi di tipo Spectre | Cap. 2, Il tempo reale |
+| **Programma che chiama** (un core live) | Il programma che, da un altro processore, chiede a un core live di eseguire una funzione del kernel. Lo dice `tools/live-callers.sh` | Cap. 3; cap. 4, P1.9a |
 | **PREEMPT_RT** | La variante real-time del kernel Linux | Cap. 2, Il tempo reale |
 | **Profilo di avvio** | Le opzioni del kernel che dipendono dalla macchina: `285k`, `generic` | Cap. 2, La piattaforma |
 | **Quanto** | La lunghezza di un periodo in frame: 96, 192 o 384 secondo la frequenza | Cap. 2, L'audio come numeri |

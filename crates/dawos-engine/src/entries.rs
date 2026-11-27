@@ -53,8 +53,12 @@ const LATE_WAKE_NS: u64 = 20_000;
 const HELD_COMPUTE: usize = 16;
 const HELD_WAIT: usize = 48;
 
-/// What is kept one by one for the report.
-const KEPT_IN_COMPUTE: usize = 12;
+/// What is kept one by one for the report: of the entries in the compute
+/// phase the first of each kind, so that a kind that comes late in the
+/// run is not hidden by one that came early (open point A-75: twelve
+/// entries of one kind had filled the list before the ones looked for).
+const KEPT_OF_A_KIND: usize = 8;
+const KEPT_IN_COMPUTE: usize = 96;
 const KEPT_GAPS: usize = 4;
 const KEPT_LATE: usize = 4;
 const KEPT_AGAIN: usize = 3;
@@ -365,6 +369,8 @@ pub struct Entries {
     /// were left out.
     pub out_of_order: u64,
     pub in_compute: Vec<InCompute>,
+    /// How many of each kind are in `in_compute`.
+    in_compute_kept: HashMap<Label, usize>,
     pub in_compute_total: u64,
     /// The longest step inside the nodes, cycle by cycle, for the
     /// cycles whose nodes read the clock.
@@ -424,6 +430,7 @@ impl Entries {
             outside: 0,
             out_of_order: 0,
             in_compute: Vec::new(),
+            in_compute_kept: HashMap::new(),
             in_compute_total: 0,
             gaps: Durations::new(),
             gaps_explained: HashMap::new(),
@@ -615,7 +622,9 @@ impl Entries {
             *self.counts.entry((slot, phase, label)).or_insert(0) += 1;
             if phase == Phase::Compute {
                 self.in_compute_total += 1;
-                if self.in_compute.len() < KEPT_IN_COMPUTE {
+                let kept = self.in_compute_kept.entry(label).or_insert(0);
+                if *kept < KEPT_OF_A_KIND && self.in_compute.len() < KEPT_IN_COMPUTE {
+                    *kept += 1;
                     self.in_compute.push(InCompute {
                         slot,
                         index: before.index,
@@ -1002,19 +1011,32 @@ pub fn print(entries: &Entries, trace: &TraceFigures, symbols: &Symbols, start_n
     }
     if entries.in_compute_total > 0 {
         println!(
-            "kernel_entries, in the compute phase one by one (the first {} of {}):",
-            entries.in_compute.len(),
+            "kernel_entries, in the compute phase by kind, the first {KEPT_OF_A_KIND} of each ({} in all):",
             entries.in_compute_total
         );
-        for seen in &entries.in_compute {
-            println!(
-                "  slot {} cycle {} at {:.3} s: {:.2} us after the wake-up: {}",
-                seen.slot,
-                seen.index,
-                seen.woke.saturating_sub(start_ns) as f64 / 1e9,
-                us(seen.time_ns.saturating_sub(seen.woke)),
-                seen.label.words(symbols)
-            );
+        // The kinds, the one seen most first.
+        let mut kinds: Vec<(Label, u64)> = Vec::new();
+        for ((_, phase, label), count) in &entries.counts {
+            if *phase != Phase::Compute {
+                continue;
+            }
+            match kinds.iter_mut().find(|(kind, _)| kind == label) {
+                Some((_, total)) => *total += count,
+                None => kinds.push((*label, *count)),
+            }
+        }
+        kinds.sort_by_key(|(label, total)| (u64::MAX - total, *label));
+        for (kind, total) in kinds {
+            println!("  {}: {total}", kind.words(symbols));
+            for seen in entries.in_compute.iter().filter(|seen| seen.label == kind) {
+                println!(
+                    "    slot {} cycle {} at {:.3} s: {:.2} us after the wake-up",
+                    seen.slot,
+                    seen.index,
+                    seen.woke.saturating_sub(start_ns) as f64 / 1e9,
+                    us(seen.time_ns.saturating_sub(seen.woke))
+                );
+            }
         }
     }
 

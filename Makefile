@@ -206,8 +206,8 @@ campaign: ## Step P0.7 on a real machine: make campaign HOST=<address> DO="--sta
 	@ssh -o ConnectTimeout=10 root@$(HOST) sh /var/lib/dawos/campaign.sh $(or $(DO),--status)
 
 .PHONY: campaign-net
-campaign-net: ## Network traffic for the campaign, from this PC, until the campaign ends: make campaign-net HOST=<address>
-	@tools/campaign-net.sh $(HOST)
+campaign-net: ## Network traffic for the campaign, from this PC, until the campaign ends: make campaign-net HOST=<address> [ONE=1: through one SSH connection]
+	@$(if $(ONE),ONE=$(ONE)) tools/campaign-net.sh $(HOST)
 
 .PHONY: audio-hours
 audio-hours: ## Steps P1.6e and P1.7g on a real machine: the engine on the sound card for hours, in the background: make audio-hours HOST=<address> DO="--start LABEL" [CASES="swap"] [RATE=48000] [REQUIRE_CAMPAIGN=1] [ASAP=1] [BUS_LOOK=0] (or DO=--stop; nothing: the status)
