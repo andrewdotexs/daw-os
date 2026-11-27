@@ -29,6 +29,7 @@ Un file per decisione. Un ADR non si riscrive: se una decisione cambia, se ne ag
 | [0023](0023-protezione-dal-thread-che-non-cede.md) | Protezione dal thread live che non cede | K-04, A-18, prompt della Fase 1 | Accettata il 21 novembre 2026; verificata sul 285K con la prova d'urto del passo P1.3 |
 | [0024](0024-interfaccia-fcp-server-e-firmware.md) | L'interfaccia di quarta generazione: `fcp-support` e firmware nell'immagine | P1.12, D-28 | Accettata il 24 novembre 2026; da confermare con le misure sul 285K |
 | [0025](0025-grafo-assegnazione-statica.md) | Il grafo: ogni nodo ha il suo core, deciso alla compilazione | D-10, P1.7 | Accettata il 25 novembre 2026; il compilatore è in P1.7a, la misura in P1.7d |
+| [0026](0026-driver-audio-di-serie-con-iso-asap.md) | Driver audio di serie, con l'uscita consegnata «appena possibile»; `dawos-uac` non si scrive in Fase 1 | Q-14, A-50, A-69, P1.8 | Accettata il 26 novembre 2026, in prova fino alla campagna di 24 ore (P1.10) |
 
 ## Corrispondenza con il documento di progetto
 

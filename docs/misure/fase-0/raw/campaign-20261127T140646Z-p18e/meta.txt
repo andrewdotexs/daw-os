@@ -1,0 +1,36 @@
+started_utc: 2026-11-27T14:06:46Z
+label: p18e
+plan: load:1500
+cycle: default
+script_sha256: b72916271a87f66857c45fce10323367adc83e7eb47a3283d99f4acfc691aa96
+threshold_us: 50
+trace_us: 20
+timerlat_period_us: 250
+cyclictest_period_us: 1000
+priority: fifo 95
+live_cpus: 4-7
+system_cpus: 16-19
+io_cpus: 20-23
+load_cpus: 0-3,8-15,16-19
+burst_cpus: 0,1,2,3
+monitored_cpus: 0-3,8-15,16-19,20-23
+disk_load: yes
+shared_dev: /dev/disk/by-partlabel/shared
+write_mib_s: 25
+file_mib: 65536
+vm_bytes: 2G
+uptime_at_start_s: 425
+image_version: 0.0.1.20261127133726
+image_build: 7c76302a2fc2
+kernel: Linux 6.18.64-dawos #1 SMP PREEMPT_RT Thu Nov 26 10:39:52 CET 2026
+kernel_config_sha256: 2b8d975c1ee78d562ab59f41d1ba9f4a38c54b255dd4186e1a9c64bf8ffaee49
+cmdline: dm-mod.create="dawos-root,,,ro,0 131456 verity 1 PARTLABEL=dawos-root-0.0.1.20261127133726 PARTLABEL=dawos-verity-0.0.1.20261127133726 4096 4096 16432 1 sha256 afa2c30e64de9008afccefa27d8c1f9281bbcdf28126bbd11b68136ce57f8e63 d3317dc9aeb556252d43d703119fe9d4b97d1cd48c44630b149e0073fb30491f 1 panic_on_corruption" dm-mod.waitfor=PARTLABEL=dawos-root-0.0.1.20261127133726,PARTLABEL=dawos-verity-0.0.1.20261127133726 root=/dev/dm-0 rootfstype=erofs ro rootwait panic=10 console=tty0 systemd.machine_id=firmware loglevel=4 skew_tick=1 tsc=reliable isolcpus=domain,managed_irq,4-7 nohz_full=2-7 rcu_nocbs=2-7 irqaffinity=20-23 dawos.profile=285k snd_usb_audio.iso_asap=1
+cmdline_sha256: f06170fa478957f24baf88b91e72aec9326650243d97813de780b4f7ae20a8ce
+bios: 3402 09/18/2026
+microcode: 0x122
+profile: 285k
+tune: ok
+modules_loaded: 11
+tools: rtla 6.18.63; stress-ng, version 0.20.00 (gcc 14.3.0, x86_64 Linux 6.18.64-dawos); fio-3.41; cyclictest V 2.80
+throttle_since_boot: core=0 package=0
+finished_utc: 2026-11-27T14:31:55Z

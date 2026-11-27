@@ -67,6 +67,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Lucchetto** (_lock_) | Ciò che impedisce a due thread di toccare la stessa cosa insieme. Nel grafo sono solo tentati, mai attesi | Cap. 2, Il grafo |
 | **Margine** | Quanto prima della scadenza un thread smette di prendere nodi: 150 µs | Cap. 2, Il motore |
 | **Mediana** | Il valore sotto cui sta metà delle misure | Cap. 3, Il registro dei cicli |
+| **Memoria dell'interfaccia** | La piccola coda di campioni che l'interfaccia tiene tra il bus USB e il convertitore. Assorbe un ritardo sul bus senza cambiare la latenza, finché non si svuota | Cap. 2, La scheda audio; cap. 4, P1.8e |
 | **Microframe** | L'unità di tempo del bus USB veloce: 125 µs | Cap. 2, La scheda audio |
 | **Nodo** | Un elemento del grafo: ingresso, uscita, guadagno, somma, bus, ritardo, generatore, misuratore, carico | Cap. 2, Il grafo |
 | **Nodo abbandonato** | Un nodo in cui un thread si è bloccato: silenzio da subito, poi tolto dal grafo | Cap. 2, Il grafo |
@@ -93,6 +94,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Ritardo di risveglio** | Il tempo tra quando un thread doveva ripartire e quando è ripartito | Cap. 2, Il tempo reale |
 | **Ritocco** (_trim_) | Una moltiplicazione semplice su tutto il blocco: serve a comporre il costo esatto di un carico | Cap. 2, Il calcolo |
 | **Routing** | Quale segnale va dove, dentro l'interfaccia | Cap. 2, La scheda audio |
+| **Salto** (del tempo presso il controller) | In `usb-look.sh`: un trasferimento d'uscita che resta presso il controller 60 µs o più in più o in meno del precedente. Un salto che resta (da 1,115 a 1,24 ms) è un microframe saltato | Cap. 3; cap. 4, P1.8e |
 | **Scambio** (_swap_) | Sostituire il grafo mentre il ciclo gira | Cap. 2, Il grafo |
 | **SCHED_FIFO** | La classe di schedulazione real-time: gira chi ha la priorità più alta, finché non cede | Cap. 2, Il tempo reale |
 | **Scrittura corta** (_short write_) | Un periodo di uscita che la scheda non prende per intero perché il suo buffer è pieno: ciò che non entra non viene suonato | Cap. 3, Le righe della scheda |

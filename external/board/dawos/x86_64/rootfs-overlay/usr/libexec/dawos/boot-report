@@ -2,7 +2,7 @@
 # dawOS boot report: one line with what an automated boot test needs.
 #
 # Output format (single line, space-separated key=value pairs):
-#   DAWOS-BOOT-REPORT version=<v> variant=<v> kernel=<r> realtime=<0|1> secureboot=<0|1> verity=<0|1> rootpart=<label> profile=<name> tune=<ok|off|degraded|none> gpu=<driver|none> firmware=<same|changed|skipped|no-reference|unreadable|none> kvm=<0|1> timers=<none|names> var=<state|tmpfs|none> failed_units=<n> uptime_s=<s>
+#   DAWOS-BOOT-REPORT version=<v> variant=<v> kernel=<r> realtime=<0|1> secureboot=<0|1> verity=<0|1> rootpart=<label> profile=<name> tune=<ok|off|degraded|none> gpu=<driver|none> firmware=<same|changed|skipped|no-reference|unreadable|none> kvm=<0|1> usb_asap=<on|off|none> timers=<none|names> var=<state|tmpfs|none> failed_units=<n> uptime_s=<s>
 
 set -eu
 
@@ -87,6 +87,17 @@ firmware=$(sed -n 's/^status=//p' /run/dawos/firmware.txt 2> /dev/null | head -n
 kvm=0
 [ -c /dev/kvm ] && kvm=1
 
+# How the USB audio driver hands its output transfers to the controller
+# (ADR 0026): "on" as soon as possible, "off" with the number of their
+# frame, "none" when the kernel has no such switch. A profile asks for it
+# on the kernel command line; a parameter the kernel does not know is
+# dropped without a word, and this is where it would show.
+case "$(cat /sys/module/snd_usb_audio/parameters/iso_asap 2> /dev/null)" in
+Y) usb_asap=on ;;
+N) usb_asap=off ;;
+*) usb_asap=none ;;
+esac
+
 # Timers that are armed. A workstation that records must not start work
 # on its own schedule: the only timer allowed is the daily clean-up of
 # temporary files. Anything else is named here, so that a package that
@@ -110,8 +121,8 @@ done < /proc/mounts
 # The authoritative figure is "systemd-analyze", run by hand.
 read -r uptime _ < /proc/uptime
 
-report=$(printf 'DAWOS-BOOT-REPORT version=%s variant=%s kernel=%s realtime=%s secureboot=%s verity=%s rootpart=%s profile=%s tune=%s gpu=%s firmware=%s kvm=%s timers=%s var=%s failed_units=%s uptime_s=%s' \
-	"${IMAGE_VERSION:-unknown}" "${VARIANT_ID:-unknown}" "$(uname -r)" "${realtime}" "${secureboot}" "${verity}" "${rootpart:-unknown}" "${profile:-generic}" "${tune:-none}" "${gpu}" "${firmware:-none}" "${kvm}" "${timers:-none}" "${var}" "${failed}" "${uptime}")
+report=$(printf 'DAWOS-BOOT-REPORT version=%s variant=%s kernel=%s realtime=%s secureboot=%s verity=%s rootpart=%s profile=%s tune=%s gpu=%s firmware=%s kvm=%s usb_asap=%s timers=%s var=%s failed_units=%s uptime_s=%s' \
+	"${IMAGE_VERSION:-unknown}" "${VARIANT_ID:-unknown}" "$(uname -r)" "${realtime}" "${secureboot}" "${verity}" "${rootpart:-unknown}" "${profile:-generic}" "${tune:-none}" "${gpu}" "${firmware:-none}" "${kvm}" "${usb_asap}" "${timers:-none}" "${var}" "${failed}" "${uptime}")
 echo "${report}"
 
 # The unit sends the line above to the console. The test harness reads

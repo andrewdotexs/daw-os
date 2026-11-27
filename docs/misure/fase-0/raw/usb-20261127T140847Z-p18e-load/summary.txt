@@ -1,0 +1,157 @@
+campaign: A campaign is running: /var/lib/dawos/measure/campaign-20261127T140646Z-p18e
+the bus is read for 120 s in each case; its lines are kept in /run meanwhile
+
+-- the controller of bus 3: 0000:80:14.0 --
+  HCSPARAMS2 0x14200054, HCCPARAMS1 0x20007fc1
+  the controller wants a transfer 4 microframes (of 125 us) before its turn
+  it keeps the frame numbers of a stream contiguous (CFC): yes
+
+-- 48000 Hz, a quantum of 96 frames, 1 periods of the driver in it, output handed over with its frame (iso_asap off) --
+  read: 479997 lines of the card in 120.00 s
+  Zi:3:004:1 (input): 119000 transfers came back in the 119.00 s counted, 1000 a second; in all 120009 handed over, 119997 back
+    packets in a transfer (times): 8 (119000)
+    bytes in a transfer, in its first five packets at the most (times): 3120 (119000)
+    microseconds with the controller, from handed over to back: least 11935, 0.1 % 11945, half 11985, 99.9 % 12025, most 12030
+    microseconds from a transfer back to the next back: least 950, 0.1 % 960, half 1000, 99.9 % 1035, most 1045
+    microframes from a transfer to the next (times): 8 (119000)
+    transfers that did not follow the one before by its length: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  Zo:3:004:1 (output): 119000 transfers came back in the 119.00 s counted, 1000 a second; in all 119997 handed over, 119994 back
+    packets in a transfer (times): 8 (119000)
+    bytes in a transfer (times): 4992 (118982), 5096 (18)
+    microseconds with the controller, from handed over to back: least 2935, 0.1 % 2945, half 2995, 99.9 % 3000, most 3015
+      every value seen (times): 2935 (4) 2940 (12) 2945 (128) 2950 (370) 2955 (2636) 2960 (3477) 2965 (2603) 2970 (1624) 2975 (145) 2980 (2335) 2985 (2132) 2990 (13309) 2995 (89022) 3000 (1111) 3005 (84) 3010 (2) 3015 (6)
+    stays that differ from the one before by 60 us or more: 2
+      at 104.908 s: from 3003 to 2943 us
+      at 108.007 s: from 2946 to 3009 us
+    microseconds from a transfer back to the next back: least 970, 0.1 % 980, half 1000, 99.9 % 1015, most 1020
+    microframes from a transfer to the next (times): 8 (119000)
+    transfers that did not follow the one before by its length: 0
+    output transfers with the controller when one more is handed over (times): 3 (119000)
+    handed over when the controller had no other: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 3.500
+    Zo:3:004:1: first handed over at 3.502, first back at 6.511
+    first input transfer that carried something: at 3.500, after 0 empty ones
+    first output transfer handed over: at 3.502, after 1 input transfers had come back
+    first output transfer that was not silence: at 307.511, after 304 of silence
+  the engine, in the same run: way round 458 samples (9.542 ms); xruns 0; frames at a wake-up: ready 96 to 116, to play 172 to 192
+  length of a cycle, us: least 1951.39, most 2047.07 (nominal 2000.00)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 5906838 in place, 0 out of place
+
+-- 48000 Hz, a quantum of 96 frames, 1 periods of the driver in it, output handed over as soon as possible (iso_asap on) --
+  read: 479999 lines of the card in 120.00 s
+  Zi:3:004:1 (input): 119000 transfers came back in the 119.00 s counted, 1000 a second; in all 120009 handed over, 119997 back
+    packets in a transfer (times): 8 (119000)
+    bytes in a transfer, in its first five packets at the most (times): 3120 (119000)
+    microseconds with the controller, from handed over to back: least 11955, 0.1 % 11970, half 11990, 99.9 % 12010, most 12015
+    microseconds from a transfer back to the next back: least 965, 0.1 % 980, half 1000, 99.9 % 1020, most 1025
+    microframes from a transfer to the next (times): 8 (119000)
+    transfers that did not follow the one before by its length: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  Zo:3:004:1 (output): 119000 transfers came back in the 119.00 s counted, 1000 a second; in all 119997 handed over, 119996 back
+    packets in a transfer (times): 8 (119000)
+    bytes in a transfer (times): 4992 (118982), 5096 (18)
+    microseconds with the controller, from handed over to back: least 1075, 0.1 % 1090, half 1120, 99.9 % 1130, most 1140
+      every value seen (times): 1075 (1) 1085 (51) 1090 (184) 1095 (774) 1100 (2389) 1105 (8926) 1110 (12114) 1115 (20400) 1120 (71658) 1125 (2050) 1130 (433) 1135 (7) 1140 (13)
+    stays that differ from the one before by 60 us or more: 0
+    microseconds from a transfer back to the next back: least 965, 0.1 % 975, half 1000, 99.9 % 1020, most 1025
+    microframes from a transfer to the next (times): 8 (119000)
+    transfers that did not follow the one before by its length: 0
+    output transfers with the controller when one more is handed over (times): 2 (119000)
+    handed over when the controller had no other: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 3.073
+    Zo:3:004:1: first handed over at 3.075, first back at 4.207
+    first input transfer that carried something: at 3.073, after 0 empty ones
+    first output transfer handed over: at 3.075, after 1 input transfers had come back
+    first output transfer that was not silence: at 308.084, after 305 of silence
+  the engine, in the same run: way round 368 samples (7.667 ms); xruns 0; frames at a wake-up: ready 96 to 115, to play 173 to 192
+  length of a cycle, us: least 1964.68, most 2033.68 (nominal 2000.00)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 5906928 in place, 0 out of place
+
+-- 96000 Hz, a quantum of 192 frames, 1 periods of the driver in it, output handed over with its frame (iso_asap off) --
+  read: 479993 lines of the card in 120.00 s
+  Zi:3:004:1 (input): 118999 transfers came back in the 119.00 s counted, 1000 a second; in all 120008 handed over, 119996 back
+    packets in a transfer (times): 8 (118999)
+    bytes in a transfer, in its first five packets at the most (times): 4320 (118963), 4392 (36)
+    microseconds with the controller, from handed over to back: least 11940, 0.1 % 11965, half 11985, 99.9 % 12000, most 12020
+    microseconds from a transfer back to the next back: least 960, 0.1 % 985, half 1000, 99.9 % 1015, most 1035
+    microframes from a transfer to the next (times): 8 (118999)
+    transfers that did not follow the one before by its length: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  Zo:3:004:1 (output): 118999 transfers came back in the 119.00 s counted, 1000 a second; in all 119996 handed over, 119993 back
+    packets in a transfer (times): 8 (118999)
+    bytes in a transfer (times): 6912 (118963), 6984 (36)
+    microseconds with the controller, from handed over to back: least 2930, 0.1 % 2940, half 2960, 99.9 % 2975, most 2995
+      every value seen (times): 2930 (1) 2935 (6) 2940 (121) 2945 (993) 2950 (7221) 2955 (34630) 2960 (65628) 2965 (8891) 2970 (1240) 2975 (156) 2980 (14) 2985 (36) 2990 (55) 2995 (7)
+    stays that differ from the one before by 60 us or more: 0
+    microseconds from a transfer back to the next back: least 975, 0.1 % 980, half 1000, 99.9 % 1015, most 1020
+    microframes from a transfer to the next (times): 8 (118999)
+    transfers that did not follow the one before by its length: 0
+    output transfers with the controller when one more is handed over (times): 3 (118999)
+    handed over when the controller had no other: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 3.535
+    Zo:3:004:1: first handed over at 3.538, first back at 6.538
+    first input transfer that carried something: at 3.535, after 0 empty ones
+    first output transfer handed over: at 3.538, after 1 input transfers had come back
+    first output transfer that was not silence: at 307.578, after 304 of silence
+  the engine, in the same run: way round 909 samples (9.469 ms); xruns 0; frames at a wake-up: ready 192 to 230, to play 346 to 384
+  length of a cycle, us: least 1965.46, most 2036.70 (nominal 2000.00)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 11813747 in place, 0 out of place
+
+-- 96000 Hz, a quantum of 192 frames, 1 periods of the driver in it, output handed over as soon as possible (iso_asap on) --
+  read: 480003 lines of the card in 120.00 s
+  Zi:3:004:1 (input): 119001 transfers came back in the 119.00 s counted, 1000 a second; in all 120010 handed over, 119998 back
+    packets in a transfer (times): 8 (119001)
+    bytes in a transfer, in its first five packets at the most (times): 4320 (118961), 4392 (40)
+    microseconds with the controller, from handed over to back: least 11950, 0.1 % 11965, half 11990, 99.9 % 12010, most 12025
+    microseconds from a transfer back to the next back: least 970, 0.1 % 980, half 1000, 99.9 % 1015, most 1035
+    microframes from a transfer to the next (times): 8 (119001)
+    transfers that did not follow the one before by its length: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  Zo:3:004:1 (output): 119001 transfers came back in the 119.00 s counted, 1000 a second; in all 119998 handed over, 119997 back
+    packets in a transfer (times): 8 (119001)
+    bytes in a transfer (times): 6912 (118961), 6984 (40)
+    microseconds with the controller, from handed over to back: least 1065, 0.1 % 1085, half 1105, 99.9 % 1120, most 1125
+      every value seen (times): 1065 (1) 1075 (9) 1080 (77) 1085 (354) 1090 (1525) 1095 (5370) 1100 (17848) 1105 (45571) 1110 (43553) 1115 (3981) 1120 (628) 1125 (84)
+    stays that differ from the one before by 60 us or more: 0
+    microseconds from a transfer back to the next back: least 975, 0.1 % 980, half 1000, 99.9 % 1015, most 1025
+    microframes from a transfer to the next (times): 8 (119001)
+    transfers that did not follow the one before by its length: 0
+    output transfers with the controller when one more is handed over (times): 2 (119001)
+    handed over when the controller had no other: 0
+    transfers that came back with an error: 0
+    transfers back whose hand-over was not read (lines the reader lost): 0
+  the start, in milliseconds from the first line of the card:
+    Zi:3:004:1: first handed over at 0.000, first back at 3.101
+    Zo:3:004:1: first handed over at 3.104, first back at 4.232
+    first input transfer that carried something: at 3.101, after 0 empty ones
+    first output transfer handed over: at 3.104, after 1 input transfers had come back
+    first output transfer that was not silence: at 308.116, after 305 of silence
+  the engine, in the same run: way round 728 samples (7.583 ms); xruns 0; frames at a wake-up: ready 192 to 233, to play 343 to 384
+  length of a cycle, us: least 1969.58, most 2030.21 (nominal 2000.00)
+  card_short_writes: 0 (0 of them in the warm-up)
+  count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+  count_samples_on_input_5: 11814504 in place, 0 out of place
+
+kernel log, lines about USB and sound written meanwhile: 0
+
+finished_utc: 2026-11-27T14:17:43Z
