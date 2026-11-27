@@ -488,7 +488,7 @@ Che cosa resta. Un'ora non sono le 24 della campagna, che sarà la conferma. La 
 
 ### P1.8e: adottare la patch, e guardare ciò che l'ora non vedeva
 
-_26 novembre: consegnato, in attesa della misura._ Con i numeri di P1.8d l'utente ha preso tre decisioni.
+_26 novembre: consegnato. 27 novembre: misurato._ Con i numeri di P1.8d l'utente ha preso tre decisioni.
 
 1. **La patch si adotta**, accesa dalla riga di comando del kernel nel profilo della macchina. Nel driver l'interruttore resta spento di fabbrica: un kernel di dawOS a cui nessuno chiede nulla si comporta come quello di tutti.
 2. **Il driver audio nostro non si scrive**, almeno in questa fase. La domanda era aperta da prima della Fase 0, e si chiude con una riga di patch al posto di settimane di lavoro. La conferma sarà la campagna di 24 ore.
@@ -504,11 +504,51 @@ Sul bus la differenza si vede. Dopo un microframe saltato il tempo che un trasfe
 
 La previsione questa volta è che salti non ce ne siano. La scrivo sapendo che l'ultima era sbagliata nel verso opposto.
 
+**Com'è andata.** La macchina è partita con l'interruttore acceso, e il rapporto d'avvio lo dice. Poi il bus: un minuto per caso a macchina ferma, due minuti per caso sotto il carico.
+
+| A 48 kHz, interruttore acceso | Macchina ferma | Sotto carico |
+| --- | --- | --- |
+| Trasferimenti d'uscita letti | 59 000 | 119 000 |
+| Tempo presso il controller, la metà | 1115 µs | 1120 µs |
+| Il più corto (la consegna più tarda) | 1090 µs | 1075 µs |
+| Salti | 0 | 0 |
+| Slittamenti del conteggio | 0 | 0 |
+
+![Istogramma del tempo dei trasferimenti d'uscita presso il controller a 48 kHz, a macchina ferma e sotto carico, con il limite di 1000 microsecondi](img/margine-consegna.svg)
+
+**Figura 4.6.** Il tempo di ogni trasferimento d'uscita presso il controller (scala logaritmica: ogni riga vale dieci volte quella sotto). Più una barra è a sinistra, più tardi è arrivata la consegna. Il limite è la riga rossa: un trasferimento dura 1000 µs, e sotto non può stare.
+
+Un trasferimento dura mille microsecondi: ciò che avanza è l'anticipo con cui è stato consegnato. Da ferma l'anticipo è intorno a 115 µs. Sotto carico la metà non si muove, e si allunga solo la coda: la consegna peggiore di 238 000 (sommando 48 e 96 kHz) aveva ancora 65 µs. Il carico ne ha mangiati 45 al massimo.
+
+La previsione dei salti era giusta. Altre due no. Con l'interruttore spento i tempi non stanno in un mucchio ma in due, a 30 µs di distanza, anche a macchina ferma: ne conoscevo uno, perché avevo guardato 120 righe. E il kernel tarda meno di quanto temevo: 25–45 µs al peggio, non 40–100.
+
+Due limiti, scritti nell'esito. Il traffico di rete è partito due minuti dopo la lettura, per un comando lanciato dalla cartella sbagliata (i miei comandi non dicevano quale), ed è andato a metà del ritmo dell'ora di P1.8d. E due minuti non sono un giorno: in 24 ore le consegne sono 86 milioni, e la coda oltre una su centomila nessuno l'ha vista. Se continua con il passo che ha nei numeri di oggi, un microframe saltato al giorno non sarebbe una sorpresa.
+
+Da qui l'idea che chiude il sottopasso, e che è la più utile. Un salto lascia il segno: dopo, il tempo presso il controller è 125 µs più lungo, e resta così finché il flusso non riparte. Quindi non serve leggere il bus per 24 ore. Basta leggerlo due secondi all'inizio e due alla fine, e fare la differenza.
+
+### P1.8f: l'avvio, e una patch più stretta
+
+_27 novembre: consegnato, in attesa della misura._ Restava un difetto piccolo, visto due giorni prima: ogni tanto, al primo ciclo dopo l'avvio, la scheda non prendeva per intero il periodo che il motore le dava. Una «scrittura corta», una sola, e poi nulla per ore.
+
+Guardando com'è fatto l'avvio si capisce perché, e si capisce anche perché non fa danno. Prima di partire il motore riempie di silenzio tutto il buffer d'uscita: è la riserva che dà il tempo di calcolare. Poi i flussi partono, ma l'uscita di questa interfaccia si muove solo dopo che è tornato l'ingresso. Al primo risveglio del motore l'uscita ha consumato un periodo di quel silenzio, o mezzo, o niente: è una gara tra due lavori su due processori. Se non ha consumato abbastanza, il primo periodo non entra tutto.
+
+| Al primo risveglio l'uscita ha consumato | Posto nel buffer | Che cosa succedeva | Che cosa succede ora |
+| --- | --- | --- | --- |
+| Un periodo (96 frame) | 96 | Il periodo entra | Lo stesso |
+| Mezzo periodo (48) | 48 | Entra la prima metà, la seconda si perde: un buco di 1 ms subito dopo | Entra la **seconda** metà: ciò che segue è continuo |
+| Niente | 0 | Il periodo si perde | Lo stesso, e si chiama col suo nome |
+
+In tutti e tre i casi, dopo quella scrittura il buffer è pieno, e dal ciclo dopo tutto è uguale: **la latenza non dipende da chi vince la gara**. Per questo il rimedio non tocca la riserva di silenzio. Cambia solo quale pezzo del primo periodo si lascia andare: la testa, che sarebbe uscita per prima quando nessuno ha ancora sentito nulla, invece della coda. E smette di chiamarsi «scrittura corta», che da qui in poi vuol dire soltanto un difetto.
+
+Scrivendo la modifica ho fatto un errore, e l'ha trovato la prova nella macchina virtuale. Per sapere quanto posto c'è chiedo alla scheda; una scheda che si è appena fermata per un xrun non risponde, e io prendevo la non-risposta per «zero posto, buffer pieno»: il motore saltava la scrittura, e l'xrun veniva scoperto un ciclo più tardi. Nei dettagli della prova c'erano righe impossibili, «144 frame da suonare su 288, 0 scritti, 96 ceduti». Ora chi non risponde non è all'avvio: scrive come sempre, e l'errore esce subito.
+
+Le altre due cose del sottopasso vengono dalle decisioni dell'utente. **La patch al kernel si stringe**: vale solo per i flussi «a retroazione implicita», cioè per il modo in cui lavora la Scarlett di quarta generazione, l'unico in cui è stata misurata. L'altra interfaccia del progetto usa un altro modo, sta già sotto i 10 ms senza patch, e torna sul percorso di tutti. E **le ore di prova leggono il bus** per due secondi all'inizio e alla fine: è il contatore dei microframe saltati nato dall'esito di P1.8e.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: il margine della consegna letto sul bus sotto carico (P1.8e), poi l'avvio dei flussi (A-72, P1.8f) |
+| P1.8 | Il driver della scheda: la misura di P1.8f (cento avvii per frequenza), poi la chiusura del passo |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |

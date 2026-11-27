@@ -106,6 +106,14 @@ pub struct CardOutcome {
     /// The first short write: seconds from the start of the run, periods
     /// served since the streams were last started, frames the card took.
     pub first_short: Option<(f64, u64, u64)>,
+    /// Periods written in part at a start of the streams, by design, and
+    /// the frames let go at their head.
+    pub start_top_ups: u64,
+    pub start_frames_let_go: u64,
+    /// The first periods of the first start of the run: milliseconds
+    /// from the start of the run, frames ready, frames to play, frames
+    /// written and frames let go.
+    pub first_start: Vec<(f64, u64, u64, u64, u64)>,
     pub bad_stamps: u64,
     /// The other live threads: cycles taken after a tick of the card,
     /// those of them with periods gone by, wake-ups with no cycle, and
@@ -974,6 +982,22 @@ pub fn execute(options: &RunOptions) -> Result<Outcome, String> {
                     count(&stats.first_short_frames),
                 )
             }),
+            start_top_ups: count(&stats.start_top_ups),
+            start_frames_let_go: count(&stats.start_frames_let_go),
+            first_start: stats
+                .first_start
+                .iter()
+                .filter(|period| count(&period.at_ns) != 0)
+                .map(|period| {
+                    (
+                        count(&period.at_ns) as f64 / 1e6,
+                        count(&period.ready),
+                        count(&period.to_play),
+                        count(&period.written),
+                        count(&period.let_go),
+                    )
+                })
+                .collect(),
             bad_stamps: count(&stats.bad_stamps),
             follower_cycles: count(&stats.follower_cycles),
             follower_behind: count(&stats.follower_behind),
@@ -2276,6 +2300,17 @@ fn print_card(card: &CardOutcome, options: &RunOptions) {
             "card_short_writes: {} ({} of them in the warm-up)",
             card.short_writes, card.early_short_writes
         ),
+    }
+    println!(
+        "card_start_top_ups: {} ({} frames let go at the head of a period: the output was still full of the first silence)",
+        card.start_top_ups, card.start_frames_let_go
+    );
+    for (index, (at, ready, to_play, written, let_go)) in card.first_start.iter().enumerate() {
+        println!(
+            "card_first_start_{}: at {at:.3} ms; {ready} frames ready, {to_play} to play; {written} of {} written, {let_go} let go",
+            index + 1,
+            card.info.period
+        );
     }
     println!("card_stamps_not_believed: {}", card.bad_stamps);
     println!(

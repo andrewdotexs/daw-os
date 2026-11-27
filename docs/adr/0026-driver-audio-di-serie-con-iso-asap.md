@@ -1,6 +1,6 @@
 # ADR 0026 — Driver audio di serie, con l'uscita consegnata «appena possibile»
 
-- **Stato**: accettata dall'utente il 26 novembre 2026, **in prova fino alla campagna di 24 ore** del passo P1.10. Le misure sono nei sottopassi P1.8a–P1.8d della [guida](../fasi/fase-1/P1.8-il-driver-audio.md); l'adozione nell'immagine è il sottopasso P1.8e.
+- **Stato**: accettata dall'utente il 26 novembre 2026, **in prova fino alla campagna di 24 ore** del passo P1.10. Le misure sono nei sottopassi P1.8a–P1.8d della [guida](../fasi/fase-1/P1.8-il-driver-audio.md); l'adozione nell'immagine è il sottopasso P1.8e. **Modificata il 27 novembre 2026** (sottopasso P1.8f): la patch vale solo per i flussi a retroazione implicita; vedi la sezione in fondo.
 - **Data**: 26 novembre 2026
 - **Origine**: domanda Q-14 del documento 0 («un driver audio proprio?»), punti aperti A-50 e A-69, criterio 8 della [Fase 1](../fasi/fase-1/00-piano-della-fase-1.md); [ADR 0007](0007-versioni-buildroot-e-kernel.md) per la regola sulle patch fuori albero; [ADR 0021](0021-core-live-senza-kernel.md) per ciò che il driver non deve chiedere ai core live.
 
@@ -57,11 +57,25 @@ L'ADR 0007 ammette una patch fuori albero a tre condizioni.
 
 - **Il cuscino è più sottile.** Con il kernel di serie l'uscita aspettava due millisecondi presso il controller: un ritardo del kernel di un millisecondo non faceva danno. Ora ogni trasferimento d'uscita viene consegnato un decimo di millisecondo prima del suo turno. In un'ora sotto carico e in quattrocento avvii non è mancato una volta; **di quanto avanzi non è ancora misurato** (sottopasso P1.8e: il bus letto sotto carico).
 - **Un trasferimento consegnato tardi non è un xrun.** ALSA non lo vede. Lo vedono il conteggio che attraversa l'interfaccia e il confronto tra il giro all'inizio e alla fine: dal passo P1.8d sono giudizi di ogni ora di prova.
-- **Vale per ogni scheda audio USB collegata alla macchina**, non solo per la Scarlett. È stato misurato solo sulla 18i20 di quarta generazione. La seconda generazione rispetta R-01 anche senza; con l'interruttore acceso non è stata provata.
+- **Nella prima forma valeva per ogni scheda audio USB collegata alla macchina**, ed era stato misurato solo sulla 18i20 di quarta generazione. Dal 27 novembre 2026 vale solo per i flussi a retroazione implicita (vedi la modifica in fondo).
 - **Vale per il controller del 285K** (anticipo dichiarato di 4 microframe, numeri di frame contigui). Su un altro controller il guadagno e il rischio vanno rimisurati: l'interruttore sta nel profilo della macchina per questo.
 - **L'uscita soltanto.** L'ingresso segue ancora la regola del numero di frame, e non costa latenza: un trasferimento d'ingresso torna quando è pieno.
 - **Otto fette restano inutilizzabili** (l'ingresso perde un pacchetto su tre): non servono.
 - **Il giro è più ripetibile**: da un avvio all'altro si sposta di 7 campioni a 48 kHz invece di 49, di 1 a 96 kHz invece di 97 _(P1.8d)_.
+
+## Modifica del 27 novembre 2026: solo la retroazione implicita
+
+Decisione dell'utente, sottopasso P1.8f. La patch mette il segno «appena possibile» solo sui trasferimenti d'uscita di un flusso **a retroazione implicita**: quello in cui ogni trasferimento d'uscita viene accodato quando torna un trasferimento d'ingresso. È il modo della Scarlett 18i20 di quarta generazione, a tutte le frequenze _(verificato: lo dice il driver, `Implicit Feedback Mode: Yes`)_, ed è l'unico in cui la patch è stata misurata.
+
+Per le interfacce che usano gli altri modi del driver, tra cui la 18i20 di seconda generazione, il kernel di dawOS si comporta come quello a monte anche con l'interruttore acceso: restano sul percorso misurato nelle Fasi 0 e 1, che rispetta R-01 senza patch.
+
+Scartate: ricollegare la seconda generazione e misurarla con l'interruttore acceso (un'ora di lavoro e di cavi per un guadagno che non mi aspetto); lasciare la patch valida per tutte, scrivendo che non è provata.
+
+Conseguenza: se un giorno un'interfaccia con un altro modo avesse lo stesso anticipo di troppo, la patch andrebbe allargata, con la sua misura.
+
+## Dal sottopasso P1.8e: il margine misurato
+
+Sotto il carico della campagna, in due minuti per caso, la consegna più tarda di 238 000 ha consumato 45 µs dei circa 115 disponibili; nessun microframe saltato. Un microframe saltato non cambia il giro finché la memoria dell'interfaccia lo assorbe _(ragionamento, non misura)_, ma lascia il tempo dell'uscita presso il controller più lungo di 125 µs fino al riavvio del flusso: le ore di prova leggono il bus all'inizio e alla fine e ne contano la differenza (sottopasso P1.8f).
 
 ## Quando si riapre
 

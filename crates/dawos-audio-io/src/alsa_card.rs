@@ -506,6 +506,14 @@ impl Card {
         Ok(())
     }
 
+    /// Frames of room in the output buffer now. No system call: the
+    /// pointers are in memory shared with the kernel. `None`: the
+    /// stream cannot say (it has stopped, after an xrun); the exchange
+    /// of samples that follows tells what happened.
+    pub fn playback_room(&mut self) -> Option<usize> {
+        usize::try_from(self.playback.avail_update().ok()?).ok()
+    }
+
     /// Copy one period of output, all channels interleaved, to the card.
     /// On a USB interface in low-latency mode the commit is a system
     /// call: the driver wants to be told about the new data.

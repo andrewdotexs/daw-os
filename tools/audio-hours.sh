@@ -46,6 +46,15 @@
 # every case the way round of the count must be the same at the end as
 # at the start, and no sample of it out of place (step P1.8d).
 #
+# That judgement does not see everything: a transfer that goes one
+# microframe late is taken up by the queue of the interface, and the
+# way round stays as it was (step P1.8e). What it leaves is on the bus:
+# from then on an output transfer stays with the controller 125 us
+# longer. So each case reads the bus for two seconds, twenty seconds
+# after its start and fifteen before its end, and the summary says by
+# how much the two differ (step P1.8f). It is shown, not judged. The
+# second reading falls in the judged time: BUS_LOOK=0 leaves both out.
+#
 # A case passes when: the engine says "audio: PASS" and "compute: PASS";
 # no xrun; no slip of the count; no sample of it out of place; the same
 # way round at the end as at the start; no record of a cycle lost; no page of
@@ -82,6 +91,9 @@ DEVICE_OPTIONS=${DEVICE_OPTIONS:-}
 REQUIRE_CAMPAIGN=${REQUIRE_CAMPAIGN:-}
 ASAP=${ASAP:-}
 SWITCH=/sys/module/snd_usb_audio/parameters/iso_asap
+# Whether the USB bus is read for two seconds near the start and near
+# the end of each case (step P1.8f). 0: not read.
+BUS_LOOK=${BUS_LOOK:-1}
 
 usage() {
 	cat << USAGE
@@ -93,7 +105,8 @@ Usage:
 In the environment of --start: RATE (default 96000), SECONDS_JUDGED
 (default 3600), CASES (default "passthrough loaded"; also "swap"),
 REQUIRE_CAMPAIGN (set: do not start unless the campaign is running),
-ASAP (0 or 1: the switch iso_asap of the USB driver, for these hours).
+ASAP (0 or 1: the switch iso_asap of the USB driver, for these hours),
+BUS_LOOK (0: do not read the USB bus near the start and the end).
 USAGE
 }
 
@@ -200,9 +213,75 @@ judge() {
 	if [ -z "${why}" ]; then echo "PASS"; else echo "FAIL${why}"; fi
 }
 
+# ---- The USB bus of the card, read for two seconds: how long an
+# output transfer stays with the controller, from handed over to back.
+# With the switch iso_asap on a transfer is handed over a tenth of a
+# millisecond before its turn. One that comes later than that goes a
+# microframe (125 us) after its turn, and so does every transfer after
+# it until the streams start again: the interface plays the same
+# samples at the same instants from a shorter queue of its own, the way
+# round of the count does not change, and nothing else shows it (step
+# P1.8e). So the same reading near the start and near the end of a
+# case tells how many microframes went by with no output in between.
+# $1: the number of the card. Prints one line, or nothing where the
+# card is not on a bus the kernel shows.
+bus_look() {
+	where=$(cat "/proc/asound/card$1/usbbus" 2> /dev/null) || return 0
+	bus=$(echo "${where%%/*}" | sed 's/^0*//')
+	[ -n "${bus}" ] || return 0
+	[ -d /sys/kernel/debug/usb ] || mount -t debugfs debugfs /sys/kernel/debug 2> /dev/null
+	monitor="/sys/kernel/debug/usb/usbmon/${bus}u"
+	[ -r "${monitor}" ] || return 0
+	# The reader goes ahead of ordinary work: lines it does not take in
+	# time are lost. They are kept in memory, not on the disk.
+	chrt -f 10 cat "${monitor}" > "${RUN}/bus.raw" 2> /dev/null &
+	bus_reader=$!
+	echo "${bus_reader}" > "${RUN}/bus-reader.pid"
+	sleep 2
+	kill "${bus_reader}" 2> /dev/null
+	wait "${bus_reader}" 2> /dev/null
+	rm -f "${RUN}/bus-reader.pid"
+	awk -v device=":${where##*/}:" '
+		$4 ~ /^Zo:/ && index($4, device) {
+			if ($3 == "S") sent[$1] = $2
+			else if ($3 == "C" && ($1 in sent)) {
+				stay = $2 - sent[$1]
+				delete sent[$1]
+				times[int(stay / 5)]++
+				total++
+				if (least == "" || stay < least) least = stay
+				if (stay > most) most = stay
+			}
+		}
+		END {
+			if (total == 0) { print "no output transfer of the card was read"; exit }
+			# The middle one, in steps of 5 us.
+			for (step = int(least / 5); step <= int(most / 5); step++) {
+				seen += times[step]
+				if (seen * 2 >= total) break
+			}
+			printf "half %d us (least %d, most %d, %d transfers in two seconds)\n", step * 5, least, most, total
+		}' "${RUN}/bus.raw"
+	rm -f "${RUN}/bus.raw"
+}
+
+# The two readings of a case, as the lines of the summary. $1 and $2:
+# the files they were written to.
+bus_lines() {
+	at_start=$(cat "$1" 2> /dev/null)
+	at_end=$(cat "$2" 2> /dev/null)
+	[ -n "${at_start}${at_end}" ] || return 0
+	echo "bus_output_with_the_controller: at the start ${at_start:-not read}; at the end ${at_end:-not read}"
+	first=$(echo "${at_start}" | sed -n 's/^half \([0-9]*\) us.*/\1/p')
+	last=$(echo "${at_end}" | sed -n 's/^half \([0-9]*\) us.*/\1/p')
+	if [ -n "${first}" ] && [ -n "${last}" ]; then
+		echo "bus_output_later_by: $((last - first)) us from the start to the end, $(((last - first + (last >= first ? 62 : -62)) / 125)) microframes (shown, not judged)"
+	fi
+}
+
 # What a case says, for the summary.
 lines_of() {
-	grep -E '^(syscall_dispatch|syscalls_stopped_in_compute|card_xruns|card_recoveries|card_short_writes|card_followers|slips_on_input_3|count_on_input_[0-9]+|count_slips_on_input_[0-9]+|count_samples_on_input_[0-9]+|graph_file|graph_swap_file|graph_changes|graph_change_[a-z_]+|graph_changes_seen|graph_refused|graph_critical_path_measured_us|graph: |record_of_every_cycle|record, |  period, off|  wake-up +[0-9]|  input and patch|  nodes |  output |  compute, whole|  first awake|  wake_up_bands|  least_margin_us|  card_frames|  periods_gone_by|cycles_to_look_at|card_told_late_by_minute|audio: |compute: )' "$1"
+	grep -E '^(syscall_dispatch|syscalls_stopped_in_compute|card_xruns|card_recoveries|card_short_writes|card_start_top_ups|card_first_start_[0-9]+|card_followers|slips_on_input_3|count_on_input_[0-9]+|count_slips_on_input_[0-9]+|count_samples_on_input_[0-9]+|graph_file|graph_swap_file|graph_changes|graph_change_[a-z_]+|graph_changes_seen|graph_refused|graph_critical_path_measured_us|graph: |record_of_every_cycle|record, |  period, off|  wake-up +[0-9]|  input and patch|  nodes |  output |  compute, whole|  first awake|  wake_up_bands|  least_margin_us|  card_frames|  periods_gone_by|cycles_to_look_at|card_told_late_by_minute|audio: |compute: )' "$1"
 	# Every slip of the count with its instant, the first twenty: with
 	# the switch iso_asap on they tell when the output fell behind.
 	grep -E '^ *count slip on input ' "$1" | head -n 20
@@ -271,8 +350,29 @@ run_all() {
 			--seconds "$((SECONDS_JUDGED + WARM_UP))" --warm-up "${WARM_UP}" --require-rt \
 			--tone 3 --tone-cycles 3 --listen 3 --kernel-entries \
 			> "${dir}/${name}.txt" 2> "${dir}/${name}.err" &
-		echo $! > "${RUN}/engine.pid"
-		wait $!
+		engine_pid=$!
+		echo "${engine_pid}" > "${RUN}/engine.pid"
+		# The bus, twenty seconds after the start (in the warm-up) and
+		# fifteen before the end.
+		looker=
+		rm -f "${dir}/${name}-bus-start.txt" "${dir}/${name}-bus-end.txt"
+		if [ "${BUS_LOOK}" != 0 ] && [ -z "${DEVICE_OPTIONS}" ] && [ "$((SECONDS_JUDGED + WARM_UP))" -ge 60 ]; then
+			(
+				sleep 20
+				bus_look "${card}" > "${dir}/${name}-bus-start.txt"
+				sleep "$((SECONDS_JUDGED + WARM_UP - 20 - 2 - 15))"
+				bus_look "${card}" > "${dir}/${name}-bus-end.txt"
+			) &
+			looker=$!
+		fi
+		wait "${engine_pid}"
+		if [ -n "${looker}" ]; then
+			# A case that ended early leaves the reader of the bus on.
+			kill "${looker}" 2> /dev/null
+			wait "${looker}" 2> /dev/null
+			[ -r "${RUN}/bus-reader.pid" ] && kill "$(cat "${RUN}/bus-reader.pid")" 2> /dev/null
+			rm -f "${RUN}/bus-reader.pid" "${RUN}/bus.raw"
+		fi
 		after=$(smi_count)
 		verdict=$(judge "${dir}/${name}.txt" "${before}" "${after}" "${name}")
 		case "${verdict}" in
@@ -286,6 +386,7 @@ run_all() {
 			echo "iso_asap: $(cat "${SWITCH}" 2> /dev/null || echo "this kernel has no such switch")"
 			echo "smi_count: ${before} before, ${after} after"
 			echo "case_verdict: ${verdict}"
+			bus_lines "${dir}/${name}-bus-start.txt" "${dir}/${name}-bus-end.txt"
 			lines_of "${dir}/${name}.txt"
 			[ -s "${dir}/${name}.err" ] && sed 's/^/stderr: /' "${dir}/${name}.err" | head -n 12
 		} >> "${dir}/summary.txt"
@@ -428,6 +529,7 @@ systemd-run --quiet --unit="${UNIT}" --collect \
 	--description="dawOS engine, acceptance hours (P1.6e)" \
 	--setenv=RATE="${RATE}" --setenv=SECONDS_JUDGED="${SECONDS_JUDGED}" --setenv=CASES="${CASES}" \
 	--setenv=WARM_UP="${WARM_UP}" --setenv=DEVICE_OPTIONS="${DEVICE_OPTIONS}" --setenv=ASAP="${ASAP}" \
+	--setenv=BUS_LOOK="${BUS_LOOK}" \
 	/bin/sh "${copy}" --run "${dir}" ||
 	die "could not start the hours"
 
