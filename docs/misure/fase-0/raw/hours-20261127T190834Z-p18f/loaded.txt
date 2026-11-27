@@ -1,0 +1,311 @@
+dawos-engine 0.1.0
+backend: alsa
+rate_hz: 96000
+quantum_frames: 192
+period_us: 2000.000
+live_threads: 4
+live_cpus: 4,5,6,7
+system_cpus: 16,17,18,19
+scheduling: fifo 80 (watchdog: fifo 95)
+memory_locked: yes
+syscall_dispatch: on (every thread of the cycle tried it at its start)
+syscalls_stopped_in_compute: 0
+seconds: 300
+load_percent: 60
+vector_unit: AVX2 and FMA
+denormals: taken for zero on the live threads (FTZ and DAZ)
+margin_us: 150
+fault: none
+watchdog_rounds: 150003
+systemd_listening: no
+
+threads (delays and times in microseconds):
+slot   kind   end        cycles  missed incomplete overruns  late_avg  late_max compute_avg compute_max least_margin  behind
+0      first  stopped    150005       0          0        0      8.35     14.60     1206.84     1209.52       790.48       1
+1      first  stopped    150005       0          0        0      8.39     14.64     1202.70     1203.63       796.37       1
+2      first  stopped    150005       0          0        0      8.40     14.63     1202.80     1203.75       796.25       1
+3      first  stopped    150005       0          0        0      8.40     14.65     1202.80     1203.87       796.13       1
+
+card_capture: hw:Gen,0
+card_playback: hw:Gen,0
+card_format: S32_LE, 96000 Hz, 18 inputs, 18 outputs
+card_period_frames: 192 (buffer: capture 576, playback 576)
+card_linked: yes
+card_period_stamps: yes (the wake-up delay is counted from the stamp of the period)
+card_cycles: 150006 with the card, 0 without
+warm_up_seconds: 60
+card_xruns: 0 (0 of them in the warm-up)
+card_recoveries: 0 (longest 0.00 ms)
+card_restarts_after_a_pause: 0 (the start before had given no input)
+card_waits_without_period: 0
+card_lost: 0 (last error number 0), back 0, attempts to open it again 0
+card_short_writes: 0 (0 of them in the warm-up)
+card_start_top_ups: 0 (0 frames let go at the head of a period: the output was still full of the first silence)
+card_first_start_1: at 1.417 ms; 192 frames ready, 384 to play; 192 of 192 written, 0 let go
+card_first_start_2: at 3.414 ms; 192 frames ready, 384 to play; 192 of 192 written, 0 let go
+card_first_start_3: at 5.413 ms; 192 frames ready, 384 to play; 192 of 192 written, 0 let go
+card_first_start_4: at 7.414 ms; 192 frames ready, 384 to play; 192 of 192 written, 0 let go
+card_stamps_not_believed: 0
+card_followers: 450018 cycles after a tick of the card, 0 of them with periods gone by, 0 wake-ups with no cycle; timers of the card opened 3, refused 0
+tone: output 3, 1500.00 Hz, peak 12 dB below full scale
+count_on_input_5: way round 728 samples (7.583 ms), found at 0.008 s; at the end 728 samples (7.583 ms)
+count_slips_on_input_5: 0 (largest 0 samples); in the warm-up 0 (largest 0)
+count_samples_on_input_5: 28800168 in place, 0 out of place
+routes: none
+
+inputs listened to (dB relative to full scale; the first 60 s and the last, incomplete second left out):
+input   seconds     peak  level_min  level_max  tone_min  tone_max  share_min
+3           240    -17.9      -20.9      -20.9     -17.9     -17.9     1.0000
+slips_on_input_3: 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+
+record_of_every_cycle: 600020 cycles read, 0 dropped (rings of 4096 records, the fullest held 11)
+record, slot 0: 120005 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.00      0.75     11.25     14.00     20.00   1000.04
+  wake-up                       3.39      8.35      8.50      9.25     13.25     13.75     14.60
+  input and patch               2.06      2.90      3.00      3.25      3.50      3.50      3.71
+  nodes                      1202.20   1202.39   1203.41   1203.41   1203.41   1203.41   1203.41
+  output                        0.93      1.52      1.75      2.00      2.00      2.75      3.12
+  compute, whole             1205.46   1206.81   1208.57   1208.57   1208.57   1208.57   1208.57
+  period_us: least 999.96, most 2024.15 (nominal 2000.00)
+  wake_up_bands: under 5 us 516, 5 to 10 118735, 10 to 20 753, 20 to 50 0, 50 and over 0
+  began_behind: 1 cycles, 215.00 us after the period was due at the most (no sleep before them: not wake-ups)
+  least_margin_us: 791.43
+  card_frames_at_the_wake_up: ready 192 to 287, to play 289 to 384
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 14.11 us
+record, slot 1: 120005 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.00      0.75     11.25     14.00     20.00   1000.04
+  wake-up                       3.40      8.39      8.50      9.25     13.25     13.75     14.64
+  input and patch               0.11      0.32      0.50      0.75      0.75      0.75      0.87
+  nodes                      1202.09   1202.36   1203.30   1203.30   1203.30   1203.30   1203.30
+  output                        0.01      0.01      0.25      0.25      0.25      0.25      0.43
+  compute, whole             1202.35   1202.69   1203.63   1203.63   1203.63   1203.63   1203.63
+  period_us: least 999.96, most 2024.15 (nominal 2000.00)
+  wake_up_bands: under 5 us 504, 5 to 10 118747, 10 to 20 753, 20 to 50 0, 50 and over 0
+  began_behind: 1 cycles, 215.02 us after the period was due at the most (no sleep before them: not wake-ups)
+  least_margin_us: 796.37
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 14.17 us
+record, slot 2: 120005 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.00      0.75     11.25     14.00     20.00   1000.04
+  wake-up                       3.41      8.40      8.50      9.25     13.25     13.75     14.63
+  input and patch               0.07      0.31      0.50      0.75      0.75      0.75      0.79
+  nodes                      1202.09   1202.46   1203.41   1203.41   1203.41   1203.41   1203.41
+  output                        0.01      0.01      0.25      0.25      0.25      0.25      0.48
+  compute, whole             1202.37   1202.79   1203.75   1203.75   1203.75   1203.75   1203.75
+  period_us: least 999.96, most 2024.15 (nominal 2000.00)
+  wake_up_bands: under 5 us 498, 5 to 10 118753, 10 to 20 753, 20 to 50 0, 50 and over 0
+  began_behind: 1 cycles, 215.04 us after the period was due at the most (no sleep before them: not wake-ups)
+  least_margin_us: 796.25
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 14.17 us
+record, slot 3: 120005 cycles after the warm-up, 30000 in it (0 without a card); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  period, off the nominal       0.00      1.00      0.75     11.25     14.00     20.00   1000.04
+  wake-up                       3.71      8.40      8.50      9.25     13.25     13.75     14.65
+  input and patch               0.05      0.31      0.50      0.75      0.75      0.75      0.96
+  nodes                      1202.19   1202.48   1203.45   1203.45   1203.45   1203.45   1203.45
+  output                        0.01      0.01      0.25      0.25      0.25      0.25      0.56
+  compute, whole             1202.41   1202.80   1203.87   1203.87   1203.87   1203.87   1203.87
+  period_us: least 999.96, most 2024.15 (nominal 2000.00)
+  wake_up_bands: under 5 us 461, 5 to 10 118784, 10 to 20 759, 20 to 50 0, 50 and over 0
+  began_behind: 1 cycles, 215.03 us after the period was due at the most (no sleep before them: not wake-ups)
+  least_margin_us: 796.13
+  card_frames_at_the_wake_up: ready 0 to 0, to play 0 to 0
+  periods_gone_by: 0; cycles cut by the budget: 0; cycles without the patch: 0; system calls stopped in the compute phase: 0; worst wake-up of the warm-up: 14.16 us
+record, the 4 threads together: 120005 cycles after the warm-up that all of them took; microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  first awake to last           0.01      0.06      0.25      0.25      0.50      1.25      2.07
+cycles_to_look_at: 4 after the warm-up (4 began behind, the period was due before the cycle before ended); 0 in it (none)
+card_told_late_by_minute: 0 0 0 0 0 0 (from the first period, the warm-up too)
+  slot 0 cycle 135917 at 271.833 s: began behind, the period was due before the cycle before ended, 999.96 us after the period before (0.50 periods); periods gone by 0
+      it: began, without a sleep, 215.00 us after the period was due; input 2.76, nodes 1202.44 (50 of them), output 1.45 us; ended 793.34 us before the instant it had to end by; card: 192 frames ready, 384 to play
+      the one before: woke 8.18 us after the period was due; input 2.65, nodes 1202.41 (50 of them), output 1.56 us; ended 793.37 us before the instant it had to end by; card: 287 frames ready, 289 to play
+  slot 1 cycle 135917 at 271.833 s: began behind, the period was due before the cycle before ended, 999.96 us after the period before (0.50 periods); periods gone by 0
+      it: began, without a sleep, 215.02 us after the period was due; input 0.23, nodes 1202.28 (50 of them), output 0.01 us; ended 797.48 us before the instant it had to end by; card: 0 frames ready, 0 to play
+      the one before: woke 8.20 us after the period was due; input 0.25, nodes 1202.36 (50 of them), output 0.01 us; ended 797.38 us before the instant it had to end by; card: 0 frames ready, 0 to play
+  slot 3 cycle 135917 at 271.833 s: began behind, the period was due before the cycle before ended, 999.96 us after the period before (0.50 periods); periods gone by 0
+      it: began, without a sleep, 215.03 us after the period was due; input 0.18, nodes 1202.48 (50 of them), output 0.01 us; ended 797.32 us before the instant it had to end by; card: 0 frames ready, 0 to play
+      the one before: woke 8.23 us after the period was due; input 0.19, nodes 1202.41 (50 of them), output 0.01 us; ended 797.38 us before the instant it had to end by; card: 0 frames ready, 0 to play
+  slot 2 cycle 135917 at 271.833 s: began behind, the period was due before the cycle before ended, 999.96 us after the period before (0.50 periods); periods gone by 0
+      it: began, without a sleep, 215.04 us after the period was due; input 0.13, nodes 1202.44 (50 of them), output 0.01 us; ended 797.42 us before the instant it had to end by; card: 0 frames ready, 0 to play
+      the one before: woke 8.22 us after the period was due; input 0.16, nodes 1202.48 (50 of them), output 0.01 us; ended 797.35 us before the instant it had to end by; card: 0 frames ready, 0 to play
+
+kernel_entries: CPUs 4 5 6 7 traced; 3936323 records read, 3936323 of them of the events asked for; pages with records lost before them: 0; pages not understood: 0; events outside the cycles: 175; cycles out of order: 0
+kernel_entries_events_this_kernel_has_not: none
+kernel_entries_in_compute: 0 system calls, 0 entries not asked for, in 480016 cycles after the warm-up
+kernel_entries, system calls for each cycle; cycles with:
+                                none       one       two     three      more
+  slot 0, compute             120004         0         0         0         0
+  slot 0, delivery                 0    120004         0         0         0
+  slot 0, wait                     1    120003         0         0         0
+  slot 1, compute             120004         0         0         0         0
+  slot 1, delivery            120004         0         0         0         0
+  slot 1, wait                     0         0    120004         0         0
+  slot 2, compute             120004         0         0         0         0
+  slot 2, delivery            120004         0         0         0         0
+  slot 2, wait                     0         0    120004         0         0
+  slot 3, compute             120004         0         0         0         0
+  slot 3, delivery            120004         0         0         0         0
+  slot 3, wait                     0         0    120004         0         0
+kernel_entries, system calls, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: ioctl 120004 [120004 0 0 0]
+  wait:     poll 480012 [120003 120003 120003 120003]
+  wake-up:  read 360012 [0 120004 120004 120004]; poll 3 [0 1 1 1]
+kernel_entries, entries not asked for, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     none
+  wake-up:  none
+kernel_entries, what the kernel did there, by phase (the total, and slot by slot in brackets):
+  compute:  none
+  delivery: none
+  wait:     wait for a lock of the kernel 17186 [9 5942 5468 5767]
+  wake-up:  wait for a lock of the kernel 120391 [120003 121 140 127]
+kernel_entries, the longest step between two readings of the clock in the nodes of each cycle (480016 cycles); microseconds:
+                               least      mean      half       99%     99.9%    99.99%      most
+  longest step                  0.03      0.46      0.50      1.00      1.00      1.00      1.01
+  steps_of_a_microsecond_and_more: 0 with an entry into the kernel in them, 4 with none
+  with no entry                 1.00      1.01      1.01      1.01      1.01      1.01      1.01
+    slot 0 cycle 43819 at 87.639 s: 1.01 us
+    slot 0 cycle 46361 at 92.723 s: 1.01 us
+    slot 1 cycle 50780 at 101.561 s: 1.01 us
+    slot 2 cycle 52837 at 105.675 s: 1.00 us
+kernel_entries, the wake-up of slot 0 (CPU 4), 120003 of them; microseconds from the instant the period was due:
+  and 1 cycles that began behind, with no sleep before them: not wake-ups
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt           -         -         -         -         -         -         -
+  to the thread on the CPU      1.15      2.34      2.50      2.75      2.75      5.75      6.84
+  from there to user space      2.18      6.01      6.00      6.75     11.00     11.50     12.26
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock            1.08      4.34      4.50      5.00      9.25      9.75     10.66
+  given_the_cpu: never left it 0, once 120003, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 120003 wake-ups
+  wake-ups of under 5 us: 516; the CPU was held by: nobody 516; before user space: wait for a lock of the kernel 516
+  wake-ups of 5 to 10 us: 118734; the CPU was held by: nobody 118734; before user space: wait for a lock of the kernel 118734
+  wake-ups of 10 to 20 us: 753; the CPU was held by: nobody 753; before user space: wait for a lock of the kernel 753
+kernel_entries, the wake-up of slot 1 (CPU 5), 120003 of them; microseconds from the instant the period was due:
+  and 1 cycles that began behind, with no sleep before them: not wake-ups
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt           -         -         -         -         -         -         -
+  to the thread on the CPU      1.69      3.74      3.75      4.25      7.50      8.25      8.84
+  from there to user space      1.62      4.65      4.75      5.25      9.50     10.00     10.81
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock            2.36      2.91      3.00      3.52      3.52      3.52      3.52
+  given_the_cpu: never left it 0, once 120003, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 121 wake-ups
+  wake-ups of under 5 us: 504; the CPU was held by: nobody 504; before user space: read 504
+  wake-ups of 5 to 10 us: 118746; the CPU was held by: nobody 118746; before user space: read 118746
+  wake-ups of 10 to 20 us: 753; the CPU was held by: nobody 753; before user space: read 753, wait for a lock of the kernel 121
+kernel_entries, the wake-up of slot 2 (CPU 6), 120003 of them; microseconds from the instant the period was due:
+  and 1 cycles that began behind, with no sleep before them: not wake-ups
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt           -         -         -         -         -         -         -
+  to the thread on the CPU      2.18      4.79      5.00      5.25      9.50     10.00     10.13
+  from there to user space      1.15      3.60      3.75      4.25      8.25      9.00      9.93
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock            2.48      3.03      3.00      3.75      3.81      3.81      3.81
+  given_the_cpu: never left it 0, once 120003, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 140 wake-ups
+  wake-ups of under 5 us: 498; the CPU was held by: nobody 498; before user space: read 498
+  wake-ups of 5 to 10 us: 118752; the CPU was held by: nobody 118752; before user space: read 118752
+  wake-ups of 10 to 20 us: 753; the CPU was held by: nobody 753; before user space: read 753, wait for a lock of the kernel 140
+kernel_entries, the wake-up of slot 3 (CPU 7), 120003 of them; microseconds from the instant the period was due:
+  and 1 cycles that began behind, with no sleep before them: not wake-ups
+                               least      mean      half       99%     99.9%    99.99%      most
+  to the first interrupt           -         -         -         -         -         -         -
+  to the thread on the CPU      2.58      6.01      6.00      6.75     11.00     11.25     11.70
+  from there to user space      1.00      2.38      2.50      3.00      6.50      7.50      8.78
+  off the CPU and on again         -         -         -         -         -         -         -
+  waiting for a lock            2.60      3.22      3.25      4.00      4.68      4.68      4.68
+  given_the_cpu: never left it 0, once 120003, twice 0, three times or more 0; lost it again blocked in the kernel: 0; found a lock of the kernel taken: in 127 wake-ups
+  wake-ups of under 5 us: 461; the CPU was held by: nobody 461; before user space: read 461
+  wake-ups of 5 to 10 us: 118783; the CPU was held by: nobody 118783; before user space: read 118783
+  wake-ups of 10 to 20 us: 759; the CPU was held by: nobody 759; before user space: read 759, wait for a lock of the kernel 127
+kernel_entries, wake-ups one by one (microseconds from the instant the period was due):
+  slot 0 cycle 30001 at 60.003 s (the first that took so long): in user space 8.48 us after the period was due
+       -783.38  the thread                    enters the kernel: poll
+       -782.53  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +2.25  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +3.07  the thread                    finds a lock of the kernel taken and waits for it (lock 0xffffa23e85a9baf8; a lock of the real-time kernel)
+         +7.58  the thread                    has the lock (0xffffa23e85a9baf8)
+         +8.11  the thread                    back from poll, which returned 1
+  slot 2 cycle 30001 at 60.003 s (the first that took so long): in user space 8.51 us after the period was due
+       -787.67  the thread                    enters the kernel: poll
+       -786.76  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +4.70  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +5.65  the thread                    back from poll, which returned 1
+         +6.03  the thread                    enters the kernel: read
+         +6.32  the thread                    back from read, which returned 8
+  slot 3 cycle 30001 at 60.003 s (the first that took so long): in user space 8.52 us after the period was due
+       -787.68  the thread                    enters the kernel: poll
+       -786.96  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +6.00  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +6.88  the thread                    back from poll, which returned 1
+         +7.12  the thread                    enters the kernel: read
+         +7.39  the thread                    back from read, which returned 8
+  slot 1 cycle 30001 at 60.003 s (the first that took so long): in user space 8.53 us after the period was due
+       -787.82  the thread                    enters the kernel: poll
+       -786.78  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +3.73  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +4.56  the thread                    back from poll, which returned 1
+         +4.79  the thread                    enters the kernel: read
+         +5.08  the thread                    back from read, which returned 8
+  slot 0 cycle 30924 at 61.849 s (the first that took so long): in user space 3.96 us after the period was due
+       -772.18  the thread                    enters the kernel: poll
+       -771.42  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +1.25  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +1.84  the thread                    finds a lock of the kernel taken and waits for it (lock 0xffffa23e85a9baf8; a lock of the real-time kernel)
+         +3.37  the thread                    has the lock (0xffffa23e85a9baf8)
+         +3.72  the thread                    back from poll, which returned 1
+  slot 1 cycle 30924 at 61.849 s (the first that took so long): in user space 4.00 us after the period was due
+       -775.86  the thread                    enters the kernel: poll
+       -774.88  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +2.00  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +2.54  the thread                    back from poll, which returned 1
+         +2.77  the thread                    enters the kernel: read
+         +2.98  the thread                    back from read, which returned 8
+  slot 2 cycle 30924 at 61.849 s (the first that took so long): in user space 4.01 us after the period was due
+       -775.65  the thread                    enters the kernel: poll
+       -774.85  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +2.67  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +3.25  the thread                    back from poll, which returned 1
+         +3.55  the thread                    enters the kernel: read
+         +3.77  the thread                    back from read, which returned 8
+  slot 3 cycle 30924 at 61.849 s (the first that took so long): in user space 4.47 us after the period was due
+       -775.80  the thread                    enters the kernel: poll
+       -774.79  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +3.19  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +3.87  the thread                    back from poll, which returned 1
+         +4.11  the thread                    enters the kernel: read
+         +4.33  the thread                    back from read, which returned 8
+  slot 3 cycle 45712 at 91.425 s (the first that took so long): in user space 10.10 us after the period was due
+       -788.25  the thread                    enters the kernel: poll
+       -787.48  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +6.31  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +7.72  the thread                    back from poll, which returned 1
+         +8.64  the thread                    enters the kernel: read
+         +9.67  the thread                    back from read, which returned 8
+  slot 0 cycle 77196 at 154.392 s (the first that took so long): in user space 11.51 us after the period was due
+       -779.40  the thread                    enters the kernel: poll
+       -778.51  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +5.63  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +6.52  the thread                    finds a lock of the kernel taken and waits for it (lock 0xffffa23e85a9baf8; a lock of the real-time kernel)
+        +10.80  the thread                    has the lock (0xffffa23e85a9baf8)
+        +11.15  the thread                    back from poll, which returned 1
+  slot 1 cycle 77196 at 154.392 s (the first that took so long): in user space 11.54 us after the period was due
+       -783.45  the thread                    enters the kernel: poll
+       -782.76  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +7.13  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +8.01  the thread                    back from poll, which returned 1
+         +8.25  the thread                    enters the kernel: read
+         +8.51  the thread                    back from read, which returned 8
+  slot 2 cycle 77196 at 154.392 s (the first that took so long): in user space 11.54 us after the period was due
+       -783.26  the thread                    enters the kernel: poll
+       -782.48  the thread                    the CPU goes to nobody (the CPU rests); the one before is left asleep
+         +8.09  at rest                       the CPU goes to the thread of the engine; the one before is left able to run
+         +8.97  the thread                    back from poll, which returned 1
+         +9.21  the thread                    enters the kernel: read
+         +9.48  the thread                    back from read, which returned 8
+audio: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 728 samples)
+compute: PASS (no system call in the compute phase)
