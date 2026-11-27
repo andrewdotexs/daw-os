@@ -528,7 +528,7 @@ Da qui l'idea che chiude il sottopasso, e che è la più utile. Un salto lascia 
 
 ### P1.8f: l'avvio, e una patch più stretta
 
-_27 novembre: consegnato, in attesa della misura._ Restava un difetto piccolo, visto due giorni prima: ogni tanto, al primo ciclo dopo l'avvio, la scheda non prendeva per intero il periodo che il motore le dava. Una «scrittura corta», una sola, e poi nulla per ore.
+_27 novembre: consegnato e misurato._ Restava un difetto piccolo, visto due giorni prima: ogni tanto, al primo ciclo dopo l'avvio, la scheda non prendeva per intero il periodo che il motore le dava. Una «scrittura corta», una sola, e poi nulla per ore.
 
 Guardando com'è fatto l'avvio si capisce perché, e si capisce anche perché non fa danno. Prima di partire il motore riempie di silenzio tutto il buffer d'uscita: è la riserva che dà il tempo di calcolare. Poi i flussi partono, ma l'uscita di questa interfaccia si muove solo dopo che è tornato l'ingresso. Al primo risveglio del motore l'uscita ha consumato un periodo di quel silenzio, o mezzo, o niente: è una gara tra due lavori su due processori. Se non ha consumato abbastanza, il primo periodo non entra tutto.
 
@@ -544,11 +544,29 @@ Scrivendo la modifica ho fatto un errore, e l'ha trovato la prova nella macchina
 
 Le altre due cose del sottopasso vengono dalle decisioni dell'utente. **La patch al kernel si stringe**: vale solo per i flussi «a retroazione implicita», cioè per il modo in cui lavora la Scarlett di quarta generazione, l'unico in cui è stata misurata. L'altra interfaccia del progetto usa un altro modo, sta già sotto i 10 ms senza patch, e torna sul percorso di tutti. E **le ore di prova leggono il bus** per due secondi all'inizio e alla fine: è il contatore dei microframe saltati nato dall'esito di P1.8e.
 
+**Com'è andata.** Quattrocento avvii, cento per frequenza: nessuna scrittura corta, gli stessi numeri di latenza di prima, e la patch ristretta che sulla quarta generazione non cambia nulla, com'era previsto. A 48, 96 e 192 kHz il primo periodo è entrato intero trecento volte su trecento. La gara che avevo descritto con tanta cura, lì, non si è vista.
+
+Poi c'è l'avvio numero 7 a 44,1 kHz.
+
+| | Gli altri 99 | L'avvio 7 |
+| --- | --- | --- |
+| Frame da suonare al primo risveglio | 155 o 156 | 288: il buffer pieno |
+| Frame ceduti | 0 | 96: il periodo intero |
+| Giro dentro l'interfaccia | 367–374 campioni | 317 |
+
+Nella tabella qui sopra avevo scritto, in grassetto, che la latenza non dipende da chi vince la gara. L'unico avvio in cui la gara è stata persa ha il giro più corto di 50 campioni, un millisecondo e un ottavo. La frase era sbagliata, e non stava nemmeno tra le previsioni: la davo per dimostrata.
+
+Dove stava l'errore è istruttivo. Il ragionamento era: «dopo la prima scrittura il buffer è pieno in tutti i casi, quindi il regime è lo stesso». È vero per ciò che il motore **vede**. Ma il motore, all'avvio, vede una posizione dell'uscita che il kernel aggiorna solo a periodi interi. Se l'uscita è partita con un trasferimento di ritardo, al primo risveglio ha consumato meno di un periodo, e il kernel dice ancora «non ha consumato nulla, è pieno». Il motore cede un periodo che in parte ci sarebbe stato.
+
+E qui il difetto piccolo ne spiega uno grande. Dal passo P1.5 il progetto si porta dietro una stranezza: una volta ogni tanto, un avvio ha la latenza più corta di un millisecondo esatto (punto aperto A-59). Con il conto di sopra viene proprio un millisecondo, a tutte e quattro le frequenze, al campione: 96 frame ceduti, meno il trasferimento di ritardo dell'uscita. È un'ipotesi, vista in un avvio solo; ma è la prima che fa tornare tutti i numeri raccolti in cinque giorni.
+
+Il resto è andato come previsto. Il primo giro dopo un cambio di frequenza non si muove in cinque minuti, a nessuna frequenza: l'allungamento a gradini visto sull'altra interfaccia qui non c'è. E le ore di prova hanno letto il bus accanto al motore senza disturbarlo: 1105 µs all'inizio, 1105 alla fine.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: la misura di P1.8f (cento avvii per frequenza), poi la chiusura del passo |
+| P1.8 | Il driver della scheda: decidere se rimettere al suo posto l'avvio corto (restituire come silenzio il periodo ceduto), poi la chiusura del passo |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |
