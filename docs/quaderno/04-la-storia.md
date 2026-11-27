@@ -562,11 +562,25 @@ E qui il difetto piccolo ne spiega uno grande. Dal passo P1.5 il progetto si por
 
 Il resto è andato come previsto. Il primo giro dopo un cambio di frequenza non si muove in cinque minuti, a nessuna frequenza: l'allungamento a gradini visto sull'altra interfaccia qui non c'è. E le ore di prova hanno letto il bus accanto al motore senza disturbarlo: 1105 µs all'inizio, 1105 alla fine.
 
+### P1.8g: restituire il silenzio
+
+_27 novembre: consegnato, in attesa della misura._ L'utente ha scelto di rimettere l'avvio corto al suo posto prima di chiudere il passo.
+
+Il rimedio viene da una domanda semplice: che cos'ha un avvio normale che quello corto non ha? La risposta è nei primi quattro cicli di un avvio qualunque, che dal sottopasso prima il motore annota: dopo ogni scrittura, **i frame che l'uscita tiene più quelli che l'ingresso deve ancora dare fanno sempre lo stesso numero**, un buffer d'uscita. È il silenzio messo all'inizio, che gira ma non cambia. All'avvio corto ne manca un pezzo: il periodo ceduto.
+
+Quindi: il periodo che non entra **suona come silenzio**, e il silenzio che al momento non entra resta un debito, pagato prima del periodo dopo. Chi ascolta non sente differenza (all'avvio non c'è ancora nulla da sentire); il conto torna.
+
+Due cose di metodo, più interessanti del rimedio.
+
+**Una misura deve poter fallire.** L'avvio corto capita una volta su qualche centinaio. Fare altri cento avvii e non vederlo non direbbe nulla: non l'avevamo visto nemmeno in quattrocento, due giorni fa. Così il motore ha due opzioni che servono solo alla prova. Una **provoca** il caso a ogni avvio. L'altra **spegne** il rimedio. Con la prima il giro deve essere quello di sempre; con tutte e due deve essere un periodo più corto. Se il secondo lancio desse il giro di sempre, sapremmo che è la misura a non vedere, non il rimedio a funzionare.
+
+**Un errore trovato sulla carta.** La prima regola che avevo scritto era «restituisci silenzio finché il buffer è pieno». A 48 kHz è giusta. A 44,1 kHz no: lì un periodo arriva con 37 frame più del necessario, e per qualche ciclo il motore li smaltisce spostandoli dall'ingresso all'uscita. Se l'uscita è già piena di silenzio restituito, quei frame non trovano posto, e vengono tre scritture corte vere. L'ho visto scrivendo la tabella dei quattro cicli per la guida, prima di costruire l'immagine. La regola giusta lascia il posto a ciò che aspetta in ingresso.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: decidere se rimettere al suo posto l'avvio corto (restituire come silenzio il periodo ceduto), poi la chiusura del passo |
+| P1.8 | Il driver della scheda: la misura di P1.8g (l'avvio provocato, il controllo, cento avvii normali), poi la chiusura del passo |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |

@@ -64,6 +64,12 @@ pub struct RunOptions {
     pub periods: u32,
     /// Periods of the driver in a quantum (1: the period is the quantum).
     pub slices: u32,
+    /// A test: at the first period of every start of the streams, act
+    /// as if the output buffer had no room.
+    pub start_as_if_full: bool,
+    /// A test: do not give back as silence the frames of a period that
+    /// did not fit at a start.
+    pub no_start_silence: bool,
     /// Seconds at the beginning of the run that are not judged.
     pub warm_up_s: u64,
     /// Print what was heard second by second, not only summed up.
@@ -213,6 +219,14 @@ Options of run:
                      makes its transfers shorter, and the way round
                      with them. One live thread for now: the others
                      wake at every period of the driver
+  --start-as-if-full with alsa, a test: at the first period of every
+                     start of the streams act as if the output buffer
+                     had no room. It happens by itself once in some
+                     hundreds of starts; the period is then played as
+                     silence, and the way round must be the usual one
+  --no-start-silence with alsa, a test: do not give back as silence the
+                     frames of a period that did not fit at a start
+                     (the way round is then that much shorter)
   --warm-up N        with alsa: do not judge the first N seconds of the
                      run (an interface settles for some seconds after
                      its streams start); what happens there is counted
@@ -331,6 +345,8 @@ impl Default for RunOptions {
             listen: Vec::new(),
             periods: Format::DEFAULT_PERIODS,
             slices: 1,
+            start_as_if_full: false,
+            no_start_silence: false,
             warm_up_s: 0,
             each_second: false,
             allow_xruns: false,
@@ -454,6 +470,8 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             "--warm-up" => options.warm_up_s = number(value("--warm-up")?, "--warm-up", 0, 3600)?,
             "--each-second" => options.each_second = true,
             "--allow-xruns" => options.allow_xruns = true,
+            "--start-as-if-full" => options.start_as_if_full = true,
+            "--no-start-silence" => options.no_start_silence = true,
             "--rate" => options.rate = number(value("--rate")?, "--rate", 8_000, 768_000)?,
             "--quantum" => {
                 options.frames = Some(number(value("--quantum")?, "--quantum", 8, 65_536)?)
@@ -557,6 +575,8 @@ fn parse_run<'a>(mut rest: impl Iterator<Item = &'a str>) -> Result<RunOptions, 
             || options.each_second
             || options.periods != Format::DEFAULT_PERIODS
             || options.slices != 1
+            || options.start_as_if_full
+            || options.no_start_silence
             || options.warm_up_s != 0
             || options.allow_xruns
             || matches!(options.fault, Fault::CardXrun | Fault::CardLost);
@@ -678,7 +698,7 @@ mod tests {
     fn run_takes_the_options_about_sound() {
         let text = "run --backend alsa --device hw:USB,0 --capture-device hw:Loopback,1 --tone 3 \
                     --tone-hz 440 --tone-level 20 --route 3:5,4:6 --listen 3,5 --each-second --allow-xruns --tone-cycles 3 --count 5:5 --impulse 3:4 \
-                    --periods 4 --slices 8 --fault card-xrun";
+                    --periods 4 --slices 8 --start-as-if-full --no-start-silence --fault card-xrun";
         let Ok(Command::Run(options)) = parse(&arguments(text)) else {
             panic!("run was not understood");
         };
@@ -698,6 +718,8 @@ mod tests {
         assert!(options.allow_xruns);
         assert_eq!(options.periods, 4);
         assert_eq!(options.slices, 8);
+        assert!(options.start_as_if_full);
+        assert!(options.no_start_silence);
         assert_eq!(options.fault, Fault::CardXrun);
     }
 
@@ -740,6 +762,7 @@ mod tests {
             ("run --tone 3", "need --backend alsa"),
             ("run --fault card-lost", "need --backend alsa"),
             ("run --slices 2", "need --backend alsa"),
+            ("run --start-as-if-full", "need --backend alsa"),
             ("run --backend alsa --device hw:0 --slices 0", "not between"),
             (
                 "run --backend alsa --device hw:0 --slices 33",

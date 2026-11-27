@@ -35,6 +35,15 @@ pub struct CardConfig {
     /// more, the driver is asked for a period that many times shorter
     /// (the frames of the quantum must be a multiple of it).
     pub slices: u32,
+    /// Whether the frames of a period that did not fit in the output
+    /// buffer at a start of the streams are given back as silence when
+    /// there is room. `false` is for a test only: the start then stays
+    /// that much shorter.
+    pub start_silence: bool,
+    /// A test: at the first period of every start, act as if the output
+    /// buffer had no room (open point A-72: it happens by itself once
+    /// in some hundreds of starts).
+    pub start_as_if_full: bool,
 }
 
 /// What the driver accepted.
@@ -358,7 +367,14 @@ impl Card {
     /// A whole buffer of silence in the output: the distance between
     /// what the engine writes and what the converters play.
     fn fill_with_silence(&mut self) -> Result<(), CardError> {
-        let mut left = self.info.playback_buffer;
+        self.deliver_silence(self.info.playback_buffer).map(|_| ())
+    }
+
+    /// Write `frames` frames of silence to the output, or as many as
+    /// fit; says how many. As a period of output: on a USB interface
+    /// the commit is a system call.
+    pub fn deliver_silence(&mut self, frames: usize) -> Result<usize, CardError> {
+        let mut left = frames;
         let mut rounds = 0;
         while left > 0 && rounds < 4 {
             let written = self
@@ -369,10 +385,13 @@ impl Card {
                     bytes.len() / (BYTES_PER_SAMPLE * self.info.outputs)
                 })
                 .map_err(classify)?;
+            if written == 0 {
+                break;
+            }
             left = left.saturating_sub(written);
             rounds += 1;
         }
-        Ok(())
+        Ok(frames - left)
     }
 
     /// Start both streams.
