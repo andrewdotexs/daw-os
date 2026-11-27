@@ -209,9 +209,9 @@ campaign-net: ## Network traffic for the campaign, from this PC, until the campa
 	@tools/campaign-net.sh $(HOST)
 
 .PHONY: audio-hours
-audio-hours: ## Steps P1.6e and P1.7g on a real machine: the engine on the sound card for hours, in the background: make audio-hours HOST=<address> DO="--start LABEL" [CASES="swap"] [RATE=48000] [REQUIRE_CAMPAIGN=1] (or DO=--stop; nothing: the status)
+audio-hours: ## Steps P1.6e and P1.7g on a real machine: the engine on the sound card for hours, in the background: make audio-hours HOST=<address> DO="--start LABEL" [CASES="swap"] [RATE=48000] [REQUIRE_CAMPAIGN=1] [ASAP=1] (or DO=--stop; nothing: the status)
 	@ssh -o ConnectTimeout=10 root@$(HOST) 'mkdir -p /var/lib/dawos && cat > /var/lib/dawos/audio-hours.sh.new && mv /var/lib/dawos/audio-hours.sh.new /var/lib/dawos/audio-hours.sh' < tools/audio-hours.sh
-	@ssh -o ConnectTimeout=10 root@$(HOST) $(if $(CASES),CASES='"$(CASES)"') $(if $(RATE),RATE=$(RATE)) $(if $(SECONDS_JUDGED),SECONDS_JUDGED=$(SECONDS_JUDGED)) $(if $(REQUIRE_CAMPAIGN),REQUIRE_CAMPAIGN=$(REQUIRE_CAMPAIGN)) sh /var/lib/dawos/audio-hours.sh $(or $(DO),--status)
+	@ssh -o ConnectTimeout=10 root@$(HOST) $(if $(CASES),CASES='"$(CASES)"') $(if $(RATE),RATE=$(RATE)) $(if $(SECONDS_JUDGED),SECONDS_JUDGED=$(SECONDS_JUDGED)) $(if $(REQUIRE_CAMPAIGN),REQUIRE_CAMPAIGN=$(REQUIRE_CAMPAIGN)) $(if $(ASAP),ASAP=$(ASAP)) sh /var/lib/dawos/audio-hours.sh $(or $(DO),--status)
 
 .PHONY: lint
 lint: engine-lint ## Run shellcheck, markdownlint, rustfmt and clippy, and look for addresses that must not be committed

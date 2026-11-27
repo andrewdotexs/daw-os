@@ -376,7 +376,7 @@ Nella macchina virtuale, prima della riga del risultato, ci sono righe `DAWOS-AU
 
 **`tools/usb-look.sh`** (dal passo P1.8b): legge il bus USB mentre il motore gira, con `usbmon`. Per l'ingresso e l'uscita della scheda dice quanti trasferimenti al secondo, di quanti pacchetti, quanto restano presso il controller (per l'uscita: con che anticipo sul cavo il driver li consegna), quanti sono in coda, e come avviene l'avvio. Si lancia via ssh, senza immagine nuova.
 
-**`tools/audio-hours.sh`** (`make audio-hours`): giri lunghi, di un'ora, mentre il resto della macchina lavora con il carico della campagna. Tre casi: `passthrough` (i thread non fanno che passare il suono), `loaded` (ogni thread occupato per il 60 % del periodo) e `swap` (due grafi che si scambiano ogni secondo). Ogni caso ha la sua riga `case_verdict`.
+**`tools/audio-hours.sh`** (`make audio-hours`): giri lunghi, di un'ora, mentre il resto della macchina lavora con il carico della campagna. Tre casi: `passthrough` (i thread non fanno che passare il suono), `loaded` (ogni thread occupato per il 60 % del periodo) e `swap` (due grafi che si scambiano ogni secondo). Ogni caso ha la sua riga `case_verdict`. Dal passo P1.8d ogni caso chiede anche che nessun campione del conteggio sia fuori posto e che il giro alla fine sia quello dell'inizio; `ASAP=1` accende per la durata delle ore l'interruttore `iso_asap` del driver USB.
 
 ## Gli strumenti del grafo
 

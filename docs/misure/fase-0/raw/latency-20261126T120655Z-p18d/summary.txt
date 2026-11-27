@@ -1,0 +1,71 @@
+
+-- 44100 Hz, 96 frames x 3 periods (6.53 ms of buffer) --
+  inside, at the end of each run: 100 runs, 367 to 375 samples (8.322 to 8.503 ms); runs with slips: 0
+    lengths (times): 367 (32) 368 (51) 369 (2) 373 (12) 374 (2) 375 (1)
+  cable: 100 runs, 392.85 to 400.85 samples (8.908 to 9.090 ms); from start to start it moves by 8.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 392.85 (32) 393.85 (51) 394.85 (2) 398.85 (12) 399.85 (2) 400.85 (1)
+  converters and cable alone: 25.85 samples (0.586 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: yes (9.090 ms at the most)
+  calibrations: PASS (100 of 100 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.83 samples more than inside (peak 0.0894 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 368 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 2009 interrupts of the USB controllers a second; worst wake-up 13.46 us
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:006:1: 1001 transfers in a second, of 8 packets
+    Zo:3:006:1: 1001 transfers in a second, of 8 packets
+
+-- 48000 Hz, 96 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 100 runs, 368 to 375 samples (7.667 to 7.812 ms); runs with slips: 0
+    lengths (times): 368 (31) 369 (6) 374 (50) 375 (13)
+  cable: 100 runs, 393.85 to 400.85 samples (8.205 to 8.351 ms); from start to start it moves by 7.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 393.85 (31) 394.85 (6) 399.85 (50) 400.85 (13)
+  converters and cable alone: 25.85 samples (0.539 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: yes (8.351 ms at the most)
+  calibrations: PASS (100 of 100 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 25.84 samples more than inside (peak 0.0895 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 374 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 2021 interrupts of the USB controllers a second; worst wake-up 12.75 us
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:006:1: 1000 transfers in a second, of 8 packets
+    Zo:3:006:1: 1000 transfers in a second, of 8 packets
+
+-- 96000 Hz, 192 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 100 runs, 728 to 729 samples (7.583 to 7.594 ms); runs with slips: 0
+    lengths (times): 728 (59) 729 (41)
+  cable: 100 runs, 752.15 to 753.15 samples (7.835 to 7.845 ms); from start to start it moves by 1.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 752.15 (59) 753.15 (41)
+  converters and cable alone: 24.15 samples (0.252 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: yes (7.845 ms at the most)
+  calibrations: PASS (100 of 100 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.15 samples more than inside (peak 0.0892 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 728 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 2624 interrupts of the USB controllers a second; worst wake-up 13.14 us
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:006:1: 1000 transfers in a second, of 8 packets
+    Zo:3:006:1: 1000 transfers in a second, of 8 packets
+
+-- 192000 Hz, 384 frames x 3 periods (6.00 ms of buffer) --
+  inside, at the end of each run: 100 runs, 1448 to 1473 samples (7.542 to 7.672 ms); runs with slips: 0
+    lengths (times): 1448 (16) 1449 (63) 1472 (7) 1473 (14)
+  cable: 100 runs, 1472.12 to 1497.12 samples (7.667 to 7.798 ms); from start to start it moves by 25.00 samples; inside a run the bursts differ by 0.00 at the most
+    lengths (times): 1472.12 (16) 1473.12 (63) 1496.12 (7) 1497.12 (14)
+  converters and cable alone: 24.12 samples (0.126 ms) more than inside, in 100 runs of 100
+  R-01, under 10 ms through the cable: yes (7.798 ms at the most)
+  calibrations: PASS (100 of 100 measured; all under 10 ms; inside a run within one sample)
+  xruns in the short runs: 0
+  with impulses, one run: 24.09 samples more than inside (peak 0.0915 of full scale)
+  long run, 600 s, the first 60 not judged: PASS (no xrun; the tone is on input 3; the count comes back on input 5 after 1448 samples)
+  long run, 600 s: xruns 0 (0 of them in the warm-up); count slips 0 (largest 0 samples); in the warm-up 0 (largest 0); slips of the tone 0 (largest 0.00 samples); in the warm-up 0 (largest 0.00)
+  long run: 2001 interrupts of the USB controllers a second; worst wake-up 12.96 us
+  transfers on the bus (Zi: input, Zo: output; bus, device, endpoint):
+    Zi:3:006:1: 1000 transfers in a second, of 8 packets
+    Zo:3:006:1: 1000 transfers in a second, of 8 packets
+
+finished_utc: 2026-11-26T13:04:12Z
+verdict: PASS (4 of 4 shapes and rates)

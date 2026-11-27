@@ -12,7 +12,7 @@ I termini inglesi sono quelli che si trovano nei manuali, nei messaggi del kerne
 | **Accelerazione** (_speed-up_) | Quante volte più in fretta finisce il ciclo su N thread rispetto a uno | Cap. 2, Il grafo |
 | **ALSA** | L'interfaccia di Linux verso le schede audio | Cap. 2, La scheda audio |
 | **Anello** (_ring buffer_) | Una coda di lunghezza fissa in cui uno scrive e un altro legge senza lucchetti. È dove finisce il registro dei cicli | Cap. 2, Il motore |
-| **Anticipo** (del controller USB) | Quanto prima della partenza un trasferimento va consegnato al controller: 2,0–2,5 ms sul 285K, di cui 0,5 chiesti dal controller (IST) | Cap. 2, La scheda audio |
+| **Anticipo** (del controller USB) | Quanto prima della partenza un trasferimento va consegnato al controller: 2,0–2,5 ms sul 285K con il kernel di serie, 0,1 con l'interruttore `iso_asap` acceso | Cap. 2, La scheda audio |
 | **Assegnazione statica** | Ogni nodo del grafo ha il suo thread, deciso alla compilazione (D-10) | Cap. 2, Il grafo |
 | **Assestamento** (_settle_) | I secondi che l'interfaccia impiega a stabilizzarsi dopo un cambio di frequenza | Cap. 2, La scheda audio |
 | **Attesa attiva** (_spin_, _busy wait_) | Aspettare girando a vuoto invece di dormire, per non entrare nel kernel | Cap. 2, Il grafo |
@@ -176,3 +176,4 @@ Un'avvertenza: in `docs/01-registro-modifiche-v1.md` la lettera R numera anche l
 | **A-74** | Chi aspetta un nodo di un thread bloccato taglia i suoi cicli per intero | Aperto, Fase 2 |
 | **A-75** | Il processo fa svuotare la TLB sui propri processori live: 12 volte in un'ora di scambi, lo stesso numero in due ore | Aperto, P1.9 |
 | **A-76** | Ogni programma BPF classico caricato (una connessione SSH, per esempio) fa ripulire il predittore dei salti su tutti i processori, live compresi | Aperto, P1.9 |
+| **A-77** | Un errore di `fakeroot` nella costruzione dell'immagine, visto due volte: non si sa che cosa lasci a metà | Aperto |
