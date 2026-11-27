@@ -564,7 +564,7 @@ Il resto è andato come previsto. Il primo giro dopo un cambio di frequenza non 
 
 ### P1.8g: restituire il silenzio
 
-_27 novembre: consegnato, in attesa della misura._ L'utente ha scelto di rimettere l'avvio corto al suo posto prima di chiudere il passo.
+_27 novembre: consegnato e misurato._ L'utente ha scelto di rimettere l'avvio corto al suo posto prima di chiudere il passo.
 
 Il rimedio viene da una domanda semplice: che cos'ha un avvio normale che quello corto non ha? La risposta è nei primi quattro cicli di un avvio qualunque, che dal sottopasso prima il motore annota: dopo ogni scrittura, **i frame che l'uscita tiene più quelli che l'ingresso deve ancora dare fanno sempre lo stesso numero**, un buffer d'uscita. È il silenzio messo all'inizio, che gira ma non cambia. All'avvio corto ne manca un pezzo: il periodo ceduto.
 
@@ -576,11 +576,33 @@ Due cose di metodo, più interessanti del rimedio.
 
 **Un errore trovato sulla carta.** La prima regola che avevo scritto era «restituisci silenzio finché il buffer è pieno». A 48 kHz è giusta. A 44,1 kHz no: lì un periodo arriva con 37 frame più del necessario, e per qualche ciclo il motore li smaltisce spostandoli dall'ingresso all'uscita. Se l'uscita è già piena di silenzio restituito, quei frame non trovano posto, e vengono tre scritture corte vere. L'ho visto scrivendo la tabella dei quattro cicli per la guida, prima di costruire l'immagine. La regola giusta lascia il posto a ciò che aspetta in ingresso.
 
+**Com'è andata.** Per una volta, come scritto.
+
+| Giro dentro l'interfaccia, in campioni | 44,1 kHz | 48 kHz | 96 kHz | 192 kHz |
+| --- | --- | --- | --- | --- |
+| Avvii normali | 367–374 | 368–375 | 728–729 | 1448–1473 |
+| Avvio provocato, silenzio restituito | 367–374 | 368–375 | 728–729 | 1448–1473 |
+| Avvio provocato, rimedio spento | 271–279 | 272–279 | 536–537 | 1065–1089 |
+
+La seconda riga uguale alla prima dice che il rimedio funziona. La terza, più corta di un periodo esatto, dice che la misura l'avrebbe visto se non funzionasse. E a 44,1 kHz, il caso su cui credevo meno, i primi cicli tornano identici a quelli di un avvio normale dal terzo in poi: 171 frame da suonare, poi 179, come nella tabella da cui era nata la correzione.
+
+Resta scritto ciò che la misura non dice. L'avvio corto **vero**, quello che capita da solo, non si è ripresentato in quattrocento avvii: il rimedio è provato sul caso costruito, non su quello che l'ha fatto nascere. Se la mia spiegazione di quell'avvio fosse sbagliata, il silenzio restituito potrebbe allungarlo invece di sistemarlo. Il motore scrive a ogni avvio che cosa ha fatto, e la campagna lo vedrebbe.
+
+### P1.8, a conti fatti
+
+Il passo era partito il 26 novembre con una domanda, «perché questa interfaccia ha tre millisecondi di troppo?», e con un'ipotesi di lavoro costosa, scrivere un driver audio. In due giorni e sette sottopassi è finito così:
+
+- i tre millisecondi non erano del driver audio ma di quello del controller USB, e due se ne vanno con **una riga**;
+- quella riga è la prima modifica del progetto al sorgente del kernel, sta dietro un interruttore, e vale solo dove è stata misurata;
+- il driver nostro **non si scrive**;
+- l'avvio dei flussi, che aveva tre punti aperti, ne ha uno chiuso e due spiegati.
+
+Le previsioni sbagliate del passo sono state più di quelle giuste, e quasi tutte nello stesso verso: troppo prudenti sui tempi del kernel, troppo sicure su ciò che sembrava ovvio. Le tre che hanno fatto più strada sono nate da un errore: l'ora «pulita» che non poteva vedere ciò che cercava, la frase data per dimostrata, la regola corretta scrivendo una tabella.
+
 ### Che cosa viene dopo
 
 | Passo | Che cosa |
 | --- | --- |
-| P1.8 | Il driver della scheda: la misura di P1.8g (l'avvio provocato, il controllo, cento avvii normali), poi la chiusura del passo |
 | P1.9 | Il kernel: le chiamate tra processori che restano (A-49), comprese quelle che provoca il processo stesso (A-75) e quelle dei filtri BPF (A-76) |
 | P1.10 | La campagna della Fase 1 |
 | P1.11 | La chiusura |

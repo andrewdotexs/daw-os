@@ -168,6 +168,7 @@ Per giustizia, e perché dicono dove le stime sono affidabili.
 - **Il nodo che non ritorna** (P1.7f): il grafo senza di lui in uso dopo 16,14 ms, contro 16–27 attesi; tre buffer trovati occupati, contro tre o quattro; nessun campione perso sugli altri thread.
 - **Il costo dello stato C1E** (P0.6b): stimato e misurato concordano.
 - **Tre gesti incerti che hanno funzionato**: trovare la radice per etichetta dentro la riga di comando del kernel (P0.5b), spostare da fuori un thread real-time che non cede (P1.3), il driver grafico caricato all'avvio che si comporta come quello caricato a mano (P1.0).
+- **Il silenzio restituito all'avvio** (P1.8g): provocando l'avvio in cui il primo periodo non entra, il giro è quello degli avvii normali, e a rimedio spento un periodo più corto. Tutte le previsioni scritte, al campione, a quattro frequenze; quella di 44,1 kHz reggeva solo con la regola corretta sulla carta il giorno stesso.
 
 Ciò che hanno in comune: sono conti fatti su **meccanismi nostri**, di cui si conosce ogni passaggio. Le stime sbagliate riguardano quasi tutte ciò che fanno il processore, il driver, il firmware e l'interfaccia.
 
