@@ -46,20 +46,26 @@ now() {
 if [[ -n ${ONE:-} ]]; then
 	echo "$(now) traffic for the campaign: one connection, both directions, until the campaign ends; stop with Ctrl-C"
 	started=$(date +%s)
-	# On the machine: zeros out, whatever comes in thrown away, and a
-	# look every ten seconds at whether the campaign is still there. In a
-	# shell without job control a background command reads nothing unless
-	# told to: hence "<&0".
+	# On the machine: zeros out in the background, and whatever comes in
+	# thrown away by the command in front: in a shell without job control
+	# a background command reads from /dev/null whatever it is told (the
+	# first version had the reader in the background, and in two hours of
+	# step P1.9a nothing went to the machine). A third command looks
+	# every ten seconds whether the campaign is still there, and ends the
+	# other two.
 	# shellcheck disable=SC2016 # the variables are for the shell of the machine
 	dd if=/dev/zero bs=1M status=none |
 		ssh "${ssh_options[@]}" "root@${host}" '
 			systemctl is-active --quiet dawos-campaign || { echo "no campaign is running on the machine" >&2; exit 3; }
-			cat <&0 > /dev/null &
-			up=$!
 			dd if=/dev/zero bs=1M 2> /dev/null &
 			down=$!
-			while systemctl is-active --quiet dawos-campaign; do sleep 10; done
-			kill "${up}" "${down}" 2> /dev/null' > /dev/null
+			(
+				while systemctl is-active --quiet dawos-campaign; do sleep 10; done
+				kill "${down}" 2> /dev/null
+				pkill -P "$$" -x cat 2> /dev/null
+			) < /dev/null > /dev/null 2>&1 &
+			cat > /dev/null
+			exit 0' > /dev/null
 	status=${PIPESTATUS[1]}
 	elapsed=$(($(date +%s) - started))
 	case "${status}" in

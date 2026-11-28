@@ -601,7 +601,7 @@ Le previsioni sbagliate del passo sono state più di quelle giuste, e quasi tutt
 
 ### P1.9a: chi chiama i core live
 
-_27 novembre: consegnato, in attesa della misura._ Il passo sul kernel aveva, dal progetto iniziale, una risposta pronta e pesante: portare nel nostro kernel una serie di patch che altri stanno ancora discutendo, per rinviare certe interruzioni dei core live. L'utente ha scelto di cominciare da un'altra parte: **sapere da dove vengono** quelle interruzioni.
+_27 novembre: consegnato. 27 e 28 novembre: misurato, due volte._ Il passo sul kernel aveva, dal progetto iniziale, una risposta pronta e pesante: portare nel nostro kernel una serie di patch che altri stanno ancora discutendo, per rinviare certe interruzioni dei core live. L'utente ha scelto di cominciare da un'altra parte: **sapere da dove vengono** quelle interruzioni.
 
 Il motore le vede arrivare, e da qualche passo le sa anche nominare. Sono di tre tipi: il kernel che ha riscritto un pezzo del proprio codice; un programma BPF «classico» caricato da qualcuno, per cui ogni processore deve dimenticare le sue previsioni dei salti; un processo che ha restituito memoria. Costano due microsecondi l'una. E a macchina ferma, senza nessuno collegato, **sono zero**.
 
@@ -610,6 +610,24 @@ Quest'ultimo fatto è il più importante, perché dice che non vengono dal kerne
 Le ipotesi, scritte prima: il BPF lo carica `sshd` a ogni connessione, e le connessioni le aprono i nostri strumenti di misura (è il «lo strumento fa parte del carico» della regola 12, in grande); la riscrittura del codice la provocano gli strumenti della campagna; la memoria la restituisce un thread del motore stesso. Se reggono tutte e tre, la serie di patch non ha nulla da fare, e una domanda aperta dalla prima pagina del progetto si chiude con un elenco di tre righe.
 
 Nella macchina virtuale lo strumento ha già detto una cosa vera che non cercavo: tra chi fa riscrivere il codice al kernel c'è anche `dawos-tune`, il nostro programma di regolazione, all'avvio. Lì va bene, è prima di tutto. Ma è esattamente il tipo di risposta che serve.
+
+**Com'è andata.** La misura è stata fatta due volte, la sera e la mattina dopo, e le due ore dicono la stessa cosa al ciclo. Lo strumento ha messo un nome accanto a ogni interruzione.
+
+| Che cosa arriva ai core live | Chi lo manda | Perché |
+| --- | --- | --- |
+| «Dimentica le previsioni dei salti» | `sshd`, a ogni connessione | Installa un filtro di sicurezza, e il kernel per prudenza avvisa tutti i processori |
+| «Ho riscritto il mio codice» | `fio`, il carico di disco della campagna | Usa `io_uring`; al primo anello che nasce e all'ultimo che muore il kernel gira un interruttore nel proprio codice |
+| «Ho tolto memoria dalla tua mappa» | Il motore stesso | La libreria C restituisce al sistema un pezzo di memoria liberata |
+
+Tre ipotesi, tre conferme sul «chi»; sul «come», una sola l'avevo vista giusta. Che il primo fosse `sshd` lo pensavo da giorni, e con il traffico su una connessione sola il conto è andato da 116 a **zero**. Che il secondo fosse uno strumento della campagna lo pensavo, ma il meccanismo no: non sapevo che aprire il primo anello `io_uring` di una macchina facesse riscrivere al kernel un pezzo di sé. Che il terzo fosse il motore lo pensavo, ma con un'altra chiamata.
+
+Il terzo ha il dettaglio più bello della misura: le tre restituzioni di memoria arrivano **agli stessi secondi nelle due ore**, 531 e 565 e 583 dall'avvio, al millesimo. Non c'entra il carico, non c'entra il caso: è il motore che a quel punto ha chiesto e reso esattamente quella memoria. Un difetto che si ripete uguale è un difetto che si toglie.
+
+E il secondo lascia una regola per il futuro che nessuna lettura mi avrebbe dato: quando la DAW userà `io_uring` per leggere dal disco, dovrà tenere un anello aperto dall'inizio alla fine della sessione. Finché ce n'è uno aperto, l'interruttore non si muove.
+
+Gli strumenti hanno sbagliato due volte, e tutte e due per colpa mia. Il traffico «su una connessione» è passato in un verso solo: 123 GiB in uscita, niente in entrata, per una regola delle shell che credevo di conoscere e che non avevo provato. E la connessione che teneva in vita lo strumento nuovo è caduta dopo un'ora di silenzio: la mattina il rapporto era salvo, la sera prima era andato perso, e l'ho ricostruito dalla traccia. Ora lo strumento finisce il lavoro anche da solo, e scrive prima di parlare.
+
+Quanto alla domanda da cui il passo era partito, se portare nel nostro kernel la serie di patch: quella serie rinvierebbe una sola delle tre interruzioni, e qui quella viene da uno strumento di misura. La decisione è dell'utente.
 
 ### Che cosa viene dopo
 
