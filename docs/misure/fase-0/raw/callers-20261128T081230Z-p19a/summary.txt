@@ -1,0 +1,241 @@
+watched for 3960 s; events lost by the trace buffer: 0
+functions asked of the live CPUs, and the program that asked (times; seconds since the boot of the first and of the last):
+  do_sync_core | fio: 21 times, from 31309.455381 to 34918.307018
+  __bpf_arch_ibpb | sshd-auth: 3 times, from 31311.421448 to 31320.040123
+  flush_tlb_func | card-keeper: 1 times, from 31328.846274 to 31328.846274
+  flush_tlb_func | dawos-engine: 4 times, from 31328.847716 to 31912.215106
+  do_sync_core | dawos-engine: 327 times, from 31328.897897 to 31328.900056
+  do_sync_core | kworker/17:3: 3 times, from 31851.559029 to 31851.559072
+  do_sync_core | kworker/16:1: 3 times, from 32453.035413 to 32453.035464
+  do_sync_core | kworker/15:0: 3 times, from 33054.512331 to 33054.512367
+  do_sync_core | kworker/20:1: 3 times, from 33655.989562 to 33655.989596
+  do_sync_core | kworker/12:1: 6 times, from 34257.466001 to 34858.942846
+  flush_tlb_func | spare-0: 1 times, from 34989.237381 to 34989.237381
+  flush_tlb_func | spare-3: 1 times, from 34989.237382 to 34989.237382
+  flush_tlb_func | live-2: 2 times, from 34989.237867 to 34989.237900
+  flush_tlb_func | live-1: 2 times, from 34989.237883 to 34989.237901
+  flush_tlb_func | live-3: 1 times, from 34989.237899 to 34989.237899
+  flush_tlb_func | meter: 2 times, from 34989.277039 to 34989.277046
+  do_sync_core | meter: 327 times, from 34989.349084 to 34989.351095
+  trc_read_check_handler | rcu_tasks_trace: 1 times, from 34989.370491 to 34989.370491
+
+in all, on every live CPU together:
+  trc_read_check_handler: 4
+  do_sync_core: 2772
+  __bpf_arch_ibpb: 12
+  flush_tlb_func: 48
+
+where in the kernel the first of each came from:
+  do_sync_core | fio
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      arch_jump_label_transform_apply
+      static_key_slow_inc_cpuslocked
+      static_key_slow_inc
+      io_uring_setup.cold
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  __bpf_arch_ibpb | sshd-auth
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      bpf_prog_pack_alloc
+      bpf_jit_binary_pack_alloc
+      bpf_int_jit_compile
+      bpf_prog_select_runtime
+      bpf_prepare_filter
+      bpf_prog_create_from_user
+      do_seccomp
+      __do_sys_prctl
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  flush_tlb_func | card-keeper
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      flush_tlb_mm_range
+      tlb_finish_mmu
+      vms_clear_ptes
+      vms_complete_munmap_vmas
+      do_vmi_align_munmap
+      do_vmi_munmap
+      __vm_munmap
+      __x64_sys_munmap
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  flush_tlb_func | dawos-engine
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      flush_tlb_mm_range
+      tlb_finish_mmu
+      exit_mmap
+      mmput
+      do_exit
+      do_group_exit
+      __x64_sys_exit_group
+      x64_sys_call
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  do_sync_core | dawos-engine
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      __static_call_transform
+      arch_static_call_transform
+      __static_call_update
+      tracepoint_add_func
+      tracepoint_probe_register
+      __ftrace_event_enable_disable
+      event_enable_write
+      vfs_write
+      ksys_write
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  do_sync_core | kworker/17:3
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      arch_jump_label_transform_apply
+      __static_key_slow_dec_cpuslocked
+      jump_label_update_timeout
+      process_one_work
+      worker_thread
+      kthread
+      ret_from_fork
+      ret_from_fork_asm
+  do_sync_core | kworker/16:1
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      arch_jump_label_transform_apply
+      __static_key_slow_dec_cpuslocked
+      jump_label_update_timeout
+      process_one_work
+      worker_thread
+      kthread
+      ret_from_fork
+      ret_from_fork_asm
+  do_sync_core | kworker/15:0
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      arch_jump_label_transform_apply
+      __static_key_slow_dec_cpuslocked
+      jump_label_update_timeout
+      process_one_work
+      worker_thread
+      kthread
+      ret_from_fork
+      ret_from_fork_asm
+  do_sync_core | kworker/20:1
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      arch_jump_label_transform_apply
+      __static_key_slow_dec_cpuslocked
+      jump_label_update_timeout
+      process_one_work
+      worker_thread
+      kthread
+      ret_from_fork
+      ret_from_fork_asm
+  do_sync_core | kworker/12:1
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      arch_jump_label_transform_apply
+      __static_key_slow_dec_cpuslocked
+      jump_label_update_timeout
+      process_one_work
+      worker_thread
+      kthread
+      ret_from_fork
+      ret_from_fork_asm
+  flush_tlb_func | spare-0
+      (no stack was kept)
+  flush_tlb_func | spare-3
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      flush_tlb_mm_range
+      tlb_finish_mmu
+      vms_clear_ptes
+      vms_complete_munmap_vmas
+      do_vmi_align_munmap
+      do_vmi_munmap
+      __vm_munmap
+      __x64_sys_munmap
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      flush_tlb_mm_range
+      tlb_finish_mmu
+  flush_tlb_func | live-2
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      flush_tlb_mm_range
+      tlb_finish_mmu
+      vms_clear_ptes
+      vms_complete_munmap_vmas
+      do_vmi_align_munmap
+      do_vmi_munmap
+      __vm_munmap
+      __x64_sys_munmap
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  flush_tlb_func | live-1
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      flush_tlb_mm_range
+      tlb_finish_mmu
+      vms_clear_ptes
+      vms_complete_munmap_vmas
+      do_vmi_align_munmap
+      do_vmi_munmap
+      __vm_munmap
+      __x64_sys_munmap
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  flush_tlb_func | live-3
+      (no stack was kept)
+  flush_tlb_func | meter
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      flush_tlb_mm_range
+      move_page_tables
+      copy_vma_and_data
+      move_vma
+      do_mremap
+      __do_sys_mremap
+      do_syscall_64
+      entry_SYSCALL_64_after_hwframe
+  do_sync_core | meter
+      smp_call_function_many_cond
+      on_each_cpu_cond_mask
+      smp_text_poke_batch_finish
+      arch_jump_label_transform_apply
+      static_key_disable_cpuslocked
+      static_key_disable
+      tracepoint_probe_unregister
+      trace_event_reg
+      __ftrace_event_enable_disable
+      __ftrace_set_clr_event_nolock
+      event_trace_del_tracer
+      __remove_instance
+      instance_rmdir
+      tracefs_syscall_rmdir
+      vfs_rmdir
+      do_rmdir
+  trc_read_check_handler | rcu_tasks_trace
+      __smp_call_single_queue
+      generic_exec_single
+      smp_call_function_single
+      trc_wait_for_one_reader.part.0
+      check_all_holdout_tasks_trace
+      rcu_tasks_wait_gp
+      rcu_tasks_one_gp
+      rcu_tasks_kthread
+      kthread
+      ret_from_fork
+      ret_from_fork_asm
+
+finished_utc: 2026-11-28T09:18:30Z

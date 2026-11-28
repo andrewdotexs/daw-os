@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "generated_utc": "2026-11-27T23:30:49Z",
+  "profile": "285k",
+  "status": "ok",
+  "problems": [],
+  "notes": ["no idle driver: idle CPUs stop in C1, the kernel has no other state to choose"],
+  "firmware": {"check": "same", "reference": "image", "differences": []},
+  "machine": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 9 285K",
+    "virtual": false,
+    "online": "0-23",
+    "performance_cores": "0-7",
+    "efficiency_cores": "8-23"
+  },
+  "kernel": {
+    "isolated": "4-7",
+    "nohz_full": "2-7"
+  },
+  "domains": {
+    "live": "4-7",
+    "tickless": "2-7",
+    "preemptive": "0-3,8-15",
+    "system": "16-19",
+    "io": "20-23"
+  },
+  "tuning": {
+    "graphics": {"wanted": "xe", "device": "0000:00:02.0", "driver": "xe"},
+    "interrupts": {"moved": 70, "fixed": 18, "fixed_on_live": "169,170"},
+    "workqueue_cpumask": "00ffff0f",
+    "vm_stat_interval_s": 120,
+    "machine_check_poll_s": 0,
+    "timer_migration": 0,
+    "fair_server_on_live": "off",
+    "idle": {"driver": "none", "limit": "c1", "resume_latency_us": null, "c1e_auto_promotion": "off"},
+    "frequency": {"live_khz": 4600000, "energy_preference": "balance_performance", "preemptive_pcore_khz": 5500000},
+    "power_limit": {"profile_w": 160, "long_term_w": 160, "short_term_w": 160, "lowered": false}
+  }
+}
